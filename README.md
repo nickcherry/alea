@@ -16,7 +16,7 @@ when the modeled edge clears the market.
 - [Trading Domain](./doc/TRADING.md) — the live money-touching runner and failure modes.
 - [Dry Trading](./doc/DRY_TRADING.md) — dry-run fill simulation, JSONL sessions, and report interpretation.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape recorder for Polymarket + Binance + Coinbase + Chainlink reference events across all five assets, to disk and Postgres for offline replay/research.
-- [Dashboards](./doc/DASHBOARDS.md) — shared visual language for HTML reports in `tmp/`.
+- [Dashboards](./doc/DASHBOARDS.md) — design system, shared CSS+JS assets, and authoring contract for the HTML reports in `tmp/`.
 
 ### Engineering
 

@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 
 import { renderPriceChartHtml } from "@alea/lib/exchangePrices/renderPriceChartHtml";
+import { copyDashboardAssets } from "@alea/lib/ui/copyDashboardAssets";
 import type { ExchangeId, QuoteTick } from "@alea/types/exchanges";
 
 type WritePriceChartHtmlParams = {
@@ -28,12 +29,17 @@ export async function writePriceChartHtml({
   capture,
   htmlPath,
 }: WritePriceChartHtmlParams): Promise<void> {
+  const assets = await copyDashboardAssets({
+    htmlPath,
+    pageAssets: ["price-chart.css", "price-chart.js"],
+  });
   const html = renderPriceChartHtml({
     ticks: capture.ticks,
     tickCounts: capture.tickCounts,
     startedAtMs: capture.startedAtMs,
     endedAtMs: capture.endedAtMs,
     exhaustive: capture.exhaustive ?? false,
+    assets,
   });
   await writeFile(htmlPath, html);
 }

@@ -2,79 +2,130 @@
 
 This is the design contract for the standalone HTML pages we drop into
 `alea/tmp/` from CLI commands like `latency:capture` and
-`training:distributions`. These pages are not product surfaces and are not
-shipped anywhere — they exist for one operator (or one agent) to read a
-particular analysis result quickly. The contract below exists so each new
-page slots into the same visual language without bikeshedding.
+`training:distributions`. These pages are not product surfaces and are
+not shipped anywhere — they exist for one operator (or one agent) to
+read a particular analysis result quickly. The contract below exists so
+each new page slots into the same visual language without bikeshedding.
 
 ## What "temp dashboard" means
 
-- A single self-contained `.html` file written to `alea/tmp/`.
-- All assets (CSS, JS, data) inlined or pulled from a public CDN. No build
-  step, no asset pipeline. The file should still render correctly if you
-  open it from disk a year from now.
-- One companion `.json` file written next to the HTML, with the raw payload
-  the page renders. The JSON is the source of truth; the HTML is a view.
+- A single `.html` file written to `alea/tmp/`, with a sibling
+  `<basename>.assets/` folder carrying the CSS+JS the page references.
+  The folder is a frozen-in-time snapshot of the assets at generation
+  time, so a year-old report still renders even after the source assets
+  have evolved.
+- One companion `.json` file written next to the HTML, with the raw
+  payload the page renders. The JSON is the source of truth; the HTML
+  is a view.
+- All assets ship from a public CDN (uPlot only) or from the local
+  sibling assets folder. No build step, no asset pipeline.
 - Auto-opened on macOS via `open <path>` unless `--no-open` is passed.
 - Written in the **Alea dark theme** — see "Visual identity" below. The
-  dark felt-green panels with antique-gold accents are the shared brand
-  identity across every Alea report.
+  dark felt-green panels with antique-gold accents are the shared
+  brand identity across every Alea report.
+
+## On-disk layout
+
+```
+tmp/
+  training-distributions_2026-05-06T17-58-31-143Z.html
+  training-distributions_2026-05-06T17-58-31-143Z.json
+  training-distributions_2026-05-06T17-58-31-143Z.assets/
+    alea.css                      ← shared design system
+    training-distributions.css    ← page-specific layout
+    training-distributions.js     ← page-specific behavior
+```
+
+The HTML uses **relative** `<link>` and `<script>` hrefs into the
+sibling assets folder, so the file is portable: drag the `.html` and
+its `.assets/` folder anywhere together and it still renders. Different
+builds get different assets folders, so the past is never invalidated
+when we change a CSS rule.
 
 ## Stack
 
-- **Alea design system**:
-  [`src/lib/ui/aleaDesignSystem.ts`](../src/lib/ui/aleaDesignSystem.ts).
-  Inline `aleaDesignSystemHead()` in `<head>` to pull in fonts and the
-  shared `<style>` block (tokens, base layout, cards, tabs, tables,
-  tooltip, legend, section rule). Inline `aleaBrandMark()` in the header
-  for the dice + `Alea` wordmark. Read `aleaChartTokens` for axis/grid/
-  reference-line colors so uPlot configs stay in lockstep with the
-  page palette.
-- **uPlot 1.6**: charting. Same version pinned across pages.
+- **Alea design system**: source CSS lives in
+  [`src/assets/web/alea.css`](../src/assets/web/alea.css). Tokens, base
+  layout, cards, tabs, tables, tooltip, legend, section rule, top-nav,
+  metric/badge/bar/mono utilities. Every page links it. The
+  TypeScript-side helper module
+  [`src/lib/ui/aleaDesignSystem.ts`](../src/lib/ui/aleaDesignSystem.ts)
+  exposes:
+  - `aleaDesignSystemHead({ stylesheets })` — emits the font preconnect
+    and `<link>` tags for the page's stylesheet bundle.
+  - `aleaBrandMark()` — dice + `Alea` wordmark for the header.
+  - `aleaChartTokens` — axis/grid/reference-line colors uPlot reads, so
+    chart chrome stays in lockstep with the page palette.
+- **`copyDashboardAssets`**:
+  [`src/lib/ui/copyDashboardAssets.ts`](../src/lib/ui/copyDashboardAssets.ts).
+  Each `write*Artifacts` calls this with the page's asset filenames. It
+  copies `alea.css` plus the page assets into the sibling
+  `<basename>.assets/` folder and returns relative hrefs the renderer
+  pipes into `aleaDesignSystemHead` and `<script src=...>`.
+- **uPlot 1.6**: charting. Same version pinned across pages. Loaded
+  from a public CDN.
 - **No JS framework**. Plain DOM, plain `<script>` tags, plain event
-  listeners. If a page needs more than a few hundred lines of JS, that's a
-  signal it should not be a temp dashboard.
-- **No CSS preprocessor, no build step**. The shared CSS is a string
-  exported from the design-system module; page-specific layout goes in an
-  inline `<style>` block right after `aleaDesignSystemHead()`.
+  listeners.
+- **No CSS preprocessor**. The shared sheet is plain CSS authored as a
+  file. Page CSS is plain CSS authored as a file.
+
+## Authoring a new dashboard page
+
+1. Add `src/assets/web/<page>.css` for page-specific layout.
+2. Add `src/assets/web/<page>.js` for page-specific behavior (optional;
+   skip if the page is server-rendered with no interactivity).
+3. Author the renderer as a pure function `(payload, assets) → string`.
+   Use `aleaDesignSystemHead({ stylesheets: assets.stylesheets })` in
+   `<head>`. End the body with the page's data payload as
+   `<script type="application/json" id="<page>-payload">…</script>`,
+   then emit a `<script src>` tag for each entry in `assets.scripts`.
+4. The `write*Artifacts` wrapper calls `copyDashboardAssets({ htmlPath,
+   pageAssets: ["<page>.css", "<page>.js"] })`, then passes the
+   returned hrefs into the renderer.
+5. The page-side JS reads bootstrap data from
+   `document.getElementById("<page>-payload").textContent`. Don't
+   string-interpolate JS values into the inline script — keep the JS
+   purely static and let the JSON tag carry the dynamic data.
 
 ## Visual identity
 
-The look is "modern analytics dashboard + Monte Carlo casino table." Dark
-felt-green panels, thin antique-gold rules, ivory text, classical serif
-for titles and numerics, Inter for everything else. The theme should come
-from restraint — gold is an accent for borders, dividers, active states,
-headings, and aggregate-line emphasis, not a fill color for everything.
+The look is "modern analytics dashboard + Monte Carlo casino table."
+Dark felt-green panels, thin antique-gold rules, ivory text, classical
+serif for titles and numerics, Inter for everything else. The theme
+should come from restraint — gold is an accent for borders, dividers,
+active states, headings, and aggregate-line emphasis, not a fill color
+for everything.
 
-Reusable components (defined in the design system, no per-page styling
-needed):
+Reusable components and utilities live in `alea.css`. Reach for these
+before authoring page-local CSS:
 
-- `.alea-shell` / `.alea-header` / `.alea-main` — page scaffolding.
-- `.alea-brand-row` + `aleaBrandMark()` — dice + `Alea` wordmark in gold.
-- `.alea-title` (Cormorant Garamond) + `.alea-subtitle` (muted, separator
-  via `<span class="sep">·</span>`).
-- `.alea-card` — felt-green panel with subtle radial highlights and a
-  drop shadow. Add `with-corners` for the CSS-only L-bracket flourishes.
-- `.alea-tabs` + `.alea-tab` (with `.active`) — ledger-plaque tab strip,
-  gold underline on active.
-- `.alea-table-wrap` + `.alea-table` — ledger-feel table, gold uppercase
-  headers, hairline gold row borders, hover row highlight.
-- `.alea-tooltip` (with `.alea-tooltip-head` and `.alea-tooltip-row`) —
-  dark panel with antique-gold border.
-- `.alea-legend` + `.alea-legend-item` + `.alea-legend-swatch` (with
-  `dashed` modifier for aggregate lines).
-- `.alea-section-rule` — section heading in gold uppercase with a
-  trailing gradient rule.
-
-## Layout
-
-- Full-viewport: wrap the page in `.alea-shell` so it fills the viewport
-  with a flex column. The design system handles `body` margins/typography.
-- Top `.alea-header`: brand row, then a serif `.alea-title` (~28px), then
-  a muted `.alea-subtitle` with the data series + generation timestamp.
-  A subtle gold gradient hairline runs under the header automatically.
-- `.alea-main` fills the remaining viewport with the page's primary
-  content (cards, charts, tables).
+- **Scaffolding**: `.alea-shell`, `.alea-header` (with auto gold
+  hairline rule), `.alea-main`, `.alea-brand-row`, `.alea-title`
+  (Cormorant Garamond ~28px), `.alea-subtitle` (muted, separator via
+  `<span class="sep">·</span>`).
+- **Top-level page nav**: `.alea-topnav`, `.alea-topnav-link` (with
+  `.active` and `.disabled` modifiers), `.alea-topnav-soon` for
+  placeholder slots.
+- **Cards**: `.alea-card` with optional `.with-corners` for the
+  CSS-only L-bracket flourishes. `.alea-card-header`,
+  `.alea-card-title`, `.alea-card-meta`.
+- **Tabs**: `.alea-tabs` + `.alea-tab` (with `.active`).
+- **Tables**: `.alea-table-wrap` + `.alea-table` (gold uppercase
+  headers, hairline gold row borders, hover row highlight).
+- **Tooltips**: `.alea-tooltip` (with `.visible`), `.alea-tooltip-head`,
+  `.alea-tooltip-row` (`.name` + `.value`).
+- **Legend**: `.alea-legend`, `.alea-legend-item` (with `.muted`),
+  `.alea-legend-swatch` (with `.dashed` modifier for aggregate lines).
+- **Section rule**: `.alea-section-rule` for in-card section headings
+  in gold uppercase with a trailing gradient rule.
+- **Metric grid**: `.alea-summary-grid` (default 3 cols, add `.cols-4`
+  for four), `.alea-metric`, `.alea-metric-label`, `.alea-metric-value`
+  (with `.positive` / `.negative` tone variants), `.alea-metric-sub`.
+- **Bar (proportion indicator)**: `.alea-bar-track`, `.alea-bar-fill`.
+- **Badge**: `.alea-badge` with `.ok`, `.warn`, `.bad` / `.diff`,
+  `.muted` / `.miss` variants.
+- **Utilities**: `.alea-mono`, `.alea-num-positive`, `.alea-num-negative`,
+  `.alea-nowrap`, `.alea-muted`.
 
 ## Brand colors
 
@@ -112,25 +163,41 @@ dashboards feel like the same product.
 
 1. CLI command calls into `src/lib/<domain>/`.
 2. The domain layer returns a structured payload (a typed object).
-3. The CLI writes the payload to JSON and hands the same payload to the
-   renderer to produce HTML.
-4. Both paths are printed to stdout. The HTML is auto-opened on macOS.
+3. The CLI hands the payload to `write<Page>Artifacts`, which:
+   a. Calls `copyDashboardAssets` to lay down the sibling `.assets/`
+      folder.
+   b. Renders the HTML via `render<Page>Html({ payload, assets })`.
+   c. Writes the HTML and JSON sidecar.
+4. The HTML is auto-opened on macOS.
 
-The renderer is a pure function: `payload → html string`. It does not touch
-the filesystem, the database, or the network. This makes the renderer
-trivially testable and lets a `*:chart` companion command re-render an
-older JSON without re-running the analysis.
+The renderer is a pure function: `(payload, assets) → html string`. It
+does not touch the filesystem, the database, or the network. This
+makes the renderer trivially testable and lets a `*:chart` companion
+command re-render an older JSON without re-running the analysis. The
+asset-copy is the only side effect; it lives in the `write*Artifacts`
+wrapper, not in the renderer.
+
+## Deploy
+
+Some dashboards are also pushed to Cloudflare Workers (the training
+dashboard goes to `https://alea.nickcherryjiggz.workers.dev` via
+`bunx wrangler deploy`). The deploy step copies the report HTML to
+`tmp/web/index.html` plus its sibling `.assets/` folder, so the
+relative hrefs still resolve at the worker. See
+[`deployTrainingDashboard.ts`](../src/lib/training/deployTrainingDashboard.ts).
 
 ## File-naming convention
 
-`tmp/<command>_<UTC-iso>.html` plus `tmp/<command>_<UTC-iso>.json`. The
-prefix matches the CLI verb (`latency_*`, `training-distributions_*`) so a
-`ls tmp/` listing groups runs by analysis. The timestamp uses the standard
+`tmp/<command>_<UTC-iso>.html` plus `tmp/<command>_<UTC-iso>.json` plus
+`tmp/<command>_<UTC-iso>.assets/`. The prefix matches the CLI verb
+(`latency_*`, `training-distributions_*`) so a `ls tmp/` listing
+groups runs by analysis. The timestamp uses the standard
 `Date#toISOString().replace(/[:.]/g, "-")` form so it sorts lexically.
 
 ## When something doesn't fit
 
-If a page needs functionality that doesn't fit cleanly into this contract
-(a real build step, a JS framework, a backend, a light-mode toggle, multi-
-file assets), it has outgrown "temp dashboard" — promote it to a real
-product surface and document it under its own doc.
+If a page needs functionality that doesn't fit cleanly into this
+contract (a real build step, a JS framework, a backend, a light-mode
+toggle, more than a handful of asset files), it has outgrown "temp
+dashboard" — promote it to a real product surface and document it
+under its own doc.

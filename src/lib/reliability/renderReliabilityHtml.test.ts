@@ -14,6 +14,11 @@ import { describe, expect, it } from "bun:test";
 const startMs = 1_777_902_600_000;
 const endMs = startMs + 300_000;
 
+const emptyAssets = {
+  stylesheets: [] as readonly string[],
+  scripts: [] as readonly string[],
+} as const;
+
 describe("renderReliabilityHtml", () => {
   it("renders the shared Alea shell and mismatch rows", () => {
     const completed = finalizeReliabilityWindow({
@@ -22,10 +27,9 @@ describe("renderReliabilityHtml", () => {
       graceMs: 10_000,
     });
     const payload = payloadFixture({ completedWindows: [completed] });
-    const html = renderReliabilityHtml({ payload });
+    const html = renderReliabilityHtml({ payload, assets: emptyAssets });
 
     expect(html).toContain("Directional Agreement");
-    expect(html).toContain("--alea-bg");
     expect(html).toContain("coinbase-spot");
     expect(html).toContain("DIFF");
     expect(html).toContain("ledger-row diff");
@@ -45,7 +49,7 @@ describe("renderReliabilityHtml", () => {
       graceMs: 10_000,
     });
     const payload = payloadFixture({ completedWindows: [completed] });
-    const html = renderReliabilityHtml({ payload });
+    const html = renderReliabilityHtml({ payload, assets: emptyAssets });
 
     expect(html).not.toContain("Near-zero cutoff");
     expect(html).toContain("near-zero");

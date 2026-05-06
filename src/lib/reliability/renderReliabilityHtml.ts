@@ -14,8 +14,13 @@ import {
 
 export function renderReliabilityHtml({
   payload,
+  assets,
 }: {
   readonly payload: ReliabilityCapturePayload;
+  readonly assets: {
+    readonly stylesheets: readonly string[];
+    readonly scripts: readonly string[];
+  };
 }): string {
   const subtitle = [
     `${payload.assets.map((asset) => asset.toUpperCase()).join(", ")}`,
@@ -32,130 +37,7 @@ export function renderReliabilityHtml({
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Alea · Directional Agreement</title>
-  ${aleaDesignSystemHead()}
-  <style>
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .metric {
-      border: 1px solid var(--alea-border-muted);
-      border-radius: 10px;
-      padding: 16px;
-      background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
-    }
-    .metric-label {
-      margin: 0 0 8px;
-      color: var(--alea-text-muted);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    .metric-value {
-      margin: 0;
-      font-family: var(--alea-font-display);
-      font-size: 30px;
-      line-height: 1;
-      color: var(--alea-text);
-      font-variant-numeric: tabular-nums;
-    }
-    .bar-track {
-      width: 100%;
-      height: 7px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(215, 170, 69, 0.1);
-      border: 1px solid var(--alea-border-faint);
-    }
-    .bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--alea-green), var(--alea-gold));
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 54px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      border: 1px solid var(--alea-border-muted);
-    }
-    .badge.ok { color: var(--alea-green); border-color: rgba(70, 195, 123, 0.45); background: rgba(70, 195, 123, 0.08); }
-    .badge.diff { color: var(--alea-red); border-color: rgba(216, 90, 79, 0.5); background: rgba(216, 90, 79, 0.09); }
-    .badge.miss { color: var(--alea-text-muted); }
-    .ledger-row.diff td,
-    .ledger-row.diff th {
-      background: rgba(216, 90, 79, 0.055);
-    }
-    .ledger-price-cell {
-      display: grid;
-      grid-template-columns: 36px 46px minmax(74px, 1fr);
-      align-items: baseline;
-      column-gap: 8px;
-      min-width: 164px;
-      text-align: left;
-    }
-    .ledger-price-cell.baseline {
-      grid-template-columns: 46px minmax(74px, 1fr) auto;
-    }
-    .ledger-status {
-      min-width: 0;
-      width: 36px;
-      padding: 2px 5px;
-      font-size: 9px;
-      line-height: 1;
-      letter-spacing: 0.08em;
-    }
-    .ledger-outcome {
-      min-width: 46px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--alea-text);
-    }
-    .ledger-delta {
-      justify-self: end;
-      white-space: nowrap;
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-    }
-    .near-zero-chip {
-      justify-self: start;
-      white-space: nowrap;
-      border: 1px solid rgba(215, 170, 69, 0.32);
-      border-radius: 999px;
-      padding: 2px 6px;
-      color: var(--alea-text-muted);
-      background: rgba(215, 170, 69, 0.05);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .source-name {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .source-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-    .mono { font-family: var(--alea-font-mono); }
-    @media (max-width: 980px) {
-      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 640px) {
-      .summary-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
 </head>
 <body>
   <div class="alea-shell">
@@ -165,7 +47,7 @@ export function renderReliabilityHtml({
       <p class="alea-subtitle">${subtitle}</p>
     </header>
     <main class="alea-main">
-      <section class="summary-grid">
+      <section class="alea-summary-grid">
         ${renderMetric({
           label: "Comparable windows",
           value: payload.summary.sources
@@ -273,6 +155,7 @@ export function renderReliabilityHtml({
       </section>
     </main>
   </div>
+  ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
 }
@@ -284,7 +167,7 @@ function renderMetric({
   readonly label: string;
   readonly value: string;
 }): string {
-  return `<div class="metric"><p class="metric-label">${escapeHtml(label)}</p><p class="metric-value">${escapeHtml(value)}</p></div>`;
+  return `<div class="alea-metric"><p class="alea-metric-label">${escapeHtml(label)}</p><p class="alea-metric-value">${escapeHtml(value)}</p></div>`;
 }
 
 function renderSourceSummaryRow(
@@ -319,7 +202,7 @@ function renderHealthRow(
 ): string {
   return `<tr>
     <th>${sourceLabel({ source: item.source })}</th>
-    <td>${item.connected ? '<span class="badge ok">open</span>' : '<span class="badge miss">closed</span>'}</td>
+    <td>${item.connected ? '<span class="alea-badge ok">open</span>' : '<span class="alea-badge miss">closed</span>'}</td>
     <td>${item.ticks.toLocaleString()}</td>
     <td>${item.connectCount.toLocaleString()}</td>
     <td>${item.disconnectCount.toLocaleString()}</td>
@@ -344,7 +227,7 @@ function renderLedgerRow({
     Math.abs(baseline.deltaBp) <= nearZeroThresholdBp &&
     baseline.status === "complete";
   return `<tr class="ledger-row${hasDiff ? " diff" : ""}${nearZero ? " near-zero" : ""}">
-    <th><span class="mono">${formatTime({ ms: window.windowStartMs })}</span></th>
+    <th><span class="alea-mono">${formatTime({ ms: window.windowStartMs })}</span></th>
     <td>${escapeHtml(window.asset.toUpperCase())}</td>
     <td>${renderBaselineCell({
       cell: baseline,
@@ -370,9 +253,9 @@ function renderBaselineCell({
   readonly nearZeroThresholdBp: number;
 }): string {
   if (cell.status !== "complete") {
-    return `<span class="badge miss ledger-status" title="${escapeHtml(cell.status)}">${escapeHtml(statusLabel({ status: cell.status }))}</span>`;
+    return `<span class="alea-badge miss ledger-status" title="${escapeHtml(cell.status)}">${escapeHtml(statusLabel({ status: cell.status }))}</span>`;
   }
-  return `<div class="ledger-price-cell baseline"><span class="ledger-outcome">${renderOutcome({ outcome: cell.outcome })}</span><span class="mono ledger-delta">${formatDelta({ cell })}</span>${nearZero ? `<span class="near-zero-chip" title="Polymarket Chainlink moved no more than ${nearZeroThresholdBp} bp">near 0</span>` : ""}</div>`;
+  return `<div class="ledger-price-cell baseline"><span class="ledger-outcome">${renderOutcome({ outcome: cell.outcome })}</span><span class="alea-mono ledger-delta">${formatDelta({ cell })}</span>${nearZero ? `<span class="near-zero-chip" title="Polymarket Chainlink moved no more than ${nearZeroThresholdBp} bp">near 0</span>` : ""}</div>`;
 }
 
 function renderComparableCell({
@@ -382,11 +265,11 @@ function renderComparableCell({
 }): string {
   const badge =
     cell.agreesWithPolymarket === true
-      ? '<span class="badge ok ledger-status">OK</span>'
+      ? '<span class="alea-badge ok ledger-status">OK</span>'
       : cell.agreesWithPolymarket === false
-        ? '<span class="badge diff ledger-status">DIFF</span>'
-        : `<span class="badge miss ledger-status" title="${escapeHtml(cell.status)}">${escapeHtml(statusLabel({ status: cell.status }))}</span>`;
-  return `<div class="ledger-price-cell">${badge}<span class="ledger-outcome">${renderOutcome({ outcome: cell.outcome })}</span><span class="mono ledger-delta">${formatDelta({ cell })}</span></div>`;
+        ? '<span class="alea-badge diff ledger-status">DIFF</span>'
+        : `<span class="alea-badge miss ledger-status" title="${escapeHtml(cell.status)}">${escapeHtml(statusLabel({ status: cell.status }))}</span>`;
+  return `<div class="ledger-price-cell">${badge}<span class="ledger-outcome">${renderOutcome({ outcome: cell.outcome })}</span><span class="alea-mono ledger-delta">${formatDelta({ cell })}</span></div>`;
 }
 
 function statusLabel({
@@ -416,7 +299,7 @@ function renderAgreementBar({
   readonly rate: number | null;
 }): string {
   const pct = rate === null ? 0 : Math.max(0, Math.min(100, rate * 100));
-  return `<div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(2)}%"></div></div><span class="mono">${formatPercent({ value: rate })}</span>`;
+  return `<div class="alea-bar-track"><div class="alea-bar-fill" style="width:${pct.toFixed(2)}%"></div></div><span class="alea-mono">${formatPercent({ value: rate })}</span>`;
 }
 
 function weightedAgreementRate({

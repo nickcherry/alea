@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { resolve as resolvePath } from "node:path";
+import { copyFile, cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { basename, resolve as resolvePath } from "node:path";
+
+import { assetsDirFor } from "@alea/lib/ui/copyDashboardAssets";
 
 /**
  * Deploys a freshly-rendered dashboard to the `alea` Cloudflare Worker
@@ -44,6 +46,26 @@ export async function deployTrainingDashboard({
 }): Promise<{ readonly url: string }> {
   await mkdir(webDir, { recursive: true });
   await copyFile(htmlPath, resolvePath(webDir, "index.html"));
+
+  // Mirror the build's sibling .assets/ folder into the web dir under
+  // the same name, so the relative <link>/<script> hrefs that the HTML
+  // emits still resolve once the file lands at /index.html on
+  // workers.dev. The assets folder is the page's frozen-in-time CSS+JS
+  // copy — without it, the deployed page falls back to unstyled
+  // markup.
+  const assetsSrcDir = assetsDirFor(htmlPath);
+  const assetsDestDir = resolvePath(webDir, basename(assetsSrcDir));
+  try {
+    await cp(assetsSrcDir, assetsDestDir, { recursive: true, force: true });
+  } catch (err) {
+    // Older HTML built before the asset extraction may not have a
+    // sibling assets/ — log and continue, the page just won't be
+    // styled.
+    console.warn(
+      `Warning: failed to copy ${assetsSrcDir} → ${assetsDestDir}:`,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 
   // Echo a tiny meta-file alongside the HTML so anyone poking around the
   // deployed assets can tell which local artifact this came from. Not

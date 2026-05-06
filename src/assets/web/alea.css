@@ -1,0 +1,741 @@
+/*
+ * Alea shared design system. Tokens, base layout, and reusable components
+ * for every Alea HTML report. Each report copies this file (frozen-in-time)
+ * into its own `<page>_<ts>.assets/` folder at generation time and
+ * references it via a relative <link>.
+ *
+ * Vibe: dark, intelligent, probability-driven, Roman casino without the
+ * tackiness. Antique gold accents on deep felt-green panels, warm ivory
+ * text, classical serif for titles, Inter for everything else.
+ *
+ * Page-specific layout (asset panels, performance grids, etc.) lives in
+ * each page's own `<page>.css` next to this file. Generic primitives live
+ * here so all reports look uniform.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — near-black page, deep felt-green for panels. */
+  --alea-bg: #07090a;
+  --alea-bg-soft: #0a0d0c;
+  --alea-panel: #0f1610;
+  --alea-panel-2: #11180f;
+  --alea-panel-elevated: #15201a;
+
+  /* Text — ivory primary, taupe secondary. */
+  --alea-text: #f3ead2;
+  --alea-text-muted: #b8aa8a;
+  --alea-text-subtle: #7f745f;
+
+  /* Antique gold / bronze accents. */
+  --alea-gold: #d7aa45;
+  --alea-gold-soft: #a67c2d;
+  --alea-gold-muted: #6f5320;
+  --alea-bronze: #8a5f24;
+
+  /* Casino / Roman accents. */
+  --alea-felt: #102017;
+  --alea-burgundy: #6e211c;
+  --alea-marble: #e8dec4;
+
+  /* Series. Tuned slightly warmer/brighter than the spec to keep contrast
+     against the deep panel backgrounds. */
+  --alea-blue: #5b95ff;
+  --alea-orange: #ffa566;
+  --alea-green: #46c37b;
+  --alea-red: #d85a4f;
+
+  /* Borders + shadow. */
+  --alea-border: rgba(215, 170, 69, 0.32);
+  --alea-border-strong: rgba(215, 170, 69, 0.55);
+  --alea-border-muted: rgba(215, 170, 69, 0.16);
+  --alea-border-faint: rgba(215, 170, 69, 0.08);
+  --alea-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --alea-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.3);
+
+  /* Typography stacks. */
+  --alea-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --alea-font-display: "Cormorant Garamond", "EB Garamond", Georgia,
+    "Times New Roman", serif;
+  --alea-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--alea-bg);
+  color: var(--alea-text);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--alea-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(215, 170, 69, 0.07), transparent 38%),
+    radial-gradient(circle at 90% 0%, rgba(70, 195, 123, 0.04), transparent 35%),
+    var(--alea-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Shell + header                                                     */
+/* ------------------------------------------------------------------ */
+
+.alea-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.alea-header {
+  flex: 0 0 auto;
+  padding: 26px 36px 22px;
+  border-bottom: 1px solid var(--alea-border-muted);
+  background:
+    linear-gradient(180deg, rgba(215, 170, 69, 0.04), transparent 70%),
+    transparent;
+  position: relative;
+}
+
+/* Hairline gold rule sitting on top of the header border for a subtle
+   double-line ledger feel. */
+.alea-header::after {
+  content: "";
+  position: absolute;
+  left: 36px;
+  right: 36px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--alea-gold-muted) 16%,
+    var(--alea-gold) 50%,
+    var(--alea-gold-muted) 84%,
+    transparent 100%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.alea-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--alea-gold);
+}
+
+.alea-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--alea-gold);
+  flex: 0 0 auto;
+}
+
+.alea-mark svg { width: 100%; height: 100%; display: block; }
+
+.alea-wordmark {
+  font-family: var(--alea-font-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--alea-gold);
+  line-height: 1;
+}
+
+.alea-title {
+  margin: 0;
+  font-family: var(--alea-font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+  color: var(--alea-text);
+}
+
+.alea-subtitle {
+  margin: 8px 0 0;
+  color: var(--alea-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.alea-subtitle .sep {
+  color: var(--alea-gold-muted);
+  margin: 0 8px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main content                                                       */
+/* ------------------------------------------------------------------ */
+
+.alea-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 26px 36px 40px;
+  max-width: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards                                                              */
+/* ------------------------------------------------------------------ */
+
+.alea-card {
+  position: relative;
+  border: 1px solid var(--alea-border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(215, 170, 69, 0.07), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(70, 195, 123, 0.04), transparent 40%),
+    linear-gradient(180deg, var(--alea-panel), var(--alea-bg-soft));
+  box-shadow: var(--alea-shadow);
+  padding: 24px 26px;
+}
+
+/* Subtle CSS-only corner brackets — keeps the casino feel without leaning
+   on raster art or heavy ornamentation. */
+.alea-card.with-corners::before,
+.alea-card.with-corners::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.alea-card.with-corners::before {
+  top: 9px;
+  left: 9px;
+  border-top: 1px solid var(--alea-gold-soft);
+  border-left: 1px solid var(--alea-gold-soft);
+}
+.alea-card.with-corners::after {
+  right: 9px;
+  bottom: 9px;
+  border-right: 1px solid var(--alea-gold-soft);
+  border-bottom: 1px solid var(--alea-gold-soft);
+}
+
+.alea-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.alea-card-title {
+  margin: 0;
+  font-family: var(--alea-font-display);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--alea-text);
+}
+
+.alea-card-meta {
+  margin: 0;
+  color: var(--alea-text-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.alea-card-meta .sep {
+  color: var(--alea-gold-muted);
+  margin: 0 7px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Top-level page nav. Lives between the page header and the main    */
+/* content. Each entry maps to a future dashboard page; placeholders */
+/* are rendered dimmed with a "soon" tooltip until they exist as     */
+/* real routes.                                                       */
+/* ------------------------------------------------------------------ */
+
+.alea-topnav {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 36px;
+  background: rgba(7, 9, 10, 0.6);
+  border-bottom: 1px solid var(--alea-border-muted);
+  overflow-x: auto;
+}
+.alea-topnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-family: var(--alea-font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--alea-text-muted);
+  text-decoration: none;
+  transition: background 80ms ease, color 80ms ease;
+  white-space: nowrap;
+}
+.alea-topnav-link:hover {
+  color: var(--alea-text);
+  background: rgba(215, 170, 69, 0.06);
+}
+.alea-topnav-link.active {
+  color: var(--alea-gold);
+  background: rgba(215, 170, 69, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
+}
+.alea-topnav-link.disabled {
+  color: var(--alea-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.alea-topnav-link.disabled:hover {
+  background: transparent;
+  color: var(--alea-text-subtle);
+}
+.alea-topnav-soon {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--alea-text-subtle);
+}
+@media (max-width: 720px) {
+  .alea-topnav { padding: 6px 12px; }
+  .alea-topnav-link { padding: 6px 10px; font-size: 12px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tabs                                                               */
+/* ------------------------------------------------------------------ */
+
+.alea-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(16, 23, 15, 0.92),
+    rgba(8, 10, 8, 0.92)
+  );
+  overflow: hidden;
+  box-shadow: var(--alea-shadow-soft);
+}
+
+.alea-tab {
+  flex: 1 1 0;
+  min-width: 96px;
+  padding: 13px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--alea-text-subtle);
+  font-family: var(--alea-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  border-right: 1px solid var(--alea-border-muted);
+  position: relative;
+  transition: color 120ms ease, background-color 120ms ease;
+  outline: none;
+}
+
+.alea-tab:last-child { border-right: 0; }
+
+.alea-tab:hover,
+.alea-tab:focus-visible {
+  color: var(--alea-text);
+  background: rgba(215, 170, 69, 0.04);
+}
+
+.alea-tab:focus-visible {
+  outline: 1px solid var(--alea-border-strong);
+  outline-offset: -3px;
+}
+
+.alea-tab.active {
+  color: var(--alea-gold);
+  background: rgba(215, 170, 69, 0.06);
+  box-shadow: inset 0 -2px 0 0 var(--alea-gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tables (ledger feel)                                               */
+/* ------------------------------------------------------------------ */
+
+.alea-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
+}
+
+.alea-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.alea-table thead th {
+  font-family: var(--alea-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--alea-gold);
+  padding: 14px 14px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--alea-border);
+  background: rgba(215, 170, 69, 0.035);
+}
+
+.alea-table thead th:first-child {
+  text-align: left;
+}
+
+.alea-table tbody td {
+  padding: 13px 14px;
+  text-align: right;
+  color: var(--alea-text);
+  border-bottom: 1px solid var(--alea-border-faint);
+}
+
+.alea-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.alea-table tbody th {
+  padding: 13px 14px;
+  text-align: left;
+  font-family: var(--alea-font-sans);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--alea-text-muted);
+  border-bottom: 1px solid var(--alea-border-faint);
+}
+
+.alea-table tbody tr:hover td,
+.alea-table tbody tr:hover th {
+  background: rgba(215, 170, 69, 0.03);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tooltip                                                            */
+/* ------------------------------------------------------------------ */
+
+.alea-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--alea-panel-elevated), var(--alea-panel));
+  border: 1px solid var(--alea-border-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--alea-shadow);
+  font-family: var(--alea-font-sans);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--alea-text);
+  opacity: 0;
+  transition: opacity 70ms ease;
+  z-index: 10;
+  min-width: 200px;
+}
+
+.alea-tooltip.visible { opacity: 1; }
+
+.alea-tooltip .alea-tooltip-head {
+  font-weight: 600;
+  color: var(--alea-gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--alea-border-muted);
+}
+
+.alea-tooltip .alea-tooltip-row {
+  display: grid;
+  grid-template-columns: 14px auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.alea-tooltip .alea-tooltip-row .name {
+  color: var(--alea-text-muted);
+}
+
+.alea-tooltip .alea-tooltip-row .value {
+  text-align: right;
+  font-weight: 600;
+  color: var(--alea-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Legend                                                             */
+/* ------------------------------------------------------------------ */
+
+.alea-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  font-size: 12.5px;
+  color: var(--alea-text-muted);
+  user-select: none;
+}
+
+.alea-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  line-height: 1.3;
+  padding: 3px 0;
+  letter-spacing: 0.02em;
+  transition: color 120ms ease;
+}
+
+.alea-legend-item:hover { color: var(--alea-text); }
+.alea-legend-item.muted { opacity: 0.4; }
+
+.alea-legend-swatch {
+  width: 22px;
+  height: 2px;
+  border-radius: 1px;
+  flex: 0 0 auto;
+}
+
+.alea-legend-swatch.dashed {
+  background: repeating-linear-gradient(
+    90deg,
+    currentColor 0 5px,
+    transparent 5px 9px
+  ) !important;
+  height: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Summary metrics (used by reliability, trading-performance, ...)    */
+/* ------------------------------------------------------------------ */
+
+.alea-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.alea-summary-grid.cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.alea-metric {
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 10px;
+  padding: 16px;
+  background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
+  min-width: 0;
+}
+
+.alea-metric-label {
+  margin: 0 0 8px;
+  color: var(--alea-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.alea-metric-value {
+  margin: 0;
+  font-family: var(--alea-font-display);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--alea-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.alea-metric-sub {
+  margin: 6px 0 0;
+  color: var(--alea-text-muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.alea-metric-value.positive { color: var(--alea-green); }
+.alea-metric-value.negative { color: var(--alea-red); }
+
+/* Standalone color utilities for arbitrary numeric cells. */
+.alea-num-positive { color: var(--alea-green) !important; }
+.alea-num-negative { color: var(--alea-red) !important; }
+.alea-nowrap { white-space: nowrap; }
+.alea-muted { color: var(--alea-text-subtle); }
+
+/* ------------------------------------------------------------------ */
+/* Bar (proportion indicator)                                         */
+/* ------------------------------------------------------------------ */
+
+.alea-bar-track {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(215, 170, 69, 0.1);
+  border: 1px solid var(--alea-border-faint);
+}
+
+.alea-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--alea-green), var(--alea-gold));
+}
+
+/* ------------------------------------------------------------------ */
+/* Badge                                                              */
+/* ------------------------------------------------------------------ */
+
+.alea-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--alea-border-muted);
+  color: var(--alea-text-muted);
+}
+
+.alea-badge.ok {
+  color: var(--alea-green);
+  border-color: rgba(70, 195, 123, 0.45);
+  background: rgba(70, 195, 123, 0.08);
+}
+
+.alea-badge.warn {
+  color: var(--alea-orange);
+  border-color: rgba(255, 165, 102, 0.45);
+  background: rgba(255, 165, 102, 0.08);
+}
+
+.alea-badge.bad,
+.alea-badge.diff {
+  color: var(--alea-red);
+  border-color: rgba(216, 90, 79, 0.5);
+  background: rgba(216, 90, 79, 0.09);
+}
+
+.alea-badge.muted,
+.alea-badge.miss {
+  color: var(--alea-text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* uPlot integration                                                  */
+/* ------------------------------------------------------------------ */
+
+.uplot, .u-wrap { background: transparent; color: var(--alea-text-muted); }
+.u-legend { display: none !important; }
+
+/* uPlot draws axis text using its own canvas — these classes are for any
+   HTML overlays it places. */
+.u-axis { color: var(--alea-text-muted); }
+.u-cursor-x, .u-cursor-y { background: var(--alea-gold) !important; opacity: 0.35 !important; }
+
+/* ------------------------------------------------------------------ */
+/* Misc                                                               */
+/* ------------------------------------------------------------------ */
+
+.alea-mono { font-family: var(--alea-font-mono); }
+
+.alea-divider {
+  border: 0;
+  border-top: 1px solid var(--alea-border-muted);
+  margin: 0;
+}
+
+.alea-section-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 14px;
+}
+
+.alea-section-rule h2 {
+  margin: 0;
+  font-family: var(--alea-font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--alea-gold);
+}
+
+.alea-section-rule::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--alea-border-muted),
+    transparent 70%
+  );
+}
+
+.alea-error {
+  color: var(--alea-red);
+  background: rgba(216, 90, 79, 0.08);
+  border: 1px solid rgba(216, 90, 79, 0.4);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  font-family: var(--alea-font-mono);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .alea-summary-grid,
+  .alea-summary-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .alea-header { padding: 22px 20px 18px; }
+  .alea-header::after { left: 20px; right: 20px; }
+  .alea-main { padding: 18px 18px 28px; gap: 16px; }
+  .alea-card { padding: 18px; }
+  .alea-title { font-size: 22px; }
+  .alea-card-title { font-size: 17px; }
+  .alea-tab { padding: 11px 12px; font-size: 11.5px; letter-spacing: 0.14em; }
+}
+
+@media (max-width: 640px) {
+  .alea-summary-grid,
+  .alea-summary-grid.cols-4 { grid-template-columns: 1fr; }
+}

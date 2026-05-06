@@ -6,6 +6,7 @@ describe("renderTradingPerformanceHtml", () => {
   it("renders the Alea shell, PnL chart host, and trade ledger", () => {
     const html = renderTradingPerformanceHtml({
       payload: payloadFixture(),
+      assets: { stylesheets: [], scripts: [] },
     });
 
     expect(html).toContain("Polymarket Trading Performance");

@@ -12,8 +12,13 @@ import {
 
 export function renderDryRunReportHtml({
   payload,
+  assets,
 }: {
   readonly payload: DryRunReportPayload;
+  readonly assets: {
+    readonly stylesheets: readonly string[];
+    readonly scripts: readonly string[];
+  };
 }): string {
   const finalizedOrders = payload.orders.filter(isFinalized);
   const filledOrders = finalizedOrders.filter(isActuallyFilled);
@@ -33,148 +38,7 @@ export function renderDryRunReportHtml({
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Alea &middot; Dry Trading Report</title>
-  ${aleaDesignSystemHead()}
-  <style>
-    .context-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      border: 1px solid var(--alea-border-muted);
-      border-radius: 10px;
-      overflow: hidden;
-      background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
-    }
-    .context-item {
-      min-width: 0;
-      padding: 11px 13px;
-      border-right: 1px solid var(--alea-border-faint);
-      border-bottom: 1px solid var(--alea-border-faint);
-    }
-    .context-item:nth-child(4n) { border-right: 0; }
-    .context-label {
-      margin: 0 0 4px;
-      color: var(--alea-text-muted);
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-    .context-value {
-      margin: 0;
-      color: var(--alea-text);
-      font-size: 12.5px;
-      font-variant-numeric: tabular-nums;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .analysis-grid {
-      display: grid;
-      grid-template-columns: minmax(340px, 0.45fr) minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
-    }
-    .subsection-title {
-      margin: 0 0 9px;
-      color: var(--alea-text-muted);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    .dense-table {
-      font-size: 12.5px;
-    }
-    .dense-table thead th {
-      padding: 10px 11px 9px;
-      font-size: 10px;
-      letter-spacing: 0.13em;
-    }
-    .dense-table tbody th,
-    .dense-table tbody td {
-      padding: 9px 11px;
-    }
-    .dense-table .group-head {
-      text-align: center !important;
-      color: var(--alea-text-muted);
-      background: rgba(215, 170, 69, 0.055);
-      border-left: 1px solid var(--alea-border-faint);
-    }
-    .comparison-grid {
-      display: grid;
-      grid-template-columns: minmax(360px, 0.42fr) minmax(0, 1fr);
-      gap: 16px;
-      align-items: start;
-    }
-    .note-cell {
-      color: var(--alea-text-subtle) !important;
-      font-size: 12px;
-      max-width: 420px;
-    }
-    .table-note {
-      margin: 10px 0 0;
-      color: var(--alea-text-subtle);
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-    }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      padding: 2px 7px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      border: 1px solid var(--alea-border-muted);
-      white-space: nowrap;
-      color: var(--alea-text-muted);
-      background: rgba(215, 170, 69, 0.035);
-    }
-    .pill.win {
-      color: var(--alea-green);
-      border-color: rgba(70, 195, 123, 0.45);
-      background: rgba(70, 195, 123, 0.08);
-    }
-    .pill.loss {
-      color: var(--alea-red);
-      border-color: rgba(216, 90, 79, 0.5);
-      background: rgba(216, 90, 79, 0.09);
-    }
-    .pill.pending {
-      color: var(--alea-gold);
-      background: rgba(215, 170, 69, 0.07);
-    }
-    .num-positive { color: var(--alea-green) !important; }
-    .num-negative { color: var(--alea-red) !important; }
-    .mono {
-      font-family: var(--alea-font-mono);
-      font-variant-numeric: tabular-nums;
-    }
-    .nowrap { white-space: nowrap; }
-    .muted { color: var(--alea-text-subtle); }
-    .order-id {
-      max-width: 145px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .line-pair {
-      min-width: 82px;
-      color: var(--alea-text-muted);
-      line-height: 1.45;
-    }
-    @media (max-width: 1180px) {
-      .context-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .context-item:nth-child(2n) { border-right: 0; }
-      .analysis-grid,
-      .comparison-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 680px) {
-      .context-grid { grid-template-columns: 1fr; }
-      .context-item { border-right: 0; }
-    }
-  </style>
+  ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
 </head>
 <body>
   <div class="alea-shell">
@@ -202,6 +66,7 @@ export function renderDryRunReportHtml({
       ${renderParseErrors({ errors: payload.parseErrors })}
     </main>
   </div>
+  ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
 }
@@ -362,7 +227,7 @@ function renderActualFilledSection({
                   value: formatUsd({ value: summary.canonicalPnlUsd }),
                   valueClass: signedClass({
                     value: summary.canonicalPnlUsd,
-                    prefix: "num-",
+                    prefix: "alea-num-",
                   }),
                   note: "canonical queue-aware filled shares only",
                 })}
@@ -387,7 +252,7 @@ function renderActualFilledSection({
                   value: String(summary.officialProxyDisagreementCount),
                   valueClass:
                     summary.officialProxyDisagreementCount > 0
-                      ? "num-negative"
+                      ? "alea-num-negative"
                       : "",
                   note: "official Polymarket outcome vs Binance proxy",
                 })}
@@ -702,7 +567,7 @@ function scenarioRow({
       <th>${escapeHtml(label)}</th>
       <td>${escapeHtml(orders)}</td>
       <td>${escapeHtml(winRate)}</td>
-      <td class="${signedClass({ value: pnl, prefix: "num-" })}">${formatUsd({
+      <td class="${signedClass({ value: pnl, prefix: "alea-num-" })}">${formatUsd({
         value: pnl,
       })}</td>
     </tr>`;
@@ -724,7 +589,7 @@ function comparisonRow({
       <th>${escapeHtml(label)}</th>
       <td>${trades}</td>
       <td>${formatPercent({ value: winRate })}</td>
-      <td class="${signedClass({ value: pnl, prefix: "num-" })}">${formatUsd({
+      <td class="${signedClass({ value: pnl, prefix: "alea-num-" })}">${formatUsd({
         value: pnl,
       })}</td>
     </tr>`;
@@ -867,11 +732,11 @@ function renderAssetRow({
       <td>${asset.canonicalFilledCount}</td>
       <td>${formatPercent({ value: asset.canonicalFillRate })}</td>
       <td>${formatPercent({ value: asset.filledWinRate })}</td>
-      <td class="${signedClass({ value: asset.canonicalPnlUsd, prefix: "num-" })}">${formatUsd({ value: asset.canonicalPnlUsd })}</td>
+      <td class="${signedClass({ value: asset.canonicalPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: asset.canonicalPnlUsd })}</td>
       <td>${asset.unfilledWouldWinCount}/${asset.unfilledWouldLoseCount}</td>
-      <td class="${signedClass({ value: asset.unfilledCounterfactualPnlUsd, prefix: "num-" })}">${formatUsd({ value: asset.unfilledCounterfactualPnlUsd })}</td>
-      <td class="${signedClass({ value: asset.allOrdersFilledPnlUsd, prefix: "num-" })}">${formatUsd({ value: asset.allOrdersFilledPnlUsd })}</td>
-      <td class="${signedClass({ value: asset.fillSelectionDeltaUsd, prefix: "num-" })}">${formatUsd({ value: asset.fillSelectionDeltaUsd })}</td>
+      <td class="${signedClass({ value: asset.unfilledCounterfactualPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: asset.unfilledCounterfactualPnlUsd })}</td>
+      <td class="${signedClass({ value: asset.allOrdersFilledPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: asset.allOrdersFilledPnlUsd })}</td>
+      <td class="${signedClass({ value: asset.fillSelectionDeltaUsd, prefix: "alea-num-" })}">${formatUsd({ value: asset.fillSelectionDeltaUsd })}</td>
     </tr>`;
 }
 
@@ -887,10 +752,10 @@ function renderWindowRow({
       <td><span class="pill ${window.status === "pending" ? "pending" : ""}">${window.status}</span></td>
       <td>${window.orderCount}</td>
       <td>${window.canonicalFilledCount}</td>
-      <td class="${signedClass({ value: window.canonicalPnlUsd, prefix: "num-" })}">${formatUsd({ value: window.canonicalPnlUsd })}</td>
-      <td class="${signedClass({ value: window.touchPnlUsd, prefix: "num-" })}">${formatUsd({ value: window.touchPnlUsd })}</td>
-      <td class="${signedClass({ value: window.allOrdersFilledPnlUsd, prefix: "num-" })}">${formatUsd({ value: window.allOrdersFilledPnlUsd })}</td>
-      <td class="${signedClass({ value: selectionDelta, prefix: "num-" })}">${formatUsd({ value: selectionDelta })}</td>
+      <td class="${signedClass({ value: window.canonicalPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: window.canonicalPnlUsd })}</td>
+      <td class="${signedClass({ value: window.touchPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: window.touchPnlUsd })}</td>
+      <td class="${signedClass({ value: window.allOrdersFilledPnlUsd, prefix: "alea-num-" })}">${formatUsd({ value: window.allOrdersFilledPnlUsd })}</td>
+      <td class="${signedClass({ value: selectionDelta, prefix: "alea-num-" })}">${formatUsd({ value: selectionDelta })}</td>
       <td>${window.officialProxyDisagreementCount}</td>
     </tr>`;
 }
@@ -909,7 +774,7 @@ function renderFilledOrderRow({
       <td>${formatShares({ value: order.canonicalFilledShares })}/${formatShares({ value: order.sharesIfFilled })}</td>
       <td>${formatDuration({ ms: order.canonicalFillLatencyMs })}</td>
       <td>${outcomePill({ order })}</td>
-      <td class="${signedClass({ value: order.canonicalPnlUsd ?? 0, prefix: "num-" })}">${formatOptionalUsd({ value: order.canonicalPnlUsd })}</td>
+      <td class="${signedClass({ value: order.canonicalPnlUsd ?? 0, prefix: "alea-num-" })}">${formatOptionalUsd({ value: order.canonicalPnlUsd })}</td>
       <td>${modelCell({ order })}</td>
       <td>${lineEntryCell({ order })}</td>
     </tr>`;
@@ -929,16 +794,16 @@ function renderUnfilledOrderRow({
       <td>${order.queueAheadShares === null ? "--" : formatShares({ value: order.queueAheadShares })}</td>
       <td>${order.touchFilledAtMs === null ? "--" : formatDuration({ ms: order.touchFillLatencyMs })}</td>
       <td>${outcomePill({ order })}</td>
-      <td class="${signedClass({ value: order.allOrdersFilledPnlUsd ?? 0, prefix: "num-" })}">${formatOptionalUsd({ value: order.allOrdersFilledPnlUsd })}</td>
+      <td class="${signedClass({ value: order.allOrdersFilledPnlUsd ?? 0, prefix: "alea-num-" })}">${formatOptionalUsd({ value: order.allOrdersFilledPnlUsd })}</td>
       <td>${modelCell({ order })}</td>
       <td>${lineEntryCell({ order })}</td>
     </tr>`;
 }
 
 function orderTime({ order }: { readonly order: DryRunReportOrder }): string {
-  return `<div class="mono nowrap">${formatTime({
+  return `<div class="alea-mono alea-nowrap">${formatTime({
     ms: order.placedAtMs,
-  })}</div><div class="order-id mono">${escapeHtml(order.id)}</div>`;
+  })}</div><div class="order-id alea-mono">${escapeHtml(order.id)}</div>`;
 }
 
 function outcomePill({ order }: { readonly order: DryRunReportOrder }): string {
@@ -962,7 +827,7 @@ function modelCell({ order }: { readonly order: DryRunReportOrder }): string {
   return `p=${formatMaybeNumber({
     value: order.modelProbability,
     digits: 3,
-  })}<br><span class="muted">edge=${formatMaybeSigned({
+  })}<br><span class="alea-muted">edge=${formatMaybeSigned({
     value: order.edge,
   })}</span>`;
 }

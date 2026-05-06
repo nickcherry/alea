@@ -6,6 +6,7 @@ describe("renderDryRunReportHtml", () => {
   it("renders the Alea shell and dry-run execution sections", () => {
     const html = renderDryRunReportHtml({
       payload: payloadFixture(),
+      assets: { stylesheets: [], scripts: [] },
     });
 
     expect(html).toContain("Alea");

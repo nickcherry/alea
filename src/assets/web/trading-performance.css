@@ -1,0 +1,108 @@
+/*
+ * Page-specific layout for the Polymarket Trading Performance report:
+ * the cumulative-PnL chart frame and the per-trade ledger pills.
+ * Generic primitives (cards, tables, summary-grid, metric, mono,
+ * num-positive/negative, nowrap) come from alea.css.
+ */
+
+/* Trading-performance metric values are slightly smaller than the
+   shared default to keep the 4-column grid balanced on common laptop
+   widths. */
+.alea-metric-value { font-size: 29px; white-space: nowrap; }
+
+.chart-frame {
+  position: relative;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(215, 170, 69, 0.05), transparent 36%),
+    linear-gradient(180deg, rgba(15, 27, 18, 0.6), rgba(7, 9, 10, 0.4));
+  border: 1px solid var(--alea-border-muted);
+  padding: 12px 8px 6px;
+}
+.chart-host {
+  position: relative;
+  width: 100%;
+  height: 370px;
+  min-height: 370px;
+  max-height: 370px;
+}
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alea-text-subtle);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+}
+.source-line {
+  margin: 12px 0 0;
+  color: var(--alea-text-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trade-market {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 270px;
+  max-width: 460px;
+}
+.trade-question {
+  color: var(--alea-text);
+  font-size: 12.5px;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.trade-sub {
+  color: var(--alea-text-subtle);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.symbol-pill,
+.result-pill,
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--alea-border-muted);
+  white-space: nowrap;
+}
+.symbol-pill {
+  color: var(--alea-gold);
+  background: rgba(215, 170, 69, 0.06);
+}
+.result-pill.win {
+  color: var(--alea-green);
+  border-color: rgba(70, 195, 123, 0.45);
+  background: rgba(70, 195, 123, 0.08);
+}
+.result-pill.loss {
+  color: var(--alea-red);
+  border-color: rgba(216, 90, 79, 0.5);
+  background: rgba(216, 90, 79, 0.09);
+}
+.result-pill.flat,
+.result-pill.open,
+.role-pill {
+  color: var(--alea-text-muted);
+  background: rgba(215, 170, 69, 0.035);
+}
+
+@media (max-width: 680px) {
+  .alea-metric-value { font-size: 25px; }
+  .chart-host { height: 290px; min-height: 290px; max-height: 290px; }
+}
