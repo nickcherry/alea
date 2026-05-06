@@ -1,6 +1,8 @@
-import type { FiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import type { FiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
 import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
+import {
+  describeRegimeTrackers,
+  type RegimeTrackers,
+} from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import type { ClosedFiveMinuteBar } from "@alea/lib/livePrices/types";
 import type { Asset } from "@alea/types/assets";
@@ -26,7 +28,7 @@ export function createTrackerHydrationState(): TrackerHydrationState {
 }
 
 /**
- * Keeps live EMA/ATR trackers usable even when the price websocket misses
+ * Keeps live regime trackers usable even when the price websocket misses
  * a 5-minute kline-close frame. Book ticks can keep flowing while kline
  * closes are absent; without this REST fallback the decision path stays
  * silently gated because the trackers are not evaluated through the prior
@@ -37,8 +39,7 @@ export function ensureTrackersReadyForWindow({
   windowStartMs,
   nowMs,
   priceSource,
-  emas,
-  atrs,
+  trackers,
   lastClosedBars,
   state,
   signal,
@@ -48,8 +49,7 @@ export function ensureTrackersReadyForWindow({
   readonly windowStartMs: number;
   readonly nowMs: number;
   readonly priceSource: LivePriceSource;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly lastClosedBars?: Map<Asset, ClosedFiveMinuteBar>;
   readonly state: TrackerHydrationState;
   readonly signal: AbortSignal;
@@ -57,15 +57,11 @@ export function ensureTrackersReadyForWindow({
 }): void {
   const targetOpenTimeMs = windowStartMs - FIVE_MINUTES_MS;
   for (const asset of assets) {
-    const ema = emas.get(asset);
-    const atr = atrs.get(asset);
-    if (ema === undefined || atr === undefined) {
+    const bundle = trackers.get(asset);
+    if (bundle === undefined) {
       continue;
     }
-    if (
-      ema.lastBarOpenMs() === targetOpenTimeMs &&
-      atr.lastBarOpenMs() === targetOpenTimeMs
-    ) {
+    if (bundle.lastBarOpenMs() === targetOpenTimeMs) {
       continue;
     }
     const key = `${asset}:${targetOpenTimeMs}`;
@@ -89,14 +85,13 @@ export function ensureTrackersReadyForWindow({
           return;
         }
         lastClosedBars?.set(asset, bar);
-        const emaAccepted = ema.append(bar);
-        const atrAccepted = atr.append(bar);
-        if (emaAccepted || atrAccepted) {
+        const accepted = bundle.append(bar);
+        if (accepted) {
           state.nextAttemptAtMs.delete(key);
           emit({
             kind: "info",
             atMs: Date.now(),
-            message: `${asset.toUpperCase().padEnd(5)} REST hydrated 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ema50=${ema.currentValue()?.toFixed(2) ?? "warming"}, atr=${atr.currentValue()?.toFixed(2) ?? "warming"}`,
+            message: `${asset.toUpperCase().padEnd(5)} REST hydrated 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ${describeRegimeTrackers({ trackers: bundle })}`,
           });
         }
       })

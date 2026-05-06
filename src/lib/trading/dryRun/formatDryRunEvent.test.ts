@@ -38,7 +38,12 @@ describe("formatDryRunEvent", () => {
       atMs: Date.parse("2026-05-04T12:34:56.789Z"),
       decision: {
         kind: "trade",
-        samples: 250,
+        winningRegime: {
+          algoId: "vol_only_2",
+          regime: "low_vol",
+          probability: 0.72,
+          samples: 250,
+        },
         snapshot: {
           asset: "doge",
           windowStartMs: 1_777_867_200_000,
@@ -47,10 +52,12 @@ describe("formatDryRunEvent", () => {
           currentPrice: 0.183,
           distanceBp: 32,
           remaining: 3,
+          ema20: 0.18156,
           ema50: 0.18123,
-          regime: "up",
+          atr14: 0.00012,
+          atr50: 0.00010,
           currentSide: "up",
-          aligned: true,
+          regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
         },
         chosen: {
           side: "up",
@@ -70,7 +77,7 @@ describe("formatDryRunEvent", () => {
     };
 
     expect(stripAnsi(formatDryRunEvent({ event }))).toBe(
-      "12:34:56 DOGE  [rem=3m] line=0.18241 px=0.18300 32bp↑ ema=0.18123 aligned ourP=0.720 mkt(up=0.61 down=0.38) → TAKE UP @0.61 edge=+0.110",
+      "12:34:56 DOGE  [rem=3m] line=0.18241 px=0.18300 32bp↑ ema=0.18123 vol_only_2/low_vol ourP=0.720 mkt(up=0.61 down=0.38) → TAKE UP @0.61 edge=+0.110",
     );
   });
 
@@ -85,7 +92,7 @@ describe("formatDryRunEvent", () => {
               kind: "skip",
               reason: "warmup",
               snapshot: null,
-              samples: null,
+              winningRegime: null,
               up: null,
               down: null,
             },

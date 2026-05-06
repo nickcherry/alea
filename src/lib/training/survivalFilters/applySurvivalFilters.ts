@@ -360,8 +360,7 @@ function computeSummary({
   }
   const sweetSpot = computeSweetSpot({
     baseline,
-    whenTrue,
-    whenFalse,
+    halves: [whenTrue, whenFalse],
     snapshotsTotal,
   });
   return {

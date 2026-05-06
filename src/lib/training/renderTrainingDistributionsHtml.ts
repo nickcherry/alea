@@ -1,10 +1,12 @@
-import { LIVE_TRADING_FILTER } from "@alea/constants/liveTrading";
-import { MIN_ACTIONABLE_DISTANCE_BP } from "@alea/constants/trading";
 import {
-  SWEET_SPOT_INFO_GAIN_THRESHOLD,
-  SWEET_SPOT_MIN_SAMPLES,
-} from "@alea/lib/training/survivalFilters/computeSweetSpot";
+  LEADING_REGIME_MIN_LEAD_PP,
+  LIVE_TRADING_REGIME_ALGOS,
+  REGIME_CELL_MIN_SAMPLES,
+} from "@alea/constants/trading";
+import { MIN_ACTIONABLE_DISTANCE_BP } from "@alea/constants/trading";
+import type { RegimeAlgoResult } from "@alea/lib/training/regimeAlgos/resultTypes";
 import type {
+  AssetRegimeAlgos,
   AssetSizeDistribution,
   AssetSurvivalDistribution,
   AssetSurvivalFilters,
@@ -20,25 +22,20 @@ import {
 } from "@alea/lib/ui/aleaDesignSystem";
 
 /**
- * Filter id whose probability surface the live trader actually uses
- * (see `computeAssetProbabilities.ts`). The dashboard surfaces this
- * with a "LIVE" badge so the operator can tell at a glance which
- * section corresponds to the production model versus the comparison
- * filters. Sourced from the same `LIVE_TRADING_FILTER` constant the
- * trading layer reads, so the badge can never lie about which filter
- * is live.
+ * Regime-algo id whose per-regime probability surfaces the live trader
+ * actually uses (see `computeAssetProbabilities.ts`). The dashboard
+ * surfaces this with a "LIVE" badge so the operator can tell at a
+ * glance which sections correspond to production models. Sourced
+ * from the same `LIVE_TRADING_REGIME_ALGOS` list the trading layer
+ * reads, so the badges can never lie about which algos are live.
+ *
+ * The legacy filter sections are still rendered for diagnostic
+ * comparison; none of them carries the LIVE badge anymore.
  */
-const LIVE_TRADING_FILTER_ID = LIVE_TRADING_FILTER.id;
+const LIVE_TRADING_ALGO_IDS: ReadonlySet<string> = new Set(
+  LIVE_TRADING_REGIME_ALGOS.map((a) => a.id),
+);
 
-/**
- * Minimum snapshot count required for a `(remaining, distance)` survival
- * bucket to be considered trustworthy: rendered as a chart point with a
- * filled marker. Buckets below this floor are hidden as gaps. Tuned at
- * 300 — conservative enough given a few years of 1m candles (~100k+
- * snapshots per remaining-minutes bucket per asset) without hiding the
- * mid-tail data we actually want to read.
- */
-const SURVIVAL_MIN_SAMPLES = 2000;
 
 /**
  * Hard cap on the x-axis range for the survival chart, in basis points.
@@ -113,8 +110,74 @@ type DashboardAssetSlice = {
   readonly candleCount: number;
   readonly yearRange: string | null;
   readonly survival: SurvivalSlice | null;
+  readonly regimes: readonly RegimeAlgoSlice[];
   readonly filters: readonly FilterSlice[];
 };
+
+/**
+ * Per-algo data for one asset, server-rendered into a static HTML
+ * block (no per-tab JS reflow needed). The renderer stamps these as
+ * pre-built `<details>` strings into the asset panel's regime host on
+ * tab switch.
+ */
+type RegimeAlgoSlice = {
+  readonly id: string;
+  readonly displayName: string;
+  readonly description: string;
+  readonly params: Readonly<Record<string, number>>;
+  readonly snapshotsTotal: number;
+  readonly snapshotsClassified: number;
+  readonly snapshotsSkipped: number;
+  /**
+   * Best regime in this algo's average pp lead vs the unconditional
+   * baseline, sample-weighted across (remaining, distance) cells where
+   * both regime and baseline clear the sample floor. `null` when no
+   * regime has any qualifying cell.
+   */
+  readonly maxLeadPp: number | null;
+  /**
+   * Shared bp x-axis for the regime chart — every integer bp from 0 to
+   * `SURVIVAL_MAX_DISTANCE_BP - 1`. Both the baseline densified
+   * arrays and every regime's densified arrays index into this.
+   */
+  readonly distancesBp: readonly number[];
+  /**
+   * Densified baseline survival surface (unconditional, the same one
+   * the Baseline section renders). Repeated on every algo slice so the
+   * regime chart can overlay it without a cross-slice lookup.
+   */
+  readonly baseline: RegimeSurfaceArrays;
+  readonly buckets: readonly RegimeBucketSlice[];
+};
+
+type RegimeBucketSlice = {
+  readonly regime: string;
+  readonly windowShare: number;
+  readonly snapshotsTotal: number;
+  /**
+   * Average pp lead vs baseline for this regime. Sample-weighted by
+   * the regime's per-cell sample count, across (remaining, distance)
+   * cells where both regime and baseline clear the sample floor.
+   * Positive = regime sits above baseline on average; negative = below.
+   * `null` when no qualifying cells exist.
+   */
+  readonly avgLeadPp: number | null;
+  /**
+   * Densified per-bp win-rate arrays, one per remaining slot. Powers
+   * the regime chart — one line per regime overlaid on the baseline.
+   */
+  readonly surface: RegimeSurfaceArrays;
+};
+
+type RegimeSurfaceArrays = Readonly<
+  Record<
+    SurvivalRemainingMinutes,
+    {
+      readonly winRate: readonly (number | null)[];
+      readonly sampleCount: readonly number[];
+    }
+  >
+>;
 
 /**
  * Chart-ready data for one filter section. Three densified surfaces
@@ -198,7 +261,7 @@ type FilterSurfaceArrays = Readonly<
  * bucket we carry parallel arrays:
  *
  *   - `winRate[i]` ∈ [0, 100] or `null` when the bucket is empty/sparse
- *     (below `SURVIVAL_MIN_SAMPLES`). uPlot draws nulls as gaps.
+ *     (below `REGIME_CELL_MIN_SAMPLES`). uPlot draws nulls as gaps.
  *   - `sampleCount[i]` is the raw bucket size (always present, even when
  *     below the floor — used in tooltips so the operator can see why a
  *     point was hidden).
@@ -245,11 +308,16 @@ export function renderTrainingDistributionsHtml({
   for (const filterBundle of payload.survivalFilters) {
     filtersByAsset.set(filterBundle.asset, filterBundle);
   }
+  const regimesByAsset = new Map<string, AssetRegimeAlgos>();
+  for (const regimeBundle of payload.regimeAlgos) {
+    regimesByAsset.set(regimeBundle.asset, regimeBundle);
+  }
   const slices = payload.assets.map((asset) =>
     toDashboardSlice({
       asset,
       survival: survivalByAsset.get(asset.asset) ?? null,
       filters: filtersByAsset.get(asset.asset) ?? null,
+      regimes: regimesByAsset.get(asset.asset) ?? null,
     }),
   );
   const seriesLabel = `${payload.series.source}-${payload.series.product} ${payload.series.timeframe}`;
@@ -264,7 +332,7 @@ export function renderTrainingDistributionsHtml({
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Alea · Training · Point-of-No-Return</title>
+  <title>Alea · Hold-rate by distance, time, and regime</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js" charset="utf-8"></script>
   ${aleaDesignSystemHead()}
@@ -274,6 +342,385 @@ export function renderTrainingDistributionsHtml({
        per-series row label colors). Tokens, fonts, cards, tabs, generic
        table styling, and tooltip chrome all come from the design system. */
     .asset-panel { display: flex; flex-direction: column; gap: 18px; }
+
+    /* Top-level page nav. Lives between the page header and the main
+       content. Each entry maps to a future dashboard page; placeholders
+       are rendered dimmed with a "soon" tooltip until they exist as
+       real routes. */
+    .alea-topnav {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 36px;
+      background: rgba(7, 9, 10, 0.6);
+      border-bottom: 1px solid var(--alea-border-muted);
+      overflow-x: auto;
+    }
+    .alea-topnav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-family: var(--alea-font-sans);
+      font-size: 12.5px;
+      letter-spacing: 0.04em;
+      color: var(--alea-text-muted);
+      text-decoration: none;
+      transition: background 80ms ease, color 80ms ease;
+      white-space: nowrap;
+    }
+    .alea-topnav-link:hover {
+      color: var(--alea-text);
+      background: rgba(215, 170, 69, 0.06);
+    }
+    .alea-topnav-link.active {
+      color: var(--alea-gold);
+      background: rgba(215, 170, 69, 0.10);
+      box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
+    }
+    .alea-topnav-link.disabled {
+      color: var(--alea-text-subtle);
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+    .alea-topnav-link.disabled:hover {
+      background: transparent;
+      color: var(--alea-text-subtle);
+    }
+    .alea-topnav-soon {
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--alea-text-subtle);
+    }
+    @media (max-width: 720px) {
+      .alea-topnav { padding: 6px 12px; }
+      .alea-topnav-link { padding: 6px 10px; font-size: 12px; }
+    }
+
+    /* Regime sections: per-algo collapsibles with a head-to-head
+       per-(regime × remaining) win-rate table. Mirrors the filter-
+       section visual chrome so the two read as siblings. */
+    .regime-sections-host {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    details.regime-section {
+      border-radius: 10px;
+      background: rgba(15, 27, 18, 0.4);
+      border: 1px solid var(--alea-border-muted);
+      overflow: hidden;
+    }
+    details.regime-section[open] {
+      background: rgba(15, 27, 18, 0.6);
+    }
+    details.regime-section > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      column-gap: 14px;
+      align-items: center;
+    }
+    details.regime-section > summary::-webkit-details-marker { display: none; }
+    details.regime-section > summary:hover {
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .regime-summary-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--alea-text);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .regime-summary-title .algo-title-name { color: var(--alea-text); }
+    .regime-summary-title .algo-title-buckets {
+      color: var(--alea-text-subtle);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      margin-left: -4px;     /* tighten to the algo name */
+    }
+    /* LIVE badge — same visual language as the cross-asset summary
+       and filter-section badges: gold pill with dot. Defined in one
+       place so all three locations stay in sync. */
+    .regime-summary-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(215, 170, 69, 0.10);
+      border: 1px solid rgba(215, 170, 69, 0.45);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      color: var(--alea-gold);
+      font-family: var(--alea-font-sans);
+      vertical-align: middle;
+    }
+    .regime-summary-live::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--alea-gold);
+      box-shadow: 0 0 4px rgba(215, 170, 69, 0.6);
+    }
+    .regime-summary-headlines {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      color: var(--alea-text-subtle);
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .regime-summary-headlines .key { color: var(--alea-text-muted); margin-right: 4px; }
+    /* Chevron is icon-only (▾ collapsed / ▴ open). Both glyphs render
+       at identical width so toggling open/closed never shifts the
+       neighboring summary metrics horizontally. */
+    .regime-summary-chevron {
+      color: var(--alea-text-muted);
+      font-size: 13px;
+      width: 14px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .regime-section-body {
+      padding: 0 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .regime-section-body .regime-helper {
+      margin: 0;
+      color: var(--alea-text-muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .regime-section-body .regime-params {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 11.5px;
+      color: var(--alea-text-subtle);
+      font-variant-numeric: tabular-nums;
+    }
+    .regime-section-body .regime-params .param {
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--alea-border-faint);
+    }
+    .regime-section-body .regime-table-wrap {
+      overflow-x: auto;
+      width: 100%;
+    }
+    /* Algo-section headline pill — single "max lead" metric showing
+       the best regime's average pp lead over baseline. + = green,
+       − = red. Matches the .regime-summary-headlines cell layout. */
+    .regime-section .regime-summary-lead {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--alea-border-faint);
+      font-variant-numeric: tabular-nums;
+    }
+    .regime-section .regime-summary-lead .key {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--alea-text-subtle);
+    }
+    .regime-section .regime-summary-lead .val {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .regime-section .regime-summary-lead.lead-up .val { color: var(--alea-green); }
+    .regime-section .regime-summary-lead.lead-down .val { color: var(--alea-red); }
+    .regime-section .regime-summary-lead.lead-flat .val { color: var(--alea-text-muted); }
+    /* Per-regime stats beneath the chart: one row per regime, columns
+       aligned across rows so the eye can scan vertically. Outer is a
+       5-column grid; each .regime-stat is a CSS subgrid spanning the
+       full row, so column widths line up across regimes AND we can
+       hang a faint row separator on the row element itself. */
+    .regime-section-body .regime-stats-row {
+      display: grid;
+      grid-template-columns:
+        max-content           /* swatch */
+        max-content           /* regime name */
+        max-content           /* share % */
+        max-content           /* lead pp */
+        max-content;          /* live pill (or empty placeholder) */
+      column-gap: 14px;
+      justify-content: start;
+      padding: 4px 4px 0;
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .regime-section-body .regime-stat {
+      display: grid;
+      grid-template-columns: subgrid;
+      grid-column: 1 / -1;
+      align-items: center;
+      padding: 6px 0;
+    }
+    .regime-section-body .regime-stat + .regime-stat {
+      border-top: 1px solid var(--alea-border-faint);
+    }
+    .regime-section-body .regime-stat-name {
+      color: var(--alea-text);
+      font-weight: 500;
+      margin-left: -6px;            /* pull name closer to the swatch */
+    }
+    .regime-section-body .regime-stat-share {
+      color: var(--alea-text-subtle);
+      font-size: 11.5px;
+      justify-self: end;
+      min-width: 36px;
+    }
+    .regime-section-body .regime-stat-lead {
+      font-weight: 500;
+      justify-self: end;
+      min-width: 56px;
+    }
+    .regime-section-body .regime-stat-lead.lead-up { color: var(--alea-green); }
+    .regime-section-body .regime-stat-lead.lead-down { color: var(--alea-red); }
+    .regime-section-body .regime-stat-lead.lead-flat { color: var(--alea-text-muted); }
+    .regime-section-body .regime-stat-leading-slot { justify-self: start; min-width: 56px; }
+    /* Leading-regime pill: gold dot + "live" label, attached to the
+       per-regime stat row when this (algo, regime) makes it into the
+       live probability table. */
+    .regime-section-body .regime-stat-leading {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(215, 170, 69, 0.10);
+      border: 1px solid rgba(215, 170, 69, 0.45);
+      color: var(--alea-gold);
+      font-size: 9px;
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      font-family: var(--alea-font-sans);
+    }
+    .regime-section-body .regime-stat-leading::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--alea-gold);
+      box-shadow: 0 0 4px rgba(215, 170, 69, 0.6);
+    }
+    .regime-section-body table.regime-table {
+      width: 100%;
+      min-width: 540px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--alea-text);
+    }
+    .regime-section-body table.regime-table th,
+    .regime-section-body table.regime-table td {
+      padding: 7px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--alea-border-faint);
+      white-space: nowrap;
+    }
+    .regime-section-body table.regime-table th:first-child,
+    .regime-section-body table.regime-table td:first-child {
+      text-align: left;
+    }
+    .regime-section-body table.regime-table thead th {
+      color: var(--alea-text-subtle);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--alea-border-muted);
+    }
+    .regime-section-body table.regime-table tbody td.no-data {
+      color: var(--alea-text-subtle);
+    }
+    .regime-section-body table.regime-table tbody td .winrate {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .regime-section-body table.regime-table tbody td .samples {
+      color: var(--alea-text-subtle);
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .regime-section-body table.regime-table tbody tr.baseline-row {
+      color: var(--alea-text-subtle);
+      font-style: italic;
+    }
+    /* Inline color swatch next to each regime label so the legend
+       between the chart and table is implicit — same color in both
+       places. */
+    .regime-section-body .regime-swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    /* Tab row above each regime chart. Same shape as the legacy
+       filter tabs so the patterns line up across sections. */
+    .regime-section-body .regime-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .regime-section-body .regime-tab {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-family: var(--alea-font-sans);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--alea-text-subtle);
+      border: 1px solid var(--alea-border-faint);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .regime-section-body .regime-tab:hover {
+      color: var(--alea-text);
+      border-color: var(--alea-border-muted);
+    }
+    .regime-section-body .regime-tab.active {
+      background: rgba(70, 195, 123, 0.18);
+      color: var(--alea-text);
+      border-color: rgba(70, 195, 123, 0.55);
+    }
+    /* Per-chart host inside a regime section. Same height as the
+       baseline survival chart so all charts on the page have a
+       consistent visual rhythm. */
+    .regime-section-body .regime-chart-host {
+      width: 100%;
+      height: 340px;
+      min-height: 340px;
+      max-height: 340px;
+    }
 
     .chart-section { display: flex; flex-direction: column; gap: 14px; }
 
@@ -821,10 +1268,11 @@ export function renderTrainingDistributionsHtml({
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       padding-bottom: 8px;
       border-bottom: 1px solid var(--alea-border-faint);
       margin-bottom: 10px;
+      flex-wrap: nowrap;
     }
     .cross-asset-summary .ca-title {
       font-family: var(--alea-font-display);
@@ -832,12 +1280,18 @@ export function renderTrainingDistributionsHtml({
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--alea-gold);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .cross-asset-summary .ca-hint {
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: none;
       color: var(--alea-text-subtle);
+      max-width: 760px;
+      text-align: right;
+      line-height: 1.45;
+      flex-shrink: 1;
     }
     .cross-asset-summary table {
       width: 100%;
@@ -879,6 +1333,9 @@ export function renderTrainingDistributionsHtml({
       font-weight: 500;
       font-size: 13px;
     }
+    .cross-asset-summary .ca-cell-pop.ca-cell-up { color: var(--alea-green); }
+    .cross-asset-summary .ca-cell-pop.ca-cell-down { color: var(--alea-red); }
+    .cross-asset-summary .ca-cell-pop.ca-cell-flat { color: var(--alea-text-muted); }
     .cross-asset-summary .ca-cell-sweet {
       color: var(--alea-text);
       font-size: 11px;
@@ -890,6 +1347,23 @@ export function renderTrainingDistributionsHtml({
       display: flex;
       flex-direction: column;
       gap: 2px;
+    }
+    .cross-asset-summary .ca-row-algo {
+      color: var(--alea-text);
+      font-weight: 500;
+      font-size: 12.5px;
+    }
+    .cross-asset-summary .ca-row-buckets {
+      color: var(--alea-text-subtle);
+      font-size: 10.5px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      margin-left: 6px;
+    }
+    .cross-asset-summary .ca-row-regime {
+      color: var(--alea-text-subtle);
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
     }
     .cross-asset-summary .ca-live-tag {
       display: inline-flex;
@@ -1087,15 +1561,14 @@ export function renderTrainingDistributionsHtml({
   <div class="alea-shell">
     <header class="alea-header">
       <div class="alea-brand-row">${aleaBrandMark()}</div>
-      <h1 class="alea-title">Training · Point-of-No-Return</h1>
+      <h1 class="alea-title">Hold-rate by distance, time, and regime</h1>
       <p class="alea-subtitle">${escapeHtml(seriesLabel)}<span class="sep">·</span>generated ${escapeHtml(generatedAt)}</p>
       <div class="alea-config-strip" title="Constants in src/constants/trading.ts and computeSweetSpot.ts that drive scoring + sweet-spot detection. Changing any of these is a code change with reviewable diff.">
         <span class="config-item"><span class="config-key">min distance</span><span class="config-val">${MIN_ACTIONABLE_DISTANCE_BP} bp</span></span>
-        <span class="config-item"><span class="config-key">sample floor</span><span class="config-val">${SWEET_SPOT_MIN_SAMPLES.toLocaleString()}</span></span>
-        <span class="config-item"><span class="config-key">sweet-spot threshold</span><span class="config-val">${(SWEET_SPOT_INFO_GAIN_THRESHOLD * 100).toFixed(0)}%</span></span>
-        <span class="config-item"><span class="config-key">live filter</span><span class="config-val">${escapeHtml(LIVE_TRADING_FILTER.displayName)}</span></span>
+        <span class="config-item"><span class="config-key">sample floor</span><span class="config-val">${REGIME_CELL_MIN_SAMPLES.toLocaleString()}</span></span>
       </div>
     </header>
+    ${renderTopNav({ activeId: "training" })}
     <main class="alea-main">
       ${renderCrossAssetSummary({ slices })}
       <nav class="alea-tabs" role="tablist" id="tabs">
@@ -1116,7 +1589,7 @@ export function renderTrainingDistributionsHtml({
         <div class="alea-section-rule">
           <h2>Baseline</h2>
         </div>
-        <p class="survival-helper">Unconditional point-of-no-return surface: at every distance from the 5m start line and every minutes-remaining bucket, the historical win rate of the side currently leading. Filter overlays below split the same data by simple binary context filters and read deltas against this curve. Buckets with fewer than ${SURVIVAL_MIN_SAMPLES.toLocaleString()} snapshots are hidden.</p>
+        <p class="survival-helper">How often the leading side stayed ahead until window close.<br>By distance from the 5m start price and minutes remaining.<br>Regime sections below split this same data by market context.<br>Buckets under ${REGIME_CELL_MIN_SAMPLES.toLocaleString()} snapshots hidden.</p>
 
         <div class="survival-section" id="survival-section">
           <p class="alea-card-meta" id="survival-meta"></p>
@@ -1130,11 +1603,11 @@ export function renderTrainingDistributionsHtml({
         </div>
 
         <div class="alea-section-rule">
-          <h2>Filter Overlays</h2>
+          <h2>Regime Algos</h2>
         </div>
-        <p class="survival-helper">Each filter splits the same survival snapshots in two, so we can ask "does this slice of context tighten the point of no return?". The chart compares baseline vs filter-true vs filter-false at one remaining-time bucket.</p>
+        <p class="survival-helper">Each algo splits the data by market context — does it separate outcomes from the baseline?<br>Each section's chart overlays the regime curves on the baseline so you can see which lead and which lag.</p>
 
-        <div class="filter-sections-host" id="filter-sections-host"></div>
+        <div class="regime-sections-host" id="regime-sections-host"></div>
       </section>
     </main>
   </div>
@@ -1143,9 +1616,11 @@ export function renderTrainingDistributionsHtml({
     const chartTokens = ${JSON.stringify(aleaChartTokens)};
     const survivalRemainingOrder = ${JSON.stringify(SURVIVAL_REMAINING_ORDER)};
     const survivalRemainingColors = ${JSON.stringify(SURVIVAL_REMAINING_COLORS)};
-    const survivalMinSamples = ${SURVIVAL_MIN_SAMPLES};
+    const regimeCellMinSamples = ${REGIME_CELL_MIN_SAMPLES};
+    const minActionableDistanceBp = ${MIN_ACTIONABLE_DISTANCE_BP};
     const survivalXAxisPadBp = ${SURVIVAL_X_AXIS_PAD_BP};
-    const liveTradingFilterId = ${JSON.stringify(LIVE_TRADING_FILTER_ID)};
+    const liveTradingAlgoIds = ${JSON.stringify([...LIVE_TRADING_ALGO_IDS])};
+    const leadingRegimeMinLeadPp = ${LEADING_REGIME_MIN_LEAD_PP};
 
     // Auto-fit the y-axis to actual data range, clamped to [0, 100] for
     // the % charts. The hard-coded [0, 100] was wasting most of the
@@ -1213,10 +1688,10 @@ export function renderTrainingDistributionsHtml({
 
     // ----------------------------------------------------------------
     // Survival section: a second chart + table inside the same panel.
-    // The chart shows current-side win rate as a function of distance
+    // The chart shows current-side hold rate as a function of distance
     // from the 5m line, one series per remaining-minutes bucket. The
     // table inverts the question: how much distance does each remaining
-    // bucket need to historically reach a given win-rate target?
+    // bucket need to historically reach a given hold-rate target?
     // ----------------------------------------------------------------
 
     const formatBp = (v) => {
@@ -1381,7 +1856,7 @@ export function renderTrainingDistributionsHtml({
         return;
       }
       if (survivalMetaEl) {
-        survivalMetaEl.textContent = survival.windowCount.toLocaleString() + " 5m windows";
+        survivalMetaEl.textContent = "";
       }
       renderSurvivalChart(survival);
     }
@@ -1923,7 +2398,7 @@ export function renderTrainingDistributionsHtml({
       const openAttr = expanded ? ' open' : '';
       const chevronText = expanded ? 'collapse ▴' : 'expand ▾';
       const headlinesHtml = formatHeadlinePair(summary);
-      const liveBadgeHtml = filter.id === liveTradingFilterId
+      const liveBadgeHtml = liveTradingAlgoIds.indexOf(filter.id) >= 0
         ? '<span class="filter-summary-live" title="This is the filter the live trader currently uses (see computeAssetProbabilities.ts)">LIVE</span>'
         : '';
       const cellMetricsHtml = formatCellMetrics({
@@ -2082,6 +2557,380 @@ export function renderTrainingDistributionsHtml({
       });
     }
 
+    // ----------------------------------------------------------------
+    // Regime sections: one per algo per asset. Server-rendered as
+    // static HTML on tab switch — the per-(regime, remaining) win-rate
+    // table doesn't change interactively (no chart, no tab row), so
+    // there's nothing for the client to lazy-build.
+    // ----------------------------------------------------------------
+
+    const regimeSectionsHost = document.getElementById("regime-sections-host");
+
+    // Categorical palette for regime lines. 8 colors covers any algo we
+    // currently ship (max 6 regimes). Picked for distinguishability on
+    // the dark theme — one each from blue/amber/green/red families plus
+    // violet/teal/orange/grey for the more granular algos.
+    const REGIME_COLORS = [
+      "#5b95ff", "#46c37b", "#d7aa45", "#d75a4f",
+      "#a16eef", "#5fc8d8", "#f08a3c", "#9eaeb8",
+    ];
+    const REGIME_BASELINE_COLOR = "#cdd2c8";
+
+    // Per-(asset, algo, remaining) chart instance tracking so the
+    // ResizeObserver and tab clicks can update the right chart.
+    const regimeCharts = [];
+
+    function clearRegimeSections() {
+      for (const entry of regimeCharts) {
+        try { entry.chart.destroy(); } catch (e) { /* ignore */ }
+      }
+      regimeCharts.length = 0;
+      if (regimeSectionsHost) regimeSectionsHost.innerHTML = "";
+    }
+
+    function escapeHtmlClient(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Plain-English label for one regime id. Falls through to the raw
+    // id (snake_case prettified) for any regime not in the explicit
+    // map. Keep the map terse — operator scans the chart legend, not
+    // the explanation.
+    const REGIME_LABEL_MAP = {
+      low_vol: "Low vol",
+      mid_vol: "Mid vol",
+      high_vol: "High vol",
+      vol_q1_lowest: "Q1 (lowest vol)",
+      vol_q2: "Q2",
+      vol_q3: "Q3",
+      vol_q4_highest: "Q4 (highest vol)",
+      no_trend: "No trend",
+      with_trend: "With trend",
+      against_trend: "Against trend",
+      weak_trend: "Weak trend",
+      strong_trend: "Strong trend",
+      no_trend_low_vol: "No trend · low vol",
+      no_trend_high_vol: "No trend · high vol",
+      with_trend_low_vol: "With trend · low vol",
+      with_trend_high_vol: "With trend · high vol",
+      against_trend_low_vol: "Against trend · low vol",
+      against_trend_high_vol: "Against trend · high vol",
+      oversold: "Oversold (RSI ≤ 30)",
+      neutral: "Neutral RSI",
+      overbought: "Overbought (RSI ≥ 70)",
+      with_carry: "With carry (matches prev bar)",
+      against_carry: "Against carry (fights prev bar)",
+    };
+    function prettyRegime(id) {
+      if (id == null) return '';
+      const explicit = REGIME_LABEL_MAP[id];
+      if (explicit) return explicit;
+      return id.replace(/_/g, ' ');
+    }
+
+    // Map a win-rate % into a CSS background color. Centered at 50% =
+    // baseline-neutral; greener as we go higher, redder as we go lower.
+    // The amplitude is clamped so a 100% cell is bold green and a 0%
+    // cell is bold red, with a gentle linear ramp in between.
+    function winRateCellStyle(winRate) {
+      if (winRate == null || !Number.isFinite(winRate)) return '';
+      const t = Math.max(-1, Math.min(1, (winRate - 65) / 25));
+      // Below 65 → red; above 65 → green. 65% picked because the
+      // baseline curves on these assets cluster around 65–75% in the
+      // sweet-spot range, so this anchors the center on what the
+      // operator would consider "average."
+      const alpha = Math.min(0.42, Math.abs(t) * 0.42);
+      const r = t > 0 ? "70, 195, 123" : "216, 90, 79";
+      return 'background: rgba(' + r + ', ' + alpha.toFixed(3) + ');';
+    }
+
+    function renderRegimeSection(algo, expanded) {
+      const algoIsLiveSection = liveTradingAlgoIds.indexOf(algo.id) >= 0;
+      // Count regimes whose avgLeadPp clears the leading floor — i.e.
+      // the ones that make it into the live probability table for
+      // this algo. The LIVE pill shows the count so the operator
+      // sees at a glance how many of an algo's buckets are
+      // contributing to live trading.
+      const leadingCount = !algoIsLiveSection ? 0 : algo.buckets.reduce((acc, b) => {
+        const v = (b.avgLeadPp == null || !Number.isFinite(b.avgLeadPp)) ? null : b.avgLeadPp;
+        return v !== null && v >= leadingRegimeMinLeadPp ? acc + 1 : acc;
+      }, 0);
+      // Only show the LIVE pill if at least one regime from this algo
+      // actually feeds the live probability table. An algo whose
+      // inputs are available but whose regimes don't clear the
+      // leading-pp floor is technically eligible but contributes
+      // nothing — showing "0 LIVE" was confusing.
+      const liveBadge = algoIsLiveSection && leadingCount > 0
+        ? '<span class="regime-summary-live" title="' + leadingCount + ' regime' + (leadingCount === 1 ? '' : 's') + ' from this algo are in the live probability table.">' + leadingCount + ' LIVE</span>'
+        : '';
+      const bucketCount = algo.buckets.length;
+      const titleHtml =
+        '<span class="algo-title-name">' + escapeHtmlClient(algo.displayName) + '</span>' +
+        '<span class="algo-title-buckets">[' + bucketCount + ' bucket' + (bucketCount === 1 ? '' : 's') + ']</span>';
+      // Headline = max regime lead vs baseline. Single decision-aligned
+      // number: how much the best regime in this algo outpaces the
+      // unconditional model on average across (remaining, distance)
+      // cells. + = leads, - = lags.
+      const maxLead = (algo.maxLeadPp == null || !Number.isFinite(algo.maxLeadPp))
+        ? null
+        : algo.maxLeadPp;
+      const maxLeadStr = maxLead === null
+        ? '—'
+        : (maxLead >= 0 ? '+' : '') + maxLead.toFixed(1) + 'pp';
+      const maxLeadClass = maxLead === null
+        ? 'lead-flat'
+        : (maxLead > 0 ? 'lead-up' : 'lead-down');
+      const headlinesHtml =
+        '<span class="regime-summary-lead ' + maxLeadClass + '" title="Best regime in this algo, average pp lead over baseline across (remaining, distance) cells. + = the regime sits above baseline more often than not.">' +
+          '<span class="key">max lead</span>' +
+          '<span class="val">' + maxLeadStr + '</span>' +
+        '</span>';
+      const paramsHtml = Object.entries(algo.params || {})
+        .map(([k, v]) => '<span class="param">' + escapeHtmlClient(k) + '=' + v + '</span>')
+        .join('');
+
+      // Per-regime stat row under the chart: regime name + share + avg
+      // lead vs baseline. The chart shows the curves visually; this row
+      // quantifies what the eye sees.
+      const algoIsLive = liveTradingAlgoIds.indexOf(algo.id) >= 0;
+      const regimeStatsHtml = algo.buckets.map((b, idx) => {
+        const color = REGIME_COLORS[idx % REGIME_COLORS.length];
+        const lead = (b.avgLeadPp == null || !Number.isFinite(b.avgLeadPp)) ? null : b.avgLeadPp;
+        const leadStr = lead === null
+          ? '—'
+          : (lead >= 0 ? '+' : '') + lead.toFixed(1) + 'pp';
+        const leadCls = lead === null ? 'lead-flat' : (lead > 0 ? 'lead-up' : 'lead-down');
+        const sharePct = (b.windowShare * 100).toFixed(0) + '%';
+        // Leading-regime pill: shown when (a) the algo is in
+        // LIVE_TRADING_REGIME_ALGOS AND (b) this regime's avgLeadPp
+        // clears LEADING_REGIME_MIN_LEAD_PP. Means the live trader's
+        // probability table includes a surface for this (algo,
+        // regime) pair and decisions can fire on it.
+        const isLeading = algoIsLive && lead !== null && lead >= leadingRegimeMinLeadPp;
+        // Always render the live-pill column so the grid stays
+        // aligned even when this regime isn't leading. Empty span =
+        // empty cell.
+        const leadingPill = isLeading
+          ? '<span class="regime-stat-leading-slot"><span class="regime-stat-leading" title="In production: probability table includes a surface for this regime — live decisions can fire on it.">live</span></span>'
+          : '<span class="regime-stat-leading-slot"></span>';
+        return (
+          '<div class="regime-stat">' +
+            '<span class="regime-swatch" style="background:' + color + '"></span>' +
+            '<span class="regime-stat-name">' + escapeHtmlClient(prettyRegime(b.regime)) + '</span>' +
+            '<span class="regime-stat-share">' + sharePct + '</span>' +
+            '<span class="regime-stat-lead ' + leadCls + '">' + leadStr + '</span>' +
+            leadingPill +
+          '</div>'
+        );
+      }).join('');
+
+      // Tab row for switching the chart's remaining-minutes bucket.
+      // Default to 4m so every algo opens to the same column for
+      // consistent cross-algo scanning.
+      const defaultRemaining = 4;
+      const tabsHtml = survivalRemainingOrder.map((rem) =>
+        '<button type="button" class="regime-tab' +
+          (rem === defaultRemaining ? ' active' : '') +
+          '" data-algo-id="' + escapeHtmlClient(algo.id) +
+          '" data-remaining="' + rem + '">' + rem + 'm left</button>'
+      ).join('');
+
+      const openAttr = expanded ? ' open' : '';
+      const chevronGlyph = expanded ? '▴' : '▾';
+      const sectionHtml =
+        '<details class="regime-section" data-algo-id="' + escapeHtmlClient(algo.id) + '"' + openAttr + '>' +
+          '<summary>' +
+            '<h2 class="regime-summary-title">' + titleHtml + liveBadge + '</h2>' +
+            '<div class="regime-summary-headlines">' + headlinesHtml + '</div>' +
+            '<span class="regime-summary-chevron">' + chevronGlyph + '</span>' +
+          '</summary>' +
+          '<div class="regime-section-body">' +
+            '<p class="regime-helper">' + escapeHtmlClient(algo.description) + '</p>' +
+            (paramsHtml ? '<div class="regime-params">' + paramsHtml + '</div>' : '') +
+            '<div class="regime-tabs" role="tablist">' + tabsHtml + '</div>' +
+            '<div class="chart-frame">' +
+              '<div class="chart-host regime-chart-host" data-algo-id="' + escapeHtmlClient(algo.id) + '"></div>' +
+            '</div>' +
+            '<div class="regime-stats-row" title="Each regime: share of all training windows and average pp lead/lag vs the unconditional baseline.">' + regimeStatsHtml + '</div>' +
+          '</div>' +
+        '</details>';
+      if (!regimeSectionsHost) return;
+      regimeSectionsHost.insertAdjacentHTML('beforeend', sectionHtml);
+      const detailsEl = regimeSectionsHost.querySelector('details.regime-section[data-algo-id="' + algo.id + '"]');
+      if (!detailsEl) return;
+      const chartHost = detailsEl.querySelector('.regime-chart-host');
+      const buildIfNeeded = () => {
+        if (!detailsEl.open || detailsEl.dataset.built === '1') return;
+        detailsEl.dataset.built = '1';
+        const chevron = detailsEl.querySelector('.regime-summary-chevron');
+        if (chevron) chevron.textContent = '▴';
+        if (!chartHost) return;
+        const chart = buildRegimeChart({ host: chartHost, algo: algo, remaining: defaultRemaining });
+        if (chart) {
+          regimeCharts.push({ chart: chart, host: chartHost, algo: algo, remaining: defaultRemaining });
+        }
+      };
+      detailsEl.addEventListener('toggle', () => {
+        const chevron = detailsEl.querySelector('.regime-summary-chevron');
+        if (chevron) chevron.textContent = detailsEl.open ? '▴' : '▾';
+        buildIfNeeded();
+      });
+      if (expanded) buildIfNeeded();
+    }
+
+    function buildRegimeChart({ host, algo, remaining }) {
+      if (typeof uPlot === "undefined") {
+        host.innerHTML = '<pre class="chart-error">uPlot global is undefined</pre>';
+        return null;
+      }
+      const w = host.clientWidth || host.getBoundingClientRect().width || 800;
+      const h = host.clientHeight || 380;
+      if (w === 0 || h === 0) {
+        host.innerHTML = '<pre class="chart-error">chart host has zero size: ' + w + 'x' + h + '</pre>';
+        return null;
+      }
+      const xs = algo.distancesBp.slice();
+      const baselineY = algo.baseline[remaining].winRate.slice();
+      const regimeYArrays = algo.buckets.map((b) => b.surface[remaining].winRate.slice());
+      const allY = [baselineY].concat(regimeYArrays);
+      const xMax = autoFitMaxBp({ xs: xs, yArrays: allY });
+      const data = [xs, baselineY].concat(regimeYArrays);
+      const series = [
+        {},
+        { label: "baseline", stroke: REGIME_BASELINE_COLOR, width: 1.25, dash: [4, 3], spanGaps: false, points: { show: false } },
+      ];
+      for (let i = 0; i < algo.buckets.length; i++) {
+        const color = REGIME_COLORS[i % REGIME_COLORS.length];
+        series.push({
+          label: prettyRegime(algo.buckets[i].regime),
+          stroke: color,
+          width: 2,
+          spanGaps: false,
+          points: { show: false },
+        });
+      }
+      const opts = {
+        width: w,
+        height: h,
+        legend: { show: false },
+        padding: [16, 18, 8, 8],
+        scales: {
+          x: { time: false, range: [0, xMax] },
+          y: {
+            range: autoFitPercentYRange({
+              yArrays: allY,
+              includeReferenceFifty: true,
+            }),
+          },
+        },
+        cursor: { points: { show: false }, drag: { setScale: false, x: false, y: false } },
+        series: series,
+        axes: [
+          {
+            stroke: chartTokens.axisStroke,
+            font: chartTokens.axisFont,
+            labelFont: chartTokens.axisFont,
+            label: "distance from price line (bp)",
+            labelSize: 28,
+            grid: { stroke: chartTokens.gridStroke, width: 1 },
+            ticks: { stroke: chartTokens.axisTickStroke, width: 1, size: 5 },
+            values: (u, splits) => splits.map((v) => Math.round(v).toLocaleString()),
+          },
+          {
+            stroke: chartTokens.axisStroke,
+            font: chartTokens.axisFont,
+            labelFont: chartTokens.axisFont,
+            label: "hold rate %",
+            labelSize: 28,
+            grid: { stroke: chartTokens.gridStroke, width: 1 },
+            ticks: { stroke: chartTokens.axisTickStroke, width: 1, size: 5 },
+            values: (u, splits) => splits.map((v) => Math.round(v) + '%'),
+            size: 60,
+          },
+        ],
+        hooks: {
+          drawAxes: [
+            (u) => {
+              // 50% coin-flip reference line (subtle, dashed).
+              const yPos50 = u.valToPos(50, "y", true);
+              const ctx = u.ctx;
+              ctx.save();
+              ctx.strokeStyle = chartTokens.referenceLine;
+              ctx.lineWidth = 1;
+              ctx.setLineDash([4, 4]);
+              ctx.beginPath();
+              ctx.moveTo(u.bbox.left, yPos50);
+              ctx.lineTo(u.bbox.left + u.bbox.width, yPos50);
+              ctx.stroke();
+              ctx.restore();
+            },
+          ],
+        },
+      };
+      try {
+        return new uPlot(opts, data, host);
+      } catch (err) {
+        host.innerHTML = '<pre class="chart-error">uPlot threw: ' + (err && err.message ? err.message : String(err)) + '</pre>';
+        return null;
+      }
+    }
+
+    function setRegimeRemaining({ algoId, remaining }) {
+      const idx = regimeCharts.findIndex((e) => e.algo.id === algoId);
+      if (idx < 0) return;
+      const entry = regimeCharts[idx];
+      try { entry.chart.destroy(); } catch (e) { /* ignore */ }
+      const newChart = buildRegimeChart({ host: entry.host, algo: entry.algo, remaining: remaining });
+      if (newChart) {
+        regimeCharts[idx] = { chart: newChart, host: entry.host, algo: entry.algo, remaining: remaining };
+      }
+      const tabs = regimeSectionsHost.querySelectorAll('.regime-tab[data-algo-id="' + algoId + '"]');
+      tabs.forEach((tab) => {
+        const tabRem = Number(tab.getAttribute('data-remaining'));
+        tab.classList.toggle('active', tabRem === remaining);
+      });
+    }
+
+    if (regimeSectionsHost) {
+      regimeSectionsHost.addEventListener('click', (e) => {
+        const target = e.target instanceof HTMLElement ? e.target : null;
+        if (!target) return;
+        const remTab = target.closest('.regime-tab');
+        if (remTab instanceof HTMLElement) {
+          const algoId = remTab.getAttribute('data-algo-id');
+          const remaining = Number(remTab.getAttribute('data-remaining'));
+          if (algoId && Number.isFinite(remaining)) {
+            setRegimeRemaining({ algoId: algoId, remaining: remaining });
+            remTab.blur();
+          }
+        }
+      });
+    }
+
+    function renderRegimes(slice) {
+      clearRegimeSections();
+      if (!regimeSectionsHost) return;
+      if (!slice.regimes || slice.regimes.length === 0) {
+        regimeSectionsHost.innerHTML = '<div class="survival-empty">No regime algos computed — needs 1m candle data.</div>';
+        return;
+      }
+      // Sort all algo sections by max lead pp descending — best
+      // regime first regardless of live status. The LIVE pill on the
+      // header makes live algos visually distinguishable; we don't
+      // need them anchored to the top.
+      const ordered = slice.regimes.slice().sort(
+        (a, b) => (b.maxLeadPp ?? -Infinity) - (a.maxLeadPp ?? -Infinity),
+      );
+      ordered.forEach((algo) => {
+        renderRegimeSection(algo, true);
+      });
+    }
+
     if (filterSectionsHost) {
       filterSectionsHost.addEventListener('click', (e) => {
         const target = e.target instanceof HTMLElement ? e.target : null;
@@ -2106,6 +2955,7 @@ export function renderTrainingDistributionsHtml({
       metaEl.textContent = slice.yearRange ?? "";
       countEl.textContent = slice.candleCount.toLocaleString() + " candles";
       renderSurvival(slice);
+      renderRegimes(slice);
       renderFilters(slice);
     }
 
@@ -2162,9 +3012,32 @@ export function renderTrainingDistributionsHtml({
         });
         mo.observe(filterSectionsHost, { childList: true, subtree: true });
       }
+      // Same machinery for regime-chart hosts.
+      const regimeRo = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const host = entry.target;
+          const match = regimeCharts.find((rc) => rc.host === host);
+          if (!match) continue;
+          const w = host.clientWidth;
+          const h = host.clientHeight;
+          if (w > 0 && h > 0) match.chart.setSize({ width: w, height: h });
+        }
+      });
+      if (regimeSectionsHost) {
+        const regimeMo = new MutationObserver(() => {
+          const hosts = regimeSectionsHost.querySelectorAll('.regime-chart-host');
+          hosts.forEach((h) => regimeRo.observe(h));
+        });
+        regimeMo.observe(regimeSectionsHost, { childList: true, subtree: true });
+      }
     }
     window.addEventListener("resize", () => {
       if (survivalChart) survivalChart.setSize({ width: survivalChartHost.clientWidth, height: survivalChartHost.clientHeight });
+      for (const entry of regimeCharts) {
+        const w = entry.host.clientWidth;
+        const h = entry.host.clientHeight;
+        if (w > 0 && h > 0) entry.chart.setSize({ width: w, height: h });
+      }
       for (const entry of filterCharts) {
         const w = entry.host.clientWidth;
         const h = entry.host.clientHeight;
@@ -2196,76 +3069,201 @@ export function renderTrainingDistributionsHtml({
  * payload — keeps it out of the on-page JS slices and makes the
  * static HTML carry its own first-paint summary.
  */
+/**
+ * Top-level page navigation. Renders a horizontal bar of links — the
+ * active page is the one matching `activeId`; the rest are placeholder
+ * slots for future dashboards (live trading, strategy, etc.) and
+ * render disabled with a "soon" tooltip until each gets its own route.
+ *
+ * Adding a real page: change its entry from `kind: "soon"` to
+ * `kind: "ready"` and pass an `href`. Until then, every dashboard's
+ * server-render emits the same nav with a different `activeId` so the
+ * navigation feels persistent across pages even though each page is a
+ * standalone HTML asset.
+ */
+type TopNavPage =
+  | { readonly id: string; readonly label: string; readonly kind: "ready"; readonly href: string }
+  | { readonly id: string; readonly label: string; readonly kind: "soon" };
+
+const TOP_NAV_PAGES: readonly TopNavPage[] = [
+  { id: "training", label: "Training", kind: "ready", href: "/" },
+  { id: "dry-runs", label: "Dry runs", kind: "soon" },
+  { id: "live", label: "Live trading", kind: "soon" },
+];
+
+function renderTopNav({
+  activeId,
+}: {
+  readonly activeId: string;
+}): string {
+  const items = TOP_NAV_PAGES.map((page) => {
+    const isActive = page.id === activeId;
+    if (page.kind === "ready") {
+      const cls = isActive ? "alea-topnav-link active" : "alea-topnav-link";
+      const ariaCurrent = isActive ? ' aria-current="page"' : "";
+      return `<a class="${cls}" href="${escapeHtml(page.href)}"${ariaCurrent}>${escapeHtml(page.label)}</a>`;
+    }
+    // Disabled placeholder — anchor with no href + role=link so screen
+    // readers see it but it's not navigable.
+    return (
+      `<span class="alea-topnav-link disabled" title="Coming soon">` +
+        `${escapeHtml(page.label)}<span class="alea-topnav-soon">soon</span>` +
+      `</span>`
+    );
+  }).join("");
+  return `<nav class="alea-topnav" aria-label="Dashboards">${items}</nav>`;
+}
+
+/**
+ * Mirrors the client-side `prettyRegime` (defined inline in the
+ * dashboard script) for server-rendered table rows. Both must agree
+ * on the labels they emit so the cross-asset summary and the
+ * per-section regime stats look the same.
+ */
+function prettyRegimeServer(id: string): string {
+  const explicit: Record<string, string> = {
+    no_trend_low_vol: "no trend · low vol",
+    no_trend_high_vol: "no trend · high vol",
+    with_trend_low_vol: "with trend · low vol",
+    with_trend_high_vol: "with trend · high vol",
+    against_trend_low_vol: "against trend · low vol",
+    against_trend_high_vol: "against trend · high vol",
+    no_trend: "no trend",
+    with_trend: "with trend",
+    against_trend: "against trend",
+    weak_trend: "weak trend",
+    strong_trend: "strong trend",
+    low_vol: "low vol",
+    mid_vol: "mid vol",
+    high_vol: "high vol",
+    vol_q1_lowest: "vol q1 · lowest",
+    vol_q2: "vol q2",
+    vol_q3: "vol q3",
+    vol_q4_highest: "vol q4 · highest",
+    oversold: "oversold",
+    neutral: "neutral",
+    overbought: "overbought",
+  };
+  if (explicit[id] !== undefined) return explicit[id] as string;
+  return id.replace(/_/g, " ");
+}
+
 function renderCrossAssetSummary({
   slices,
 }: {
   readonly slices: readonly DashboardAssetSlice[];
 }): string {
   if (slices.length === 0) {return "";}
-  // Collect filters by id from all slices in registry order. Filters
-  // that show up in any slice are columns; the inner map per filter
-  // is keyed by asset for the row.
-  const filterOrder: { id: string; displayName: string }[] = [];
-  const filterSeen = new Set<string>();
+
+  // Collect every (algo, regime) pair that's "live" — i.e. the algo
+  // is in LIVE_TRADING_REGIME_ALGOS AND the regime has avgLeadPp >=
+  // LEADING_REGIME_MIN_LEAD_PP on at least one asset. For each
+  // live pair, gather avgLeadPp across ALL assets (even ones below
+  // threshold), so the operator sees the full distribution of
+  // performance, not just the leading-asset cherrypick.
+  type LivePair = {
+    algoId: string;
+    algoDisplayName: string;
+    algoBucketCount: number;
+    regime: string;
+    leads: number[];
+  };
+  const livePairs = new Map<string, LivePair>();
   for (const slice of slices) {
-    for (const filter of slice.filters) {
-      if (filterSeen.has(filter.id)) {continue;}
-      filterSeen.add(filter.id);
-      filterOrder.push({ id: filter.id, displayName: filter.displayName });
+    for (const algo of slice.regimes) {
+      if (!LIVE_TRADING_ALGO_IDS.has(algo.id)) {continue;}
+      for (const bucket of algo.buckets) {
+        const lead = bucket.avgLeadPp;
+        if (lead === null || !Number.isFinite(lead)) {continue;}
+        const key = algo.id + "|" + bucket.regime;
+        let pair = livePairs.get(key);
+        if (pair === undefined) {
+          pair = {
+            algoId: algo.id,
+            algoDisplayName: algo.displayName,
+            algoBucketCount: algo.buckets.length,
+            regime: bucket.regime,
+            leads: [],
+          };
+          livePairs.set(key, pair);
+        }
+        pair.leads.push(lead);
+      }
     }
   }
-  if (filterOrder.length === 0) {return "";}
+  // Filter to pairs that qualified as leading on at least one asset
+  // (i.e. cleared the threshold somewhere — same rule the prob-table
+  // generator uses to include the surface in the live table).
+  const eligible = [...livePairs.values()].filter((p) =>
+    p.leads.some((l) => l >= LEADING_REGIME_MIN_LEAD_PP),
+  );
+  if (eligible.length === 0) {return "";}
 
-  const baselineLogLossNats = 0.6931471805599453;
-  const headerCells = slices
-    .map((slice) => `<th>${escapeHtml(slice.assetUpper)}</th>`)
-    .join("");
-  const rows = filterOrder
-    .map((entry) => {
-      const isLive = entry.id === LIVE_TRADING_FILTER_ID;
-      const liveTag = isLive
-        ? `<span class="ca-live-tag">live trading</span>`
-        : "";
-      const cells = slices
-        .map((slice) => {
-          const filter = slice.filters.find((f) => f.id === entry.id);
-          if (filter === undefined) {
-            return `<td><span class="ca-cell-pop">—</span></td>`;
-          }
-          const popPct =
-            (filter.summary.calibrationScore / baselineLogLossNats) * 100;
-          const sweetHtml = renderCrossAssetSweetCell({ filter });
-          return (
-            `<td>` +
-              `<span class="ca-cell-pop">${popPct.toFixed(2)}%</span>` +
-              sweetHtml +
-            `</td>`
-          );
-        })
-        .join("");
+  function median(values: readonly number[]): number {
+    const sorted = [...values].sort((a, b) => a - b);
+    const n = sorted.length;
+    if (n === 0) return Number.NaN;
+    if (n % 2 === 1) return sorted[(n - 1) / 2] as number;
+    return ((sorted[n / 2 - 1] as number) + (sorted[n / 2] as number)) / 2;
+  }
+  function mean(values: readonly number[]): number {
+    if (values.length === 0) return Number.NaN;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }
+
+  // Per-row stats. Sort by mean lead descending — best regime first.
+  const ranked = eligible
+    .map((pair) => ({
+      pair,
+      max: Math.max(...pair.leads),
+      min: Math.min(...pair.leads),
+      median: median(pair.leads),
+      avg: mean(pair.leads),
+    }))
+    .sort((a, b) => b.avg - a.avg);
+
+  function formatLead(pp: number): string {
+    if (!Number.isFinite(pp)) return "—";
+    return (pp >= 0 ? "+" : "") + pp.toFixed(1) + "pp";
+  }
+  function leadClass(pp: number): string {
+    if (!Number.isFinite(pp)) return "ca-cell-flat";
+    if (pp > 0) return "ca-cell-up";
+    if (pp < 0) return "ca-cell-down";
+    return "ca-cell-flat";
+  }
+
+  const rows = ranked
+    .map((row) => {
       return (
-        `<tr${isLive ? ' class="live-row"' : ""}>` +
+        `<tr>` +
           `<th>` +
             `<div class="ca-filter-cell">` +
-              `<span>${escapeHtml(entry.displayName)}</span>` +
-              liveTag +
+              `<span class="ca-row-algo">${escapeHtml(row.pair.algoDisplayName)}<span class="ca-row-buckets">[${row.pair.algoBucketCount} bucket${row.pair.algoBucketCount === 1 ? "" : "s"}]</span></span>` +
+              `<span class="ca-row-regime">${escapeHtml(prettyRegimeServer(row.pair.regime))}</span>` +
             `</div>` +
           `</th>` +
-          cells +
+          `<td><span class="ca-cell-pop ${leadClass(row.avg)}">${formatLead(row.avg)}</span></td>` +
+          `<td><span class="ca-cell-pop ${leadClass(row.median)}">${formatLead(row.median)}</span></td>` +
+          `<td><span class="ca-cell-pop ${leadClass(row.max)}">${formatLead(row.max)}</span></td>` +
+          `<td><span class="ca-cell-pop ${leadClass(row.min)}">${formatLead(row.min)}</span></td>` +
         `</tr>`
       );
     })
     .join("");
-  const hint = `${filterOrder.length} filter${filterOrder.length === 1 ? "" : "s"} × ${slices.length} asset${slices.length === 1 ? "" : "s"} · pop = vs no-filter, sweet = restricted bp range`;
+
+  const hintHtml = escapeHtml(
+    `Each row: a regime in the live probability table.`,
+  );
   return (
-    `<section class="cross-asset-summary" aria-label="Cross-asset summary">` +
+    `<section class="cross-asset-summary" aria-label="Live regimes summary">` +
       `<div class="ca-title-row">` +
-        `<span class="ca-title">At-a-glance</span>` +
-        `<span class="ca-hint">${escapeHtml(hint)}</span>` +
+        `<span class="ca-title">Live regimes</span>` +
+        `<span class="ca-hint">${hintHtml}</span>` +
       `</div>` +
       `<div class="ca-table-wrap">` +
         `<table>` +
-          `<thead><tr><th>Filter</th>${headerCells}</tr></thead>` +
+          `<thead><tr><th>Algo · Regime</th><th>avg</th><th>median</th><th>max</th><th>min</th></tr></thead>` +
           `<tbody>${rows}</tbody>` +
         `</table>` +
       `</div>` +
@@ -2273,33 +3271,16 @@ function renderCrossAssetSummary({
   );
 }
 
-/**
- * Stacks the sweet-spot bp range under the cross-asset cell's pop %
- * line. Honours the per-asset sweet-spot we surface on the filter
- * slice via `summary.sweetSpot` (if available — pulled through from
- * the trading-side schema mirror in `FilterSlice`).
- */
-function renderCrossAssetSweetCell({
-  filter,
-}: {
-  readonly filter: FilterSlice;
-}): string {
-  const ss = (filter.summary as { sweetSpot?: { startBp: number; endBp: number } | null })
-    .sweetSpot;
-  if (ss === null || ss === undefined) {
-    return `<span class="ca-cell-sweet">no sweet spot</span>`;
-  }
-  return `<span class="ca-cell-sweet">[${ss.startBp}–${ss.endBp}] bp</span>`;
-}
-
 function toDashboardSlice({
   asset,
   survival,
   filters,
+  regimes,
 }: {
   readonly asset: AssetSizeDistribution;
   readonly survival: AssetSurvivalDistribution | null;
   readonly filters: AssetSurvivalFilters | null;
+  readonly regimes: AssetRegimeAlgos | null;
 }): DashboardAssetSlice {
   const years = Object.keys(asset.byYear).sort();
   const first = years[0];
@@ -2316,10 +3297,109 @@ function toDashboardSlice({
     candleCount: asset.candleCount,
     yearRange,
     survival: survival === null ? null : toSurvivalSlice({ survival }),
+    regimes:
+      regimes === null
+        ? []
+        : regimes.results.map((result) => toRegimeAlgoSlice({ result })),
     filters:
       filters === null
         ? []
         : filters.results.map((result) => toFilterSlice({ result })),
+  };
+}
+
+/**
+ * Pivots one regime-algo result into the renderer's slice shape:
+ * sweet-spot weighted per-remaining win rates per regime + algo-level
+ * summary.
+ */
+function toRegimeAlgoSlice({
+  result,
+}: {
+  readonly result: RegimeAlgoResult;
+}): RegimeAlgoSlice {
+  const distancesBp: number[] = [];
+  for (let bp = 0; bp < SURVIVAL_MAX_DISTANCE_BP; bp += 1) {
+    distancesBp.push(bp);
+  }
+  // Index baseline cells by (remaining, distanceBp) for the lead
+  // computation. Baseline rates are the unconditional reference each
+  // regime's average lead is measured against.
+  const baselineByRemainingDistance = new Map<
+    SurvivalRemainingMinutes,
+    Map<number, { total: number; survived: number }>
+  >();
+  for (const remaining of SURVIVAL_REMAINING_ORDER) {
+    const inner = new Map<number, { total: number; survived: number }>();
+    for (const cell of result.baseline.byRemaining[remaining]) {
+      inner.set(cell.distanceBp, { total: cell.total, survived: cell.survived });
+    }
+    baselineByRemainingDistance.set(remaining, inner);
+  }
+  const totalWindowsCount = result.buckets.reduce((acc, b) => acc + b.windowCount, 0);
+  const unsortedBuckets: RegimeBucketSlice[] = result.buckets.map((bucket) => {
+    // avgLeadPp: sample-weighted (by regime cell sample count) average
+    // of (regime hold rate − baseline hold rate) across cells where
+    // both clear the sample floor and the distance is actionable.
+    let leadNumerator = 0;
+    let leadDenominator = 0;
+    for (const remaining of SURVIVAL_REMAINING_ORDER) {
+      const baselineInner = baselineByRemainingDistance.get(remaining);
+      if (baselineInner === undefined) continue;
+      for (const cell of bucket.surface.byRemaining[remaining]) {
+        if (cell.distanceBp < MIN_ACTIONABLE_DISTANCE_BP) continue;
+        if (cell.total < REGIME_CELL_MIN_SAMPLES) continue;
+        const baselineCell = baselineInner.get(cell.distanceBp);
+        if (baselineCell === undefined || baselineCell.total < REGIME_CELL_MIN_SAMPLES) {
+          continue;
+        }
+        const regimeRate = (cell.survived / cell.total) * 100;
+        const baselineRate =
+          (baselineCell.survived / baselineCell.total) * 100;
+        const deltaPp = regimeRate - baselineRate;
+        leadNumerator += deltaPp * cell.total;
+        leadDenominator += cell.total;
+      }
+    }
+    const avgLeadPp = leadDenominator === 0 ? null : leadNumerator / leadDenominator;
+    return {
+      regime: bucket.regime,
+      windowShare: totalWindowsCount === 0 ? 0 : bucket.windowCount / totalWindowsCount,
+      snapshotsTotal: bucket.snapshotsTotal,
+      avgLeadPp,
+      surface: densifySurface({ surface: bucket.surface, distancesBp }),
+    };
+  });
+  // Sort buckets by avgLeadPp descending — best regime first. Tie-
+  // breaker: bigger windowShare wins (a regime that fires more often
+  // is more impactful at the same lead). Stats row, chart legend,
+  // chart series order all inherit this.
+  const buckets: RegimeBucketSlice[] = unsortedBuckets.slice().sort((a, b) => {
+    const la = a.avgLeadPp ?? Number.NEGATIVE_INFINITY;
+    const lb = b.avgLeadPp ?? Number.NEGATIVE_INFINITY;
+    if (lb !== la) return lb - la;
+    return b.windowShare - a.windowShare;
+  });
+  // maxLeadPp = best regime's avgLeadPp. Algo headline.
+  let maxLeadPp: number | null = null;
+  for (const b of buckets) {
+    if (b.avgLeadPp === null) continue;
+    if (maxLeadPp === null || b.avgLeadPp > maxLeadPp) {
+      maxLeadPp = b.avgLeadPp;
+    }
+  }
+  return {
+    id: result.id,
+    displayName: result.displayName,
+    description: result.description,
+    params: result.params,
+    snapshotsTotal: result.summary.snapshotsTotal,
+    snapshotsClassified: result.summary.snapshotsClassified,
+    snapshotsSkipped: result.summary.snapshotsSkipped,
+    maxLeadPp,
+    distancesBp,
+    baseline: densifySurface({ surface: result.baseline, distancesBp }),
+    buckets,
   };
 }
 
@@ -2401,7 +3481,7 @@ function densifySurface({
         continue;
       }
       sampleCount.push(bucket.total);
-      if (bucket.total < SURVIVAL_MIN_SAMPLES) {
+      if (bucket.total < REGIME_CELL_MIN_SAMPLES) {
         winRate.push(null);
         continue;
       }
@@ -2452,7 +3532,7 @@ function toSurvivalSlice({
         continue;
       }
       sampleCount.push(bucket.total);
-      if (bucket.total < SURVIVAL_MIN_SAMPLES) {
+      if (bucket.total < REGIME_CELL_MIN_SAMPLES) {
         winRate.push(null);
         continue;
       }

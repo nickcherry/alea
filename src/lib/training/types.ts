@@ -204,4 +204,21 @@ export type TrainingDistributionsPayload = {
   readonly assets: readonly AssetSizeDistribution[];
   readonly survival: readonly AssetSurvivalDistribution[];
   readonly survivalFilters: readonly AssetSurvivalFilters[];
+  /**
+   * Per-asset per-regime-algo bundle. Each entry is the full set of
+   * results for one asset across every algo in the regime registry.
+   * The renderer consumes this in parallel with `survivalFilters` and
+   * renders the regime sections at the top of the page.
+   */
+  readonly regimeAlgos: readonly AssetRegimeAlgos[];
+};
+
+/**
+ * Per-asset bundle of regime-algo results. One entry per algo in the
+ * registry, with full per-bucket survival surfaces + the summary
+ * metrics used to rank algos head-to-head.
+ */
+export type AssetRegimeAlgos = {
+  readonly asset: Asset;
+  readonly results: readonly import("@alea/lib/training/regimeAlgos/resultTypes").RegimeAlgoResult[];
 };

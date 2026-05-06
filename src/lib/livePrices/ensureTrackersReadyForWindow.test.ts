@@ -2,9 +2,8 @@ import {
   createTrackerHydrationState,
   ensureTrackersReadyForWindow,
 } from "@alea/lib/livePrices/ensureTrackersReadyForWindow";
-import { createFiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import { createFiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
 import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
+import { createRegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import type { ClosedFiveMinuteBar } from "@alea/lib/livePrices/types";
 import type { Asset } from "@alea/types/assets";
@@ -18,12 +17,8 @@ describe("ensureTrackersReadyForWindow", () => {
     const fetched: number[] = [];
     const logs: string[] = [];
     const lastClosedBars = new Map<Asset, ClosedFiveMinuteBar>();
-    const emas = new Map<Asset, ReturnType<typeof createFiveMinuteEmaTracker>>([
-      ["btc", createFiveMinuteEmaTracker()],
-    ]);
-    const atrs = new Map<Asset, ReturnType<typeof createFiveMinuteAtrTracker>>([
-      ["btc", createFiveMinuteAtrTracker()],
-    ]);
+    const bundle = createRegimeTrackers();
+    const trackers = new Map([["btc" as const, bundle]]);
 
     ensureTrackersReadyForWindow({
       assets: ["btc"],
@@ -35,8 +30,7 @@ describe("ensureTrackersReadyForWindow", () => {
           return bar;
         },
       }),
-      emas,
-      atrs,
+      trackers,
       lastClosedBars,
       state: createTrackerHydrationState(),
       signal: new AbortController().signal,
@@ -46,8 +40,7 @@ describe("ensureTrackersReadyForWindow", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fetched).toEqual([priorOpenMs]);
-    expect(emas.get("btc")?.lastBarOpenMs()).toBe(priorOpenMs);
-    expect(atrs.get("btc")?.lastBarOpenMs()).toBe(priorOpenMs);
+    expect(bundle.lastBarOpenMs()).toBe(priorOpenMs);
     expect(lastClosedBars.get("btc")).toEqual(bar);
     expect(logs[0]).toContain("BTC   REST hydrated 5m close 12:30 UTC");
   });
@@ -66,12 +59,7 @@ describe("ensureTrackersReadyForWindow", () => {
       assets: ["btc"] as readonly Asset[],
       windowStartMs,
       priceSource: source,
-      emas: new Map<Asset, ReturnType<typeof createFiveMinuteEmaTracker>>([
-        ["btc", createFiveMinuteEmaTracker()],
-      ]),
-      atrs: new Map<Asset, ReturnType<typeof createFiveMinuteAtrTracker>>([
-        ["btc", createFiveMinuteAtrTracker()],
-      ]),
+      trackers: new Map([["btc" as const, createRegimeTrackers()]]),
       state,
       signal: new AbortController().signal,
       emit: () => undefined,

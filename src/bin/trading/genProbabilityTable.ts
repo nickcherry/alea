@@ -2,7 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { assetValues } from "@alea/constants/assets";
-import { MIN_BUCKET_SAMPLES } from "@alea/constants/trading";
+import {
+  LIVE_TRADING_REGIME_ALGOS,
+  MIN_BUCKET_SAMPLES,
+} from "@alea/constants/trading";
 import { trainingCandleSeries } from "@alea/constants/training";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -29,26 +32,28 @@ const generatedPath = resolvePath(
 const tmpDir = resolvePath(repoRoot, "tmp");
 
 /**
- * Generates the committed `probabilityTable.generated.ts` artifact that
- * the live trader loads at boot. Reuses the survival snapshot pipeline
- * (so the bucketing math is identical to what we vet on the training
- * dashboard) but applies only the live filter
- * (`LIVE_TRADING_FILTER` — see `src/constants/liveTrading.ts`) and
- * writes a lean per-asset surface restricted to that filter's
- * sweet-spot bp range. No HTML, no scoring caches — this is the
- * production model checked into version control.
+ * Generates the committed `probabilityTable.generated.ts` artifact
+ * that the live trader loads at boot. Reuses the survival snapshot
+ * pipeline (same bucketing math the training dashboard uses), then
+ * for every algo in `LIVE_TRADING_REGIME_ALGOS` (auto-derived from
+ * the registry by the live-feasibility check in
+ * `@alea/constants/trading`) partitions snapshots by regime,
+ * computes each regime's avgLeadPp vs the unconditional baseline,
+ * and persists a `LeadingRegimeTable` for any regime that clears
+ * `LEADING_REGIME_MIN_LEAD_PP`. No HTML, no scoring caches — this is
+ * the production model checked into version control.
  *
  * Run after the candle sync is up to date; the per-asset summary line
- * shows the discovered sweet-spot range and bucket counts so it's
- * obvious if the data is thin or if the sweet spot has shifted from a
- * prior run.
+ * shows how many leading tables persisted and which (algo, regime)
+ * pairs got promoted, so it's obvious if the eligible set has shifted
+ * from a prior run.
  */
 export const tradingGenProbabilityTableCommand = defineCommand({
   name: "trading:gen-probability-table",
   summary:
     "Refresh the committed live-trading probability table from local candles",
   description:
-    "Reads the local Postgres for the configured training candle series (today: binance-perp 5m + the matching 1m series) and writes src/lib/trading/probabilityTable/probabilityTable.generated.ts plus a JSON sidecar in tmp/. The model uses LIVE_TRADING_FILTER (snapshot is `aligned`/decisively away when |distance| ≥ 0.5 × ATR at the configured period) and only persists buckets within the per-asset sweet-spot bp range. Buckets thinner than --min-samples are dropped.",
+    "Reads the local Postgres for the configured training candle series (today: binance-perp 5m + the matching 1m series) and writes src/lib/trading/probabilityTable/probabilityTable.generated.ts plus a JSON sidecar in tmp/. Snapshots are partitioned by LIVE_TRADING_REGIME_ALGO and each per-regime surface is restricted to the sweet-spot bp range. Buckets thinner than --min-samples are dropped.",
   options: [
     defineValueOption({
       key: "assets",
@@ -111,24 +116,21 @@ export const tradingGenProbabilityTableCommand = defineCommand({
         firstWindowMs = Math.min(firstWindowMs, result.firstWindowMs);
         lastWindowMs = Math.max(lastWindowMs, result.lastWindowMs);
 
-        const aligned = countBuckets({
+        const totalBuckets = countAllBuckets({
           probabilities: result.probabilities,
-          aligned: true,
         });
-        const notAligned = countBuckets({
-          probabilities: result.probabilities,
-          aligned: false,
-        });
-        const ss = result.probabilities.sweetSpot;
-        const sweetSpotLabel = ss
-          ? `[${ss.startBp}-${ss.endBp}] cov=${(ss.coverageFraction * 100).toFixed(1)}%`
-          : "—";
+        const tableSummary = result.probabilities.leadingTables
+          .map(
+            (t) =>
+              `${t.algoId}/${t.regime}+${t.avgLeadPp.toFixed(1)}pp`,
+          )
+          .join(", ");
         io.writeStdout(
           `${pc.bold(asset.toUpperCase().padEnd(5))} ` +
             `${pc.dim("windows=")}${String(result.probabilities.windowCount).padStart(7)} ` +
-            `${pc.dim("aligned=")}${(result.probabilities.alignedWindowShare * 100).toFixed(1).padStart(5)}% ` +
-            `${pc.dim("sweet=")}${sweetSpotLabel.padEnd(20)} ` +
-            `${pc.dim("buckets=")}${String(aligned).padStart(4)}/${String(notAligned).padEnd(4)}\n`,
+            `${pc.dim("tables=")}${String(result.probabilities.leadingTables.length).padStart(2)} ` +
+            `${pc.dim("buckets=")}${String(totalBuckets).padStart(4)} ` +
+            `${pc.dim("leading=")}[${tableSummary}]\n`,
         );
       }
     } finally {
@@ -194,6 +196,7 @@ async function processAsset({
     candles1m,
     candles5m,
     minBucketSamples,
+    regimeAlgos: LIVE_TRADING_REGIME_ALGOS,
   });
   if (probabilities === null) {
     return null;
@@ -204,20 +207,20 @@ async function processAsset({
   return { probabilities, firstWindowMs, lastWindowMs };
 }
 
-function countBuckets({
+function countAllBuckets({
   probabilities,
-  aligned,
 }: {
   readonly probabilities: AssetProbabilities;
-  readonly aligned: boolean;
 }): number {
-  const surface = aligned ? probabilities.aligned : probabilities.notAligned;
-  return (
-    surface.byRemaining[1].length +
-    surface.byRemaining[2].length +
-    surface.byRemaining[3].length +
-    surface.byRemaining[4].length
-  );
+  let total = 0;
+  for (const entry of probabilities.leadingTables) {
+    total +=
+      entry.surface.byRemaining[1].length +
+      entry.surface.byRemaining[2].length +
+      entry.surface.byRemaining[3].length +
+      entry.surface.byRemaining[4].length;
+  }
+  return total;
 }
 
 function parseList(value: string | undefined): string[] | undefined {

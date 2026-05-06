@@ -1,5 +1,5 @@
 import {
-  EMA50_BOOTSTRAP_BARS,
+  REGIME_TRACKER_BOOTSTRAP_BARS,
   MIN_QUEUE_AHEAD_SHARES,
   ORDER_CANCEL_MARGIN_MS,
   STAKE_USD,
@@ -11,18 +11,15 @@ import {
   ensureTrackersReadyForWindow,
 } from "@alea/lib/livePrices/ensureTrackersReadyForWindow";
 import {
-  createFiveMinuteAtrTracker,
-  type FiveMinuteAtrTracker,
-} from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import {
-  createFiveMinuteEmaTracker,
-  type FiveMinuteEmaTracker,
-} from "@alea/lib/livePrices/fiveMinuteEmaTracker";
-import {
   currentWindowStartMs,
   FIVE_MINUTES_MS,
   flooredRemainingMinutes,
 } from "@alea/lib/livePrices/fiveMinuteWindow";
+import {
+  createRegimeTrackers,
+  describeRegimeTrackers,
+  type RegimeTrackers,
+} from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import type {
   ClosedFiveMinuteBar,
@@ -129,8 +126,7 @@ export async function runDryRun({
     emit,
   });
 
-  const emas = new Map<Asset, FiveMinuteEmaTracker>();
-  const atrs = new Map<Asset, FiveMinuteAtrTracker>();
+  const trackers = new Map<Asset, RegimeTrackers>();
   const lastTick = new Map<Asset, LivePriceTick>();
   const priceHistory: DryPriceHistory = new Map();
   const lastClosedBars = new Map<Asset, ClosedFiveMinuteBar>();
@@ -165,13 +161,11 @@ export async function runDryRun({
   });
 
   for (const asset of assets) {
-    emas.set(asset, createFiveMinuteEmaTracker());
-    atrs.set(asset, createFiveMinuteAtrTracker());
+    trackers.set(asset, createRegimeTrackers());
   }
   await hydrateTrackers({
     assets,
-    emas,
-    atrs,
+    trackers,
     priceSource,
     signal,
     emit,
@@ -188,15 +182,13 @@ export async function runDryRun({
     },
     onBarClose: (bar) => {
       lastClosedBars.set(bar.asset, bar);
-      const ema = emas.get(bar.asset);
-      const atr = atrs.get(bar.asset);
-      const emaAccepted = ema !== undefined && ema.append(bar);
-      const atrAccepted = atr !== undefined && atr.append(bar);
-      if (emaAccepted || atrAccepted) {
+      const bundle = trackers.get(bar.asset);
+      const accepted = bundle !== undefined && bundle.append(bar);
+      if (accepted) {
         emit({
           kind: "info",
           atMs: Date.now(),
-          message: `${labelAsset(bar.asset)} 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ema50=${ema?.currentValue()?.toFixed(2) ?? "warming"}, atr=${atr?.currentValue()?.toFixed(2) ?? "warming"}`,
+          message: `${labelAsset(bar.asset)} 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ${describeRegimeTrackers({ trackers: bundle })}`,
         });
       }
     },
@@ -300,8 +292,7 @@ export async function runDryRun({
       windowStartMs: startMs,
       nowMs,
       priceSource,
-      emas,
-      atrs,
+      trackers,
       lastClosedBars,
       state: trackerHydrationState,
       signal,
@@ -354,8 +345,7 @@ export async function runDryRun({
         vendor,
         lastTick,
         priceHistory,
-        emas,
-        atrs,
+        trackers,
         books,
         table,
         minEdge,
@@ -515,15 +505,13 @@ function createDryTelegramNotifier({
 
 async function hydrateTrackers({
   assets,
-  emas,
-  atrs,
+  trackers,
   priceSource,
   signal,
   emit,
 }: {
   readonly assets: readonly Asset[];
-  readonly emas: Map<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: Map<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: Map<Asset, RegimeTrackers>;
   readonly priceSource: LivePriceSource;
   readonly signal: AbortSignal;
   readonly emit: (event: DryRunEvent) => void;
@@ -535,19 +523,19 @@ async function hydrateTrackers({
     try {
       const bars = await priceSource.fetchRecentFiveMinuteBars({
         asset,
-        count: EMA50_BOOTSTRAP_BARS,
+        count: REGIME_TRACKER_BOOTSTRAP_BARS,
         signal,
       });
-      const ema = emas.get(asset);
-      const atr = atrs.get(asset);
-      for (const bar of bars) {
-        ema?.append(bar);
-        atr?.append(bar);
+      const bundle = trackers.get(asset);
+      if (bundle !== undefined) {
+        for (const bar of bars) {
+          bundle.append(bar);
+        }
       }
       emit({
         kind: "info",
         atMs: Date.now(),
-        message: `${labelAsset(asset)} hydrated ${bars.length} closed 5m bars, ema50=${ema?.currentValue()?.toFixed(2) ?? "warming"}, atr=${atr?.currentValue()?.toFixed(2) ?? "warming"}`,
+        message: `${labelAsset(asset)} hydrated ${bars.length} closed 5m bars${bundle ? `, ${describeRegimeTrackers({ trackers: bundle })}` : ""}`,
       });
     } catch (error) {
       emit({
@@ -684,8 +672,7 @@ function stepDryAsset({
   vendor,
   lastTick,
   priceHistory,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -700,8 +687,7 @@ function stepDryAsset({
   readonly vendor: Vendor;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
   readonly priceHistory: ReadonlyMap<Asset, readonly LivePriceTick[]>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -751,8 +737,7 @@ function stepDryAsset({
     record,
     window: state.window,
     lastTick,
-    emas,
-    atrs,
+    trackers,
     books,
     table,
     minEdge,
@@ -793,8 +778,7 @@ function stepDryAsset({
       vendor,
       lastTick,
       priceHistory,
-      emas,
-      atrs,
+      trackers,
       books,
       table,
       minEdge,
@@ -813,8 +797,7 @@ async function prepareDryOrder({
   vendor,
   lastTick,
   priceHistory,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -829,8 +812,7 @@ async function prepareDryOrder({
   readonly vendor: Vendor;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
   readonly priceHistory: ReadonlyMap<Asset, readonly LivePriceTick[]>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -868,8 +850,7 @@ async function prepareDryOrder({
     record,
     window: state.window,
     lastTick,
-    emas,
-    atrs,
+    trackers,
     books,
     table,
     minEdge,
@@ -1686,10 +1667,10 @@ function serializeDryOrder({
     remaining: decision.snapshot.remaining,
     distanceBp: decision.snapshot.distanceBp,
     currentSide: decision.snapshot.currentSide,
-    regime: decision.snapshot.regime,
-    decisivelyAway: decision.snapshot.aligned,
+    regime: decision.winningRegime.regime,
+    decisivelyAway: null,
     ema50: decision.snapshot.ema50,
-    samples: decision.samples,
+    samples: decision.winningRegime.samples,
     modelProbability: decision.chosen.ourProbability,
     edge: decision.chosen.edge,
     entryPriceTelemetry: envelope.entryPriceTelemetry,

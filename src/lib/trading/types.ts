@@ -41,7 +41,7 @@ export const probabilityBucketSchema = z.object({
 export type ProbabilityBucket = z.infer<typeof probabilityBucketSchema>;
 
 /**
- * For one `(asset, alignment)` pair, the four probability curves keyed by
+ * For one `(asset, regime)` pair, the four probability curves keyed by
  * remaining minutes. Each curve is a list of buckets sorted ascending by
  * `distanceBp` with no gaps suppressed (zero-sample buckets are simply
  * absent — this keeps the on-disk representation compact).
@@ -57,42 +57,52 @@ export const probabilitySurfaceSchema = z.object({
 export type ProbabilitySurface = z.infer<typeof probabilitySurfaceSchema>;
 
 /**
- * The contiguous bp range where the active filter does most of its
- * work. Computed at training-data analysis time and applied as a
- * bucket-level filter when generating the probability table — buckets
- * outside this range are dropped, so the live lookup naturally returns
- * `null` there and the runner skips the trade. See
- * doc/research/2026-05-04-sweet-spot.md for the rationale.
+ * One persisted (algo, regime) entry — a "leading regime table." For
+ * the snapshots an algo's classifier puts into this regime, the
+ * regime's hold rate sits *above* the unconditional baseline by at
+ * least `LEADING_REGIME_MIN_LEAD_PP`. We persist a probability
+ * surface per leading entry so the live decision evaluator can
+ * iterate every (algo, regime) the snapshot fits and pick the
+ * highest-edge tradeable read.
+ *
+ * Non-leading regimes (lagging or tie) are excluded entirely — the
+ * decision evaluator skips an algo's contribution when the snapshot's
+ * regime under that algo isn't in the table.
+ *
+ * `windowShare` is the share of all training windows the algo
+ * classified into this regime (not just the leading set). It tells
+ * the dashboard "how often does this regime fire" without confusing
+ * the share with the across-leading-regimes total.
+ *
+ * `avgLeadPp` is the diagnostic figure that earned the regime its
+ * leading status — sample-weighted across (remaining, distance)
+ * cells. Persisted so the dashboard can show it without recomputing.
  */
-export const sweetSpotSchema = z.object({
-  startBp: z.int().nonnegative(),
-  endBp: z.int().nonnegative(),
-  calibrationScore: z.number(),
-  coverageFraction: z.number().min(0).max(1),
+export const leadingRegimeTableSchema = z.object({
+  algoId: z.string(),
+  regime: z.string(),
+  windowShare: z.number().min(0).max(1),
+  avgLeadPp: z.number(),
+  surface: probabilitySurfaceSchema,
 });
-export type SweetSpot = z.infer<typeof sweetSpotSchema>;
+export type LeadingRegimeTable = z.infer<typeof leadingRegimeTableSchema>;
 
 /**
- * Per-asset payload: two surfaces produced by the active live filter
- * (`LIVE_TRADING_FILTER` — see `src/constants/liveTrading.ts`:
- * `aligned` = "decisively away" iff `|distance| ≥ 0.5 × ATR` at the
- * configured period, `notAligned` = "near the line"), plus the window
- * count each was derived from and the per-asset sweet-spot range that
- * bounds the persisted buckets.
+ * Per-asset payload: an array of leading-regime tables across every
+ * algo in `LIVE_TRADING_REGIME_ALGOS`, plus the total window count.
  *
  * `windowCount` is the number of *5m windows*, not snapshots; each
  * window contributes up to four snapshots (one per remaining-minute
- * slot) and is split between the two surfaces by the filter. Names
- * `aligned` / `notAligned` are kept for back-compat with the existing
- * runtime code; they don't refer to EMA-50 alignment anymore.
+ * slot). Every algo classifies the same windows into its own regime
+ * partition, so the same window can contribute to multiple algos'
+ * surfaces.
+ *
+ * Buckets are persisted as long as they clear `minBucketSamples`.
  */
 export const assetProbabilitiesSchema = z.object({
   asset: assetSchema,
   windowCount: z.int().nonnegative(),
-  alignedWindowShare: z.number().min(0).max(1),
-  aligned: probabilitySurfaceSchema,
-  notAligned: probabilitySurfaceSchema,
-  sweetSpot: sweetSpotSchema,
+  leadingTables: z.array(leadingRegimeTableSchema).readonly(),
 });
 export type AssetProbabilities = z.infer<typeof assetProbabilitiesSchema>;
 

@@ -12,7 +12,8 @@ import type { CandleSeries } from "@alea/types/candleSeries";
 export type CacheManifest =
   | SizeDistributionCacheManifest
   | SurvivalDistributionCacheManifest
-  | SurvivalFilterCacheManifest;
+  | SurvivalFilterCacheManifest
+  | RegimeAlgoCacheManifest;
 
 export type SizeDistributionCacheManifest = {
   readonly kind: "size";
@@ -49,4 +50,15 @@ export type SurvivalFilterCacheManifest = {
   readonly pipelineVersion: number;
   readonly filterId: string;
   readonly filterVersion: number;
+};
+
+export type RegimeAlgoCacheManifest = {
+  readonly kind: "regime";
+  readonly series: CandleSeries;
+  readonly asset: string;
+  readonly lastCandleMs1m: number;
+  readonly lastCandleMs5m: number;
+  readonly pipelineVersion: number;
+  readonly algoId: string;
+  readonly algoVersion: number;
 };

@@ -13,6 +13,7 @@ const KIND_DIR = {
   size: "size",
   survival: "survival",
   filter: "filters",
+  regime: "regimes",
 } as const;
 
 /**

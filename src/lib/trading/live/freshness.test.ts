@@ -1,10 +1,8 @@
-import { createFiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
 import type {
   ClosedFiveMinuteBar,
   LivePriceTick,
 } from "@alea/lib/livePrices/types";
 import {
-  emaReadyForWindow,
   exactSettlementBar,
   tickCanCaptureLine,
   usableBookForMarket,
@@ -116,19 +114,7 @@ describe("live freshness guards", () => {
     ).toBeNull();
   });
 
-  it("requires EMA-50 to be evaluated through the prior 5m close", () => {
-    const tracker = createFiveMinuteEmaTracker();
-    for (let i = 50; i >= 1; i -= 1) {
-      tracker.append(bar(WINDOW_START - i * 5 * 60_000));
-    }
-    expect(emaReadyForWindow({ tracker, windowStartMs: WINDOW_START })).not.toBe(
-      null,
-    );
-    tracker.append(bar(WINDOW_START));
-    expect(emaReadyForWindow({ tracker, windowStartMs: WINDOW_START })).toBeNull();
-  });
-
-  it("requires the exact settlement bar for the window", () => {
+it("requires the exact settlement bar for the window", () => {
     expect(
       exactSettlementBar({
         bar: bar(WINDOW_START),

@@ -6,7 +6,8 @@
  * call site must pass the timestamp in.
  */
 
-export const FIVE_MINUTES_MS = 5 * 60 * 1000;
+export const ONE_MINUTE_MS = 60 * 1000;
+export const FIVE_MINUTES_MS = 5 * ONE_MINUTE_MS;
 
 /**
  * Returns the start (in epoch ms) of the 5m window containing `nowMs`.

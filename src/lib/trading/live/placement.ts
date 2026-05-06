@@ -1,6 +1,5 @@
 import { ORDER_CANCEL_MARGIN_MS, STAKE_USD } from "@alea/constants/trading";
-import type { FiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import type { FiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
+import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
 import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
 import { evaluateRecordDecision } from "@alea/lib/trading/live/evaluateRecordDecision";
@@ -53,8 +52,7 @@ export async function placeWithRetry({
   record,
   window,
   lastTick,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -68,8 +66,7 @@ export async function placeWithRetry({
   readonly record: AssetWindowRecord;
   readonly window: WindowRecord;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -116,8 +113,7 @@ export async function placeWithRetry({
       record,
       window,
       lastTick,
-      emas,
-      atrs,
+      trackers,
       books,
       table,
       minEdge,
@@ -273,8 +269,7 @@ function currentDecision({
   record,
   window,
   lastTick,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -284,8 +279,7 @@ function currentDecision({
   readonly record: AssetWindowRecord;
   readonly window: WindowRecord;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -300,8 +294,7 @@ function currentDecision({
     record,
     window,
     lastTick,
-    emas,
-    atrs,
+    trackers,
     books,
     table,
     minEdge,

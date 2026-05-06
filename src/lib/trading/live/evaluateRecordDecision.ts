@@ -1,20 +1,16 @@
-import type { FiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import type { FiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
+import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
+import { computeRegimeClassifierInput } from "@alea/lib/livePrices/regimeContext";
+import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
 import { evaluateDecision } from "@alea/lib/trading/decision/evaluateDecision";
 import type { TradeDecision } from "@alea/lib/trading/decision/types";
-import {
-  atrReadyForWindow,
-  emaReadyForWindow,
-  tickIsFresh,
-  usableBookForMarket,
-} from "@alea/lib/trading/live/freshness";
+import { tickIsFresh, usableBookForMarket } from "@alea/lib/trading/live/freshness";
 import type {
   AssetWindowRecord,
   BookCache,
   WindowRecord,
 } from "@alea/lib/trading/live/types";
-import type { ProbabilityTable } from "@alea/lib/trading/types";
+import type { LeadingSide, ProbabilityTable } from "@alea/lib/trading/types";
 import type { Asset } from "@alea/types/assets";
 
 export function evaluateRecordDecision({
@@ -22,8 +18,7 @@ export function evaluateRecordDecision({
   record,
   window,
   lastTick,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -33,8 +28,7 @@ export function evaluateRecordDecision({
   readonly record: AssetWindowRecord;
   readonly window: Pick<WindowRecord, "windowStartMs">;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -49,25 +43,27 @@ export function evaluateRecordDecision({
     return null;
   }
   const tick = lastTick.get(asset);
-  const tracker = emas.get(asset);
-  const atrTracker = atrs.get(asset);
-  if (tick === undefined || tracker === undefined || atrTracker === undefined) {
+  const bundle = trackers.get(asset);
+  if (tick === undefined || bundle === undefined) {
     return null;
   }
   if (!tickIsFresh({ tick, windowStartMs: window.windowStartMs, nowMs })) {
     return null;
   }
-  const ema50 = emaReadyForWindow({
-    tracker,
-    windowStartMs: window.windowStartMs,
-  });
-  const atr = atrReadyForWindow({
-    tracker: atrTracker,
-    windowStartMs: window.windowStartMs,
-  });
-  if (atr === null) {
+  // Buffer freshness: the last accepted closed bar must be the one
+  // ending exactly at the current 5m window's start, matching the
+  // training pipeline's "evaluated through and including the prior
+  // closed bar" convention. If the buffer is stale (missed a kline
+  // close), the REST-hydration helper will catch it on the next tick.
+  if (bundle.lastBarOpenMs() !== window.windowStartMs - FIVE_MINUTES_MS) {
     return null;
   }
+  const leadingSide: LeadingSide = tick.mid >= record.line ? "up" : "down";
+  const regimeInput = computeRegimeClassifierInput({
+    recentBars: bundle.bars(),
+    windowStartMs: window.windowStartMs,
+    leadingSide,
+  });
   const book = usableBookForMarket({
     book: books.get(market.vendorRef),
     vendorRef: market.vendorRef,
@@ -80,8 +76,7 @@ export function evaluateRecordDecision({
     nowMs,
     line: record.line,
     currentPrice: tick.mid,
-    ema50,
-    atr,
+    regimeInput,
     upBestBid: book?.up.bestBid ?? null,
     downBestBid: book?.down.bestBid ?? null,
     upTokenId: market.upRef,

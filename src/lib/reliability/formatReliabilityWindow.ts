@@ -1,3 +1,4 @@
+import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
 import {
   baselineReliabilitySource,
   comparableReliabilitySourceValues,
@@ -15,7 +16,7 @@ export function formatReliabilityWindow({
   readonly windowStartMs: number;
   readonly windows: readonly ReliabilityAssetWindow[];
 }): string {
-  const windowEndMs = windowStartMs + 5 * 60 * 1000;
+  const windowEndMs = windowStartMs + FIVE_MINUTES_MS;
   const lines: string[] = [
     "",
     `${pc.bold("Directional agreement")} ${pc.dim(`${formatClock({ ms: windowStartMs })}-${formatClock({ ms: windowEndMs })} UTC`)}`,

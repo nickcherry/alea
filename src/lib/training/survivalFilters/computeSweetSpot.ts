@@ -74,20 +74,20 @@ export type SweetSpot = {
  * sub-floor buckets contribute zero to the gain map and zero to the
  * sweet-spot snapshot count.
  *
- * Reusable across the training-side scoring (`applySurvivalFilters`)
- * and the trading-side probability-table generation
- * (`computeAssetProbabilities`) so they share a single source of
- * truth for the sweet-spot range live trading restricts to.
+ * Reusable across the training-side scoring (`applySurvivalFilters`,
+ * binary halves) and the trading-side probability-table generation
+ * (`computeAssetProbabilities`, N-way regime halves) so they share a
+ * single source of truth for the sweet-spot range live trading
+ * restricts to. `halves` accepts any number of partition surfaces; the
+ * info-gain math is symmetric across them.
  */
 export function computeSweetSpot({
   baseline,
-  whenTrue,
-  whenFalse,
+  halves,
   snapshotsTotal,
 }: {
   readonly baseline: SurvivalSurface;
-  readonly whenTrue: SurvivalSurface;
-  readonly whenFalse: SurvivalSurface;
+  readonly halves: readonly SurvivalSurface[];
   readonly snapshotsTotal: number;
 }): SweetSpot | null {
   const perBpGain = new Map<number, number>();
@@ -97,33 +97,30 @@ export function computeSweetSpot({
     for (const b of baseline.byRemaining[remaining]) {
       globalByDistance.set(b.distanceBp, b);
     }
-    for (const halfBuckets of [
-      whenTrue.byRemaining[remaining],
-      whenFalse.byRemaining[remaining],
-    ]) {
-      for (const half of halfBuckets) {
-        if (half.distanceBp < MIN_ACTIONABLE_DISTANCE_BP) {continue;}
-        if (half.total < SWEET_SPOT_MIN_SAMPLES) {continue;}
-        const global = globalByDistance.get(half.distanceBp);
+    for (const half of halves) {
+      for (const bucket of half.byRemaining[remaining]) {
+        if (bucket.distanceBp < MIN_ACTIONABLE_DISTANCE_BP) {continue;}
+        if (bucket.total < SWEET_SPOT_MIN_SAMPLES) {continue;}
+        const global = globalByDistance.get(bucket.distanceBp);
         if (global === undefined || global.total < SWEET_SPOT_MIN_SAMPLES) {
           continue;
         }
-        const halfP = clampProb(half.survived / half.total);
+        const halfP = clampProb(bucket.survived / bucket.total);
         const globalP = clampProb(global.survived / global.total);
-        const survived = half.survived;
-        const failed = half.total - half.survived;
+        const survived = bucket.survived;
+        const failed = bucket.total - bucket.survived;
         const halfLogLoss =
           -survived * Math.log(halfP) - failed * Math.log(1 - halfP);
         const globalLogLoss =
           -survived * Math.log(globalP) - failed * Math.log(1 - globalP);
         const gain = Math.max(0, globalLogLoss - halfLogLoss);
         perBpGain.set(
-          half.distanceBp,
-          (perBpGain.get(half.distanceBp) ?? 0) + gain,
+          bucket.distanceBp,
+          (perBpGain.get(bucket.distanceBp) ?? 0) + gain,
         );
         perBpSnapshots.set(
-          half.distanceBp,
-          (perBpSnapshots.get(half.distanceBp) ?? 0) + half.total,
+          bucket.distanceBp,
+          (perBpSnapshots.get(bucket.distanceBp) ?? 0) + bucket.total,
         );
       }
     }

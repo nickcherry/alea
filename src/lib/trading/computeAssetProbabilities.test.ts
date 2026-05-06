@@ -1,4 +1,5 @@
 import { computeAssetProbabilities } from "@alea/lib/trading/computeAssetProbabilities";
+import { trendXVol6Algo } from "@alea/lib/training/regimeAlgos/trendXVol6";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import { describe, expect, it } from "bun:test";
 
@@ -88,17 +89,19 @@ describe("computeAssetProbabilities", () => {
       candles1m: [],
       candles5m: [],
       minBucketSamples: 1,
+      regimeAlgos: [trendXVol6Algo],
     });
     expect(result).toBeNull();
   });
 
-  it("returns null when synthetic data is too thin for sweet-spot detection", () => {
-    // The sweet-spot algorithm requires per-bucket samples ≥ 2000
-    // (`SWEET_SPOT_MIN_SAMPLES`). Toy snapshot streams in unit tests
-    // can't realistically produce that many samples per bucket; the
-    // function correctly returns null. End-to-end coverage of the
-    // happy path lives at the integration level (running
-    // `trading:gen-probability-table` against the real backfill).
+  it("returns null when no regime clears the leading-lead threshold (synthetic data too thin)", () => {
+    // The leading-regime test requires per-bucket samples ≥ 2000.
+    // Toy snapshot streams in unit tests can't realistically produce
+    // that many samples per bucket, so no regime ever computes a
+    // non-null avgLeadPp and the function returns null. End-to-end
+    // coverage of the happy path lives at the integration level
+    // (running `trading:gen-probability-table` against the real
+    // backfill).
     const windowStart = Date.UTC(2025, 0, 1, 0, 0, 0);
     const seed5m: number[] = [];
     for (let i = 0; i < 60; i += 1) {
@@ -118,6 +121,7 @@ describe("computeAssetProbabilities", () => {
       candles1m,
       candles5m,
       minBucketSamples: 1,
+      regimeAlgos: [trendXVol6Algo],
     });
     expect(result).toBeNull();
   });

@@ -1,6 +1,8 @@
-import { EMA50_BOOTSTRAP_BARS } from "@alea/constants/trading";
-import type { FiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import type { FiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
+import { REGIME_TRACKER_BOOTSTRAP_BARS } from "@alea/constants/trading";
+import {
+  describeRegimeTrackers,
+  type RegimeTrackers,
+} from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import { activeSlotFromHydration } from "@alea/lib/trading/live/slotHydration";
 import type {
@@ -14,27 +16,23 @@ import type { Vendor } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 
 /**
- * Bootstrap each asset's moving trackers (EMA-50 and the live ATR)
- * with the most recent closed 5m bars from the price-feed REST
- * endpoint. EMA needs ≥50 closes; ATR needs ≥`LIVE_TRADING_ATR_PERIOD`.
- * We pull `EMA50_BOOTSTRAP_BARS` (60 by default) which seeds both with
- * margin to spare, and fetch
- * once per asset so the two trackers share a single network round-
- * trip. Failures are logged and the runner proceeds — decisions
- * just stay in the `warmup` skip state until the live stream catches
- * up.
+ * Bootstrap each asset's regime trackers (EMA-20, EMA-50, ATR-14,
+ * ATR-50) with the most recent closed 5m bars from the price-feed REST
+ * endpoint. We pull `REGIME_TRACKER_BOOTSTRAP_BARS` (which seeds the
+ * slowest tracker comfortably) and fetch once per asset so all four
+ * trackers share a single network round-trip. Failures are logged and
+ * the runner proceeds — decisions just stay in the `warmup` skip
+ * state until the live stream catches up.
  */
 export async function hydrateMovingTrackers({
   assets,
-  emas,
-  atrs,
+  trackers,
   signal,
   emit,
   priceSource,
 }: {
   readonly assets: readonly Asset[];
-  readonly emas: Map<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: Map<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: Map<Asset, RegimeTrackers>;
   readonly signal: AbortSignal;
   readonly emit: (event: LiveEvent) => void;
   readonly priceSource: LivePriceSource;
@@ -46,21 +44,19 @@ export async function hydrateMovingTrackers({
     try {
       const bars = await priceSource.fetchRecentFiveMinuteBars({
         asset,
-        count: EMA50_BOOTSTRAP_BARS,
+        count: REGIME_TRACKER_BOOTSTRAP_BARS,
         signal,
       });
-      const ema = emas.get(asset);
-      const atr = atrs.get(asset);
-      for (const bar of bars) {
-        ema?.append(bar);
-        atr?.append(bar);
+      const bundle = trackers.get(asset);
+      if (bundle !== undefined) {
+        for (const bar of bars) {
+          bundle.append(bar);
+        }
       }
-      const emaValue = ema?.currentValue();
-      const atrValue = atr?.currentValue();
       emit({
         kind: "info",
         atMs: Date.now(),
-        message: `${labelAsset(asset)} hydrated ${bars.length} closed 5m bars, ema50=${emaValue === null || emaValue === undefined ? "warming" : emaValue.toFixed(2)}, atr=${atrValue === null || atrValue === undefined ? "warming" : atrValue.toFixed(2)}`,
+        message: `${labelAsset(asset)} hydrated ${bars.length} closed 5m bars${bundle ? `, ${describeRegimeTrackers({ trackers: bundle })}` : ""}`,
       });
     } catch (error) {
       emit({

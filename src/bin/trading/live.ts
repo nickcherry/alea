@@ -152,13 +152,17 @@ function formatLiveEvent({ event }: { readonly event: LiveEvent }): string {
       const { decision } = event;
       if (decision.kind === "trade") {
         const s = decision.snapshot;
-        return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${s.aligned ? pc.cyan("aligned") : pc.dim("vs-regime")} ourP=${decision.chosen.ourProbability.toFixed(3)} ${pc.green(`→ TAKE ${decision.chosen.side.toUpperCase()} @${decision.chosen.bid?.toFixed(2) ?? "?"} edge=${formatSigned({ value: decision.chosen.edge ?? 0 })}`)}`;
+        const winLabel = `${decision.winningRegime.algoId}/${decision.winningRegime.regime}`;
+        return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${pc.cyan(winLabel)} ourP=${decision.chosen.ourProbability.toFixed(3)} ${pc.green(`→ TAKE ${decision.chosen.side.toUpperCase()} @${decision.chosen.bid?.toFixed(2) ?? "?"} edge=${formatSigned({ value: decision.chosen.edge ?? 0 })}`)}`;
       }
       if (decision.snapshot === null) {
         return `${ts} ${pc.dim(decision.reason.toUpperCase())}`;
       }
       const s = decision.snapshot;
-      return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${s.aligned ? pc.cyan("aligned") : pc.dim("vs-regime")} ${pc.yellow(`→ SKIP ${decision.reason}`)}`;
+      const regimeLabel = s.regimesByAlgoId.size === 0
+        ? "no-regime"
+        : [...s.regimesByAlgoId.entries()].map(([a, r]) => `${a}/${r}`).join(",");
+      return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${pc.cyan(regimeLabel)} ${pc.yellow(`→ SKIP ${decision.reason}`)}`;
     }
     case "order-placed":
       return `${ts} ${pc.green("ORDER PLACED")} ${pc.bold(event.asset.toUpperCase().padEnd(5))} ${event.slot.side.toUpperCase()} @${event.slot.limitPrice.toFixed(2)} order=${event.slot.orderId?.slice(0, 12) ?? "?"}…`;

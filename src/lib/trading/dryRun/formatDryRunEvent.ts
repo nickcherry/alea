@@ -39,6 +39,7 @@ function formatDecision({
 }): string {
   if (decision.kind === "trade") {
     const s = decision.snapshot;
+    const winLabel = `${decision.winningRegime.algoId}/${decision.winningRegime.regime}`;
     return [
       pc.bold(labelAsset(s.asset)),
       `${formatRem({ remaining: s.remaining })}`,
@@ -46,7 +47,7 @@ function formatDecision({
       `px=${s.currentPrice.toFixed(decimalsFor({ asset: s.asset }))}`,
       `${distanceLabel({ snapshot: s })}`,
       `ema=${s.ema50 === null ? "—" : s.ema50.toFixed(decimalsFor({ asset: s.asset }))}`,
-      `${alignmentLabel({ aligned: s.aligned })}`,
+      pc.cyan(winLabel),
       `ourP=${decision.chosen.ourProbability.toFixed(3)}`,
       `mkt(up=${formatBid({ value: decision.chosen.side === "up" ? decision.chosen.bid : decision.other.bid })} down=${formatBid({ value: decision.chosen.side === "down" ? decision.chosen.bid : decision.other.bid })})`,
       pc.green(
@@ -68,7 +69,7 @@ function formatDecision({
     `line=${s.line.toFixed(decimalsFor({ asset: s.asset }))}`,
     `px=${s.currentPrice.toFixed(decimalsFor({ asset: s.asset }))}`,
     `${distanceLabel({ snapshot: s })}`,
-    `${alignmentLabel({ aligned: s.aligned })}`,
+    `${regimesLabel({ regimesByAlgoId: s.regimesByAlgoId })}`,
     pc.yellow(`→ SKIP ${decision.reason}${tail}`),
   ].join(" ");
 }
@@ -101,8 +102,17 @@ function distanceLabel({
   return `${snapshot.distanceBp}bp${arrow}`;
 }
 
-function alignmentLabel({ aligned }: { readonly aligned: boolean }): string {
-  return aligned ? pc.cyan("aligned") : pc.dim("vs-regime");
+function regimesLabel({
+  regimesByAlgoId,
+}: {
+  readonly regimesByAlgoId: ReadonlyMap<string, string>;
+}): string {
+  if (regimesByAlgoId.size === 0) {
+    return pc.dim("no-regime");
+  }
+  return pc.cyan(
+    [...regimesByAlgoId.entries()].map(([a, r]) => `${a}/${r}`).join(","),
+  );
 }
 
 function formatBid({ value }: { readonly value: number | null }): string {

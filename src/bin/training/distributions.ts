@@ -11,6 +11,7 @@ import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { openHtmlOnDarwin } from "@alea/lib/exchangePrices/openHtmlOnDarwin";
 import type {
+  RegimeAlgoCacheManifest,
   SizeDistributionCacheManifest,
   SurvivalDistributionCacheManifest,
   SurvivalFilterCacheManifest,
@@ -27,10 +28,15 @@ import {
 import { deployTrainingDashboard } from "@alea/lib/training/deployTrainingDashboard";
 import { loadMaxCandleTimestamp } from "@alea/lib/training/loadMaxCandleTimestamp";
 import { loadTrainingCandles } from "@alea/lib/training/loadTrainingCandles";
+import { applyRegimeAlgos } from "@alea/lib/training/regimeAlgos/applyRegimeAlgos";
+import { regimeAlgos } from "@alea/lib/training/regimeAlgos/registry";
+import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
+import type { RegimeAlgoResult } from "@alea/lib/training/regimeAlgos/resultTypes";
 import { applySurvivalFilters } from "@alea/lib/training/survivalFilters/applySurvivalFilters";
 import { survivalFilters } from "@alea/lib/training/survivalFilters/registry";
 import type { SurvivalFilter } from "@alea/lib/training/survivalFilters/types";
 import type {
+  AssetRegimeAlgos,
   AssetSizeDistribution,
   AssetSurvivalDistribution,
   AssetSurvivalFilters,
@@ -128,6 +134,7 @@ export const trainingDistributionsCommand = defineCommand({
     const distributions: AssetSizeDistribution[] = [];
     const survivalDistributions: AssetSurvivalDistribution[] = [];
     const survivalFilterResults: AssetSurvivalFilters[] = [];
+    const regimeAlgoResults: AssetRegimeAlgos[] = [];
 
     try {
       for (const asset of options.assets) {
@@ -149,12 +156,15 @@ export const trainingDistributionsCommand = defineCommand({
         if (result.filterResults !== null) {
           survivalFilterResults.push(result.filterResults);
         }
+        if (result.regimeAlgoResults !== null) {
+          regimeAlgoResults.push(result.regimeAlgoResults);
+        }
 
         const yearKeys = Object.keys(result.distribution.byYear).sort();
         const survivalLabel =
           result.survival === null
             ? pc.yellow("no 1m")
-            : `${pc.dim("windows=")}${result.survival.windowCount.toLocaleString()} ${pc.dim("filters=")}${survivalFilters.length}`;
+            : `${pc.dim("windows=")}${result.survival.windowCount.toLocaleString()} ${pc.dim("filters=")}${survivalFilters.length} ${pc.dim("regimes=")}${regimeAlgos.length}`;
         const cacheLabel = formatCacheLabel({
           hits: result.cacheHits,
           total: result.cacheTotal,
@@ -193,6 +203,7 @@ export const trainingDistributionsCommand = defineCommand({
       distributions,
       survivalDistributions,
       survivalFilterResults,
+      regimeAlgoResults,
     });
     await writeTrainingDistributionsArtifacts({ payload, htmlPath, jsonPath });
 
@@ -234,6 +245,7 @@ type AssetResult = {
   readonly distribution: AssetSizeDistribution;
   readonly survival: AssetSurvivalDistribution | null;
   readonly filterResults: AssetSurvivalFilters | null;
+  readonly regimeAlgoResults: AssetRegimeAlgos | null;
   readonly cacheHits: number;
   readonly cacheTotal: number;
 };
@@ -316,20 +328,56 @@ async function processAsset({
     }
   }
 
+  const regimeAlgoCacheState: {
+    algo: RegimeAlgo;
+    manifest: RegimeAlgoCacheManifest;
+    cached: RegimeAlgoResult | null;
+  }[] = [];
+  if (lastCandleMs1m !== null) {
+    for (const algo of regimeAlgos) {
+      const manifest: RegimeAlgoCacheManifest = {
+        kind: "regime",
+        series: trainingCandleSeries,
+        asset,
+        lastCandleMs1m,
+        lastCandleMs5m,
+        pipelineVersion: SNAPSHOT_PIPELINE_VERSION,
+        algoId: algo.id,
+        algoVersion: algo.version,
+      };
+      const cached =
+        cache === null
+          ? null
+          : await cache.get<RegimeAlgoResult>({ manifest });
+      regimeAlgoCacheState.push({ algo, manifest, cached });
+    }
+  }
+
   const needSize = cachedSize === null;
   const needSurvival = lastCandleMs1m !== null && cachedSurvival === null;
   const missingFilters = filterCacheState.filter((s) => s.cached === null);
   const needAnyFilter = missingFilters.length > 0;
-  const needSnapshotPass = needSurvival || needAnyFilter;
+  const missingRegimeAlgos = regimeAlgoCacheState.filter(
+    (s) => s.cached === null,
+  );
+  const needAnyRegimeAlgo = missingRegimeAlgos.length > 0;
+  const needSnapshotPass = needSurvival || needAnyFilter || needAnyRegimeAlgo;
 
   // Bookkeeping for the per-asset summary line: hits / total across the
-  // size + survival + per-filter cache layers.
+  // size + survival + per-filter + per-regime-algo cache layers.
   const cacheTotal =
-    1 + (lastCandleMs1m !== null ? 1 : 0) + filterCacheState.length;
+    1 +
+    (lastCandleMs1m !== null ? 1 : 0) +
+    filterCacheState.length +
+    regimeAlgoCacheState.length;
   const cacheHits =
     (cachedSize === null ? 0 : 1) +
     (cachedSurvival === null ? 0 : 1) +
-    filterCacheState.reduce((acc, s) => acc + (s.cached === null ? 0 : 1), 0);
+    filterCacheState.reduce((acc, s) => acc + (s.cached === null ? 0 : 1), 0) +
+    regimeAlgoCacheState.reduce(
+      (acc, s) => acc + (s.cached === null ? 0 : 1),
+      0,
+    );
 
   // Load only what we need. 5m candles power the size dist AND the
   // snapshot pipeline's prev-5m / MA-20 context, so they're needed if
@@ -450,10 +498,78 @@ async function processAsset({
   const filterResults: AssetSurvivalFilters | null =
     perFilter === null ? null : { asset, results: perFilter };
 
+  // Regime-algo pass. We re-walk the snapshot stream once for the
+  // regime layer when any algo's cache missed; the survival/filter
+  // layer above already had its own walk. Two passes total worst-case
+  // (size, regime+filter+survival) is the simplest correctness story
+  // and the cache amortizes everything after the first run.
+  let perRegimeAlgo: RegimeAlgoResult[] | null =
+    regimeAlgoCacheState.length === 0
+      ? null
+      : regimeAlgoCacheState.map((s) => s.cached as RegimeAlgoResult);
+
+  if (needAnyRegimeAlgo) {
+    if (candles1m === null || candles5m === null) {
+      throw new Error(
+        "unreachable: needed regime pass but never loaded the source candles",
+      );
+    }
+    const algosToRun = missingRegimeAlgos.map((s) => s.algo);
+    const { perAlgo: freshPerAlgo } = applyRegimeAlgos({
+      snapshots: computeSurvivalSnapshots({ candles1m, candles5m }),
+      algos: algosToRun,
+    });
+    if (perRegimeAlgo === null) {
+      perRegimeAlgo = regimeAlgoCacheState.map(
+        (s) => s.cached as RegimeAlgoResult,
+      );
+    }
+    for (let i = 0; i < missingRegimeAlgos.length; i += 1) {
+      const slot = missingRegimeAlgos[i];
+      const fresh = freshPerAlgo[i];
+      if (slot === undefined || fresh === undefined) {
+        continue;
+      }
+      const idx = regimeAlgoCacheState.findIndex(
+        (s) => s.algo.id === slot.algo.id,
+      );
+      if (idx < 0) {
+        continue;
+      }
+      perRegimeAlgo[idx] = fresh;
+      if (cache !== null) {
+        await cache.set({ manifest: slot.manifest, value: fresh });
+      }
+    }
+  }
+
+  // Overlay live algo metadata on cached entries so copy edits don't
+  // need a cache invalidation, mirroring the filter-overlay above.
+  if (perRegimeAlgo !== null) {
+    perRegimeAlgo = perRegimeAlgo.map((entry) => {
+      const live = regimeAlgos.find((a) => a.id === entry.id);
+      if (live === undefined) {
+        return entry;
+      }
+      return {
+        ...entry,
+        displayName: live.displayName,
+        description: live.description,
+        params: live.params,
+      };
+    });
+  }
+
+  const regimeAlgoResults: AssetRegimeAlgos | null =
+    perRegimeAlgo === null || perRegimeAlgo.length === 0
+      ? null
+      : { asset, results: perRegimeAlgo };
+
   return {
     distribution,
     survival,
     filterResults,
+    regimeAlgoResults,
     cacheHits,
     cacheTotal,
   };
@@ -483,10 +599,12 @@ function buildPayload({
   distributions,
   survivalDistributions,
   survivalFilterResults,
+  regimeAlgoResults,
 }: {
   readonly distributions: readonly AssetSizeDistribution[];
   readonly survivalDistributions: readonly AssetSurvivalDistribution[];
   readonly survivalFilterResults: readonly AssetSurvivalFilters[];
+  readonly regimeAlgoResults: readonly AssetRegimeAlgos[];
 }): TrainingDistributionsPayload {
   return {
     command: "training:distributions",
@@ -495,6 +613,7 @@ function buildPayload({
     assets: distributions,
     survival: survivalDistributions,
     survivalFilters: survivalFilterResults,
+    regimeAlgos: regimeAlgoResults,
   };
 }
 

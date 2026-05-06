@@ -5,6 +5,10 @@ import { describe, expect, it } from "bun:test";
 const WINDOW_START = Date.UTC(2026, 0, 1, 0, 0, 0);
 const ONE_MINUTE = 60_000;
 
+// Fixture: vol_only_2 / low_vol is the leading table for the BTC
+// sample. The high_vol bucket is excluded (it lags baseline at gen
+// time, by definition not persisted). The decision evaluator should
+// only fire when the snapshot's vol_only_2 classification is `low_vol`.
 const table: ProbabilityTable = {
   command: "trading:gen-probability-table",
   schemaVersion: 1,
@@ -16,34 +20,56 @@ const table: ProbabilityTable = {
     {
       asset: "btc",
       windowCount: 1000,
-      alignedWindowShare: 0.7,
-      aligned: {
-        byRemaining: {
-          1: [],
-          2: [],
-          3: [
-            { distanceBp: 5, samples: 800, probability: 0.85 },
-            { distanceBp: 10, samples: 500, probability: 0.92 },
-          ],
-          4: [],
+      leadingTables: [
+        {
+          algoId: "vol_only_2",
+          regime: "low_vol",
+          windowShare: 0.6,
+          avgLeadPp: 2.4,
+          surface: {
+            byRemaining: {
+              1: [],
+              2: [],
+              3: [
+                { distanceBp: 5, samples: 800, probability: 0.85 },
+                { distanceBp: 10, samples: 500, probability: 0.92 },
+              ],
+              4: [],
+            },
+          },
         },
-      },
-      notAligned: {
-        byRemaining: {
-          1: [],
-          2: [],
-          3: [{ distanceBp: 5, samples: 600, probability: 0.6 }],
-          4: [],
+        {
+          algoId: "trend_x_vol_6",
+          regime: "with_trend_low_vol",
+          windowShare: 0.18,
+          avgLeadPp: 1.8,
+          surface: {
+            byRemaining: {
+              1: [],
+              2: [],
+              3: [{ distanceBp: 5, samples: 600, probability: 0.78 }],
+              4: [],
+            },
+          },
         },
-      },
-      sweetSpot: {
-        startBp: 0,
-        endBp: 100,
-        calibrationScore: 0.01,
-        coverageFraction: 0.5,
-      },
+      ],
     },
   ],
+};
+
+// Regime classifier input populated so vol_only_2 → low_vol and
+// trend_x_vol_6 → with_trend_low_vol (both leading tables in the
+// fixture). EMA20 > EMA50 with separation ≥ 0.5 × ATR-14 = trending up;
+// ATR-14 / ATR-50 = 1.0 ≤ 1.0 → low_vol.
+const baseRegimeInput = {
+  leadingSide: "up" as const,
+  ema20: 101,
+  ema50: 100,
+  atr14: 1,
+  atr50: 1,
+  atr3: 1,
+  rsi14: 50,
+  prev5mDirection: "up" as const,
 };
 
 const baseInputs = {
@@ -52,10 +78,7 @@ const baseInputs = {
   nowMs: WINDOW_START + 2 * ONE_MINUTE, // [+2m, +3m) → remaining = 3
   line: 100,
   currentPrice: 100.05, // distance = 0.05, distanceBp = 5
-  ema50: 99, // diagnostic only; aligned no longer keys off EMA
-  // distance_from_line_atr classification: aligned iff
-  // |distance| >= 0.5 × atr. Here 0.05 >= 0.5 × 0.04 = 0.02 → aligned = true.
-  atr: 0.04,
+  regimeInput: baseRegimeInput,
   upBestBid: 0.6,
   downBestBid: 0.1,
   upTokenId: "TOKEN_UP",
@@ -65,7 +88,7 @@ const baseInputs = {
 };
 
 describe("evaluateDecision", () => {
-  it("trades the higher-edge side when both edges clear minEdge", () => {
+  it("trades the (algo, side) tuple with the highest edge across all leading tables", () => {
     const decision = evaluateDecision(baseInputs);
     expect(decision.kind).toBe("trade");
     if (decision.kind !== "trade") {
@@ -73,20 +96,37 @@ describe("evaluateDecision", () => {
     }
     expect(decision.snapshot.distanceBp).toBe(5);
     expect(decision.snapshot.remaining).toBe(3);
-    expect(decision.snapshot.aligned).toBe(true);
+    // Both algos classify; both have a populated bucket at (3m left, 5bp).
+    // vol_only_2/low_vol: P(up) = 0.85 → edge_up = 0.85 - 0.60 = 0.25
+    // trend_x_vol_6/with_trend_low_vol: P(up) = 0.78 → edge_up = 0.18
+    // Maximum edge across all (lookup, side) → vol_only_2 / up @ 0.25.
+    expect(decision.winningRegime.algoId).toBe("vol_only_2");
+    expect(decision.winningRegime.regime).toBe("low_vol");
     expect(decision.chosen.side).toBe("up");
     expect(decision.chosen.bid).toBe(0.6);
     expect(decision.chosen.edge).toBeCloseTo(0.85 - 0.6, 9);
     expect(decision.other.side).toBe("down");
-    expect(decision.other.edge).toBeCloseTo(1 - 0.85 - 0.1, 9);
   });
 
-  it("returns warmup before the ATR tracker is seeded", () => {
-    const decision = evaluateDecision({ ...baseInputs, atr: null });
+  it("returns warmup when no algo classifies (buffer hasn't seeded)", () => {
+    const decision = evaluateDecision({
+      ...baseInputs,
+      regimeInput: {
+        leadingSide: "up",
+        ema20: null,
+        ema50: null,
+        atr14: null,
+        atr50: null,
+        atr3: null,
+        rsi14: null,
+        prev5mDirection: null,
+      },
+    });
     expect(decision.kind).toBe("skip");
     if (decision.kind === "skip") {
       expect(decision.reason).toBe("warmup");
-      expect(decision.snapshot).toBeNull();
+      // Snapshot is populated on warmup; regimesByAlgoId is empty.
+      expect(decision.snapshot?.regimesByAlgoId.size).toBe(0);
     }
   });
 
@@ -112,10 +152,10 @@ describe("evaluateDecision", () => {
     }
   });
 
-  it("returns no-bucket when distance is past the table tail", () => {
+  it("returns no-bucket when no leading table has data at this (remaining, distance)", () => {
     const decision = evaluateDecision({
       ...baseInputs,
-      currentPrice: 100.5, // distanceBp = 50, no entry at remaining=3
+      currentPrice: 100.5, // distanceBp = 50, no entry at any leading table
     });
     expect(decision.kind).toBe("skip");
     if (decision.kind === "skip") {
@@ -137,58 +177,53 @@ describe("evaluateDecision", () => {
     }
   });
 
-  it("returns thin-edge when neither side clears minEdge", () => {
+  it("returns thin-edge when no (algo, side) tuple clears minEdge", () => {
+    // Bids tuned so the maximum edge across all four (algo, side)
+    // tuples is below 0.05:
+    //   vol_only_2 P(up)=0.85, P(down)=0.15
+    //   trend_x_vol_6 P(up)=0.78, P(down)=0.22
+    //   upBid 0.81 → max edge_up = 0.04 (vol_only_2)
+    //   downBid 0.18 → max edge_down = 0.04 (trend_x_vol_6)
     const decision = evaluateDecision({
       ...baseInputs,
-      upBestBid: 0.84, // edge = 0.01
-      downBestBid: 0.14, // edge = 0.01
+      upBestBid: 0.81,
+      downBestBid: 0.18,
     });
     expect(decision.kind).toBe("skip");
     if (decision.kind === "skip") {
       expect(decision.reason).toBe("thin-edge");
-      expect(decision.up?.edge).toBeCloseTo(0.01, 9);
-      expect(decision.down?.edge).toBeCloseTo(0.01, 9);
     }
   });
 
-  it("returns low-confidence when chosen side's probability is below the gate", () => {
-    // Long-shot reversion shape: aligned bucket at distanceBp=10 →
-    // P(currentSide=up wins) = 0.92, so ourP_down = 0.08. With downBid
-    // = 0.01 we'd have edge_down = 0.07 (clears minEdge), but the
-    // chosen probability 0.08 is far below MIN_MODEL_PROBABILITY = 0.3
-    // so the bot must refuse the trade.
+  it("returns low-confidence when the winning side's probability is below MIN_MODEL_PROBABILITY", () => {
+    // distanceBp=10, only vol_only_2 has data here:
+    //   P(up wins) = 0.92 → ourP_down = 0.08
+    //   downBid = 0.01 → edge_down = 0.07 (clears minEdge)
+    //   But ourP_down 0.08 < MIN_MODEL_PROBABILITY 0.55 → refuse.
     const decision = evaluateDecision({
       ...baseInputs,
-      currentPrice: 100.1, // distance = 0.10 → distanceBp=10
+      currentPrice: 100.1,
       upBestBid: 0.95,
       downBestBid: 0.01,
     });
     expect(decision.kind).toBe("skip");
     if (decision.kind === "skip") {
       expect(decision.reason).toBe("low-confidence");
-      expect(decision.up?.edge).toBeCloseTo(0.92 - 0.95, 9);
-      expect(decision.down?.edge).toBeCloseTo(0.08 - 0.01, 9);
     }
   });
 
-  it("flips aligned to false when distance < 0.5 × ATR", () => {
+  it("falls back to a different leading table when the primary algo's regime doesn't match", () => {
+    // Force vol_only_2 into the lagging (non-persisted) regime by
+    // bumping atr14/atr50 to ratio > 1 → high_vol. trend_x_vol_6
+    // would classify into with_trend_high_vol (no leading table) → no
+    // matching tables → expect no-bucket.
     const decision = evaluateDecision({
       ...baseInputs,
-      // distance = 0.05; 0.5 × atr = 0.5 × 0.3 = 0.15 → 0.05 < 0.15 → not aligned.
-      atr: 0.3,
+      regimeInput: { ...baseRegimeInput, atr14: 2, atr50: 1 },
     });
-    // notAligned table at remaining=3, distance=5 → P(currentSide=up wins) = 0.6.
-    // currentSide=up so ourP_up = 0.6, ourP_down = 0.4.
-    // edge_up = 0.6 - 0.6 = 0 (below minEdge);
-    // edge_down = 0.4 - 0.1 = 0.3 (above minEdge) → trade DOWN.
-    expect(decision.kind).toBe("trade");
-    if (decision.kind !== "trade") {
-      return;
+    expect(decision.kind).toBe("skip");
+    if (decision.kind === "skip") {
+      expect(decision.reason).toBe("no-bucket");
     }
-    expect(decision.snapshot.aligned).toBe(false);
-    expect(decision.chosen.side).toBe("down");
-    expect(decision.chosen.edge).toBeCloseTo(0.3, 9);
-    expect(decision.other.side).toBe("up");
-    expect(decision.other.edge).toBeCloseTo(0.0, 9);
   });
 });

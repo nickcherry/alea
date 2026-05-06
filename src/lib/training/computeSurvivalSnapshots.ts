@@ -1,3 +1,7 @@
+import {
+  FIVE_MINUTES_MS,
+  ONE_MINUTE_MS,
+} from "@alea/lib/livePrices/fiveMinuteWindow";
 import type { SurvivalRemainingMinutes } from "@alea/lib/training/types";
 import type { Candle } from "@alea/types/candles";
 
@@ -255,8 +259,6 @@ const SNAPSHOTS: readonly {
   { candleIndex: 3, remaining: 1 },
 ];
 
-const MS_PER_5M = 5 * 60 * 1000;
-const MS_PER_1M = 60 * 1000;
 
 /**
  * Bumps when the snapshot enumeration's externally-visible behaviour
@@ -455,15 +457,15 @@ function* iterateWindows(candles: readonly Candle[]): Generator<{
       break;
     }
     const startMs = c0.timestamp.getTime();
-    if (startMs % MS_PER_5M !== 0) {
+    if (startMs % FIVE_MINUTES_MS !== 0) {
       i += 1;
       continue;
     }
     if (
-      c1.timestamp.getTime() !== startMs + MS_PER_1M ||
-      c2.timestamp.getTime() !== startMs + 2 * MS_PER_1M ||
-      c3.timestamp.getTime() !== startMs + 3 * MS_PER_1M ||
-      c4.timestamp.getTime() !== startMs + 4 * MS_PER_1M
+      c1.timestamp.getTime() !== startMs + ONE_MINUTE_MS ||
+      c2.timestamp.getTime() !== startMs + 2 * ONE_MINUTE_MS ||
+      c3.timestamp.getTime() !== startMs + 3 * ONE_MINUTE_MS ||
+      c4.timestamp.getTime() !== startMs + 4 * ONE_MINUTE_MS
     ) {
       i += 1;
       continue;
@@ -495,7 +497,7 @@ function* iterateWindows(candles: readonly Candle[]): Generator<{
  * first N samples. All series indexed so `seriesAt[i]` = value computed
  * THROUGH AND INCLUDING bar i.
  */
-type FiveMinuteIndex = {
+export type FiveMinuteIndex = {
   readonly smaAt: (input: {
     readonly windowStartMs: number;
     readonly period: number;
@@ -589,7 +591,15 @@ type FiveMinuteIndex = {
 const EMA50_SLOPE_LOOKBACK = 10;
 const ROC_PERIOD = 20;
 
-function build5mLookback({
+/**
+ * Builds the 5m-bar feature index used by both the training-side
+ * snapshot pipeline and the live decision evaluator. Exported so the
+ * live runner can compute the same `RegimeClassifierInput` from a
+ * rolling buffer of recent closed bars without per-feature trackers.
+ *
+ * Pure function — same input always produces the same lookups.
+ */
+export function build5mLookback({
   candles5m,
 }: {
   readonly candles5m: readonly Candle[] | undefined;

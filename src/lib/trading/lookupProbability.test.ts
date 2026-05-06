@@ -1,4 +1,4 @@
-import { lookupProbability } from "@alea/lib/trading/lookupProbability";
+import { lookupAllProbabilities } from "@alea/lib/trading/lookupProbability";
 import type { ProbabilityTable } from "@alea/lib/trading/types";
 import { describe, expect, it } from "bun:test";
 
@@ -13,101 +13,126 @@ const baseTable: ProbabilityTable = {
     {
       asset: "btc",
       windowCount: 1000,
-      alignedWindowShare: 0.5,
-      aligned: {
-        byRemaining: {
-          1: [
-            { distanceBp: 1, samples: 500, probability: 0.95 },
-            { distanceBp: 5, samples: 300, probability: 0.85 },
-          ],
-          2: [],
-          3: [],
-          4: [{ distanceBp: 1, samples: 1000, probability: 0.7 }],
+      leadingTables: [
+        {
+          algoId: "vol_only_2",
+          regime: "low_vol",
+          windowShare: 0.6,
+          avgLeadPp: 2.4,
+          surface: {
+            byRemaining: {
+              1: [
+                { distanceBp: 1, samples: 500, probability: 0.95 },
+                { distanceBp: 5, samples: 300, probability: 0.85 },
+              ],
+              2: [],
+              3: [],
+              4: [{ distanceBp: 1, samples: 1000, probability: 0.7 }],
+            },
+          },
         },
-      },
-      notAligned: {
-        byRemaining: {
-          1: [{ distanceBp: 1, samples: 200, probability: 0.6 }],
-          2: [],
-          3: [],
-          4: [],
+        {
+          algoId: "trend_x_vol_6",
+          regime: "with_trend_low_vol",
+          windowShare: 0.2,
+          avgLeadPp: 1.6,
+          surface: {
+            byRemaining: {
+              1: [{ distanceBp: 1, samples: 200, probability: 0.78 }],
+              2: [],
+              3: [],
+              4: [],
+            },
+          },
         },
-      },
-      sweetSpot: {
-        startBp: 0,
-        endBp: 100,
-        calibrationScore: 0.01,
-        coverageFraction: 0.5,
-      },
+      ],
     },
   ],
 };
 
-describe("lookupProbability", () => {
-  it("returns the exact bucket for a hit", () => {
-    const lookup = lookupProbability({
+describe("lookupAllProbabilities", () => {
+  it("returns one entry per (algo, regime) where the snapshot's classification matches and the bucket is populated", () => {
+    const lookups = lookupAllProbabilities({
       table: baseTable,
       asset: "btc",
-      aligned: true,
-      remaining: 1,
-      distanceBp: 5,
-    });
-    expect(lookup).toEqual({
-      distanceBp: 5,
-      probability: 0.85,
-      samples: 300,
-    });
-  });
-
-  it("returns null when the bucket is absent (gap or beyond-tail)", () => {
-    expect(
-      lookupProbability({
-        table: baseTable,
-        asset: "btc",
-        aligned: true,
-        remaining: 1,
-        distanceBp: 3,
-      }),
-    ).toBeNull();
-    expect(
-      lookupProbability({
-        table: baseTable,
-        asset: "btc",
-        aligned: true,
-        remaining: 1,
-        distanceBp: 99,
-      }),
-    ).toBeNull();
-  });
-
-  it("respects the alignment toggle", () => {
-    const aligned = lookupProbability({
-      table: baseTable,
-      asset: "btc",
-      aligned: true,
+      regimesByAlgoId: new Map([
+        ["vol_only_2", "low_vol"],
+        ["trend_x_vol_6", "with_trend_low_vol"],
+      ]),
       remaining: 1,
       distanceBp: 1,
     });
-    const notAligned = lookupProbability({
+    expect(lookups).toHaveLength(2);
+    const byAlgo = new Map(lookups.map((l) => [l.algoId, l]));
+    expect(byAlgo.get("vol_only_2")?.probability).toBe(0.95);
+    expect(byAlgo.get("trend_x_vol_6")?.probability).toBe(0.78);
+  });
+
+  it("skips entries where the snapshot's classification under the algo doesn't match the table's regime", () => {
+    const lookups = lookupAllProbabilities({
       table: baseTable,
       asset: "btc",
-      aligned: false,
+      regimesByAlgoId: new Map([
+        ["vol_only_2", "high_vol"], // not a leading regime, no entry exists
+        ["trend_x_vol_6", "with_trend_low_vol"],
+      ]),
       remaining: 1,
       distanceBp: 1,
     });
-    expect(aligned?.probability).toBe(0.95);
-    expect(notAligned?.probability).toBe(0.6);
+    expect(lookups).toHaveLength(1);
+    expect(lookups[0]?.algoId).toBe("trend_x_vol_6");
   });
 
-  it("returns null for unknown assets", () => {
+  it("skips entries where the algo isn't in the snapshot's regimesByAlgoId at all (e.g. classifier returned null)", () => {
+    const lookups = lookupAllProbabilities({
+      table: baseTable,
+      asset: "btc",
+      regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
+      remaining: 1,
+      distanceBp: 1,
+    });
+    expect(lookups).toHaveLength(1);
+    expect(lookups[0]?.algoId).toBe("vol_only_2");
+  });
+
+  it("skips entries where the bucket at this distance is absent (sparse bp range)", () => {
+    const lookups = lookupAllProbabilities({
+      table: baseTable,
+      asset: "btc",
+      regimesByAlgoId: new Map([
+        ["vol_only_2", "low_vol"],
+        ["trend_x_vol_6", "with_trend_low_vol"],
+      ]),
+      remaining: 1,
+      distanceBp: 5,
+    });
+    // Only vol_only_2 has a bucket at distanceBp=5 / remaining=1.
+    expect(lookups).toHaveLength(1);
+    expect(lookups[0]?.algoId).toBe("vol_only_2");
+    expect(lookups[0]?.distanceBp).toBe(5);
+  });
+
+  it("returns an empty array for unknown assets", () => {
     expect(
-      lookupProbability({
+      lookupAllProbabilities({
         table: baseTable,
         asset: "eth",
-        aligned: true,
+        regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
         remaining: 1,
         distanceBp: 1,
       }),
-    ).toBeNull();
+    ).toEqual([]);
+  });
+
+  it("returns an empty array when no algo classifications were provided", () => {
+    expect(
+      lookupAllProbabilities({
+        table: baseTable,
+        asset: "btc",
+        regimesByAlgoId: new Map(),
+        remaining: 1,
+        distanceBp: 1,
+      }),
+    ).toEqual([]);
   });
 });

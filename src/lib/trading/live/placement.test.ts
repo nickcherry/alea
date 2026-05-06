@@ -1,5 +1,4 @@
-import { createFiveMinuteAtrTracker } from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import { createFiveMinuteEmaTracker } from "@alea/lib/livePrices/fiveMinuteEmaTracker";
+import { createRegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
 import { applyFill } from "@alea/lib/trading/live/applyFill";
 import { placeWithRetry } from "@alea/lib/trading/live/placement";
@@ -45,22 +44,22 @@ const table: ProbabilityTable = {
     {
       asset: "btc",
       windowCount: 1,
-      alignedWindowShare: 1,
-      aligned: {
-        byRemaining: {
-          1: [],
-          2: [],
-          3: [{ distanceBp: 5, samples: 500, probability: 0.85 }],
-          4: [],
+      leadingTables: [
+        {
+          algoId: "vol_only_2",
+          regime: "low_vol",
+          windowShare: 0.6,
+          avgLeadPp: 2.4,
+          surface: {
+            byRemaining: {
+              1: [],
+              2: [],
+              3: [{ distanceBp: 5, samples: 500, probability: 0.85 }],
+              4: [],
+            },
+          },
         },
-      },
-      notAligned: { byRemaining: { 1: [], 2: [], 3: [], 4: [] } },
-      sweetSpot: {
-        startBp: 0,
-        endBp: 100,
-        calibrationScore: 0.01,
-        coverageFraction: 0.5,
-      },
+      ],
     },
   ],
 };
@@ -124,40 +123,26 @@ function lastTick(): ReadonlyMap<"btc", LivePriceTick> {
   ]);
 }
 
-function emas() {
-  const tracker = createFiveMinuteEmaTracker();
-  for (let i = 50; i >= 1; i -= 1) {
-    tracker.append({
+function trackers() {
+  // Seeds all four regime trackers with a synthetic series gentle
+  // enough to keep ATRs small. Inputs land in the "with_trend_low_vol"
+  // regime when paired with the test's leading-up snapshot — see the
+  // regime algo's threshold rules.
+  const bundle = createRegimeTrackers();
+  for (let i = 70; i >= 1; i -= 1) {
+    bundle.append({
       asset: "btc",
       openTimeMs: WINDOW_START - i * 5 * 60_000,
       closeTimeMs: WINDOW_START - (i - 1) * 5 * 60_000,
-      open: 99,
-      high: 100,
-      low: 98,
-      close: 99,
+      // Slight upward drift in the most recent bars so EMA-20 lifts
+      // above EMA-50 by enough to register a trend.
+      open: 99 + (70 - i) * 0.02,
+      high: 99.025 + (70 - i) * 0.02,
+      low: 98.975 + (70 - i) * 0.02,
+      close: 99 + (70 - i) * 0.02,
     });
   }
-  return new Map([["btc" as const, tracker]]);
-}
-
-function atrs() {
-  // Small bar range → small configured live ATR, so the test's tick distance of
-  // 0.05 (currentPrice 100.05 − line 100) clears the
-  // |distance| ≥ 0.5 × ATR threshold and the snapshot resolves as
-  // `aligned = true`. ATR ≈ 0.05 here → 0.5 × ATR = 0.025 < 0.05.
-  const tracker = createFiveMinuteAtrTracker();
-  for (let i = 50; i >= 1; i -= 1) {
-    tracker.append({
-      asset: "btc",
-      openTimeMs: WINDOW_START - i * 5 * 60_000,
-      closeTimeMs: WINDOW_START - (i - 1) * 5 * 60_000,
-      open: 99,
-      high: 99.025,
-      low: 98.975,
-      close: 99,
-    });
-  }
-  return new Map([["btc" as const, tracker]]);
+  return new Map([["btc" as const, bundle]]);
 }
 
 function books(): BookCache {
@@ -254,8 +239,7 @@ async function runPlacement({
     record,
     window: windowRecord(),
     lastTick: lastTick(),
-    emas: emas(),
-    atrs: atrs(),
+    trackers: trackers(),
     books: books(),
     table,
     minEdge: 0.05,

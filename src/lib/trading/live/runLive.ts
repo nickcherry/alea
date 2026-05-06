@@ -9,18 +9,15 @@ import {
   ensureTrackersReadyForWindow,
 } from "@alea/lib/livePrices/ensureTrackersReadyForWindow";
 import {
-  createFiveMinuteAtrTracker,
-  type FiveMinuteAtrTracker,
-} from "@alea/lib/livePrices/fiveMinuteAtrTracker";
-import {
-  createFiveMinuteEmaTracker,
-  type FiveMinuteEmaTracker,
-} from "@alea/lib/livePrices/fiveMinuteEmaTracker";
-import {
   currentWindowStartMs,
   FIVE_MINUTES_MS,
   flooredRemainingMinutes,
 } from "@alea/lib/livePrices/fiveMinuteWindow";
+import {
+  createRegimeTrackers,
+  describeRegimeTrackers,
+  type RegimeTrackers,
+} from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import type {
   ClosedFiveMinuteBar,
@@ -122,16 +119,13 @@ export async function runLive({
     return;
   }
 
-  const emas = new Map<Asset, FiveMinuteEmaTracker>();
-  const atrs = new Map<Asset, FiveMinuteAtrTracker>();
+  const trackers = new Map<Asset, RegimeTrackers>();
   for (const asset of assets) {
-    emas.set(asset, createFiveMinuteEmaTracker());
-    atrs.set(asset, createFiveMinuteAtrTracker());
+    trackers.set(asset, createRegimeTrackers());
   }
   await hydrateMovingTrackers({
     assets,
-    emas,
-    atrs,
+    trackers,
     priceSource,
     signal,
     emit,
@@ -154,15 +148,13 @@ export async function runLive({
     },
     onBarClose: (bar) => {
       lastClosedBars.set(bar.asset, bar);
-      const ema = emas.get(bar.asset);
-      const atr = atrs.get(bar.asset);
-      const emaAccepted = ema !== undefined && ema.append(bar);
-      const atrAccepted = atr !== undefined && atr.append(bar);
-      if (emaAccepted || atrAccepted) {
+      const bundle = trackers.get(bar.asset);
+      const accepted = bundle !== undefined && bundle.append(bar);
+      if (accepted) {
         emit({
           kind: "info",
           atMs: Date.now(),
-          message: `${labelAsset(bar.asset)} 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ema50=${ema?.currentValue()?.toFixed(2) ?? "warming"}, atr=${atr?.currentValue()?.toFixed(2) ?? "warming"}`,
+          message: `${labelAsset(bar.asset)} 5m close ${new Date(bar.openTimeMs).toISOString().slice(11, 16)} UTC: close=${bar.close}, ${describeRegimeTrackers({ trackers: bundle })}`,
         });
       }
     },
@@ -286,8 +278,7 @@ export async function runLive({
       windowStartMs: startMs,
       nowMs,
       priceSource,
-      emas,
-      atrs,
+      trackers,
       lastClosedBars,
       state: trackerHydrationState,
       signal,
@@ -340,8 +331,7 @@ export async function runLive({
         window,
         nowMs,
         lastTick,
-        emas,
-        atrs,
+        trackers,
         books,
         table,
         minEdge,
@@ -473,8 +463,7 @@ function stepAsset({
   window,
   nowMs,
   lastTick,
-  emas,
-  atrs,
+  trackers,
   books,
   table,
   minEdge,
@@ -489,8 +478,7 @@ function stepAsset({
   readonly window: WindowRecord;
   readonly nowMs: number;
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
-  readonly emas: ReadonlyMap<Asset, FiveMinuteEmaTracker>;
-  readonly atrs: ReadonlyMap<Asset, FiveMinuteAtrTracker>;
+  readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly minEdge: number;
@@ -550,8 +538,7 @@ function stepAsset({
     record,
     window,
     lastTick,
-    emas,
-    atrs,
+    trackers,
     books,
     table,
     minEdge,
@@ -590,8 +577,7 @@ function stepAsset({
       record,
       window,
       lastTick,
-      emas,
-      atrs,
+      trackers,
       books,
       table,
       minEdge,
