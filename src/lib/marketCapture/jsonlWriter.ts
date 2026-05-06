@@ -34,9 +34,12 @@ import type { CaptureRecord } from "@alea/lib/marketCapture/types";
  *      file itself so the path stays stable for any human or
  *      monitoring process inspecting it.
  *   3. The new window's `.jsonl` file is opened.
- *   4. The caller's `onRollover` hook is invoked (best-effort —
- *      thrown errors are logged, not propagated, so a failing
- *      ingester can't wedge capture).
+ *   4. The caller's `onRollover` hook is dispatched onto a SEPARATE
+ *      sequential chain — the writer's main queue does NOT await it.
+ *      A slow ingester (e.g. Postgres backlog) cannot stall the
+ *      writer's next rotation; rotations queue cleanly and only the
+ *      ingest chain backs up. `close()` drains the rollover chain
+ *      so the process exits cleanly.
  *
  * Concurrency: every public method awaits a single in-flight chain
  * to keep writes ordered. Callers can fire-and-forget `write()` and
@@ -67,8 +70,16 @@ export async function createCaptureJsonlWriter({
   let handle: FileHandle | null = null;
   let session: WindowSession | null = null;
   let closed = false;
-  // Single-slot serialiser so write/close/rollover can't interleave.
+  // Single-slot serialiser so write/close/rollover-internals can't
+  // interleave. Used for everything that touches `handle` / `session`.
   let queue: Promise<void> = Promise.resolve();
+  // Independent serial chain for `onRollover` callbacks (typically a
+  // Postgres bulk insert). Kept off the main queue so a slow or stuck
+  // ingester cannot wedge subsequent rotations or writes — observed in
+  // production: a hung onRollover used to block all future window
+  // rotations, the WS handlers piled up records in heap, and the
+  // process grew to multi-GB before SIGINT.
+  let rolloverChain: Promise<void> = Promise.resolve();
 
   const enqueue = <T>(fn: () => Promise<T>): Promise<T> => {
     const next = queue.then(fn, fn);
@@ -114,11 +125,18 @@ export async function createCaptureJsonlWriter({
       onError?.(error instanceof Error ? error : new Error(String(error)));
     }
     if (onRollover !== undefined) {
-      try {
-        await onRollover({ closedSession: ending, closedPath });
-      } catch (error) {
-        onError?.(error instanceof Error ? error : new Error(String(error)));
-      }
+      // Dispatch onto the rollover chain so the writer's main queue
+      // stays free for the next rotation. Errors are isolated per
+      // rotation so one stuck ingest doesn't stop subsequent ones from
+      // running.
+      const rolloverInput = { closedSession: ending, closedPath };
+      rolloverChain = rolloverChain.then(async () => {
+        try {
+          await onRollover(rolloverInput);
+        } catch (error) {
+          onError?.(error instanceof Error ? error : new Error(String(error)));
+        }
+      });
     }
   };
 
@@ -174,13 +192,19 @@ export async function createCaptureJsonlWriter({
         // (open mode 'a' positions at EOF on each write under POSIX).
         await appendFile(handle, line, "utf8");
       }),
-    close: () =>
-      enqueue(async () => {
+    close: async () => {
+      // Drain writes + the final rotation, then drain any rollover
+      // callbacks that were dispatched onto the parallel chain. The
+      // process is shutting down; we wait so the operator gets a clean
+      // last-window ingest before exit.
+      await enqueue(async () => {
         if (closed) {
           return;
         }
         closed = true;
         await finishSession();
-      }),
+      });
+      await rolloverChain;
+    },
   };
 }

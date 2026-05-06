@@ -269,14 +269,6 @@ export function replayWindow({
       polymarketResolution: replayMarket.polymarketResolved,
     });
 
-    // After-window trades may still complete partial fills if the
-    // expiresAtMs hasn't passed. The fill simulator already enforces
-    // its own time bounds, so we walk the trade history (which the
-    // event loop has already populated) and apply any not-yet-applied
-    // trades. In the current event loop we apply trades inline as
-    // they come in, so this section is a noop — kept here as a hook
-    // in case we ever need to re-apply trades after a re-evaluation.
-
     perAsset.set(asset, {
       asset,
       market: replayMarket.market,
@@ -287,11 +279,6 @@ export function replayWindow({
       outcomeError: resolution.status === "error" ? resolution.error : null,
       skipReason: state.skipReason,
     });
-
-    // Lead-time counterfactuals can be computed now that all in-
-    // window trades are in. Mutating the envelope to attach them
-    // would diverge from the dry-run shape; we instead expose them
-    // through the serialization step in the orchestrator.
   }
 
   return { windowStartMs, windowEndMs, perAsset };
@@ -635,12 +622,6 @@ function tryDecide({
     expiresAtMs,
     queueAheadShares,
   });
-
-  // Apply any in-window trades that already occurred before this
-  // order was placed but on the chosen outcome — fillSimulation
-  // ignores those (atMs < placedAtMs guard) so this is just
-  // bookkeeping in case we later relax that.
-  // (No-op today; left as a hook.)
 
   const top = topForSide({ book, side: prepared.side });
   const outcomeTrades =

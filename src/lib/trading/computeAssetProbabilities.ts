@@ -116,7 +116,7 @@ export function computeAssetProbabilities({
     return null;
   }
 
-  const baselineByRD = indexByRemainingDistance({ raw: baselineRaw });
+  const baselineByRD = baselineRaw;
   const leadingTables: LeadingRegimeTable[] = [];
 
   for (const slot of perAlgo) {
@@ -189,14 +189,6 @@ function accumulate({
     bucket.survived += 1;
   }
   surface[snapshot.remaining].set(snapshot.distanceBp, bucket);
-}
-
-function indexByRemainingDistance({
-  raw,
-}: {
-  readonly raw: RawSurface;
-}): Record<RemainingMinutes, ReadonlyMap<number, RawBucket>> {
-  return raw;
 }
 
 function computeAvgLeadPp({

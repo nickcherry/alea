@@ -7,6 +7,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { openHtmlOnDarwin } from "@alea/lib/exchangePrices/openHtmlOnDarwin";
 import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
+import { formatUsd } from "@alea/lib/trading/format";
 import { writeTradingPerformanceArtifacts } from "@alea/lib/trading/performance/writeTradingPerformanceArtifacts";
 import { scanPolymarketTradingPerformance } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
 import pc from "picocolors";
@@ -91,16 +92,3 @@ export const tradingPerformanceCommand = defineCommand({
   },
 });
 
-function formatUsd({
-  value,
-  signed = true,
-}: {
-  readonly value: number;
-  readonly signed?: boolean;
-}): string {
-  if (!signed || value === 0) {
-    return `$${Math.abs(value).toFixed(2)}`;
-  }
-  const sign = value > 0 ? "+" : "-";
-  return `${sign}$${Math.abs(value).toFixed(2)}`;
-}

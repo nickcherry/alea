@@ -5,6 +5,7 @@ import {
   DEFAULT_LIFETIME_PNL_PATH,
   persistLifetimePnl,
 } from "@alea/lib/trading/state/lifetimePnlStore";
+import { formatUsd } from "@alea/lib/trading/format";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import pc from "picocolors";
 
@@ -69,10 +70,3 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
   },
 });
 
-function formatUsd({ value }: { readonly value: number }): string {
-  if (value === 0) {
-    return "$0.00";
-  }
-  const sign = value > 0 ? "+" : "-";
-  return `${sign}$${Math.abs(value).toFixed(2)}`;
-}

@@ -1,7 +1,8 @@
 /*
- * Page-specific layout for the Dry Trading Session report. Generic
- * primitives (cards, tables, mono, num-positive/negative, nowrap,
- * muted) come from alea.css.
+ * Page-specific layout for the Replay Session report. Mirrors the
+ * dry-trading sheet so divergence is intentional rather than
+ * accidental; generic primitives (cards, tables, mono,
+ * num-positive/negative, nowrap, muted) come from alea.css.
  */
 
 .context-grid {

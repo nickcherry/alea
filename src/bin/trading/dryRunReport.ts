@@ -7,6 +7,7 @@ import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { openHtmlOnDarwin } from "@alea/lib/exchangePrices/openHtmlOnDarwin";
 import { loadDryRunReportPayload } from "@alea/lib/trading/dryRun/report/loadDryRunReportPayload";
 import { writeDryRunReportArtifacts } from "@alea/lib/trading/dryRun/report/writeDryRunReportArtifacts";
+import { formatPercent, formatUsd } from "@alea/lib/trading/format";
 import pc from "picocolors";
 import { z } from "zod";
 
@@ -78,14 +79,3 @@ export const tradingDryRunReportCommand = defineCommand({
   },
 });
 
-function formatUsd({ value }: { readonly value: number }): string {
-  if (value === 0) {
-    return "$0.00";
-  }
-  const sign = value > 0 ? "+" : "-";
-  return `${sign}$${Math.abs(value).toFixed(2)}`;
-}
-
-function formatPercent({ value }: { readonly value: number | null }): string {
-  return value === null ? "--" : `${(value * 100).toFixed(1)}%`;
-}

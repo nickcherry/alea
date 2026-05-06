@@ -19,10 +19,7 @@ import {
   createReplayJsonlWriter,
   type ReplayJsonlWriter,
 } from "@alea/lib/trading/replay/jsonlLog";
-import {
-  loadMarketEvents,
-  type ReplayLoadStats,
-} from "@alea/lib/trading/replay/loadMarketEvents";
+import { loadMarketEvents } from "@alea/lib/trading/replay/loadMarketEvents";
 import {
   buildLeadTimeForOrder,
   replayWindow,
@@ -257,18 +254,22 @@ export async function runReplay({
       continue;
     }
 
-    // Hydrate per-asset trackers from candles.
+    // Hydrate per-asset trackers from candles. Candles are already
+    // sorted ascending by openTimeMs (the loader returns them in DB
+    // order); binary-search for the cutoff and slice the trailing
+    // bootstrap window. O(log N) per asset per window vs the prior
+    // O(N) full-array filter, which dominated multi-day replays.
     const trackers = new Map<Asset, RegimeTrackers>();
     for (const asset of assets) {
       const tracker = createRegimeTrackers();
       const bars = candlesByAsset.get(asset) ?? [];
-      // Append bars whose openTimeMs < windowStartMs, capped at the
-      // bootstrap depth. The buffer is FIFO inside RegimeTrackers so
-      // we can append all and let it prune.
-      const eligible = bars.filter((bar) => bar.openTimeMs < windowStartMs);
-      const slice = eligible.slice(-TRACKER_BOOTSTRAP_BARS);
-      for (const bar of slice) {
-        tracker.append(bar);
+      const cutoffIdx = upperBoundOpenTime({ bars, lessThanMs: windowStartMs });
+      const sliceStart = Math.max(0, cutoffIdx - TRACKER_BOOTSTRAP_BARS);
+      for (let i = sliceStart; i < cutoffIdx; i += 1) {
+        const bar = bars[i];
+        if (bar !== undefined) {
+          tracker.append(bar);
+        }
       }
       trackers.set(asset, tracker);
     }
@@ -586,7 +587,30 @@ function serializeWindowChainlink({
   return out;
 }
 
-// Unused imports warning silencer for ReplayLoadStats — currently
-// surfaced through the manifest log line and not stored on the
-// result; kept on the import for future stats exposure.
-void ((): ReplayLoadStats | undefined => undefined);
+/**
+ * Returns the smallest index `i` such that `bars[i].openTimeMs >=
+ * lessThanMs`. Equivalently, the count of bars whose `openTimeMs <
+ * lessThanMs`. Assumes `bars` is sorted ascending by `openTimeMs` —
+ * which `loadTrainingCandles` guarantees.
+ */
+function upperBoundOpenTime({
+  bars,
+  lessThanMs,
+}: {
+  readonly bars: readonly ClosedFiveMinuteBar[];
+  readonly lessThanMs: number;
+}): number {
+  let lo = 0;
+  let hi = bars.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    const bar = bars[mid];
+    if (bar !== undefined && bar.openTimeMs < lessThanMs) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+

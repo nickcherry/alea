@@ -5,6 +5,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
+import { formatUsd } from "@alea/lib/trading/format";
 import { formatReplayEvent } from "@alea/lib/trading/replay/formatReplayEvent";
 import { runReplay } from "@alea/lib/trading/replay/runReplay";
 import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
@@ -207,10 +208,3 @@ function parseList(value: string | undefined): string[] | undefined {
   return parts.length > 0 ? parts : undefined;
 }
 
-function formatUsd({ value }: { readonly value: number }): string {
-  if (value === 0) {
-    return "$0.00";
-  }
-  const sign = value > 0 ? "+" : "-";
-  return `${sign}$${Math.abs(value).toFixed(2)}`;
-}

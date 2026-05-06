@@ -17,6 +17,16 @@ import type { Asset } from "@alea/types/assets";
 
 const SETTLEMENT_RETRY_DELAY_MS = 2_000;
 
+/**
+ * Hard cap on settlement retries before we give up and finalize the
+ * window with whatever outcomes we have. Prevents the wrap-up loop
+ * from holding a `WindowRecord` in memory forever (and emitting a
+ * warn line every 2s) when a venue gap means a closing 5m bar will
+ * never arrive. With the 2s delay this caps total wait at ~60s,
+ * comfortably past the typical Binance kline-close arrival jitter.
+ */
+const SETTLEMENT_RETRY_MAX = 30;
+
 type WrapUpWindowParams = {
   readonly window: WindowRecord;
   readonly lastClosedBars: Map<Asset, ClosedFiveMinuteBar>;
@@ -72,7 +82,7 @@ export async function wrapUpWindow(
     outcomes.push(settleRecord({ record, lastClosedBars }));
   }
   const pending = outcomes.filter((o) => o.kind === "pending");
-  if (pending.length > 0) {
+  if (pending.length > 0 && window.settlementRetryCount < SETTLEMENT_RETRY_MAX) {
     window.settlementRetryCount += 1;
     emit({
       kind: "warn",
@@ -84,6 +94,17 @@ export async function wrapUpWindow(
       void wrapUpWindow(params);
     }, SETTLEMENT_RETRY_DELAY_MS);
     return;
+  }
+  if (pending.length > 0) {
+    // Retry budget exhausted — proceed without the missing
+    // outcomes. The asset's bet contributes 0 to PnL for this
+    // window; a follow-up reconciliation can correct lifetime totals
+    // once the venue catches up.
+    emit({
+      kind: "error",
+      atMs: Date.now(),
+      message: `window ${new Date(window.windowStartMs).toISOString().slice(11, 16)} settlement gave up after ${window.settlementRetryCount} retries; finalizing without ${pending.map((p) => p.asset.toUpperCase()).join(",")} (PnL excluded for those assets)`,
+    });
   }
   window.summarySent = true;
 

@@ -115,7 +115,6 @@ export function applyRegimeAlgos({
 
   const perAlgo: RegimeAlgoResult[] = perAlgoRaw.map((slot) => {
     const buckets: RegimeBucketResult[] = [];
-    const halves: SurvivalSurface[] = [];
     let classifiedTotal = 0;
     for (const regime of slot.algo.regimes) {
       const raw = slot.perRegime.get(regime);
@@ -129,7 +128,6 @@ export function applyRegimeAlgos({
         windowCount: windows.size,
         ...materializeSurface({ raw }),
       };
-      halves.push(surface);
       buckets.push({
         regime,
         snapshotsTotal: samples,
@@ -138,7 +136,6 @@ export function applyRegimeAlgos({
       });
     }
     const snapshotsTotal = classifiedTotal + slot.skipCount;
-    void halves; // halves was used by the dropped sweet-spot computation.
     const summary = computeAlgoSummary({
       baseline,
       buckets,
