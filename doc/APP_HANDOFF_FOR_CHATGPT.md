@@ -1,10 +1,30 @@
 # Alea Codebase Handoff for ChatGPT
 
-Last reviewed: 2026-05-04.
+Last reviewed: 2026-05-06.
 
 This file is a standalone technical handoff for a reviewer who cannot see the
 repository. It summarizes the documentation, source code, data model, runtime
 flows, and known source-of-truth details in the current working tree.
+
+**Recent architectural changes** (early May 2026, all reflected below):
+
+- **Filters → regimes** (commit `4e82390`, refined in `6d37a1d`): the live
+  probability table is now generated from the regime registry, not the filter
+  registry. Filters remain as legacy benchmarking only. The decision evaluator
+  uses a multi-algo greedy strategy across the persisted leading-regime tables.
+- **Regime registry trim** (commit `6d37a1d`): from 10 algos down to 3
+  survivors — `vol_only_3`, `vol_quartiles_4`, `trend_x_vol_6`. Auto-promoted
+  leading regimes per asset are listed under "Probability Table Generation".
+- **Market capture pipeline** (commit `6b43173`): long-running `data:capture`
+  records every Polymarket / Binance / Coinbase / Chainlink WS event into the
+  `market_event` Postgres table for offline replay/research.
+- **Replay infrastructure** (commit `ec8d4b8`): `trading:replay` walks
+  captured windows through the live decision + maker-order + fill-simulation
+  pipeline; `trading:replay-report` renders the dashboard. See "Replay
+  Infrastructure" section below.
+- **Capture writer wedge fix + cleanup** (commit `0666e9e`): rollover
+  callbacks run on a separate sequential chain; settlement retries capped at
+  30 (~60s); `formatUsd`/`formatPercent` extracted to `src/lib/trading/format.ts`.
 
 The project is named Alea. It is probabilistic tooling for Polymarket
 5-minute crypto up/down markets. The app studies live exchange feeds, trains
@@ -101,7 +121,8 @@ Major source directories:
 - `src/lib/db`: Kysely setup and migrations.
 - `src/lib/exchangePrices`: latency experiment stream capture and charting.
 - `src/lib/livePrices`: live Binance perp feed, five-minute window helpers,
-  EMA and ATR trackers.
+  per-asset rolling 5m bar buffer (`RegimeTrackers`), and the
+  `RegimeClassifierInput` builder shared with training.
 - `src/lib/polymarket`: CLOB auth, auth check, user websocket probe.
 - `src/lib/reliability`: directional agreement experiment.
 - `src/lib/telegram`: Telegram Bot API sender.
@@ -121,11 +142,18 @@ The README points to these docs:
   Polymarket/Chainlink, what the latency chart shows, and current findings.
 - `doc/RELIABILITY_EXPERIMENT.md`: directional agreement test between fast
   exchange proxies and Polymarket Chainlink settlement feed.
-- `doc/TRAINING_DOMAIN.md`: offline analysis, survival surface, filters,
-  scoring methodology, sweet spots, cache, output files.
+- `doc/TRAINING_DOMAIN.md`: offline analysis, survival surface, filters
+  (legacy benchmarking), scoring methodology, sweet spots, cache, output files.
+- `doc/REGIMES.md`: regime registry, the partitions that drive the live
+  probability table, and the auto-promotion mechanics.
 - `doc/TRADING.md`: live trading model, architecture, vendor abstraction,
   five-minute window lifecycle, API touchpoints, failure modes, Telegram
   messages, and trading commands.
+- `doc/DRY_TRADING.md`: dry-run fill simulation, JSONL session shape, and
+  report interpretation.
+- `doc/MARKET_CAPTURE.md`: long-running tape recorder for offline replay.
+- `doc/REPLAY.md`: offline replay of the live decision pipeline against the
+  captured `market_event` table.
 - `doc/DASHBOARDS.md`: design contract for temp HTML dashboards under `tmp/`.
 - `doc/POLYMARKET.md`: endpoint constants, official docs links, and current
   Polymarket assumptions.
@@ -149,11 +177,13 @@ The app exposes one main CLI entrypoint:
 bun alea
 ```
 
-Registered command families in `src/bin/index.ts`:
+Registered commands in `src/bin/index.ts`:
 
 - `db:migrate`
 - `candles:sync`
 - `candles:fill-gaps`
+- `data:capture` — long-running market-data tape recorder (Polymarket + Binance + Coinbase + Chainlink WS) into `market_event` Postgres
+- `data:ingest-pending` — one-shot ingester for orphaned JSONL session files
 - `latency:capture`
 - `latency:chart`
 - `reliability:capture`
@@ -163,9 +193,12 @@ Registered command families in `src/bin/index.ts`:
 - `polymarket:auth-check`
 - `trading:gen-probability-table`
 - `trading:dry-run`
+- `trading:dry-run-report`
 - `trading:live`
 - `trading:hydrate-lifetime-pnl`
 - `trading:performance`
+- `trading:replay` — offline replay against captured `market_event` data
+- `trading:replay-report` — render an HTML dashboard from a replay session
 - built-in `help`
 
 CLI framework details:
@@ -207,15 +240,20 @@ Training series:
 
 Trading constants in `src/constants/trading.ts`:
 
-- `MIN_BUCKET_SAMPLES = 200`
-- `MIN_ACTIONABLE_DISTANCE_BP = 2`
-- `MIN_EDGE = 0.05`
-- `EMA50_BOOTSTRAP_BARS = 60`
-- `STAKE_USD = 20`
-- `MAKER_FEE_RATE = 0`
-- `ORDER_CANCEL_MARGIN_MS = 10000`
-- `WINDOW_SUMMARY_DELAY_MS = 8000`
-- `WINNING_YES_PAYOUT_USD = 1`
+- `MIN_BUCKET_SAMPLES = 200` — minimum sample count for a probability bucket to be considered tradable
+- `MIN_ACTIONABLE_DISTANCE_BP = 2` — minimum bp distance from line at which we engage at all
+- `MIN_EDGE = 0.05` — minimum (`ourProbability − marketImpliedProbability`) to take a trade
+- `MIN_MODEL_PROBABILITY = 0.55` — minimum model probability for the chosen side; must clear in addition to `MIN_EDGE`
+- `MIN_QUEUE_AHEAD_SHARES = 20` — minimum queue depth at the chosen-side limit price for placement to proceed
+- `REGIME_TRACKER_BOOTSTRAP_BARS = 70` — closed 5m bars pulled at boot to seed the per-asset rolling bar buffer
+- `STAKE_USD = 20` — fixed USD stake per trade
+- `MAKER_FEE_RATE = 0` — current Polymarket maker-fee rate (zero today on these markets)
+- `ORDER_CANCEL_MARGIN_MS = 10_000` — cancel residual orders 10s before window close
+- `WINDOW_SUMMARY_DELAY_MS = 8_000` — Telegram summary fires 8s after window close
+- `WINNING_YES_PAYOUT_USD = 1` — Polymarket winning YES token payout
+- `LIVE_TRADING_REGIME_ALGOS` — the live regime algo set (currently `vol_only_3`, `vol_quartiles_4`, `trend_x_vol_6`); aliased from the registry
+- `LEADING_REGIME_MIN_LEAD_PP = 1.0` — minimum hold-rate lead vs baseline for a regime to be persisted in the live table
+- `REGIME_CELL_MIN_SAMPLES = 400` — minimum sample count per (regime, remaining, distance) cell pre-aggregation
 
 Environment constants in `src/constants/env.ts`:
 
@@ -339,21 +377,20 @@ Five-minute helpers:
   - between +3:00 and +4:00: 2
   - between +4:00 and +5:00: 1
 
-EMA tracker:
+Regime trackers (replaces the old per-feature EMA/ATR trackers):
 
-- `createFiveMinuteEmaTracker` computes EMA-50.
-- It seeds from a simple moving average over the first 50 closed bars.
-- Alpha is `2 / (period + 1)`.
-- It appends only strictly increasing bar open times and drops duplicates or
-  out-of-order bars.
-
-ATR tracker:
-
-- `createFiveMinuteAtrTracker` computes Wilder ATR-14.
-- It seeds from the first 14 true ranges.
-- It also appends only strictly increasing bars.
-- After warmup, memory use is O(1).
-- A unit test asserts it matches the training-side Wilder ATR series.
+- `createRegimeTrackers` keeps a per-asset rolling buffer of recently
+  closed 5m bars (capped at 70).
+- `append(bar)` admits strictly-increasing `openTimeMs` only;
+  duplicates and out-of-order bars are dropped.
+- `bars()` returns the buffer in chronological order; the live
+  decision evaluator passes this to `computeRegimeClassifierInput`,
+  which folds the buffer through the same `build5mLookback` index the
+  training-side snapshot pipeline runs over historical candles.
+- Every input the lookback can compute (EMA-20/50, ATR-3/14/50,
+  RSI-14, prev-bar direction) is automatically available at decision
+  time. Adding a regime algo that consumes a new feature requires zero
+  live-side wiring.
 
 Binance live stream:
 
@@ -627,7 +664,12 @@ Given a snapshot at a certain remaining-minute bucket and distance from the
 line, what is the probability the side currently leading will still be the
 winner at the five-minute close?
 
-### Filter Framework
+### Filter Framework (legacy benchmarking)
+
+**Filters are now legacy benchmarking only** as of commit `4e82390`.
+The live probability table is generated from the **regime registry**,
+not the filter registry. Filters remain in the dashboard for
+diagnostic comparison; no filter result feeds the live trader.
 
 Filter type:
 
@@ -636,23 +678,43 @@ Filter type:
   and `classify(snapshot, context)`.
 - Classifier returns `true`, `false`, or `"skip"`.
 
-Current registered filters in code:
+Currently registered filters in code (all dashboard-only):
 
-1. `distance_from_line_atr`
-   - Display: "Distance from price line >= 0.5 ATR".
-   - True means the snapshot price is at least 0.5 ATR-14 away from the line.
-   - False means near the line.
-   - Skips when ATR is unavailable or zero.
-   - This is the current champion and the production trading filter.
+1. `distance_from_line_atr_3` — distance ≥ 0.5 × ATR-3
+2. `distance_from_line_atr_4` — distance ≥ 0.5 × ATR-4
+3. `distance_from_line_atr` — distance ≥ 0.5 × ATR-14 (the historical comparator)
+4. `ema_50_5m_alignment` — current side aligned with the EMA-50 regime
 
-2. `ema_50_5m_alignment`
-   - True means current side is aligned with the EMA50 regime.
-   - Regime is up when `line >= ema50`, down otherwise.
-   - Skips until EMA50 is available.
-   - Kept for dashboard benchmark/back-compat comparison.
+The research archive documents 26 retired filters and why they were
+removed from the active registry. The live signal now comes from the
+three regime algos: `vol_only_3`, `vol_quartiles_4`, `trend_x_vol_6`
+(see "Regime Framework" below).
 
-The research archive documents 26 retired filters and why they were removed
-from the active registry.
+### Regime Framework (live)
+
+Regime algo type:
+
+- `RegimeAlgo`.
+- Fields: id, displayName, description, version, regimes (the partition
+  labels), params, and `classify(input: RegimeClassifierInput) → label
+  | null`.
+- `null` indicates warmup (required features haven't seeded).
+
+Currently registered regime algos in code (all live):
+
+1. `vol_only_3` — `low_vol` (≤ 0.7), `mid_vol` (0.7-1.3), `high_vol` (≥ 1.3) on ATR-14 ÷ ATR-50.
+2. `vol_quartiles_4` — quartile-style cuts on ATR-14 ÷ ATR-50 at 0.6 / 1.0 / 1.5.
+3. `trend_x_vol_6` — `{no_trend, with_trend, against_trend} × {low_vol, high_vol}` using `|EMA20-EMA50|/ATR14` (cut at 0.5) and ATR-14 ÷ ATR-50 (cut at 1.0).
+
+Adding a new algo: drop a file under `src/lib/training/regimeAlgos/`,
+append to `regimeAlgos/registry.ts`, regenerate the probability table.
+Algos auto-promote to live trading at next gen-time if any of their
+regimes' `avgLeadPp` clears `LEADING_REGIME_MIN_LEAD_PP` (1.0pp).
+
+The seven algos pruned in commit `6d37a1d` (`vol_only_2`,
+`vol_only_2_tight`, `vol_only_2_atr3`, `trend_strength_3`,
+`trend_only_3`, `prev_bar_carry_2`, `rsi_3`) were either redundant
+with the survivors or didn't clear the live-promotion floor.
 
 ### Filter Scoring
 
@@ -805,69 +867,54 @@ Inputs:
 - One-minute bars for snapshots.
 - Five-minute bars for lookback context.
 
-Current production filter:
-
-- `distance_from_line_atr`, not EMA alignment.
-- The output shape still uses names `aligned` and `notAligned`, but source
-  comments explain that:
-  - `aligned` means "decisively away" from the line, i.e.
-    `abs(price - line) >= 0.5 * ATR14`.
-  - `notAligned` means "near the line".
-  - The names are kept for back-compat and no longer mean EMA alignment.
-
-Generation algorithm:
+Generation algorithm (regime-conditional, since commit `4e82390`):
 
 1. Load one-minute and five-minute candles per asset.
 2. Run `computeSurvivalSnapshots`.
-3. Classify each snapshot with `distanceFromLineAtrFilter`.
-4. Skip snapshots where the filter returns `"skip"`.
-5. Accumulate three raw surfaces:
-   - global baseline.
-   - filter true, stored as `aligned`.
-   - filter false, stored as `notAligned`.
-6. Compute sweet spot using the same `computeSweetSpot` helper used by the
-   training dashboard.
-7. Materialize true/false surfaces, dropping:
-   - distances below `MIN_ACTIONABLE_DISTANCE_BP`.
-   - distances outside the sweet spot.
-   - buckets below the requested `--min-samples` floor, default 200.
-8. Write a TypeScript module, not a JSON import.
+3. For each algo in `LIVE_TRADING_REGIME_ALGOS`, classify every snapshot
+   into one of the algo's regimes (or skip on warmup).
+4. Per (algo, regime) pair, accumulate a raw surface keyed by
+   `(remaining, distanceBp)` with `(survived, total)` per cell.
+5. Compute the unconditional baseline surface across all snapshots.
+6. For each (algo, regime), compute `avgLeadPp` — the sample-weighted
+   mean of `(regimeRate − baselineRate)` in pp across cells that meet
+   `MIN_ACTIONABLE_DISTANCE_BP` AND `REGIME_CELL_MIN_SAMPLES` (400).
+7. Persist the regime as a `LeadingRegimeTable` only if `avgLeadPp ≥
+   LEADING_REGIME_MIN_LEAD_PP` (1.0pp). Lagging or tied regimes are
+   excluded entirely; the runtime decision evaluator skips an algo's
+   contribution when the snapshot's regime under that algo isn't in the
+   persisted table.
+8. Sweet-spot the surviving surfaces (same `computeSweetSpot` helper the
+   filter framework used).
+9. Drop buckets below `--min-samples` (default 200).
+10. Write a TypeScript module, not a JSON import.
 
 Runtime lookup:
 
-- `lookupProbability` finds exact `(asset, aligned, remaining, distanceBp)`.
-- It does not interpolate.
-- It does not fall back to neighboring buckets.
-- Missing bucket means no signal and the runner skips.
+- `lookupAllProbabilities` walks the asset's `leadingTables` and emits
+  one entry per (algo, regime) pair where the snapshot's classification
+  matches AND the bucket at `(remaining, distanceBp)` exists.
+- Multiple matching entries are normal — the decision evaluator uses
+  the multi-algo greedy strategy described in the next section.
+- It does not interpolate. It does not fall back to neighboring
+  buckets. Missing bucket means no signal from that (algo, regime).
 
-Current committed generated table:
+Current committed generated table (regenerated 2026-05-06 after the
+regime trim):
 
-- Generated at `2026-05-04T18:53:47.761Z`.
 - `minBucketSamples = 200`.
-- Training range:
-  - first: `2023-05-04T20:19:00.000Z`
-  - last: `2026-05-02T23:59:00.000Z`
-- All five assets have `windowCount = 315116`.
+- Training range: `2023-05-04` … `2026-05-02`. All five assets have
+  `windowCount = 315,116`.
 
-Current generated table per-asset summary:
+Auto-promoted leading regimes per asset (from the latest regen):
 
-| Asset | Aligned window share | Sweet spot | Sweet calibration raw | Coverage | Buckets aligned/not |
-| ----- | -------------------: | ---------- | --------------------: | -------: | ------------------: |
-| BTC   |               51.56% | 3-8 bp     |          0.0093824443 |   38.18% |             24 / 24 |
-| ETH   |               48.65% | 5-11 bp    |          0.0089335477 |   30.66% |             28 / 28 |
-| SOL   |               49.27% | 11-18 bp   |          0.0089491764 |   19.05% |             32 / 32 |
-| XRP   |               48.22% | 7-14 bp    |          0.0102903027 |   25.52% |             32 / 32 |
-| DOGE  |               48.88% | 8-16 bp    |          0.0093379306 |   25.49% |             36 / 36 |
-
-Important runtime/source distinction:
-
-- The live runner imports and uses the committed generated table as-is.
-- If the generation command is re-run, it will use the current source code,
-  including the current `SWEET_SPOT_INFO_GAIN_THRESHOLD = 0.80`.
-- The committed table's sweet-spot ranges match the 70 percent ranges shown in
-  the sample-floor research note, while the current source code says the
-  threshold is 80 percent. That means the generated artifact and source
-  settings should be treated as separate facts unless the table is regenerated.
+| Asset | Leading regimes (algo / regime / avg-lead-pp)                                                                                            |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| BTC   | `vol_only_3/low_vol +6.5pp`, `vol_quartiles_4/vol_q2 +2.0pp`, `trend_x_vol_6/no_trend_low_vol +2.5pp`, `trend_x_vol_6/against_trend_low_vol +2.6pp` |
+| ETH   | `vol_only_3/low_vol +7.3pp`, `vol_quartiles_4/vol_q2 +1.7pp`, `trend_x_vol_6/no_trend_low_vol +2.2pp`, `trend_x_vol_6/against_trend_low_vol +2.2pp` |
+| SOL   | `vol_quartiles_4/vol_q2 +1.6pp`, `trend_x_vol_6/no_trend_low_vol +1.9pp`, `trend_x_vol_6/against_trend_low_vol +2.4pp` (no `vol_only_3` leader) |
+| XRP   | `vol_only_3/low_vol +3.7pp`, `vol_quartiles_4/vol_q2 +1.5pp`, `trend_x_vol_6/no_trend_low_vol +1.8pp`, `trend_x_vol_6/against_trend_low_vol +1.8pp` |
+| DOGE  | `vol_only_3/low_vol +3.6pp`, `vol_quartiles_4/vol_q2 +1.5pp`, `trend_x_vol_6/no_trend_low_vol +1.9pp`, `trend_x_vol_6/against_trend_low_vol +2.2pp` |
 
 ## Decision Evaluator
 
@@ -882,33 +929,41 @@ Inputs:
 - Current `nowMs`.
 - Line price.
 - Current price.
-- EMA50, used diagnostically.
-- ATR14, used by the active filter.
+- `regimeInput` — pre-computed `RegimeClassifierInput` containing every
+  feature any registered algo might read (`leadingSide`, EMA-20/50,
+  ATR-3/14/50, RSI-14, prev-bar direction). Algos return `null` from
+  `classify` when their required features haven't seeded yet.
 - Current best bid for up YES.
 - Current best bid for down YES.
 - Up/down token ids.
 - Probability table.
 - Minimum edge.
 
-Decision flow implemented in code:
+Multi-algo greedy decision flow implemented in code:
 
 1. Compute floored remaining minutes. If null, skip `out-of-window`.
-2. Require ATR14 to be non-null and positive. Otherwise skip `warmup`.
-3. Compute absolute distance and `distanceBp`.
-4. If distance is below `MIN_ACTIONABLE_DISTANCE_BP`, skip
+2. Compute absolute distance and `distanceBp`.
+3. If distance is below `MIN_ACTIONABLE_DISTANCE_BP`, skip
    `too-close-to-line`.
-5. Compute current side, with ties up.
-6. Compute EMA regime for diagnostics if EMA50 exists.
-7. Compute `aligned = abs(currentPrice - line) >= 0.5 * atr14`.
-8. Look up the exact probability-table bucket.
-9. If no bucket exists, skip `no-bucket`.
-10. Interpret table probability as probability that the current side wins.
-11. Convert to up and down probabilities based on current side.
-12. Compute edge for each side as `ourProbability - bestBid`.
-13. If both bids are missing, skip `no-bid`.
-14. Pick the side with higher edge, treating null edge as negative infinity.
-15. If chosen edge is missing or below `minEdge`, skip `thin-edge`.
-16. Otherwise return `trade`.
+4. Compute current side, with ties up.
+5. Classify the snapshot under every algo in `LIVE_TRADING_REGIME_ALGOS`,
+   building `regimesByAlgoId: Map<algoId, regime>`. Algos that returned
+   `null` (warmup) are absent from the map.
+6. If no algo classified anything, skip `warmup`.
+7. Iterate every persisted leading-regime table for the asset; emit a
+   lookup entry for every (algo, regime) pair that matches
+   `regimesByAlgoId` AND has a populated bucket at `(remaining,
+   distanceBp)`. If no lookups, skip `no-bucket`.
+8. For every (lookup, side) tuple, derive `ourProbability` (interpreted
+   relative to `currentSide`) and `edge = ourProbability - bestBid`.
+   Track the maximum edge per side across all lookups.
+9. If both sides' bids are missing, skip `no-bid`.
+10. Pick the side with the larger maximum edge as the trade side.
+11. If the winning edge is below `minEdge`, skip `thin-edge`.
+12. If the winning side's `ourProbability` is below `MIN_MODEL_PROBABILITY`
+    (0.55), skip `low-confidence`.
+13. Otherwise return `trade` with `winningRegime = (algoId, regime,
+    probability, samples)`.
 
 Skip reasons:
 
@@ -1216,16 +1271,17 @@ Purpose:
 
 Flow:
 
-1. Create EMA and ATR trackers per asset.
-2. Hydrate recent 60 closed five-minute bars from the configured live price
-   source.
+1. Create per-asset rolling 5m bar buffer (`RegimeTrackers`).
+2. Hydrate `REGIME_TRACKER_BOOTSTRAP_BARS` (70) closed five-minute bars
+   from the configured live price source.
 3. Start the live price websocket for BBO ticks and five-minute close bars.
 4. Discover markets, poll books, and subscribe to Polymarket public market
    websocket updates for active token IDs.
 5. Tick every 250 ms.
 6. On window rollover, create new per-asset window state and asynchronously
    discover markets.
-7. Use the same freshness checks and `evaluateDecision` path as live trading.
+7. Use the same freshness checks and `evaluateDecision` path as live trading
+   (multi-algo greedy across promoted leading-regime tables).
 8. On TAKE, force a just-in-time book refresh, re-evaluate, prepare the maker
    GTD order through the vendor, then create a virtual order.
 9. Simulate queue-aware fills from `last_trade_price` events and write
@@ -1239,6 +1295,65 @@ Dry-run differences from live:
 - Dry-run tracks canonical queue-aware fills plus touch/all-filled/unfilled
   counterfactual metrics. Live tracks real user fills and wallet PnL.
 - Dry-run book poll interval is 2000 ms. Live uses 1500 ms.
+
+## Market Capture and Replay
+
+### Capture (`data:capture`)
+
+Source: `src/lib/marketCapture/`, `src/bin/data/capture.ts`.
+
+Long-running daemon that records every Polymarket / Binance USDT-M perp /
+Coinbase Advanced Trade (spot + INTX perp) / Polymarket-RTDS Chainlink WS
+event into a per-window JSONL file under `tmp/market-capture/<UTC-day>/` and
+bulk-loads the rotated file into the `market_event` Postgres table on each
+5-minute boundary. Recovery on startup picks up any orphaned `.jsonl` files
+and loads them before the new writer's window opens. The rollover hook runs
+on a separate sequential chain so a stuck Postgres ingest cannot wedge the
+writer's main queue (commit `0666e9e`).
+
+`market_event` schema: one row per WS event with `(ts_ms, received_ms,
+source, asset, kind, market_ref, payload jsonb)`. Indexed by `ts_ms`,
+`(source, asset, ts_ms)`, and partial `(market_ref, ts_ms) WHERE market_ref
+IS NOT NULL`.
+
+### Replay (`trading:replay` / `trading:replay-report`)
+
+Source: `src/lib/trading/replay/`, `src/bin/trading/replay.ts`,
+`src/bin/trading/replayReport.ts`.
+
+Walks every captured 5-minute window through the live decision +
+maker-order + fill-simulation pipeline. Reuses `evaluateDecision`,
+`fillSimulation`, the dry-run telemetry builders, and the dry-run
+metrics module verbatim. Output JSONL is bit-compatible with the
+dry-run report parser; `trading:replay-report` is a duplicate of
+`trading:dry-run-report` (lightly rebranded) so divergence later is
+intentional rather than accidental.
+
+Flow:
+
+1. Manifest scan: stream every polymarket event in the replay range to
+   build `(asset, windowStart) → ReplayMarket`. Up/down comes from the
+   captured `resolved` event for each market.
+2. Pre-load chainlink reference-price events into per-asset arrays.
+3. Per-asset per-window: hydrate `RegimeTrackers` from the local
+   `candles` table (binary-search slice for the bootstrap window).
+4. Per-window: walk the window's events in time order, dispatching to
+   binance bbo handler / polymarket book/trade/bba handlers, with
+   minute-boundary triggers for evaluation; calls `evaluateDecision`
+   and the simulator just like live.
+5. At window end: resolve the winning side from chainlink (truth) and
+   cross-check against the captured polymarket `resolved` event.
+   Disagreements counted in the dashboard's "Settlement mismatch" stat.
+   A window with missing chainlink coverage logs an error and excludes
+   that asset's bet from PnL — single bad windows don't blow away
+   multi-day replays.
+
+Limitations: replay needs candles synced through to the start of the
+captured range (`bun alea candles:sync`), needs capture to have
+started before `windowStart` (line capture window is `MAX_LINE_CAPTURE_LAG_MS`
+= 5s), and needs the polymarket `resolved` event (~1.5min after
+window-end) for up/down assignment — capture should run at least 2min
+past the last replayable window.
 
 ## Live Trader
 
@@ -1365,8 +1480,9 @@ Rules:
    - On scan failure after a checkpoint loaded, keep the checkpoint and log a
      warning.
    - On scan failure without a checkpoint, log error and start from zero.
-3. Create EMA and ATR trackers per asset.
-4. Hydrate trackers from recent Binance five-minute bars.
+3. Create per-asset rolling 5m bar buffers (`RegimeTrackers`).
+4. Hydrate buffers from recent Binance five-minute bars
+   (`REGIME_TRACKER_BOOTSTRAP_BARS` = 70).
 5. Open Binance perp websocket.
 6. Initialize maps for last tick, books, closed bars, windows, condition index.
 7. Build user fill stream subscription whenever discovered markets change.
@@ -1402,23 +1518,14 @@ Live `stepAsset` prerequisites:
 
 - Record exists.
 - Latest tick exists and is fresh.
-- EMA tracker exists.
-- ATR tracker exists.
-- Market exists.
-- Hydration status is ready.
-- Line is captured.
-- EMA is ready for the window.
-- ATR is ready for the window.
+- Per-asset bar buffer exists.
+- Buffer's last accepted bar ends at `windowStart - 5min` (training-pipeline convention; if the buffer missed a kline-close, the REST hydration helper catches it on the next tick).
+- Market exists, hydration status is ready, line is captured, book is fresh.
 
-Then it calls `evaluateDecision`.
-
-Important nuance:
-
-- The pure evaluator only requires ATR and allows EMA to be null for
-  diagnostics.
-- Live `stepAsset` currently requires EMA readiness before it calls the pure
-  evaluator. Placement retry's internal `currentDecision` does not require
-  EMA readiness, only ATR readiness, and passes EMA as nullable diagnostics.
+Then it calls `evaluateRecordDecision`, which folds the buffer into a
+`RegimeClassifierInput` and invokes `evaluateDecision`. The decision
+evaluator handles its own warmup logic: if no algo classifies, it
+returns `skip` with `reason: "warmup"`.
 
 ### Market Hydration
 
@@ -1426,13 +1533,14 @@ Source:
 
 - `src/lib/trading/live/marketHydration.ts`
 
-Moving tracker hydration:
+Bar-buffer hydration:
 
-- Fetches 60 closed five-minute Binance perp bars per asset.
-- Appends the same bars into EMA and ATR trackers.
-- Logs current EMA/ATR or warming.
-- On failure, logs warning and continues; decisions will remain in warmup until
-  trackers are ready.
+- Fetches `REGIME_TRACKER_BOOTSTRAP_BARS` (70) closed five-minute
+  Binance perp bars per asset.
+- Appends them into the per-asset `RegimeTrackers`.
+- Logs current buffer state (count + last bar timestamp) or warming.
+- On failure, logs warning and continues; decisions remain in warmup
+  until the buffer has seeded.
 
 Asset market hydration:
 
@@ -1690,7 +1798,8 @@ Covered areas include:
 - Exchange price interpolation, densification, and consensus series.
 - Exchange-specific websocket frame parsers.
 - Live price five-minute window helpers.
-- EMA and ATR trackers.
+- Regime tracker rolling-buffer mechanics.
+- Regime classifier input + algo classify functions.
 - Reliability feed parsers, directional outcome, window finalization, and
   renderer.
 - Probability generation and lookup.
@@ -1872,9 +1981,12 @@ Historical data flow:
 1. `candles:sync` fetches candles from Binance/Coinbase.
 2. `upsertCandles` writes OHLCV into Postgres.
 3. `candles:fill-gaps` repairs missing bars.
-4. `training:distributions` reads candles, computes survival/filter outputs,
+4. `training:distributions` reads candles, computes survival/filter
+   surfaces (legacy benchmarking) and per-(algo, regime) regime surfaces,
    and writes dashboard artifacts.
-5. `trading:gen-probability-table` reads candles, runs the production filter,
+5. `trading:gen-probability-table` reads candles, runs every algo in the
+   regime registry, persists `LeadingRegimeTable`s for every (algo,
+   regime) pair clearing `LEADING_REGIME_MIN_LEAD_PP` (1.0pp avg lead),
    and writes the committed probability table.
 
 Research validation flow:
@@ -1885,15 +1997,32 @@ Research validation flow:
    between exchange proxies and Polymarket Chainlink.
 3. Dashboard and JSON outputs provide audit trails.
 
+Capture and replay flow:
+
+1. `data:capture` opens long-running WS subscriptions to Polymarket,
+   Binance, Coinbase, and Polymarket-RTDS Chainlink, writes JSONL per
+   5m window under `tmp/market-capture/`, and bulk-loads each rotated
+   file into the `market_event` Postgres table.
+2. `data:ingest-pending` reloads any orphaned JSONLs (recovery after
+   crash, after `--no-ingest`, or after a Postgres outage).
+3. `trading:replay` walks each captured 5m window through the same
+   `evaluateDecision` + `fillSimulation` pipeline live uses, with
+   chainlink reference-price events as settlement truth and the
+   captured polymarket `resolved` event as cross-check. Output JSONL
+   under `tmp/replay-trading/` is bit-compatible with the dry-run report.
+4. `trading:replay-report` renders the session HTML.
+
 Dry-run trading flow:
 
 1. Load committed probability table.
 2. Create lazy Polymarket vendor without credentials.
-3. Hydrate EMA/ATR from the injected live price source.
+3. Hydrate the per-asset rolling 5m bar buffer (`RegimeTrackers`) from the
+   injected live price source.
 4. Stream live price ticks and close bars.
 5. Discover Polymarket markets.
 6. Poll books and stream public market data.
-7. Run evaluator and prepare virtual maker orders through the vendor.
+7. Run the multi-algo greedy evaluator and prepare virtual maker orders
+   through the vendor.
 8. Simulate queue-aware fills and official-first settlement.
 9. Append JSONL session/window/order records under `tmp/dry-trading/`.
 
@@ -1903,17 +2032,18 @@ Live trading flow:
 2. Validate `--commit` and required env.
 3. Create eager-auth Polymarket vendor.
 4. Bootstrap lifetime PnL.
-5. Hydrate EMA/ATR.
+5. Hydrate the per-asset rolling 5m bar buffer (`RegimeTrackers`).
 6. Stream Binance perp ticks and close bars.
 7. Discover/hydrate each Polymarket market per five-minute window.
 8. Poll books.
 9. Stream user fills.
 10. Capture line.
-11. Evaluate decisions.
+11. Evaluate decisions (multi-algo greedy across promoted regimes).
 12. Place maker-only limit BUY orders if edge passes.
 13. Retry post-only rejections while edge remains.
 14. Cancel residual orders before close.
-15. Settle filled slots after close.
+15. Settle filled slots after close (capped at 30 retries / ~60s if a
+    closing 5m bar is delayed; missing assets contribute 0 to PnL).
 16. Persist lifetime PnL.
 17. Send Telegram summary.
 
@@ -1980,8 +2110,10 @@ Database/candles:
 Live prices:
 
 - `src/lib/livePrices/fiveMinuteWindow.ts`
-- `src/lib/livePrices/fiveMinuteEmaTracker.ts`
-- `src/lib/livePrices/fiveMinuteAtrTracker.ts`
+- `src/lib/livePrices/regimeTrackers.ts` — per-asset rolling buffer of recently-closed 5m bars (replaces the old per-feature trackers)
+- `src/lib/livePrices/regimeContext.ts` — folds the bar buffer into a `RegimeClassifierInput` per decision
+- `src/lib/livePrices/ensureTrackersReadyForWindow.ts` — REST fallback when a kline-close was missed
+- `src/lib/livePrices/source.ts` and `src/lib/livePrices/types.ts`
 - `src/lib/exchangePrices/sources/binance/streamBinancePerpQuotes.ts` (multi-asset BBO + kline + reconnect; trader consumes via the adapter at `src/lib/livePrices/binancePerp/source.ts`)
 - `src/lib/wsClient/createReconnectingWebSocket.ts` (shared auto-reconnect WS client used by every long-running stream)
 - `src/lib/livePrices/binancePerp/fetchRecentFiveMinuteBars.ts`

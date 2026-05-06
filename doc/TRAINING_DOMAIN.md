@@ -159,11 +159,18 @@ The active filter set is the array exported from
 runner, cache layer, and renderer all consume filters generically through
 this list — none of them special-cases a particular filter id.
 
-The registry is intentionally focused: it currently includes the
-production champion (`distance_from_line_atr`) plus the EMA-50 alignment
-benchmark retained for comparison. Retired filters are documented in the
-research archive so they can be reconstructed later without keeping every
-historical experiment active in the dashboard.
+The registry is intentionally focused. As of 2026-05-06 it contains
+four filters — `distance_from_line_atr_3`, `distance_from_line_atr_4`,
+`distance_from_line_atr` (the historical ATR-14 comparator), and
+`ema_50_5m_alignment` (head-to-head benchmark). Retired filters are
+documented in the research archive so they can be reconstructed later
+without keeping every historical experiment active in the dashboard.
+
+**Filters are now legacy benchmarking only.** The live probability
+table is generated from the **regime registry** (see
+[REGIMES.md](./REGIMES.md)) rather than the filter registry. Filters
+remain in the dashboard for diagnostic comparison and to anchor
+historical research, but no filter result feeds the live trader.
 
 ### Adding a filter
 
@@ -308,25 +315,28 @@ range visually, and the three-number meta strip above it
 
 ### What we learned by running this
 
-A few observations from the first regen with the new methodology:
+These observations are from the 2026-05-04 filter-scoring regen and
+predate the regime-table migration. They're useful as historical
+intuition; the **current** live signal comes from regime tables, not
+filter results — see [REGIMES.md](./REGIMES.md).
 
-- `distance_from_line_atr` is the clear single-filter champion across all
-  five assets (calibration ~0.6–0.9% vs no-filter). Universal coverage,
-  decent calibration, and consistently the top by total information gain.
-- `distance_atr_with_ema_aligned`, the previous "compound winner," now
-  scores meaningfully **worse** than its parent under fair scoring. The
-  EMA-alignment AND condition restricts the kept population to smaller
-  per-bucket samples whose noisier rates predict outcomes worse than the
-  parent's smoother rates. Restrictive compounds trade calibration quality
-  for selectivity; the trade can go badly when sample sizes drop too far.
-- `rsi_extreme_against_side` has the highest per-kept-snapshot
-  information gain (~0.011 nats/snapshot) but fires on only 7% of
-  snapshots, so its `calibrationScore` lands well below the champion.
-  Strong candidate for a future compound layer (orthogonal to the
-  champion's signal — Cohen's kappa ≈ 0.025).
-- The per-rem breakdown reveals where filters earn their edge. The
-  champion peaks at `remaining=2/3`; some niche filters peak at
-  `remaining=4` (window-open) and decay sharply.
+- `distance_from_line_atr` was the clear single-filter champion across
+  all five assets (calibration ~0.6–0.9% vs no-filter): universal
+  coverage, decent calibration, top by total information gain.
+- `distance_atr_with_ema_aligned`, the previous "compound winner,"
+  scored meaningfully **worse** than its parent under fair scoring.
+  The EMA-alignment AND condition restricted the kept population to
+  smaller per-bucket samples whose noisier rates predicted outcomes
+  worse than the parent's smoother rates. Restrictive compounds trade
+  calibration quality for selectivity; the trade can go badly when
+  sample sizes drop too far.
+- `rsi_extreme_against_side` had the highest per-kept-snapshot
+  information gain (~0.011 nats/snapshot) but fired on only 7% of
+  snapshots, so its `calibrationScore` landed well below the champion.
+  Was a strong candidate for a compound layer.
+- The per-rem breakdown revealed where filters earned their edge. The
+  champion peaked at `remaining=2/3`; some niche filters peaked at
+  `remaining=4` (window-open) and decayed sharply.
 
 ## Output
 

@@ -26,6 +26,9 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync`
   `candles:fill-gaps`
+- `data:*`
+  `data:capture`
+  `data:ingest-pending`
 - `latency:*`
   `latency:capture`
   `latency:chart`
@@ -45,6 +48,8 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `trading:live`
   `trading:hydrate-lifetime-pnl`
   `trading:performance`
+  `trading:replay`
+  `trading:replay-report`
 - `help`
   Built-in. `alea help <command>` prints detailed help; `alea help` is equivalent to `alea` with no arguments.
 

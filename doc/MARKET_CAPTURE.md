@@ -175,7 +175,7 @@ That's ~1.3 GB/hr in the DB and ~1.1 GB/hr in JSONL files. Index overhead is ~39
 
 ### Ingest timing
 
-The bulk-INSERT path runs synchronously inside the rollover hook every 5 minutes. Real numbers:
+The bulk-INSERT path runs in the rollover hook every 5 minutes. Real numbers from the 2026-05-05 calibration:
 
 | Window | Rows | Ingest time | Throughput |
 |---|---:|---:|---:|
@@ -184,7 +184,7 @@ The bulk-INSERT path runs synchronously inside the rollover hook every 5 minutes
 
 Linear scaling at ~14 µs/row inserted. **60× headroom** under the 5-minute window budget. Even a 5× volatility spike (~1.8M rows/window) would still ingest in ~25 s.
 
-While the ingest is running, the JSONL writer's serialisation chain blocks new writes — events arriving from the WS streams accumulate as JS-heap closures behind the await chain. At sustained 1,200 events/sec × 5 s ingest = ~6,000 events ≈ ~5 MB held briefly. Trivially small.
+The rollover hook runs on a **separate sequential chain** from the writer's main queue (since 2026-05-06, commit `0666e9e`). A slow or stuck Postgres ingest cannot block subsequent rotations or in-flight writes — events keep flowing into the JSONL file, the next rotation queues cleanly, and only the ingest backlog accumulates. `data:capture`'s clean-shutdown path drains both chains so the operator gets a final-window ingest before exit. The earlier failure mode — a stuck rollover backing up WS handler closures in heap until SIGINT — is no longer reachable through this path.
 
 ### Process resource steady-state
 

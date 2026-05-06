@@ -46,46 +46,45 @@ Each in-window snapshot is classified by:
 - `remaining` — minutes left in the window, floored to one of
   `{1, 2, 3, 4}` per the training pipeline's snapshot convention
   (snapshots happen at +1m, +2m, +3m, +4m with `remaining = 5 − N`).
-- `aligned` — was `|currentPrice − line| ≥ 0.5 × ATR` at decision
-  time, where ATR is the Wilder ATR period configured by
-  `LIVE_TRADING_ATR_PERIOD` through and including the most recently
-  closed 5m bar. Today that is ATR-3. Mirrors the training-side
-  `LIVE_TRADING_FILTER` exactly so the live classification matches
-  the historical classifications baked into the probability table.
-  (The field name `aligned` is kept for back-compat with the
-  surrounding code; semantically `true` = "decisively away" and
-  `false` = "near the line" — it does **not** refer to EMA-50
-  alignment anymore.)
+- `regimesByAlgoId` — for every algo in `LIVE_TRADING_REGIME_ALGOS`
+  (`vol_only_3`, `vol_quartiles_4`, `trend_x_vol_6`), the regime label
+  the snapshot's features classify into. Algos whose required features
+  haven't seeded yet (warmup) drop out by returning `null`.
 
-The probability table maps `(asset, aligned, remaining, distanceBp)`
-to `P(currentSide settles winning)`, derived empirically from the
-training data. Buckets thinner than `MIN_BUCKET_SAMPLES` (200) and
-buckets outside the per-asset **sweet-spot bp range** are dropped at
-generation; the runtime never sees them, so a snapshot whose
-distance falls outside the sweet spot returns `null` from
-`lookupProbability` and the runner skips. See
-[TRAINING_DOMAIN.md § Sweet-spot detection](./TRAINING_DOMAIN.md#sweet-spot-detection)
-and [doc/research/2026-05-04-sweet-spot.md](./research/2026-05-04-sweet-spot.md).
+The probability table maps `(asset, algoId, regime, remaining,
+distanceBp)` → `P(currentSide settles winning)`, derived empirically
+from the training data. Only **leading** regimes are persisted —
+those whose hold-rate beats the unconditional baseline by at least
+`LEADING_REGIME_MIN_LEAD_PP` (1.0pp); lagging regimes are excluded
+entirely. Per-cell sample floor is `REGIME_CELL_MIN_SAMPLES` (400);
+buckets thinner than that are dropped pre-aggregation. See
+[REGIMES.md](./REGIMES.md) for the active algo set and the
+auto-promotion mechanics.
 
-The live runner maintains two streaming trackers per asset, both
-seeded from a REST hydration of the most recent 60 closed 5m bars
-and rolled forward by the websocket close-stream. If book ticks keep
-flowing but a `kline_5m` close frame is missed, live and dry runners
-hydrate the exact prior closed 5m bar over REST before allowing a
-decision in the new window:
+`evaluateDecision` runs a **multi-algo greedy** strategy (live and
+dry-run share the same path):
+1. Classify the snapshot under every algo in the registry.
+2. For every (algo, regime) pair the snapshot matches AND that has a
+   populated bucket at `(remaining, distanceBp)`, compute the per-side
+   edge against the resting Polymarket bid.
+3. Pick the (lookup, side) tuple with the maximum edge across all
+   matches. Trade if `edge ≥ MIN_EDGE` (0.05) AND
+   `ourProbability ≥ MIN_MODEL_PROBABILITY` (0.55); otherwise skip
+   with a typed reason (`thin-edge`, `low-confidence`, `no-bucket`,
+   `no-bid`, `warmup`, `too-close-to-line`, `out-of-window`).
 
-- `fiveMinuteEmaTracker` — running EMA-50 (used for diagnostic
-  logging only since the filter swap; retained because operator-
-  facing messages still reference it).
-- `fiveMinuteAtrTracker` — running Wilder ATR at
-  `LIVE_TRADING_ATR_PERIOD` (the active conditioning variable; ATR-3
-  today). Memory is O(1) after warmup; each tracker keeps only its
-  current value plus the previous bar's close.
-
-A focused unit test (`fiveMinuteAtrTracker.test.ts`) asserts the
-live ATR tracker matches the training pipeline's `computeWilderAtrSeries`
-bar-for-bar, so a divergence in the formula or seed convention is
-caught before it silently miscalibrates live trading.
+The live runner keeps a single rolling buffer of recently-closed 5m
+bars per asset (`RegimeTrackers`, capped at 70 bars). Per-decision the
+buffer is folded into a `RegimeClassifierInput` containing every
+feature the algos read (EMA-20/50, ATR-3/14/50, RSI-14, prev-bar
+direction). Same `build5mLookback` runs over the live buffer that the
+training-side snapshot pipeline runs over historical candles — so any
+algo can read whatever features its `classify` needs without per-input
+plumbing. Bars are hydrated at boot from a REST `klines?interval=5m`
+fetch (most recent `REGIME_TRACKER_BOOTSTRAP_BARS` = 70) and rolled
+forward by the websocket `kline_5m` close stream; if a close is
+missed, the next-window REST fallback re-hydrates the exact prior bar
+before allowing a decision.
 
 ## Architecture
 
@@ -135,8 +134,9 @@ Polymarket directly.
 The orchestrator (`runLive.ts`) only does three things:
 
 1. **Boot.** Hydrate lifetime PnL from the checkpoint, then reconcile it
-   against vendor trade history. Hydrate EMA-50 and the configured live ATR.
-   Open the configured live price source. Open the vendor's user fill stream.
+   against vendor trade history. Hydrate the per-asset rolling 5m bar
+   buffers (`RegimeTrackers`) over REST. Open the configured live price
+   source. Open the vendor's user fill stream.
 2. **Tick.** Every 250 ms, detect window rollover, capture lines,
    evaluate decisions, fire `placeWithRetry` for empty slots that
    pass the edge filter.
@@ -239,7 +239,7 @@ hosts.
 
 | Endpoint                           | Usage                                           | Frequency                                                        | Median latency                                                                |
 | ---------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `GET /fapi/v1/klines?interval=5m`  | Boot-time EMA/ATR hydration; exact-bar fallback | 5 calls at boot, then only when a tracker missed the prior close | **274 ms**                                                                    |
+| `GET /fapi/v1/klines?interval=5m`  | Boot-time bar-buffer hydration; exact-bar fallback | 5 calls at boot, then only when the buffer missed the prior close | **274 ms**                                                                    |
 | `wss://fstream.binance.com/stream` | Combined `bookTicker` + `kline_5m` for 5 assets | Continuous (1 socket)                                            | **~750 ms** to first frame after connect; thousands of ticks/sec steady-state |
 
 Reconnect schedule: `[1, 2, 5, 10, 30] s` exponential. Stale-frame
@@ -326,6 +326,7 @@ reading a long log stretch knows what's normal:
 | `lifetime pnl persist failed`                | Disk error on the checkpoint write                        | Continue; the in-memory accumulator is still correct, next window will retry the persist                                           |
 | `window summary telegram send failed`        | Telegram API hiccup                                       | Continue; the next window's summary will reflect the same lifetime total                                                           |
 | `${asset} state hydration failed`            | `getOpenOrders` or `getTrades` failed at boot             | Slot starts empty; if there was a leftover open order on the venue we'll observe its fill via the user WS, or cancel it at wrap-up |
+| `window … settlement gave up after 30 retries; finalizing without …` | The 5m closing bar for some asset never arrived (Binance gap or REST fallback failure) | Window finalizes without the missing asset's outcome; that asset's bet contributes 0 to PnL for the window. Capped at 30 retries (~60s total) so a permanent gap can't hold a `WindowRecord` in memory forever |
 
 What the runner explicitly **doesn't** do, by design:
 
@@ -400,9 +401,11 @@ Error placing SOL ↑ order: polymarket clob 502 (gateway timeout)
 
 `bun alea trading:gen-probability-table` reads the local Postgres
 for the configured training candle series (binance-perp, 5m + 1m),
-walks the snapshot pipeline once, applies the `distance_from_line_atr`
-filter (`aligned` = decisively away from the line), restricts buckets
-to the per-asset sweet-spot range, and overwrites
+walks the snapshot pipeline once, partitions snapshots by every algo
+in `LIVE_TRADING_REGIME_ALGOS`, persists a `LeadingRegimeTable` for
+every (algo, regime) pair whose hold-rate beats baseline by at least
+`LEADING_REGIME_MIN_LEAD_PP` (1.0pp), restricts each surface to its
+sweet-spot bp range, and overwrites
 `src/lib/trading/probabilityTable/probabilityTable.generated.ts`
 plus a JSON sidecar in `tmp/`. Run this whenever the underlying
 training data has been refreshed and you want the live trader to use
@@ -453,6 +456,18 @@ plus JSON sidecar. It uses only Polymarket API data, does not touch the
 database, and shares the same post-fee PnL normalization as the live
 runner and lifetime-PnL scanner.
 
+### `trading:replay` and `trading:replay-report`
+
+`bun alea trading:replay` walks every captured 5-minute window in
+the `market_event` table through the same `evaluateDecision` +
+`fillSimulation` pipeline live and dry-run use, and emits a JSONL
+session under `tmp/replay-trading/` that's bit-compatible with the
+dry-run report parser. Settlement uses the captured chainlink
+reference-price feed as truth; the polymarket `resolved` event is
+carried alongside as a cross-check. `bun alea trading:replay-report`
+renders the session into an HTML dashboard. See
+[Replay](./REPLAY.md) for the full workflow.
+
 ## Files
 
 Vendor-agnostic core:
@@ -479,5 +494,11 @@ CLIs:
 
 - [src/bin/trading/genProbabilityTable.ts](../src/bin/trading/genProbabilityTable.ts)
 - [src/bin/trading/dryRun.ts](../src/bin/trading/dryRun.ts)
+- [src/bin/trading/dryRunReport.ts](../src/bin/trading/dryRunReport.ts)
 - [src/bin/trading/live.ts](../src/bin/trading/live.ts)
 - [src/bin/trading/hydrateLifetimePnl.ts](../src/bin/trading/hydrateLifetimePnl.ts)
+- [src/bin/trading/performance.ts](../src/bin/trading/performance.ts)
+- [src/bin/trading/replay.ts](../src/bin/trading/replay.ts)
+- [src/bin/trading/replayReport.ts](../src/bin/trading/replayReport.ts)
+
+Replay infrastructure: [src/lib/trading/replay/](../src/lib/trading/replay/) (engine + report renderer; see [Replay](./REPLAY.md)).
