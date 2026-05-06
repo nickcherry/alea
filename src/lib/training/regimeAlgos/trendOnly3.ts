@@ -32,7 +32,7 @@ export const trendOnly3Algo: RegimeAlgo = {
   id: "trend_only_3",
   displayName: "Trend only",
   description:
-    "Three-bucket split on the leading side's relationship to the EMA-20 vs EMA-50 trend: with_trend, against_trend, or no_trend when |EMA-20 − EMA-50| ÷ ATR-14 < 0.5. Direction-aware; magnitude beyond the threshold doesn't sub-divide the buckets.",
+    "Three-bucket split on whether the leading side is riding or fighting the EMA-20 vs EMA-50 trend, with a no-trend bucket for windows where the trend is too faint to call (|EMA-20 − EMA-50| ÷ ATR-14 < 0.5). Only direction matters here — a roaring trend and a gentle one in the same direction land in the same bucket.",
   version: 1,
   regimes: REGIMES,
   params: {

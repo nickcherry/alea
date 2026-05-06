@@ -35,7 +35,7 @@ export const trendXVol6Algo: RegimeAlgo = {
   id: "trend_x_vol_6",
   displayName: "Trend × vol",
   description:
-    "Six-bucket split on trend × vol. Trend axis: |EMA-20 − EMA-50| ÷ ATR-14 ≥ 0.5 counts as trending; the leading side is then with-trend, against-trend, or no-trend (sub-threshold). Vol axis: ATR-14 ÷ ATR-50 with > 1.0 = high_vol. Buckets are {no-trend, with-trend, against-trend} × {low-vol, high-vol}.",
+    "The richest split: tags every window with both a trend label and a vol label, then crosses them. Trend axis looks at the gap between the EMA-20 and EMA-50 (scaled by ATR-14, cut at 0.5) and asks whether the leading side is riding the trend, fighting it, or whether there's no real trend to speak of; vol axis is the usual calm-vs-choppy cut (ATR-14 ÷ ATR-50 = 1.0). Six buckets in total — informative when trend and vol interact, but spreads the data thin.",
   version: 1,
   regimes: REGIMES,
   params: {

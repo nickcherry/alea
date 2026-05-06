@@ -19,7 +19,7 @@ export const volOnly3Algo: RegimeAlgo = {
   id: "vol_only_3",
   displayName: "Vol only",
   description:
-    "Three-bucket vol split on ATR-14 ÷ ATR-50: low_vol (≤ 0.7), mid_vol (0.7–1.3], high_vol (> 1.3). Carves out an explicit mid-vol zone between the structural extremes.",
+    "Three-bucket version of the calm-vs-choppy split, with an explicit middle zone for the everyday cases: calm (ATR-14 ÷ ATR-50 ≤ 0.7), middling (0.7–1.3), elevated (> 1.3). Lets the calm and elevated buckets focus on unambiguous extremes rather than borderline windows.",
   version: 1,
   regimes: REGIMES,
   params: { lowCut: LOW_CUT, highCut: HIGH_CUT },

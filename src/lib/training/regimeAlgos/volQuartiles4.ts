@@ -33,7 +33,7 @@ export const volQuartiles4Algo: RegimeAlgo = {
   id: "vol_quartiles_4",
   displayName: "Vol quartiles",
   description:
-    "Four-bucket vol split on ATR-14 ÷ ATR-50: q1 (≤ 0.6), q2 (0.6–1.0], q3 (1.0–1.5], q4 (> 1.5). Quartile-style cuts isolate the extreme tails from the central population.",
+    "Four-bucket vol split using quartile-style cuts on ATR-14 ÷ ATR-50: lowest quartile (≤ 0.6), below-average (0.6–1.0), above-average (1.0–1.5), highest quartile (> 1.5). Spreads the population roughly evenly across buckets so each one gets a fair sample, and isolates the extreme tails from the broad middle.",
   version: 1,
   regimes: REGIMES,
   params: { q1: Q1, q2: Q2, q3: Q3 },

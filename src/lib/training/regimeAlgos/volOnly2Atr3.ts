@@ -19,7 +19,7 @@ export const volOnly2Atr3Algo: RegimeAlgo = {
   id: "vol_only_2_atr3",
   displayName: "Vol only · ATR-3 numerator",
   description:
-    "Two-bucket vol split using a faster numerator: low_vol when ATR-3 ÷ ATR-50 ≤ 1.0, high_vol when > 1.0. Asks whether very-short-window turbulence is a sharper vol signal than the smoother 14-bar window.",
+    "Same calm-vs-choppy split, but measures recent activity over a much shorter window (ATR-3 instead of ATR-14, cut at ATR-3 ÷ ATR-50 = 1.0). Reacts quickly to fresh shocks; useful when what matters is turbulence right now rather than turbulence smoothed over the last hour or so.",
   version: 1,
   regimes: REGIMES,
   params: { volRatio: VOL_RATIO },

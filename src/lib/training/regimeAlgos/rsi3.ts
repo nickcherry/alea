@@ -28,7 +28,7 @@ export const rsi3Algo: RegimeAlgo = {
   id: "rsi_3",
   displayName: "RSI extremes",
   description:
-    "Three-bucket split on momentum extremes via the 14-period Wilder RSI of 5m closes: oversold (RSI ≤ 30), neutral (30 < RSI < 70), overbought (RSI ≥ 70).",
+    "Three-bucket split on momentum extremes using the 14-period RSI of 5m closes, with the conventional thresholds: oversold (≤ 30), neutral (30–70), overbought (≥ 70). RSI tracks the balance of recent up moves vs down moves, so this bucket-up is largely independent of how big the moves are or which way any longer-term trend is pointing.",
   version: 1,
   regimes: REGIMES,
   params: { oversoldCut: OVERSOLD_CUT, overboughtCut: OVERBOUGHT_CUT },

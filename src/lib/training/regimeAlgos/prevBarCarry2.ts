@@ -21,7 +21,7 @@ export const prevBarCarry2Algo: RegimeAlgo = {
   id: "prev_bar_carry_2",
   displayName: "Previous-bar carry",
   description:
-    "Two-bucket split on whether the leading side matches the direction of the previous COMPLETED 5m bar (close ≥ open = up, else down). with_carry when the leading side matches the prior bar's direction, against_carry when it disagrees. Pure short-term directional carry signal.",
+    "Two-bucket split on whether the leading side is moving with or against the most recently completed 5-minute bar (up if its close finished at or above its open, otherwise down). A pure short-term momentum check that lives on a totally different timescale from the slower EMA-based trend signals.",
   version: 1,
   regimes: REGIMES,
   params: {},

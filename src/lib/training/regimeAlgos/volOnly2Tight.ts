@@ -25,7 +25,7 @@ export const volOnly2TightAlgo: RegimeAlgo = {
   id: "vol_only_2_tight",
   displayName: "Vol only · skip middle",
   description:
-    "Two-bucket vol split with a deadband: low_vol when ATR-14 ÷ ATR-50 ≤ 0.85, high_vol when > 1.15. Snapshots in the 0.85–1.15 zone are skipped (return null) and never enter either bucket. Sharper boundary at the cost of coverage.",
+    "Same calm-vs-choppy idea as the simple vol split, but ignores anything close to the boundary — only clearly-calm windows (ATR-14 ÷ ATR-50 ≤ 0.85) and clearly-choppy windows (> 1.15) get classified, and the middle zone is skipped. Trades coverage for a sharper line between the two regimes.",
   version: 1,
   regimes: REGIMES,
   params: { lowCut: LOW_CUT, highCut: HIGH_CUT },

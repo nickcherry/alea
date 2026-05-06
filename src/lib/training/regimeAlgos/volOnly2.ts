@@ -27,7 +27,7 @@ export const volOnly2Algo: RegimeAlgo = {
   id: "vol_only_2",
   displayName: "Vol only",
   description:
-    "Two-bucket vol split: low_vol when ATR-14 ÷ ATR-50 ≤ 1.0, high_vol when > 1.0. Asks whether current 14-bar vol relative to the 50-bar baseline predicts the leading side's hold rate.",
+    "Sorts windows by how lively the market has been lately compared with its longer-term baseline: calm when recent average swing size sits at or below the slower one, choppy when it's above (cut at ATR-14 ÷ ATR-50 = 1.0). The simplest possible vol split — a baseline the more elaborate vol algos have to beat.",
   version: 1,
   regimes: REGIMES,
   params: {

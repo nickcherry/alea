@@ -27,7 +27,7 @@ export const trendStrength3Algo: RegimeAlgo = {
   id: "trend_strength_3",
   displayName: "Trend strength",
   description:
-    "Three-bucket split on direction-agnostic trend magnitude: |EMA-20 − EMA-50| ÷ ATR-14, bucketed as no_trend (< 0.5), weak_trend (0.5–1.5), strong_trend (> 1.5). Asks whether the size of the trend predicts the leading side's hold rate, regardless of which way it points.",
+    "Three-bucket split on how strong the trend is, ignoring which direction it points. Strength is the gap between the EMA-20 and EMA-50 measured in ATR-14 units, bucketed as flat (< 0.5), modest trend (0.5–1.5), or strong trend (> 1.5). Asks whether the size of a trend matters even when its direction doesn't.",
   version: 1,
   regimes: REGIMES,
   params: { weakCut: WEAK_CUT, strongCut: STRONG_CUT },
