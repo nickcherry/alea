@@ -16,6 +16,8 @@ import { tradingGenProbabilityTableCommand } from "@alea/bin/trading/genProbabil
 import { tradingHydrateLifetimePnlCommand } from "@alea/bin/trading/hydrateLifetimePnl";
 import { tradingLiveCommand } from "@alea/bin/trading/live";
 import { tradingPerformanceCommand } from "@alea/bin/trading/performance";
+import { tradingReplayCommand } from "@alea/bin/trading/replay";
+import { tradingReplayReportCommand } from "@alea/bin/trading/replayReport";
 import { trainingDistributionsCommand } from "@alea/bin/training/distributions";
 import { createCli } from "@alea/lib/cli/createCli";
 
@@ -41,6 +43,8 @@ const cli = createCli({
     tradingLiveCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,
+    tradingReplayCommand,
+    tradingReplayReportCommand,
   ],
 });
 
