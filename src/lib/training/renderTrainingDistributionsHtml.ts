@@ -2927,7 +2927,17 @@ export function renderTrainingDistributionsHtml({
         (a, b) => (b.maxLeadPp ?? -Infinity) - (a.maxLeadPp ?? -Infinity),
       );
       ordered.forEach((algo) => {
-        renderRegimeSection(algo, true);
+        // Auto-expand only sections whose algo has at least one
+        // leading regime in the live probability table — same
+        // condition as the LIVE pill. Algos without live regimes
+        // collapse so the operator's eye lands on what's actually
+        // trading.
+        const algoIsLive = liveTradingAlgoIds.indexOf(algo.id) >= 0;
+        const leadingCount = !algoIsLive ? 0 : algo.buckets.reduce((acc, b) => {
+          const v = (b.avgLeadPp == null || !Number.isFinite(b.avgLeadPp)) ? null : b.avgLeadPp;
+          return v !== null && v >= leadingRegimeMinLeadPp ? acc + 1 : acc;
+        }, 0);
+        renderRegimeSection(algo, leadingCount > 0);
       });
     }
 
