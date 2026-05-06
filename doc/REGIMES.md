@@ -69,21 +69,9 @@ generation if any of its regimes lead.
 
 | Algo id            | Buckets                                     | What it splits on |
 | ------------------ | ------------------------------------------- | ----------------- |
-| `vol_only_2`       | `low_vol`, `high_vol`                       | ATR-14 ÷ ATR-50, cut at 1.0 |
-| `vol_only_2_tight` | `low_vol`, `high_vol`                       | Tighter ATR-14 ÷ ATR-50 cut |
-| `vol_only_2_atr3`  | `low_vol`, `high_vol`                       | ATR-3 ÷ ATR-50 — faster vol response |
 | `vol_only_3`       | `low_vol`, `mid_vol`, `high_vol`            | ATR-14 ÷ ATR-50, cuts at 0.7 / 1.3 |
 | `vol_quartiles_4`  | `vol_q1_lowest` … `vol_q4_highest`          | ATR-14 ÷ ATR-50, quartile-style cuts (0.6 / 1.0 / 1.5) |
 | `trend_x_vol_6`    | `{no/with/against}_trend_{low/high}_vol`    | Trend (EMA20−EMA50 ÷ ATR14) × vol |
-| `trend_strength_3` | `no_trend`, `weak_trend`, `strong_trend`    | Magnitude of `\|EMA20−EMA50\| ÷ ATR14`, direction-agnostic |
-| `trend_only_3`     | `no_trend`, `with_trend`, `against_trend`   | Trend direction relative to leading side |
-| `prev_bar_carry_2` | `with_carry`, `against_carry`               | Whether leading side aligns with previous 5m bar's direction |
-| `rsi_3`            | `oversold`, `neutral`, `overbought`         | RSI-14 cuts at 30 / 70 |
-
-**Note on `rsi_3`:** the live runner currently passes `rsi14: null`, so
-this algo can't auto-promote to the persisted live table until a live
-RSI tracker is wired into `RegimeTrackers`. Until then it's strictly a
-dashboard comparison algo.
 
 ## Auto-promotion to live
 

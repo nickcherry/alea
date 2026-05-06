@@ -5,10 +5,10 @@ import { describe, expect, it } from "bun:test";
 const WINDOW_START = Date.UTC(2026, 0, 1, 0, 0, 0);
 const ONE_MINUTE = 60_000;
 
-// Fixture: vol_only_2 / low_vol is the leading table for the BTC
-// sample. The high_vol bucket is excluded (it lags baseline at gen
+// Fixture: vol_only_3 / mid_vol is the leading table for the BTC
+// sample. The other buckets are excluded (they lag baseline at gen
 // time, by definition not persisted). The decision evaluator should
-// only fire when the snapshot's vol_only_2 classification is `low_vol`.
+// only fire when the snapshot's vol_only_3 classification is `mid_vol`.
 const table: ProbabilityTable = {
   command: "trading:gen-probability-table",
   schemaVersion: 1,
@@ -22,8 +22,8 @@ const table: ProbabilityTable = {
       windowCount: 1000,
       leadingTables: [
         {
-          algoId: "vol_only_2",
-          regime: "low_vol",
+          algoId: "vol_only_3",
+          regime: "mid_vol",
           windowShare: 0.6,
           avgLeadPp: 2.4,
           surface: {
@@ -57,10 +57,12 @@ const table: ProbabilityTable = {
   ],
 };
 
-// Regime classifier input populated so vol_only_2 → low_vol and
+// Regime classifier input populated so vol_only_3 → mid_vol and
 // trend_x_vol_6 → with_trend_low_vol (both leading tables in the
 // fixture). EMA20 > EMA50 with separation ≥ 0.5 × ATR-14 = trending up;
-// ATR-14 / ATR-50 = 1.0 ≤ 1.0 → low_vol.
+// ATR-14 / ATR-50 = 1.0, between vol_only_3's 0.7/1.3 cuts → mid_vol;
+// trend_x_vol_6 still lands in low_vol (its 1.0 cut is inclusive on the
+// low side).
 const baseRegimeInput = {
   leadingSide: "up" as const,
   ema20: 101,
@@ -97,11 +99,11 @@ describe("evaluateDecision", () => {
     expect(decision.snapshot.distanceBp).toBe(5);
     expect(decision.snapshot.remaining).toBe(3);
     // Both algos classify; both have a populated bucket at (3m left, 5bp).
-    // vol_only_2/low_vol: P(up) = 0.85 → edge_up = 0.85 - 0.60 = 0.25
+    // vol_only_3/mid_vol: P(up) = 0.85 → edge_up = 0.85 - 0.60 = 0.25
     // trend_x_vol_6/with_trend_low_vol: P(up) = 0.78 → edge_up = 0.18
-    // Maximum edge across all (lookup, side) → vol_only_2 / up @ 0.25.
-    expect(decision.winningRegime.algoId).toBe("vol_only_2");
-    expect(decision.winningRegime.regime).toBe("low_vol");
+    // Maximum edge across all (lookup, side) → vol_only_3 / up @ 0.25.
+    expect(decision.winningRegime.algoId).toBe("vol_only_3");
+    expect(decision.winningRegime.regime).toBe("mid_vol");
     expect(decision.chosen.side).toBe("up");
     expect(decision.chosen.bid).toBe(0.6);
     expect(decision.chosen.edge).toBeCloseTo(0.85 - 0.6, 9);
@@ -180,9 +182,9 @@ describe("evaluateDecision", () => {
   it("returns thin-edge when no (algo, side) tuple clears minEdge", () => {
     // Bids tuned so the maximum edge across all four (algo, side)
     // tuples is below 0.05:
-    //   vol_only_2 P(up)=0.85, P(down)=0.15
+    //   vol_only_3 P(up)=0.85, P(down)=0.15
     //   trend_x_vol_6 P(up)=0.78, P(down)=0.22
-    //   upBid 0.81 → max edge_up = 0.04 (vol_only_2)
+    //   upBid 0.81 → max edge_up = 0.04 (vol_only_3)
     //   downBid 0.18 → max edge_down = 0.04 (trend_x_vol_6)
     const decision = evaluateDecision({
       ...baseInputs,
@@ -196,7 +198,7 @@ describe("evaluateDecision", () => {
   });
 
   it("returns low-confidence when the winning side's probability is below MIN_MODEL_PROBABILITY", () => {
-    // distanceBp=10, only vol_only_2 has data here:
+    // distanceBp=10, only vol_only_3 has data here:
     //   P(up wins) = 0.92 → ourP_down = 0.08
     //   downBid = 0.01 → edge_down = 0.07 (clears minEdge)
     //   But ourP_down 0.08 < MIN_MODEL_PROBABILITY 0.55 → refuse.
@@ -213,7 +215,7 @@ describe("evaluateDecision", () => {
   });
 
   it("falls back to a different leading table when the primary algo's regime doesn't match", () => {
-    // Force vol_only_2 into the lagging (non-persisted) regime by
+    // Force vol_only_3 into the lagging (non-persisted) regime by
     // bumping atr14/atr50 to ratio > 1 → high_vol. trend_x_vol_6
     // would classify into with_trend_high_vol (no leading table) → no
     // matching tables → expect no-bucket.

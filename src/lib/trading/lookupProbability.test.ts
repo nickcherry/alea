@@ -15,7 +15,7 @@ const baseTable: ProbabilityTable = {
       windowCount: 1000,
       leadingTables: [
         {
-          algoId: "vol_only_2",
+          algoId: "vol_only_3",
           regime: "low_vol",
           windowShare: 0.6,
           avgLeadPp: 2.4,
@@ -56,7 +56,7 @@ describe("lookupAllProbabilities", () => {
       table: baseTable,
       asset: "btc",
       regimesByAlgoId: new Map([
-        ["vol_only_2", "low_vol"],
+        ["vol_only_3", "low_vol"],
         ["trend_x_vol_6", "with_trend_low_vol"],
       ]),
       remaining: 1,
@@ -64,7 +64,7 @@ describe("lookupAllProbabilities", () => {
     });
     expect(lookups).toHaveLength(2);
     const byAlgo = new Map(lookups.map((l) => [l.algoId, l]));
-    expect(byAlgo.get("vol_only_2")?.probability).toBe(0.95);
+    expect(byAlgo.get("vol_only_3")?.probability).toBe(0.95);
     expect(byAlgo.get("trend_x_vol_6")?.probability).toBe(0.78);
   });
 
@@ -73,7 +73,7 @@ describe("lookupAllProbabilities", () => {
       table: baseTable,
       asset: "btc",
       regimesByAlgoId: new Map([
-        ["vol_only_2", "high_vol"], // not a leading regime, no entry exists
+        ["vol_only_3", "high_vol"], // not a leading regime, no entry exists
         ["trend_x_vol_6", "with_trend_low_vol"],
       ]),
       remaining: 1,
@@ -87,12 +87,12 @@ describe("lookupAllProbabilities", () => {
     const lookups = lookupAllProbabilities({
       table: baseTable,
       asset: "btc",
-      regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
+      regimesByAlgoId: new Map([["vol_only_3", "low_vol"]]),
       remaining: 1,
       distanceBp: 1,
     });
     expect(lookups).toHaveLength(1);
-    expect(lookups[0]?.algoId).toBe("vol_only_2");
+    expect(lookups[0]?.algoId).toBe("vol_only_3");
   });
 
   it("skips entries where the bucket at this distance is absent (sparse bp range)", () => {
@@ -100,15 +100,15 @@ describe("lookupAllProbabilities", () => {
       table: baseTable,
       asset: "btc",
       regimesByAlgoId: new Map([
-        ["vol_only_2", "low_vol"],
+        ["vol_only_3", "low_vol"],
         ["trend_x_vol_6", "with_trend_low_vol"],
       ]),
       remaining: 1,
       distanceBp: 5,
     });
-    // Only vol_only_2 has a bucket at distanceBp=5 / remaining=1.
+    // Only vol_only_3 has a bucket at distanceBp=5 / remaining=1.
     expect(lookups).toHaveLength(1);
-    expect(lookups[0]?.algoId).toBe("vol_only_2");
+    expect(lookups[0]?.algoId).toBe("vol_only_3");
     expect(lookups[0]?.distanceBp).toBe(5);
   });
 
@@ -117,7 +117,7 @@ describe("lookupAllProbabilities", () => {
       lookupAllProbabilities({
         table: baseTable,
         asset: "eth",
-        regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
+        regimesByAlgoId: new Map([["vol_only_3", "low_vol"]]),
         remaining: 1,
         distanceBp: 1,
       }),

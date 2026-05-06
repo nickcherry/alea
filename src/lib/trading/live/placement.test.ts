@@ -46,8 +46,8 @@ const table: ProbabilityTable = {
       windowCount: 1,
       leadingTables: [
         {
-          algoId: "vol_only_2",
-          regime: "low_vol",
+          algoId: "vol_only_3",
+          regime: "mid_vol",
           windowShare: 0.6,
           avgLeadPp: 2.4,
           surface: {

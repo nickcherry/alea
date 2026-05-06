@@ -39,7 +39,7 @@ describe("formatDryRunEvent", () => {
       decision: {
         kind: "trade",
         winningRegime: {
-          algoId: "vol_only_2",
+          algoId: "vol_only_3",
           regime: "low_vol",
           probability: 0.72,
           samples: 250,
@@ -57,7 +57,7 @@ describe("formatDryRunEvent", () => {
           atr14: 0.00012,
           atr50: 0.00010,
           currentSide: "up",
-          regimesByAlgoId: new Map([["vol_only_2", "low_vol"]]),
+          regimesByAlgoId: new Map([["vol_only_3", "low_vol"]]),
         },
         chosen: {
           side: "up",
@@ -77,7 +77,7 @@ describe("formatDryRunEvent", () => {
     };
 
     expect(stripAnsi(formatDryRunEvent({ event }))).toBe(
-      "12:34:56 DOGE  [rem=3m] line=0.18241 px=0.18300 32bp↑ ema=0.18123 vol_only_2/low_vol ourP=0.720 mkt(up=0.61 down=0.38) → TAKE UP @0.61 edge=+0.110",
+      "12:34:56 DOGE  [rem=3m] line=0.18241 px=0.18300 32bp↑ ema=0.18123 vol_only_3/low_vol ourP=0.720 mkt(up=0.61 down=0.38) → TAKE UP @0.61 edge=+0.110",
     );
   });
 

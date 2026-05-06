@@ -4,7 +4,7 @@ import type { Asset } from "@alea/types/assets";
 /**
  * Identifies which leading-regime table produced the probability that
  * won out at decision time. Threaded onto the trade snapshot so the
- * dry-run log can record "vol_only_2 / low_vol won at 78.4% on a 0.55
+ * dry-run log can record "vol_only_3 / mid_vol won at 78.4% on a 0.55
  * conviction floor" for post-hoc analysis.
  */
 export type WinningRegime = {
