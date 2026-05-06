@@ -212,8 +212,8 @@ function computeAvgLeadPp({
   for (const remaining of remainings) {
     const baselineMap = baselineByRD[remaining];
     for (const [distanceBp, cell] of raw[remaining]) {
-      if (distanceBp < MIN_ACTIONABLE_DISTANCE_BP) continue;
-      if (cell.total < REGIME_CELL_MIN_SAMPLES) continue;
+      if (distanceBp < MIN_ACTIONABLE_DISTANCE_BP) {continue;}
+      if (cell.total < REGIME_CELL_MIN_SAMPLES) {continue;}
       const baselineCell = baselineMap.get(distanceBp);
       if (
         baselineCell === undefined ||
@@ -228,7 +228,7 @@ function computeAvgLeadPp({
       denominator += cell.total;
     }
   }
-  if (denominator === 0) return null;
+  if (denominator === 0) {return null;}
   return numerator / denominator;
 }
 

@@ -3154,7 +3154,7 @@ function prettyRegimeServer(id: string): string {
     neutral: "neutral",
     overbought: "overbought",
   };
-  if (explicit[id] !== undefined) return explicit[id] as string;
+  if (explicit[id] !== undefined) {return explicit[id];}
   return id.replace(/_/g, " ");
 }
 
@@ -3212,12 +3212,12 @@ function renderCrossAssetSummary({
   function median(values: readonly number[]): number {
     const sorted = [...values].sort((a, b) => a - b);
     const n = sorted.length;
-    if (n === 0) return Number.NaN;
-    if (n % 2 === 1) return sorted[(n - 1) / 2] as number;
+    if (n === 0) {return Number.NaN;}
+    if (n % 2 === 1) {return sorted[(n - 1) / 2] as number;}
     return ((sorted[n / 2 - 1] as number) + (sorted[n / 2] as number)) / 2;
   }
   function mean(values: readonly number[]): number {
-    if (values.length === 0) return Number.NaN;
+    if (values.length === 0) {return Number.NaN;}
     return values.reduce((a, b) => a + b, 0) / values.length;
   }
 
@@ -3233,13 +3233,13 @@ function renderCrossAssetSummary({
     .sort((a, b) => b.avg - a.avg);
 
   function formatLead(pp: number): string {
-    if (!Number.isFinite(pp)) return "—";
+    if (!Number.isFinite(pp)) {return "—";}
     return (pp >= 0 ? "+" : "") + pp.toFixed(1) + "pp";
   }
   function leadClass(pp: number): string {
-    if (!Number.isFinite(pp)) return "ca-cell-flat";
-    if (pp > 0) return "ca-cell-up";
-    if (pp < 0) return "ca-cell-down";
+    if (!Number.isFinite(pp)) {return "ca-cell-flat";}
+    if (pp > 0) {return "ca-cell-up";}
+    if (pp < 0) {return "ca-cell-down";}
     return "ca-cell-flat";
   }
 
@@ -3355,10 +3355,10 @@ function toRegimeAlgoSlice({
     let leadDenominator = 0;
     for (const remaining of SURVIVAL_REMAINING_ORDER) {
       const baselineInner = baselineByRemainingDistance.get(remaining);
-      if (baselineInner === undefined) continue;
+      if (baselineInner === undefined) {continue;}
       for (const cell of bucket.surface.byRemaining[remaining]) {
-        if (cell.distanceBp < MIN_ACTIONABLE_DISTANCE_BP) continue;
-        if (cell.total < REGIME_CELL_MIN_SAMPLES) continue;
+        if (cell.distanceBp < MIN_ACTIONABLE_DISTANCE_BP) {continue;}
+        if (cell.total < REGIME_CELL_MIN_SAMPLES) {continue;}
         const baselineCell = baselineInner.get(cell.distanceBp);
         if (baselineCell === undefined || baselineCell.total < REGIME_CELL_MIN_SAMPLES) {
           continue;
@@ -3387,13 +3387,13 @@ function toRegimeAlgoSlice({
   const buckets: RegimeBucketSlice[] = unsortedBuckets.slice().sort((a, b) => {
     const la = a.avgLeadPp ?? Number.NEGATIVE_INFINITY;
     const lb = b.avgLeadPp ?? Number.NEGATIVE_INFINITY;
-    if (lb !== la) return lb - la;
+    if (lb !== la) {return lb - la;}
     return b.windowShare - a.windowShare;
   });
   // maxLeadPp = best regime's avgLeadPp. Algo headline.
   let maxLeadPp: number | null = null;
   for (const b of buckets) {
-    if (b.avgLeadPp === null) continue;
+    if (b.avgLeadPp === null) {continue;}
     if (maxLeadPp === null || b.avgLeadPp > maxLeadPp) {
       maxLeadPp = b.avgLeadPp;
     }

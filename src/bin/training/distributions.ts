@@ -30,8 +30,8 @@ import { loadMaxCandleTimestamp } from "@alea/lib/training/loadMaxCandleTimestam
 import { loadTrainingCandles } from "@alea/lib/training/loadTrainingCandles";
 import { applyRegimeAlgos } from "@alea/lib/training/regimeAlgos/applyRegimeAlgos";
 import { regimeAlgos } from "@alea/lib/training/regimeAlgos/registry";
-import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import type { RegimeAlgoResult } from "@alea/lib/training/regimeAlgos/resultTypes";
+import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import { applySurvivalFilters } from "@alea/lib/training/survivalFilters/applySurvivalFilters";
 import { survivalFilters } from "@alea/lib/training/survivalFilters/registry";
 import type { SurvivalFilter } from "@alea/lib/training/survivalFilters/types";

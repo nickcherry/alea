@@ -1,3 +1,4 @@
+import type { RegimeAlgoResult } from "@alea/lib/training/regimeAlgos/resultTypes";
 import type { Asset } from "@alea/types/assets";
 import type { CandleSeries } from "@alea/types/candleSeries";
 
@@ -220,5 +221,5 @@ export type TrainingDistributionsPayload = {
  */
 export type AssetRegimeAlgos = {
   readonly asset: Asset;
-  readonly results: readonly import("@alea/lib/training/regimeAlgos/resultTypes").RegimeAlgoResult[];
+  readonly results: readonly RegimeAlgoResult[];
 };

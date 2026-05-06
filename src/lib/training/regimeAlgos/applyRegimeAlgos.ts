@@ -3,12 +3,12 @@ import type {
   SurvivalRemainingMinutes,
   SurvivalSnapshot,
 } from "@alea/lib/training/computeSurvivalSnapshots";
-import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import type {
   RegimeAlgoResult,
   RegimeAlgoSummary,
   RegimeBucketResult,
 } from "@alea/lib/training/regimeAlgos/resultTypes";
+import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import type {
   SurvivalBucket,
   SurvivalSurface,

@@ -1,7 +1,7 @@
-import { build5mLookback } from "@alea/lib/training/computeSurvivalSnapshots";
 import type { ClosedFiveMinuteBar } from "@alea/lib/livePrices/types";
-import type { RegimeClassifierInput } from "@alea/lib/training/regimeAlgos/types";
 import type { LeadingSide } from "@alea/lib/trading/types";
+import { build5mLookback } from "@alea/lib/training/computeSurvivalSnapshots";
+import type { RegimeClassifierInput } from "@alea/lib/training/regimeAlgos/types";
 import type { Candle } from "@alea/types/candles";
 
 /**

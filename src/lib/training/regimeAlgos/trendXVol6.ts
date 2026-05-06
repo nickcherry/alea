@@ -63,11 +63,11 @@ export const trendXVol6Algo: RegimeAlgo = {
     const trendStrength = (ema20 - ema50) / atr14;
     const volBucket = atr14 / atr50 > VOL_RATIO ? "high_vol" : "low_vol";
     if (Math.abs(trendStrength) < TREND_BAND_ATR) {
-      return `no_trend_${volBucket}` as RegimeLabel;
+      return `no_trend_${volBucket}`;
     }
     const trendDirection = trendStrength > 0 ? "up" : "down";
     const trendBucket =
       leadingSide === trendDirection ? "with_trend" : "against_trend";
-    return `${trendBucket}_${volBucket}` as RegimeLabel;
+    return `${trendBucket}_${volBucket}`;
   },
 };
