@@ -40,7 +40,7 @@ from the existing `candleSourceSchema`, `productSchema`, and
 
 ### `training:distributions`
 
-`bun alea training:distributions` runs three local analyses in one pass and
+`bun alea training:distributions` runs four local analyses in one pass and
 writes a paired HTML dashboard and JSON sidecar to `alea/tmp/`:
 
 1. **Candle size distributions** — body and wick percentiles per asset
@@ -48,9 +48,15 @@ writes a paired HTML dashboard and JSON sidecar to `alea/tmp/`:
 2. **Point-of-no-return survival surface** — the unconditional probability
    that a snapshot's current side holds to the 5m close, bucketed by
    `(remaining-minutes, distanceBp)`. See [Survival surface](#survival-surface).
-3. **Binary filter overlays** — every registered filter's per-half survival
-   surface plus the calibration metrics that rank filters against each
-   other. See [Filters](#filters) and [Scoring methodology](#scoring-methodology).
+3. **Regime overlays** — every registered regime algo's per-regime hold-rate
+   surface, plus the per-cell lead vs the unconditional baseline that drives
+   auto-promotion to the live probability table. See [REGIMES.md](./REGIMES.md)
+   for the full regime contract.
+4. **Legacy binary filter overlays** — still rendered on the dashboard
+   for diagnostic comparison (no LIVE badge). Filters no longer feed
+   the persisted probability table; regimes do. See
+   [Filters (legacy benchmarking only)](#filters-legacy-benchmarking-only)
+   and [Scoring methodology](#scoring-methodology).
 
 Heavy intermediate results are cached per asset under
 `tmp/cache/training-distributions/`. Cache keys mix in data freshness
@@ -116,7 +122,15 @@ its `SNAPSHOT_PIPELINE_VERSION` constant gates the survival/filter cache
 and bumps any time the snapshot stream's externally-visible behaviour
 changes (different tie-break, new context field, new metric, etc.).
 
-## Filters
+## Filters (legacy benchmarking only)
+
+> **Status:** filters are no longer the live decision axis. Regimes
+> ([REGIMES.md](./REGIMES.md)) replaced them as the primary partitioning
+> for the persisted probability table. The filter framework still
+> computes on the dashboard for cross-checking, ablation studies, and
+> sweet-spot research, but its sections no longer carry the LIVE badge.
+> Don't add new filters expecting them to flow to live trading — add a
+> regime algo instead.
 
 A **filter** is a binary classifier over snapshots: it asks a yes/no
 question of each snapshot and splits the stream into a `true` half and a

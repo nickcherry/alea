@@ -13,6 +13,7 @@ when the modeled edge clears the market.
 - [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — finding the fastest useful leading-indicator feeds.
 - [Directional Agreement Experiment](./doc/RELIABILITY_EXPERIMENT.md) — checking whether fast exchange-feed proxies are reliable enough for Polymarket-side training and live trading.
 - [Training Domain](./doc/TRAINING_DOMAIN.md) — historical candle analysis and threshold discovery.
+- [Regimes](./doc/REGIMES.md) — multi-class partitions of 5m windows that drive the live probability table.
 - [Trading Domain](./doc/TRADING.md) — the live money-touching runner and failure modes.
 - [Dry Trading](./doc/DRY_TRADING.md) — dry-run fill simulation, JSONL sessions, and report interpretation.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape recorder for Polymarket + Binance + Coinbase + Chainlink reference events across all five assets, to disk and Postgres for offline replay/research.
@@ -28,5 +29,5 @@ when the modeled edge clears the market.
 ### Research
 
 - [Research notes](./doc/research/) — dated findings, methodology
-  changes, and per-filter intuition from offline-analysis sessions.
+  changes, and per-regime intuition from offline-analysis sessions.
   Long-term memory for what we've tried and why.
