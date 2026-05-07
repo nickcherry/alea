@@ -30,22 +30,23 @@ edge that is hidden by adverse-selected maker fills.
 session):
 
 ```json
-{ "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
+{ "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 8, 11, 19, 20, 22], "minEdge": 0.06 }
 ```
 
-| Variant | n | PnL |
-|---|---:|---:|
-| All taker | 369 | +$1,074 |
-| All maker | 369 | +$648 |
+| Variant                                            |   n |     PnL |
+| -------------------------------------------------- | --: | ------: |
+| All taker                                          | 369 | +$1,074 |
+| All maker                                          | 369 |   +$648 |
 | Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) | 369 | +$1,197 |
-| Same + DOGE-19 dropped | 353 | +$1,235 |
+| Same + DOGE-19 dropped                             | 353 | +$1,235 |
 
 **Conservative variant** (structural — Asian + early Europe only,
 less overfit-risk):
 
 ```json
-{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+{ "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "minEdge": 0.06 }
 ```
+
 → +$519 taker / +$558 maker / 252 orders / 64% win.
 
 ### Key insight
@@ -111,24 +112,24 @@ recorded chronologically below.
   `market_event`); chainlink for settlement; min-edge 0.05; stake $20.
 - Probability table generated from coinbase/spot 5m+1m candles (2y).
 
-| Metric | Value |
-|---|---:|
-| Windows replayed | 385 |
-| Orders prepared | 754 |
-| Canonical fills | 533 (70.7%) |
-| Touch fills | 566 |
-| **Canonical PnL** | **−$577.25** |
-| Touch PnL | −$84.45 |
-| All-orders-filled PnL | **+$2697.20** |
-| Adverse-selection drag (all-filled − canonical) | $3274.45 |
-| Chainlink/polymarket disagreements | 0 |
+| Metric                                          |         Value |
+| ----------------------------------------------- | ------------: |
+| Windows replayed                                |           385 |
+| Orders prepared                                 |           754 |
+| Canonical fills                                 |   533 (70.7%) |
+| Touch fills                                     |           566 |
+| **Canonical PnL**                               |  **−$577.25** |
+| Touch PnL                                       |       −$84.45 |
+| All-orders-filled PnL                           | **+$2697.20** |
+| Adverse-selection drag (all-filled − canonical) |      $3274.45 |
+| Chainlink/polymarket disagreements              |             0 |
 
 Replay JSONL: `tmp/replay-trading/replay-trading_2026-05-07T02-00-11.819Z.jsonl`
 
 **Key signal.** All-filled PnL is strongly positive while canonical PnL
 is negative → the model picks the right side, but our queue-aware fills
 are concentrated in the losing half. Classic maker adverse selection:
-when our limit hits, the price often moved *through* us.
+when our limit hits, the price often moved _through_ us.
 
 ## Lever menu
 
@@ -154,7 +155,6 @@ fill or which orders are placed):
 
 ## Findings — chronological
 
-
 ### 22:55 EDT — first telemetry sweep
 
 Built `src/bin/research/sweepReplay.ts` — post-hoc filter analyzer that
@@ -163,16 +163,16 @@ canonical/touch/all-filled PnL with optional time-bucket stability check.
 
 #### Single-axis sweep highlights
 
-| Lever | Best bucket | Canonical PnL | Win rate | n |
-|---|---|---:|---:|---:|
-| Baseline | none | −$577.25 | 53.1% | 754 |
-| min-edge ≥ 0.15 | (vs 0.05) | +$95 | 51.0% | 82 |
-| queueAhead ≥ 100 | (vs ≥0) | +$84 | 59.2% | 200 |
-| signedDistanceBp ∈ [−10,−5) | strong | +$108 | **72.4%** | 45 |
-| signedDistanceBp ≤ −3 | broad | +$122 | 62.8% | 169 |
-| entry30sDeltaBp ≥ +5 | strong | +$178 | 69.6% | 70 |
-| asset = btc @ minEdge≥0.10 | best asset | +$124 | 61.8% | 56 |
-| asset = xrp | worst | −$310 | 44.6% | 120 |
+| Lever                       | Best bucket | Canonical PnL |  Win rate |   n |
+| --------------------------- | ----------- | ------------: | --------: | --: |
+| Baseline                    | none        |      −$577.25 |     53.1% | 754 |
+| min-edge ≥ 0.15             | (vs 0.05)   |          +$95 |     51.0% |  82 |
+| queueAhead ≥ 100            | (vs ≥0)     |          +$84 |     59.2% | 200 |
+| signedDistanceBp ∈ [−10,−5) | strong      |         +$108 | **72.4%** |  45 |
+| signedDistanceBp ≤ −3       | broad       |         +$122 |     62.8% | 169 |
+| entry30sDeltaBp ≥ +5        | strong      |         +$178 |     69.6% |  70 |
+| asset = btc @ minEdge≥0.10  | best asset  |         +$124 |     61.8% |  56 |
+| asset = xrp                 | worst       |         −$310 |     44.6% | 120 |
 
 #### Best cross-product (so far)
 
@@ -191,12 +191,13 @@ positive signedDistanceBp at entry and down bets have negative. So the
 down bets**. The symmetric "up bets where price rose ≥4 bp above line"
 filter is a loser:
 
-| Filter | n | PnL | Win |
-|---|---:|---:|---:|
-| down: signedDistBp ≤ −4 + edge ≥ 0.06 | 81 | **+$232** | 72.9% |
-| up: signedDistBp ≥ +4 + edge ≥ 0.06 | 113 | −$182 | 53.2% |
+| Filter                                |   n |       PnL |   Win |
+| ------------------------------------- | --: | --------: | ----: |
+| down: signedDistBp ≤ −4 + edge ≥ 0.06 |  81 | **+$232** | 72.9% |
+| up: signedDistBp ≥ +4 + edge ≥ 0.06   | 113 |     −$182 | 53.2% |
 
 Two interpretations:
+
 1. **Window bias**: BTC/SOL/DOGE were net-down trending in the 32h tape;
    "trend continuation down" is the play because price was actually going
    down. If next window trends up, our filter will under-fire badly.
@@ -206,7 +207,6 @@ Two interpretations:
 
 Action: keep the filter but flag it as direction-biased; revisit when we
 have more data covering an up-trending period.
-
 
 ### 23:25 EDT — direction-aware union filter
 
@@ -224,12 +224,18 @@ showing 44.6% win rate in baseline):
 ```json
 {
   "any": [
-    {"sides":["down"], "minTrendConfirmBp":4, "minEdge":0.06,
-     "excludeAssets":["xrp"]},
-    {"sides":["up"],   "minSideAlignedMomentumBp":5,
-     "excludeAssets":["xrp"]},
-    {"sides":["up"],   "minEdge":0.15,
-     "excludeAssets":["xrp"]}
+    {
+      "sides": ["down"],
+      "minTrendConfirmBp": 4,
+      "minEdge": 0.06,
+      "excludeAssets": ["xrp"]
+    },
+    {
+      "sides": ["up"],
+      "minSideAlignedMomentumBp": 5,
+      "excludeAssets": ["xrp"]
+    },
+    { "sides": ["up"], "minEdge": 0.15, "excludeAssets": ["xrp"] }
   ]
 }
 ```
@@ -239,12 +245,12 @@ showing 44.6% win rate in baseline):
 
 Stability across 4 time-buckets (all positive):
 
-| Bucket | Start | n | PnL | Win |
-|---|---|---:|---:|---:|
-| 0 | 2026-05-05 17:02 | 28 | +$64 | 64.3% |
-| 1 | 2026-05-06 00:56 | 54 | +$355 | 80.5% |
-| 2 | 2026-05-06 08:51 | 25 | +$42 | 64.3% |
-| 3 | 2026-05-06 16:46 | 52 | +$20 | 57.6% |
+| Bucket | Start            |   n |   PnL |   Win |
+| ------ | ---------------- | --: | ----: | ----: |
+| 0      | 2026-05-05 17:02 |  28 |  +$64 | 64.3% |
+| 1      | 2026-05-06 00:56 |  54 | +$355 | 80.5% |
+| 2      | 2026-05-06 08:51 |  25 |  +$42 | 64.3% |
+| 3      | 2026-05-06 16:46 |  52 |  +$20 | 57.6% |
 
 At $20 stake. Straight stake-scaling extrapolation to $200 → ~$4,800
 per 32h, but wider sample needed before claiming that's real.
@@ -253,7 +259,6 @@ Open concern: bucket-3 win rate of 57.6% is close to the noise floor,
 and bucket-2 is also low. The bulk of the edge is concentrated in
 bucket-1. Need wider data to validate the filter as a stable rule
 versus a 32h-period artifact.
-
 
 ### 23:55 EDT — taker-with-fees analysis
 
@@ -264,23 +269,23 @@ captured in `entryBookTelemetry` and the Polymarket fee formula
 
 Best filter on taker:
 
-| Lens | n | PnL | Win | Filled |
-|---|---:|---:|---:|---|
-| canonical maker | 159 | +$481 | 68.6% | 102/159 (64%) |
-| touch (lucky maker) | 159 | +$644 | — | 109/159 |
-| **taker @ 720 bps fee** | **159** | **+$661** | **79.9%** | 159/159 (100%) |
-| all-fill (no spread, no fee) | 159 | +$1400 | — | 159/159 |
+| Lens                         |       n |       PnL |       Win | Filled         |
+| ---------------------------- | ------: | --------: | --------: | -------------- |
+| canonical maker              |     159 |     +$481 |     68.6% | 102/159 (64%)  |
+| touch (lucky maker)          |     159 |     +$644 |         — | 109/159        |
+| **taker @ 720 bps fee**      | **159** | **+$661** | **79.9%** | 159/159 (100%) |
+| all-fill (no spread, no fee) |     159 |    +$1400 |         — | 159/159        |
 
 Fee sensitivity (same filter):
 
-| feeBps | PnL |
-|---:|---:|
-| 0 | +$738 |
-| 200 | +$717 |
-| 400 | +$695 |
-| 720 | +$661 |
-| 1000 | +$631 |
-| 1500 | +$578 |
+| feeBps |   PnL |
+| -----: | ----: |
+|      0 | +$738 |
+|    200 | +$717 |
+|    400 | +$695 |
+|    720 | +$661 |
+|   1000 | +$631 |
+|   1500 | +$578 |
 
 Even at 15% fee taker is +$578. Fees are NOT the binding constraint.
 
@@ -302,11 +307,11 @@ order's `placedAtMs` from `market_event`. Punted for now.
 Linear-stake extrapolation (no slippage adjustment beyond the above):
 
 | Stake | Estimated 32h taker PnL |
-|---:|---:|
-| $20 | $600 |
-| $50 | $1,500 |
-| $100 | $3,000 |
-| $200 | $6,000 |
+| ----: | ----------------------: |
+|   $20 |                    $600 |
+|   $50 |                  $1,500 |
+|  $100 |                  $3,000 |
+|  $200 |                  $6,000 |
 
 Real-world slippage is super-linear in stake, so $200 isn't actually
 3× the $100 number — likely closer to $4,000-$5,000. Either way,
@@ -314,42 +319,41 @@ clearly in the "thousands" target.
 
 #### Time-bucket stability (taker, best filter)
 
-| Bucket | Start | n | PnL | Win |
-|---|---|---:|---:|---:|
-| 0 | 2026-05-05 17:02 | 28 | +$196 | 82.1% |
-| 1 | 2026-05-06 00:56 | 54 | +$234 | 85.2% |
-| 2 | 2026-05-06 08:51 | 25 | +$68 | 80.0% |
-| 3 | 2026-05-06 16:46 | 52 | +$163 | 73.1% |
+| Bucket | Start            |   n |   PnL |   Win |
+| ------ | ---------------- | --: | ----: | ----: |
+| 0      | 2026-05-05 17:02 |  28 | +$196 | 82.1% |
+| 1      | 2026-05-06 00:56 |  54 | +$234 | 85.2% |
+| 2      | 2026-05-06 08:51 |  25 |  +$68 | 80.0% |
+| 3      | 2026-05-06 16:46 |  52 | +$163 | 73.1% |
 
 Much more stable than canonical maker (no 50%-win bucket). Win rate
 across all 4 buckets: 73-85%.
-
 
 ### 00:25 EDT — TIME-OF-DAY effect
 
 Sliced PnL by UTC hour of placement (with `minEdge:0.06` filter).
 Discovery: there's a massive intraday seasonality.
 
-| UTC hour | n | Maker PnL | Taker PnL | Win |
-|---:|---:|---:|---:|---:|
-| 0 | 33 | +$55 | +$84 | 76% |
-| 1 | 23 | +$86 | +$140 | 87% |
-| **2** | 24 | +$194 | +$176 | 88% |
-| 3 | 32 | +$91 | +$53 | 72% |
-| 4 | 34 | +$45 | +$20 | 68% |
-| 5 | 23 | +$30 | +$8 | 65% |
-| 6 | 22 | +$47 | +$58 | 73% |
-| 7 | 18 | -$81 | -$94 | 50% |
-| 8 | 18 | +$62 | +$62 | 78% |
-| 11 | 12 | +$57 | +$37 | 83% |
-| 16 | 33 | -$198 | -$188 | 45% |
-| 17 | 52 | -$120 | -$91 | 58% |
-| 18 | 66 | -$190 | -$149 | 55% |
-| 19 | 59 | -$60 | +$39 | 64% |
-| **20** | 63 | +$0.37 | **+$327** | 78% |
-| 21 | 28 | -$124 | -$15 | 57% |
-| 22 | 23 | +$40 | +$70 | 78% |
-| 23 | 17 | -$141 | -$81 | 47% |
+| UTC hour |   n | Maker PnL | Taker PnL | Win |
+| -------: | --: | --------: | --------: | --: |
+|        0 |  33 |      +$55 |      +$84 | 76% |
+|        1 |  23 |      +$86 |     +$140 | 87% |
+|    **2** |  24 |     +$194 |     +$176 | 88% |
+|        3 |  32 |      +$91 |      +$53 | 72% |
+|        4 |  34 |      +$45 |      +$20 | 68% |
+|        5 |  23 |      +$30 |       +$8 | 65% |
+|        6 |  22 |      +$47 |      +$58 | 73% |
+|        7 |  18 |      -$81 |      -$94 | 50% |
+|        8 |  18 |      +$62 |      +$62 | 78% |
+|       11 |  12 |      +$57 |      +$37 | 83% |
+|       16 |  33 |     -$198 |     -$188 | 45% |
+|       17 |  52 |     -$120 |      -$91 | 58% |
+|       18 |  66 |     -$190 |     -$149 | 55% |
+|       19 |  59 |      -$60 |      +$39 | 64% |
+|   **20** |  63 |    +$0.37 | **+$327** | 78% |
+|       21 |  28 |     -$124 |      -$15 | 57% |
+|       22 |  23 |      +$40 |      +$70 | 78% |
+|       23 |  17 |     -$141 |      -$81 | 47% |
 
 Pattern: Asian + early Europe (0-6) + scattered evening (19, 20, 22) wins;
 US business hours (16-18) and late-evening (21, 23) lose. Hour 20 is a
@@ -365,47 +369,46 @@ during active hours.
 
 ```json
 {
-  "hoursUtc":[0,1,2,3,4,5,6,8,11,15,19,20,22],
-  "minEdge":0.06
+  "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 8, 11, 15, 19, 20, 22],
+  "minEdge": 0.06
 }
 ```
 
 **+$648 maker / +$1,100 taker / 369 orders / 74.5% taker win** at $20
 stake.
 
-| Bucket | Start | n | Maker | Taker | Taker Win |
-|---|---|---:|---:|---:|---:|
-| 0 | 19:03 | 94 | +$158 | +$476 | 79.8% |
-| 1 | 02:28 | 144 | +$335 | +$268 | 71.5% |
-| 2 | 09:54 | 15 | +$57 | +$64 | 86.7% |
-| 3 | 17:20 | 116 | +$98 | +$293 | 72.4% |
+| Bucket | Start |   n | Maker | Taker | Taker Win |
+| ------ | ----- | --: | ----: | ----: | --------: |
+| 0      | 19:03 |  94 | +$158 | +$476 |     79.8% |
+| 1      | 02:28 | 144 | +$335 | +$268 |     71.5% |
+| 2      | 09:54 |  15 |  +$57 |  +$64 |     86.7% |
+| 3      | 17:20 | 116 |  +$98 | +$293 |     72.4% |
 
 All positive. Fee-sensitivity (taker):
 
-| feeBps | PnL |
-|---:|---:|
-| 0 | +$1291 |
-| 200 | +$1238 |
-| 400 | +$1185 |
-| 720 | +$1100 |
-| 1000 | +$1026 |
-| 1500 | +$894 |
+| feeBps |    PnL |
+| -----: | -----: |
+|      0 | +$1291 |
+|    200 | +$1238 |
+|    400 | +$1185 |
+|    720 | +$1100 |
+|   1000 | +$1026 |
+|   1500 |  +$894 |
 
 Even at 15% taker fee we're +$894.
 
 Stake-scaling extrapolation (assuming linear, ignoring slippage):
 
 | Stake | Taker PnL / 32h |
-|---:|---:|
-| $20 | $1,100 |
-| $50 | $2,750 |
-| $100 | $5,500 |
-| $200 | $11,000 |
+| ----: | --------------: |
+|   $20 |          $1,100 |
+|   $50 |          $2,750 |
+|  $100 |          $5,500 |
+|  $200 |         $11,000 |
 
 Real-world slippage will bend the curve — at $200 with median ratio
 of 0.36 (depth/need at $20 stake), we'd be eating multiple book levels
 on most orders. Realistic $200 stake might be closer to $5–6K.
-
 
 ### 03:15 EDT — cancel-on-adverse implementation
 
@@ -428,24 +431,23 @@ touching the unfilled winners.
 
 Running sweeps at thresholds 5, 10, 20 bp.
 
-
 ### 03:25 EDT — cancel-on-adverse results
 
 Three thresholds tested at $20 stake on baseline (no filter):
 
-| Threshold | Maker PnL | Δ vs baseline | Fills |
-|---:|---:|---:|---:|
-| none (0 bp) | −$577 | — | 533 |
-| 10 bp | −$557 | +$20 | 532 |
-| 3 bp | −$431 | +$146 | 515 |
+|   Threshold | Maker PnL | Δ vs baseline | Fills |
+| ----------: | --------: | ------------: | ----: |
+| none (0 bp) |     −$577 |             — |   533 |
+|       10 bp |     −$557 |          +$20 |   532 |
+|        3 bp |     −$431 |         +$146 |   515 |
 
 3 bp is the only one that meaningfully reduced losses. But: applied
 to our best filter the effect REVERSES — slight harm:
 
-| Filter | Without cancel | With cancel-3bp |
-|---|---:|---:|
-| hours[0..11] + edge0.06 | +$558 maker | +$554 maker |
-| good-hours + edge0.06 | +$648 maker | +$613 maker |
+| Filter                  | Without cancel | With cancel-3bp |
+| ----------------------- | -------------: | --------------: |
+| hours[0..11] + edge0.06 |    +$558 maker |     +$554 maker |
+| good-hours + edge0.06   |    +$648 maker |     +$613 maker |
 
 The cancel rule fires on ticks moving against the line — but for our
 filtered-good orders, the price was already moved INTO our side at
@@ -461,12 +463,12 @@ The filter approach captures the same edge more cleanly.
 Split the 32h tape into first 16h vs second 16h and ran each filter
 independently:
 
-| Filter | First 16h | Second 16h |
-|---|---:|---:|
-| no filter | +$97 maker / +$476 taker | **−$674** maker / −$253 taker |
-| edge≥0.06 | +$295 / +$630 | −$658 / −$275 |
-| hours[0..11]+edge0.06 | +$446 / +$461 | +$112 / +$58 |
-| good-hours+edge0.06 | +$474 / +$740 | +$174 / +$361 |
+| Filter                |                First 16h |                    Second 16h |
+| --------------------- | -----------------------: | ----------------------------: |
+| no filter             | +$97 maker / +$476 taker | **−$674** maker / −$253 taker |
+| edge≥0.06             |            +$295 / +$630 |                 −$658 / −$275 |
+| hours[0..11]+edge0.06 |            +$446 / +$461 |                  +$112 / +$58 |
+| good-hours+edge0.06   |            +$474 / +$740 |                 +$174 / +$361 |
 
 The unfiltered baseline collapses in the second half — would have lost
 $674 maker / $253 taker. Both filtered variants stay positive in BOTH
@@ -481,17 +483,18 @@ different market character) but the filter generalizes both periods.
 
 ## Takeaway
 
-**One paragraph: in 32h of captured 5-asset tape (coinbase/spot training
-+ tick), the live decision pipeline produces a real positive edge that's
-hidden by adverse-selected maker fills. The cleanest way to surface it
-is to (a) trade only during the hours UTC where the model is currently
-empirically winning (Asian session + scattered evening hours, dropping
-US business hours where adverse selection is strongest), (b) apply a
-modest min-edge gate (0.06), and (c) execute as taker rather than
-maker. The 720-bps Polymarket taker fee is comfortably absorbed by the
-edge. Result: +$1,100 taker PnL at $20 stake / 369 orders / 74.5% win
-rate, stable across half-split out-of-sample test and across all 4
-time-bucket splits, even at conservative slippage assumptions.**
+\*\*One paragraph: in 32h of captured 5-asset tape (coinbase/spot training
+
+- tick), the live decision pipeline produces a real positive edge that's
+  hidden by adverse-selected maker fills. The cleanest way to surface it
+  is to (a) trade only during the hours UTC where the model is currently
+  empirically winning (Asian session + scattered evening hours, dropping
+  US business hours where adverse selection is strongest), (b) apply a
+  modest min-edge gate (0.06), and (c) execute as taker rather than
+  maker. The 720-bps Polymarket taker fee is comfortably absorbed by the
+  edge. Result: +$1,100 taker PnL at $20 stake / 369 orders / 74.5% win
+  rate, stable across half-split out-of-sample test and across all 4
+  time-bucket splits, even at conservative slippage assumptions.\*\*
 
 Production blockers: (1) live trader and dry-run runner still default
 to maker-at-bid placement; switching to taker requires a placement-mode
@@ -506,13 +509,13 @@ artifact.
 
 Per-asset PnL at \$20 stake on the best filter (good-hours+edge0.06):
 
-| Asset | n | Maker PnL | Taker PnL | Best | Win | Depth ratio (p50) |
-|---|---:|---:|---:|---|---:|---:|
-| BTC | 80 | +\$135 | +\$372 | TAKER | 75% | 3.06 |
-| ETH | 56 | +\$27 | +\$180 | TAKER | 71% | 0.56 |
-| SOL | 64 | +\$39 | +\$190 | TAKER | 72% | 0.16 |
-| XRP | 58 | +\$63 | +\$125 | TAKER | 74% | 0.18 |
-| DOGE | 111 | **+\$384** | +\$233 | MAKER | 78% | 0.19 |
+| Asset |   n |  Maker PnL | Taker PnL | Best  | Win | Depth ratio (p50) |
+| ----- | --: | ---------: | --------: | ----- | --: | ----------------: |
+| BTC   |  80 |     +\$135 |    +\$372 | TAKER | 75% |              3.06 |
+| ETH   |  56 |      +\$27 |    +\$180 | TAKER | 71% |              0.56 |
+| SOL   |  64 |      +\$39 |    +\$190 | TAKER | 72% |              0.16 |
+| XRP   |  58 |      +\$63 |    +\$125 | TAKER | 74% |              0.18 |
+| DOGE  | 111 | **+\$384** |    +\$233 | MAKER | 78% |              0.19 |
 
 DOGE is the only asset where maker beats taker. Plausible reason:
 DOGE has the highest avg limit price (\$0.69) so the taker fee
@@ -531,7 +534,6 @@ stake (median), so it scales to \$50–100 cleanly. DOGE/SOL/XRP/ETH
 have median ratio 0.16–0.56 — more slippage if stake increases.
 Optimal allocation would scale per-asset.
 
-
 ### 03:55 EDT — final filter cleanup
 
 The hour 15 in the original "good hours" filter only had 3 orders
@@ -549,16 +551,16 @@ Result on 32h tape: **+$648 maker / +$1,074 taker / 366 orders /
 
 8-bucket finer stability check (good-hours+edge0.06, hybrid):
 
-| Bucket | Start | n | Maker | Taker | Hybrid (DOGE=maker) | Win |
-|---|---|---:|---:|---:|---:|---:|
-| 0 | 19:03 | 52 | -$53 | +$185 | +$117 | 73% |
-| 1 | 22:46 | 42 | +$211 | +$291 | +$328 | 88% |
-| 2 | 02:28 | 110 | +$281 | +$188 | +$308 | 71% |
-| 3 | 06:11 | 34 | +$54 | +$80 | +$121 | 74% |
-| 4 | 09:54 | 12 | +$57 | +$37 | +$55 | 83% |
-| 5 | 13:37 | 3 | $0 | +$26 | +$26 | 100% |
-| 6 | 17:20 | 71 | -$7 | +$161 | +$149 | 69% |
-| 7 | 21:03 | 45 | +$105 | +$132 | +$147 | 78% |
+| Bucket | Start |   n | Maker | Taker | Hybrid (DOGE=maker) |  Win |
+| ------ | ----- | --: | ----: | ----: | ------------------: | ---: |
+| 0      | 19:03 |  52 |  -$53 | +$185 |               +$117 |  73% |
+| 1      | 22:46 |  42 | +$211 | +$291 |               +$328 |  88% |
+| 2      | 02:28 | 110 | +$281 | +$188 |               +$308 |  71% |
+| 3      | 06:11 |  34 |  +$54 |  +$80 |               +$121 |  74% |
+| 4      | 09:54 |  12 |  +$57 |  +$37 |                +$55 |  83% |
+| 5      | 13:37 |   3 |    $0 |  +$26 |                +$26 | 100% |
+| 6      | 17:20 |  71 |   -$7 | +$161 |               +$149 |  69% |
+| 7      | 21:03 |  45 | +$105 | +$132 |               +$147 |  78% |
 
 All 8 finer-grained buckets positive on hybrid. Win rates all
 ≥ 69%. Real signal.
@@ -568,7 +570,7 @@ All 8 finer-grained buckets positive on hybrid. Win rates all
 ### Conservative (structurally motivated)
 
 ```json
-{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+{ "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "minEdge": 0.06 }
 ```
 
 Hypothesis: US business hours (16-23 UTC) attract more sophisticated
@@ -580,7 +582,7 @@ only Asian + early Europe hours.
 ### Aggressive (data-mined)
 
 ```json
-{ "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
+{ "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 8, 11, 19, 20, 22], "minEdge": 0.06 }
 ```
 
 Hypothesis: skip the specific hours where empirical PnL is bad
@@ -642,18 +644,17 @@ before committing.
 - Live trader still operates as maker; the 60% gain from taker is
   on paper only until placement-mode change is implemented.
 
-
 ### 04:00 EDT — extended-data validation
 
 Re-ran replay against the captured tape extended by 2.5h (capture
 keeps running) → 416 windows, 760 orders. Re-applied the same filters:
 
-| Filter | 32h | extended (~35h) |
-|---|---|---|
-| baseline | -\$577 maker, +\$224 taker | -\$619 / +\$199 |
-| edge 0.06 | -\$363 / +\$354 | -\$403 / +\$326 |
-| Asian only + edge 0.06 | +\$558 / +\$519 | +\$518 / +\$490 |
-| good-hours + edge 0.06 | +\$648 / +\$1,100 | +\$608 / +\$1,046 |
+| Filter                 | 32h                        | extended (~35h)   |
+| ---------------------- | -------------------------- | ----------------- |
+| baseline               | -\$577 maker, +\$224 taker | -\$619 / +\$199   |
+| edge 0.06              | -\$363 / +\$354            | -\$403 / +\$326   |
+| Asian only + edge 0.06 | +\$558 / +\$519            | +\$518 / +\$490   |
+| good-hours + edge 0.06 | +\$648 / +\$1,100          | +\$608 / +\$1,046 |
 
 Filter PnL drops slightly with the extended data (~\$40-50) but
 remains comfortably positive. The pattern holds across the additional
@@ -663,18 +664,17 @@ so the order set is essentially unchanged.
 **Final taker pnl on the data-mined hour filter: +\$1,046 / 369
 orders / 74.0% taker win rate / 35h captured tape / \$20 stake.**
 
-
 ### 04:10 EDT — rolling-window walk-forward
 
 Sorted all orders by `placedAtMs`, sliced into 4 chunks of ~200
 orders each, applied the filter independently:
 
-| Chunk | Total | Filtered | Win | Maker | Taker | Hybrid |
-|---|---:|---:|---:|---:|---:|---:|
-| 1-200 | 200 | 115 | 79% | +$224 | +$537 | +$530 |
-| 201-400 | 200 | 135 | 72% | +$327 | +$245 | +$399 |
-| 401-600 | 200 | 24 | 63% | +$51 | +$13 | +$38 |
-| 601-end | 160 | 95 | 74% | +$7 | +$251 | +$229 |
+| Chunk   | Total | Filtered | Win | Maker | Taker | Hybrid |
+| ------- | ----: | -------: | --: | ----: | ----: | -----: |
+| 1-200   |   200 |      115 | 79% | +$224 | +$537 |  +$530 |
+| 201-400 |   200 |      135 | 72% | +$327 | +$245 |  +$399 |
+| 401-600 |   200 |       24 | 63% |  +$51 |  +$13 |   +$38 |
+| 601-end |   160 |       95 | 74% |   +$7 | +$251 |  +$229 |
 
 All 4 chunks positive on hybrid. Chunk 3 is weakest (only 24 orders
 passed the filter — the period it spans had mostly excluded hours).
@@ -691,19 +691,18 @@ That's 4 different ways of slicing the data and the filter holds
 in every slice. As statistical evidence on a 32h sample goes, this
 is about as good as it gets without more days of data.
 
-
 ### 04:20 EDT — stake-scaling experiments
 
 Edge-bucket per-order taker PnL on the best filter:
 
-| edge bucket | n | win | pnl/order |
-|---|---:|---:|---:|
+| edge bucket  |   n | win |  pnl/order |
+| ------------ | --: | --: | ---------: |
 | [0.06, 0.08) | 122 | 79% | **+$3.52** |
-| [0.08, 0.10) | 81 | 74% | +$1.88 |
-| [0.10, 0.12) | 56 | 70% | +$1.59 |
-| [0.12, 0.15) | 60 | 68% | +$0.89 |
-| [0.15, 0.20) | 30 | 77% | +$7.62 |
-| [0.20, 1.00) | 20 | 70% | +$4.68 |
+| [0.08, 0.10) |  81 | 74% |     +$1.88 |
+| [0.10, 0.12) |  56 | 70% |     +$1.59 |
+| [0.12, 0.15) |  60 | 68% |     +$0.89 |
+| [0.15, 0.20) |  30 | 77% |     +$7.62 |
+| [0.20, 1.00) |  20 | 70% |     +$4.68 |
 
 NOT monotonically increasing in edge. The lowest-edge bucket
 (0.06-0.08) is the biggest contributor by both per-order and total
@@ -712,15 +711,15 @@ say whether it's a real anomaly or sample noise.
 
 Stake-scaling strategies (taker, best filter):
 
-| Strategy | Total PnL |
-|---|---:|
-| Flat $20 | +$1,046 |
-| Flat $50 | +$2,614 |
-| Flat $100 | +$5,228 |
-| Edge-proportional ($20 + 200×(edge−0.06)) | +$1,554 |
-| Edge-proportional ($20 + 500×(edge−0.06)) | +$2,317 |
-| Kelly 0.5× cap'd $100 | +$1,350 |
-| Kelly 0.25× cap'd $100 | +$1,050 |
+| Strategy                                  | Total PnL |
+| ----------------------------------------- | --------: |
+| Flat $20                                  |   +$1,046 |
+| Flat $50                                  |   +$2,614 |
+| Flat $100                                 |   +$5,228 |
+| Edge-proportional ($20 + 200×(edge−0.06)) |   +$1,554 |
+| Edge-proportional ($20 + 500×(edge−0.06)) |   +$2,317 |
+| Kelly 0.5× cap'd $100                     |   +$1,350 |
+| Kelly 0.25× cap'd $100                    |   +$1,050 |
 
 **Flat stake beats edge-scaled stake** in our data because the
 highest per-order PnL is in the LOWEST edge bucket (0.06-0.08). Any
@@ -732,7 +731,6 @@ depth/need ratio drops from 0.36 to 0.07 (median). Eating 3-5 book
 levels per order means avg fill price ~1-2 ticks higher than best
 ask, costing ~30-50% of the gross PnL. Realistic $100-stake PnL
 estimate: **\$2,500-\$3,500 / 35h tape** — comfortably "thousands".
-
 
 ### 04:50 EDT — replay decision-debugging
 
@@ -754,7 +752,6 @@ windows is a feature, not a bug.
 (Decision-trace debug code was added to `replayWindow.ts` for
 this investigation and reverted; the finding is the value.)
 
-
 ### 04:55 EDT — min-samples regen experiment
 
 Wondered if regenerating the probability table with `--min-samples 100`
@@ -763,13 +760,13 @@ buckets pass the threshold → more regimes covered).
 
 Bucket counts grew significantly:
 
-| Asset | Min-200 buckets | Min-100 buckets | Δ |
-|---|---:|---:|---:|
-| BTC | 250 | 308 | +58 |
-| ETH | 321 | 409 | +88 |
-| SOL | 358 | 443 | +85 |
-| XRP | 367 | 481 | +114 |
-| DOGE | 390 | 476 | +86 |
+| Asset | Min-200 buckets | Min-100 buckets |    Δ |
+| ----- | --------------: | --------------: | ---: |
+| BTC   |             250 |             308 |  +58 |
+| ETH   |             321 |             409 |  +88 |
+| SOL   |             358 |             443 |  +85 |
+| XRP   |             367 |             481 | +114 |
+| DOGE  |             390 |             476 |  +86 |
 
 Re-ran replay on the same 35h range. Result: **identical** to
 min-200 — same 760 orders, same −\$619 canonical, same +\$1,046
@@ -784,19 +781,18 @@ not just thin ones. Lowering min-samples doesn't help.
 Probability table restored to min-samples=200 default after the
 experiment.
 
-
 ### 05:00 EDT — per-asset edge tuning experiment
 
 Tested whether different min-edge thresholds per-asset would beat
 the uniform 0.06. Setup: union filter with one arm per asset, each
 with its own minEdge.
 
-| Per-asset edge config | Taker PnL | Orders |
-|---|---:|---:|
-| Uniform 0.06 (baseline) | **+$1,046** | 369 |
-| BTC/ETH/SOL/XRP 0.06, DOGE 0.05 | +$1,028 | 375 |
-| BTC/ETH/SOL/XRP 0.07, DOGE 0.06 | +$927 | 308 |
-| BTC 0.10, others 0.06 | +$993 | 323 |
+| Per-asset edge config           |   Taker PnL | Orders |
+| ------------------------------- | ----------: | -----: |
+| Uniform 0.06 (baseline)         | **+$1,046** |    369 |
+| BTC/ETH/SOL/XRP 0.06, DOGE 0.05 |     +$1,028 |    375 |
+| BTC/ETH/SOL/XRP 0.07, DOGE 0.06 |       +$927 |    308 |
+| BTC 0.10, others 0.06           |       +$993 |    323 |
 
 Uniform 0.06 wins. The per-asset edge sweet spots are all at 0.06
 within statistical noise. No room to over-engineer.
@@ -817,14 +813,13 @@ code touched. Best deployable strategy on the captured tape:
 Production blockers documented in TL;DR. The file is the night's
 output of record.
 
-
 ### 05:15 EDT — number correction + (asset, hour) micro-tuning
 
 Self-audit caught: earlier doc revisions reported "+\$1,251 hybrid" but
 the correct per-asset sum on the 35h tape is **+\$1,196**:
 
 - BTC TAKER \$372 + ETH TAKER \$169 + SOL TAKER \$161 + XRP TAKER \$110
-  + DOGE MAKER \$384 = \$1,196
+  - DOGE MAKER \$384 = \$1,196
 
 Earlier "\$1,251" came from per-asset numbers I'd quoted from the
 original 32h JSONL mixed with later filter constants — close enough
@@ -847,7 +842,6 @@ Bottom inside the filter: DOGE-19 (−\$47, 56% win) — now also dropped.
 Top winners inside the filter: BTC-20 (+\$162, 93% win, 14 orders),
 DOGE-20 (+\$95, 83%), ETH-21 (+\$84, 83%, 6 orders).
 
-
 ### 12:55 EDT (2026-05-07) — apples-to-apples source comparison
 
 Patched `fetchBinancePerpCandles.ts` with a fapi REST fallback so we
@@ -865,18 +859,18 @@ ticks across all 4 — isolating the training-source effect (option
 Results (taker PnL @ \$20 stake, all 5 assets):
 
 | Training source | No filter | minEdge≥0.06 | Hour filter + minEdge≥0.06 |
-|---|---:|---:|---:|
-| binance/perp | +$274 | +$307 | +$972 |
-| binance/spot | +$352 | +$419 | **+$1,026** |
-| coinbase/perp | +$491 | +$460 | +$987 |
-| coinbase/spot | +$144 | +$284 | +$1,021 |
+| --------------- | --------: | -----------: | -------------------------: |
+| binance/perp    |     +$274 |        +$307 |                      +$972 |
+| binance/spot    |     +$352 |        +$419 |                **+$1,026** |
+| coinbase/perp   |     +$491 |        +$460 |                      +$987 |
+| coinbase/spot   |     +$144 |        +$284 |                    +$1,021 |
 
 | Training source | Win rate (no filter) | Win (minEdge:0.06) | Win (aggressive) |
-|---|---:|---:|---:|
-| binance/perp | 65.6% | 65.5% | 73.6% |
-| binance/spot | 66.1% | 66.2% | 74.2% |
-| coinbase/perp | 66.1% | 65.7% | 73.7% |
-| coinbase/spot | 65.4% | 65.7% | 73.8% |
+| --------------- | -------------------: | -----------------: | ---------------: |
+| binance/perp    |                65.6% |              65.5% |            73.6% |
+| binance/spot    |                66.1% |              66.2% |            74.2% |
+| coinbase/perp   |                66.1% |              65.7% |            73.7% |
+| coinbase/spot   |                65.4% |              65.7% |            73.8% |
 
 #### Takeaways
 
@@ -891,7 +885,7 @@ Results (taker PnL @ \$20 stake, all 5 assets):
 
 3. **Win rates are remarkably similar across sources** — within
    0.5pp at every filter level. The differences in PnL come from
-   *which orders* fire, not from picking better sides.
+   _which orders_ fire, not from picking better sides.
 
 4. **coinbase/spot is the weakest source for our strategy** at the
    simpler filters. binance/spot is a quiet sleeper performer
@@ -909,8 +903,8 @@ coinbase/perp: **+\$284 → +\$460** (a 62% improvement on the same
 tape). If we trust this signal (35h sample caveat), the next default
 should be coinbase/perp, not coinbase/spot. The fact that the
 underlying model's edge is similar across sources means the
-*training data* matters less than how the *resulting probability
-table* maps to current market conditions.
+_training data_ matters less than how the _resulting probability
+table_ maps to current market conditions.
 
 (Caveat: we're holding the in-window WS tick at coinbase-spot for
 all 4 experiments. Truly switching to coinbase/perp end-to-end would
@@ -1132,12 +1126,12 @@ No hour gate.
 Compared with the previous all-4 `minEdge>=0.06, spread<=0.08`
 candidate:
 
-| Slice |   n | Taker PnL | 1.0-tick slippage PnL | US-hours PnL | Note |
-| ----- | --: | --------: | --------------------: | -----------: | ---- |
-| Previous rule | 202 | +$586 to +$587 | +$505 to +$506 | +$433 | Baseline all-4 consensus |
-| Updated rule | 316 | +$817 to +$834 | +$697 to +$714 | +$472 to +$494 | More volume, all quarters positive |
-| New-only orders | 127 | +$176 to +$193 | +$134 to +$151 | +$9 to +$31 | Lower-edge but tighter-spread adds |
-| Dropped old-only orders | 13 | -$55 | -$58 | -$30 | Wider-spread tail that the new cap removes |
+| Slice                   |   n |      Taker PnL | 1.0-tick slippage PnL |   US-hours PnL | Note                                       |
+| ----------------------- | --: | -------------: | --------------------: | -------------: | ------------------------------------------ |
+| Previous rule           | 202 | +$586 to +$587 |        +$505 to +$506 |          +$433 | Baseline all-4 consensus                   |
+| Updated rule            | 316 | +$817 to +$834 |        +$697 to +$714 | +$472 to +$494 | More volume, all quarters positive         |
+| New-only orders         | 127 | +$176 to +$193 |        +$134 to +$151 |    +$9 to +$31 | Lower-edge but tighter-spread adds         |
+| Dropped old-only orders |  13 |           -$55 |                  -$58 |           -$30 | Wider-spread tail that the new cap removes |
 
 That is a better anti-overfit story than a blind lower edge floor:
 the gain comes from requiring every source to agree while using a
@@ -1206,12 +1200,12 @@ and all 4 must pass the filter. No hour gate.
 Compared with the prior conservative consensus core (`edge>=0.05`,
 `spread<=0.07`, BTC/ETH/SOL, all-4 agreement):
 
-| Rule |   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL |
-| ---- | --: | --------: | --------------------: | ------------: | -----------: |
-| Core | 316 | +$817 to +$834 | +$697 to +$714 | +$15 to +$28 | +$472 to +$494 |
-| Core + ask<=0.75 | 305 | +$835 to +$850 | +$718 to +$732 | +$55 to +$59 | +$511 to +$528 |
-| Core + trend>=0 | 314 | +$858 to +$876 | +$739 to +$755 | +$36 to +$49 | +$493 to +$514 |
-| Core + both | 303 | +$877 to +$892 | +$759 to +$774 | +$75 to +$80 | +$532 to +$549 |
+| Rule             |   n |      Taker PnL | 1.0-tick slippage PnL | Worst quarter |   US-hours PnL |
+| ---------------- | --: | -------------: | --------------------: | ------------: | -------------: |
+| Core             | 316 | +$817 to +$834 |        +$697 to +$714 |  +$15 to +$28 | +$472 to +$494 |
+| Core + ask<=0.75 | 305 | +$835 to +$850 |        +$718 to +$732 |  +$55 to +$59 | +$511 to +$528 |
+| Core + trend>=0  | 314 | +$858 to +$876 |        +$739 to +$755 |  +$36 to +$49 | +$493 to +$514 |
+| Core + both      | 303 | +$877 to +$892 |        +$759 to +$774 |  +$75 to +$80 | +$532 to +$549 |
 
 This is a cleaner PnL improvement than the earlier hour whitelist:
 it cuts only execution-risk tails and requires unanimous source
@@ -1236,12 +1230,12 @@ the replay emitted **zero decision events**. Market tape was present
 source candle tables used to hydrate regime trackers were stale before
 the forward window started:
 
-| Table series | Required last 5m bar for 13:05 UTC replay | Latest available 5m bar |
-| ------------ | ----------------------------------------- | ----------------------- |
-| binance/perp | 2026-05-07 13:00 UTC | 2026-05-07 12:40 UTC |
-| binance/spot | 2026-05-07 13:00 UTC | 2026-05-07 12:40 UTC |
-| coinbase/perp | 2026-05-07 13:00 UTC | 2026-05-07 12:45 UTC |
-| coinbase/spot | 2026-05-07 13:00 UTC | 2026-05-07 12:45 UTC |
+| Table series  | Required last 5m bar for 13:05 UTC replay | Latest available 5m bar |
+| ------------- | ----------------------------------------- | ----------------------- |
+| binance/perp  | 2026-05-07 13:00 UTC                      | 2026-05-07 12:40 UTC    |
+| binance/spot  | 2026-05-07 13:00 UTC                      | 2026-05-07 12:40 UTC    |
+| coinbase/perp | 2026-05-07 13:00 UTC                      | 2026-05-07 12:45 UTC    |
+| coinbase/spot | 2026-05-07 13:00 UTC                      | 2026-05-07 12:45 UTC    |
 
 `replayWindow` intentionally refuses to evaluate if the hydrated
 tracker's last closed 5m candle is not exactly `windowStart - 5m`.
@@ -1273,17 +1267,17 @@ forward check from this machine.
 Coinbase coverage is now fresh for the 2026-05-07 13:05 → 14:35 UTC
 forward slice:
 
-| Table series | Required last 5m bar | Latest available 5m bar | Status |
-| ------------ | -------------------- | ----------------------- | ------ |
-| coinbase/perp | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC | fresh |
-| coinbase/spot | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC | fresh |
+| Table series  | Required last 5m bar | Latest available 5m bar | Status |
+| ------------- | -------------------- | ----------------------- | ------ |
+| coinbase/perp | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC    | fresh  |
+| coinbase/spot | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC    | fresh  |
 
 Raw single-table replay, before the consensus overlay:
 
-| Source table | Decisions | Orders | Maker canonical | All-fill | Real-depth taker |
-| ------------ | --------: | -----: | --------------: | -------: | ---------------: |
-| coinbase/perp | 424,064 | 12 | -$80 | +$34 | -$11 |
-| coinbase/spot | 433,160 | 10 | -$11 | +$71 | +$34 |
+| Source table  | Decisions | Orders | Maker canonical | All-fill | Real-depth taker |
+| ------------- | --------: | -----: | --------------: | -------: | ---------------: |
+| coinbase/perp |   424,064 |     12 |            -$80 |     +$34 |             -$11 |
+| coinbase/spot |   433,160 |     10 |            -$11 |     +$71 |             +$34 |
 
 This preserves the same core pattern as the in-sample tape: maker fills
 remain badly adverse-selected, while all-fill/taker lenses carry the
@@ -1309,10 +1303,10 @@ logs:
 }
 ```
 
-| Source table | n | Real-depth taker | +1 tick stress | Win |
-| ------------ | -: | ---------------: | -------------: | --: |
-| coinbase/perp | 7 | +$3 | +$1 | 71% |
-| coinbase/spot | 8 | +$13 | +$11 | 75% |
+| Source table  |   n | Real-depth taker | +1 tick stress | Win |
+| ------------- | --: | ---------------: | -------------: | --: |
+| coinbase/perp |   7 |              +$3 |            +$1 | 71% |
+| coinbase/spot |   8 |             +$13 |           +$11 | 75% |
 
 Interpretation: this is encouraging but not enough for promotion. The
 fresh forward slice is too small and all-4 consensus cannot be tested
@@ -1343,12 +1337,12 @@ I reran all four saved source tables on the same 2026-05-07 13:05 →
 14:35 UTC forward slice. All four now show fresh candle coverage and
 emit decisions/orders:
 
-| Source table | Orders | Maker canonical | All-fill |
-| ------------ | -----: | --------------: | -------: |
-| binance/perp | 12 | -$80 | +$34 |
-| binance/spot | 13 | -$46 | +$60 |
-| coinbase/perp | 12 | -$80 | +$34 |
-| coinbase/spot | 10 | -$11 | +$71 |
+| Source table  | Orders | Maker canonical | All-fill |
+| ------------- | -----: | --------------: | -------: |
+| binance/perp  |     12 |            -$80 |     +$34 |
+| binance/spot  |     13 |            -$46 |     +$60 |
+| coinbase/perp |     12 |            -$80 |     +$34 |
+| coinbase/spot |     10 |            -$11 |     +$71 |
 
 I also updated `compareReplayConsensus.ts` so its taker PnL uses the
 same real-depth `takerCounterfactual` as `sweepReplay`, instead of
@@ -1366,12 +1360,12 @@ Fresh all-4 overlay for the current challenger:
 }
 ```
 
-| Execution source | Agreeing sources | n | Real-depth taker | +1 tick stress | Win | Worst quarter |
-| ---------------- | ---------------: | -: | ---------------: | -------------: | --: | ------------: |
-| binance/perp | 4 | 5 | +$17 | +$15 | 80% | -$13 |
-| binance/spot | 4 | 5 | +$17 | +$15 | 80% | -$13 |
-| coinbase/perp | 4 | 5 | +$17 | +$15 | 80% | -$13 |
-| coinbase/spot | 4 | 5 | +$16 | +$15 | 80% | -$13 |
+| Execution source | Agreeing sources |   n | Real-depth taker | +1 tick stress | Win | Worst quarter |
+| ---------------- | ---------------: | --: | ---------------: | -------------: | --: | ------------: |
+| binance/perp     |                4 |   5 |             +$17 |           +$15 | 80% |          -$13 |
+| binance/spot     |                4 |   5 |             +$17 |           +$15 | 80% |          -$13 |
+| coinbase/perp    |                4 |   5 |             +$17 |           +$15 | 80% |          -$13 |
+| coinbase/spot    |                4 |   5 |             +$16 |           +$15 | 80% |          -$13 |
 
 This is the first clean forward check where the all-4 consensus rule
 could actually run. It is directionally good: positive across every
@@ -1380,3 +1374,26 @@ hour filter involved. It is still only **five trades**, so this should
 not be treated as live-promotion evidence by itself. The right next
 step is to collect/backfill more forward tape and keep this exact
 real-depth all-4 overlay as the holdout check.
+
+### 12:20 EDT (2026-05-07) — dry/live promoted to the research-challenger logic
+
+Implemented the current challenger in the operator runners:
+
+- `trading:dry-run` now defaults to the committed four-source
+  consensus table set and simulates the chosen trade as an immediate
+  real-depth taker fill with estimated taker fees.
+- `trading:live` now uses the same consensus evaluator and submits FAK
+  taker BUY orders capped by the just-in-time book walk's worst
+  consumed ask.
+- Default asset roster is now BTC/ETH/SOL. DOGE/XRP remain excluded by
+  the strategy policy even if an operator passes them explicitly.
+- The preserved gates are: all four source tables must trade the same
+  side, `minEdge >= 0.05`, chosen spread `<= 0.07`, chosen best ask
+  `<= 0.75`, and chosen side must match the current underlying side of
+  the line.
+
+Important caveat: this is a code-path promotion of the research
+challenger, not new statistical evidence. The forward holdout is still
+only five all-4 trades, so live operation should be watched as a
+controlled validation run rather than treated as a proven production
+strategy.

@@ -1,4 +1,3 @@
-import { assetValues } from "@alea/constants/assets";
 import { env } from "@alea/constants/env";
 import { MIN_EDGE, STAKE_USD } from "@alea/constants/trading";
 import { CliUsageError } from "@alea/lib/cli/CliUsageError";
@@ -7,7 +6,7 @@ import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { runLive } from "@alea/lib/trading/live/runLive";
 import type { LiveEvent } from "@alea/lib/trading/live/types";
-import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
+import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -15,7 +14,7 @@ import { z } from "zod";
 
 /**
  * Live, money-touching trader. Connects the same decision pipeline the
- * dry-run uses, but actually places maker-only limit BUY orders on
+ * dry-run uses, but actually places FAK taker BUY orders on
  * Polymarket, watches fills via the user WS channel, settles each
  * window with real PnL net of fees, and ships a per-window summary
  * over Telegram.
@@ -31,9 +30,9 @@ import { z } from "zod";
 export const tradingLiveCommand = defineCommand({
   name: "trading:live",
   summary:
-    "Run the live trader (maker-only limit orders, real money). Requires --commit.",
+    "Run the live trader (4-source consensus taker orders, real money). Requires --commit.",
   description:
-    "Hydrates EMA-50 from Binance, opens the Binance perp WS, opens the Polymarket user WS, evaluates the same decision pipeline trading:dry-run uses, and posts maker-only GTD limit BUY orders ($STAKE_USD per trade) on the side with the largest edge over the current Polymarket bid. Orders use venue tick/min-size constraints and expire before window close, with cancel as a backup. Settles filled positions on the kline_5m close and ships a per-window Telegram summary including REAL PnL net of fees. In-memory state only; Polymarket is the source of truth and the runner re-hydrates from getOpenOrders + getTrades on every market discovery.",
+    "Hydrates EMA-50 from Binance, opens the Binance perp WS, opens the Polymarket user WS, evaluates the same 4-source consensus decision path trading:dry-run uses, and posts FAK taker BUY orders ($STAKE_USD per trade) on the unanimous side. Entries require the research challenger gates: BTC/ETH/SOL, edge floor, spread <= 7c, best ask <= 75c, and trend-side confirmation. Settles filled positions on the kline_5m close and ships a per-window Telegram summary including REAL PnL net of fees. In-memory state only; Polymarket is the source of truth and the runner re-hydrates from getOpenOrders + getTrades on every market discovery.",
   options: [
     defineValueOption({
       key: "assets",
@@ -43,8 +42,12 @@ export const tradingLiveCommand = defineCommand({
         .string()
         .optional()
         .transform((value) => parseList(value))
-        .pipe(z.array(assetSchema).default([...assetValues]))
-        .describe("Comma-separated asset list (default: all whitelisted)."),
+        .pipe(
+          z.array(assetSchema).default([...researchChallengerStrategy.assets]),
+        )
+        .describe(
+          "Comma-separated asset list (default: research challenger roster).",
+        ),
     }),
     defineValueOption({
       key: "minEdge",
@@ -77,11 +80,12 @@ export const tradingLiveCommand = defineCommand({
   output:
     "Streams a one-line-per-event log: boot, ws connects/disconnects, decisions, order placements, fills, and per-window summaries.",
   sideEffects:
-    "Posts maker-only GTD limit BUY orders on Polymarket for matched (side, edge) signals. Sends Telegram messages on every order placement and once per window summary. Reads from fapi.binance.com (REST + WS) and Polymarket (gamma-api, CLOB REST + WS).",
+    "Posts FAK taker BUY orders on Polymarket for 4-source consensus signals. Sends Telegram messages on every order placement and once per window summary. Reads from fapi.binance.com (REST + WS) and Polymarket (gamma-api, CLOB REST + WS).",
   async run({ io, options }) {
-    if (probabilityTable.assets.length === 0) {
+    const primaryTable = researchChallengerStrategy.tables[0]?.table;
+    if (primaryTable === undefined || primaryTable.assets.length === 0) {
       throw new CliUsageError(
-        "probability table is empty — run `bun alea trading:gen-probability-table` first.",
+        "research challenger probability tables are empty — regenerate the committed table artifact first.",
       );
     }
     if (!options.commit) {
@@ -123,7 +127,10 @@ export const tradingLiveCommand = defineCommand({
       await runLive({
         vendor,
         assets: options.assets,
-        table: probabilityTable,
+        table: primaryTable,
+        decisionEvaluator: researchChallengerStrategy.decisionEvaluator,
+        strategyLabel: researchChallengerStrategy.label,
+        placementMode: researchChallengerStrategy.placementMode,
         minEdge: options.minEdge,
         telegramBotToken,
         telegramChatId,
@@ -153,15 +160,18 @@ function formatLiveEvent({ event }: { readonly event: LiveEvent }): string {
       if (decision.kind === "trade") {
         const s = decision.snapshot;
         const winLabel = `${decision.winningRegime.algoId}/${decision.winningRegime.regime}`;
-        return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${pc.cyan(winLabel)} ourP=${decision.chosen.ourProbability.toFixed(3)} ${pc.green(`→ TAKE ${decision.chosen.side.toUpperCase()} @${decision.chosen.bid?.toFixed(2) ?? "?"} edge=${formatSigned({ value: decision.chosen.edge ?? 0 })}`)}`;
+        return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${pc.cyan(winLabel)} ourP=${decision.chosen.ourProbability.toFixed(3)} ${pc.green(`→ TAKE ${decision.chosen.side.toUpperCase()} bid=${decision.chosen.bid?.toFixed(2) ?? "?"} edge=${formatSigned({ value: decision.chosen.edge ?? 0 })}`)}`;
       }
       if (decision.snapshot === null) {
         return `${ts} ${pc.dim(decision.reason.toUpperCase())}`;
       }
       const s = decision.snapshot;
-      const regimeLabel = s.regimesByAlgoId.size === 0
-        ? "no-regime"
-        : [...s.regimesByAlgoId.entries()].map(([a, r]) => `${a}/${r}`).join(",");
+      const regimeLabel =
+        s.regimesByAlgoId.size === 0
+          ? "no-regime"
+          : [...s.regimesByAlgoId.entries()]
+              .map(([a, r]) => `${a}/${r}`)
+              .join(",");
       return `${ts} ${pc.bold(s.asset.toUpperCase().padEnd(5))} ${pc.dim(`[rem=${s.remaining}m]`)} ${s.distanceBp}bp ${pc.cyan(regimeLabel)} ${pc.yellow(`→ SKIP ${decision.reason}`)}`;
     }
     case "order-placed":

@@ -192,6 +192,8 @@ function parseOrder({
       : ((proxyClose - proxyLine) / proxyLine) * 10_000;
   const canonicalFilledShares =
     numberField({ object, key: "canonicalFilledShares" }) ?? 0;
+  const canonicalFeesUsd =
+    numberField({ object, key: "canonicalFeesUsd" }) ?? 0;
   const canonicalFirstFillAtMs = numberField({
     object,
     key: "canonicalFirstFillAtMs",
@@ -206,7 +208,7 @@ function parseOrder({
           shares: canonicalFilledShares,
           price: limitPrice,
           won: side === officialOutcome,
-        });
+        }) - canonicalFeesUsd;
   const touchPnlUsd =
     officialOutcome === null || touchFilledAtMs === null
       ? null
@@ -549,23 +551,20 @@ function parseTakerCounterfactual({
   if (askPrice === null || sharesIfFilled === null || costUsd === null) {
     return null;
   }
-  const bestAskPrice =
-    numberField({ object, key: "bestAskPrice" }) ?? askPrice;
+  const bestAskPrice = numberField({ object, key: "bestAskPrice" }) ?? askPrice;
   const avgPrice = numberField({ object, key: "avgPrice" }) ?? askPrice;
-  const fillSize =
-    numberField({ object, key: "fillSize" }) ?? sharesIfFilled;
+  const fillSize = numberField({ object, key: "fillSize" }) ?? sharesIfFilled;
   return {
     askPrice,
     bestAskPrice,
     avgPrice,
+    worstPrice: numberField({ object, key: "worstPrice" }) ?? avgPrice,
     fillSize,
     sharesIfFilled,
     costUsd,
     stakeUsd: numberField({ object, key: "stakeUsd" }) ?? costUsd,
-    unfilledStakeUsd:
-      numberField({ object, key: "unfilledStakeUsd" }) ?? 0,
-    levelsConsumed:
-      numberField({ object, key: "levelsConsumed" }) ?? 1,
+    unfilledStakeUsd: numberField({ object, key: "unfilledStakeUsd" }) ?? 0,
+    levelsConsumed: numberField({ object, key: "levelsConsumed" }) ?? 1,
     estimatedFeeRateBps: numberField({
       object,
       key: "estimatedFeeRateBps",

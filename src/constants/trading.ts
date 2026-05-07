@@ -1,5 +1,6 @@
 import { regimeAlgos } from "@alea/lib/training/regimeAlgos/registry";
 import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
+import type { Asset } from "@alea/types/assets";
 
 /**
  * Single home for every tunable constant the trading strategy depends
@@ -62,6 +63,30 @@ export const MIN_ACTIONABLE_DISTANCE_BP = 2;
  * this against backtests and live calibration.
  */
 export const MIN_EDGE = 0.05;
+
+/**
+ * Active asset roster for the 2026-05-07 research challenger. DOGE and
+ * XRP were excluded because the source-consensus replay showed weaker
+ * execution quality and tail behavior there.
+ */
+export const RESEARCH_CHALLENGER_ASSETS: readonly Asset[] = [
+  "btc",
+  "eth",
+  "sol",
+];
+
+/** Maximum allowed chosen-side YES spread for taker entry. */
+export const RESEARCH_CHALLENGER_MAX_CHOSEN_SPREAD = 0.07;
+
+/** Refuse taker entries where the chosen YES best ask is above 75c. */
+export const RESEARCH_CHALLENGER_MAX_CHOSEN_BEST_ASK = 0.75;
+
+/**
+ * Require the underlying price to already be on the side we are buying.
+ * Zero means "same side of line is enough"; positive values would require
+ * that many basis points of confirmation away from the line.
+ */
+export const RESEARCH_CHALLENGER_MIN_TREND_CONFIRM_BP = 0;
 
 /**
  * Minimum probability the model must give the chosen side for the bot
@@ -140,8 +165,8 @@ export const STAKE_USD = 20;
  * constant through anyway so the formula is correct if the venue ever
  * starts charging.
  *
- * Taker fees can be up to 7% on these markets, which is why we are
- * exclusively maker. See the order placement code for the constraint.
+ * The current challenger is taker-first, but maker accounting still flows
+ * through this constant for legacy replay/dry-run paths.
  */
 export const MAKER_FEE_RATE = 0;
 

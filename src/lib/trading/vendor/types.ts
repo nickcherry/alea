@@ -101,6 +101,23 @@ export type PlacedOrder = {
   readonly placedAtMs: number;
 };
 
+export type PlacedTakerMarketBuy = {
+  /**
+   * FAK market orders do not leave a resting order to cancel. The venue
+   * may still return an id for audit purposes, but the runner must track
+   * the local slot as non-resting.
+   */
+  readonly orderId: string | null;
+  readonly side: LeadingSide;
+  readonly outcomeRef: string;
+  readonly limitPrice: number;
+  readonly sharesIfFilled: number;
+  readonly feeRateBps: number;
+  readonly orderType: "FAK";
+  readonly expiresAtMs: null;
+  readonly placedAtMs: number;
+};
+
 export type CancelResult = {
   readonly accepted: boolean;
   /**
@@ -313,6 +330,14 @@ export type Vendor = {
     readonly stakeUsd: number;
     readonly expireBeforeMs: number;
   }): Promise<PlacedOrder>;
+
+  placeTakerMarketBuy?(input: {
+    readonly market: TradableMarket;
+    readonly side: LeadingSide;
+    readonly limitPrice: number;
+    readonly sharesIfFilled: number;
+    readonly stakeUsd: number;
+  }): Promise<PlacedTakerMarketBuy>;
 
   cancelOrder(input: { readonly orderId: string }): Promise<CancelResult>;
 

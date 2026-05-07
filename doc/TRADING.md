@@ -61,8 +61,8 @@ buckets thinner than that are dropped pre-aggregation. See
 [REGIMES.md](./REGIMES.md) for the active algo set and the
 auto-promotion mechanics.
 
-`evaluateDecision` runs a **multi-algo greedy** strategy (live and
-dry-run share the same path):
+`evaluateDecision` is the single-table **multi-algo greedy** primitive:
+
 1. Classify the snapshot under every algo in the registry.
 2. For every (algo, regime) pair the snapshot matches AND that has a
    populated bucket at `(remaining, distanceBp)`, compute the per-side
@@ -72,6 +72,18 @@ dry-run share the same path):
    `ourProbability ≥ MIN_MODEL_PROBABILITY` (0.55); otherwise skip
    with a typed reason (`thin-edge`, `low-confidence`, `no-bucket`,
    `no-bid`, `warmup`, `too-close-to-line`, `out-of-window`).
+
+The live and dry-run operator commands wrap that primitive with the current
+research challenger:
+
+- load four committed probability tables (`binance/perp`, `binance/spot`,
+  `coinbase/perp`, `coinbase/spot`);
+- require all four tables to produce a trade on the same side;
+- trade only BTC/ETH/SOL;
+- require chosen-side spread `<= 0.07`, chosen best ask `<= 0.75`, and the
+  underlying price already on the chosen side of the line;
+- execute as taker, with dry-run using the same real-depth book walk live uses
+  to cap its FAK order.
 
 The live runner keeps a single rolling buffer of recently-closed 5m
 bars per asset (`RegimeTrackers`, capped at 70 bars). Per-decision the
@@ -115,7 +127,7 @@ Polymarket directly.
               └─────┬──────────────┬──────┘
                     │              │
    discoverMarket   │              │  fetchBook / prepareMakerLimitBuy
-   hydrateMarket    │              │  placeMakerLimitBuy / cancelOrder
+   hydrateMarket    │              │  placeMakerLimitBuy / placeTakerMarketBuy
    streamMarketData │              │  streamUserFills / resolveOutcome
    scanLifetimePnl  │              │  …
                     ▼              ▼
@@ -157,6 +169,7 @@ Polymarket happens to expose it today:
 | `fetchBook`            | Top-of-book, depth, and venue tick/min-size constraints  | Two parallel REST GETs                            |
 | `prepareMakerLimitBuy` | Validate/round/size a maker BUY without signing it       | Local/read-only                                   |
 | `placeMakerLimitBuy`   | Sign + post a `postOnly: true` GTD limit BUY             | One REST POST (signed)                            |
+| `placeTakerMarketBuy`  | Sign + post a FAK taker BUY capped by JIT book depth     | One REST POST (signed)                            |
 | `cancelOrder`          | Cancel a resting order by id                             | One REST POST (signed)                            |
 | `streamMarketData`     | Public market book/trade/resolution updates              | One public WS, auto-reconnecting                  |
 | `streamUserFills`      | Long-lived WS for our wallet's fill events               | One auth WS, auto-reconnecting                    |
@@ -191,14 +204,12 @@ T+0…+1m  vendor.discoverMarket completes per asset. Line is captured
          (the model has no snapshot for "no time elapsed yet"), so no
          trades fire.
 
-T+1m     remaining = 4. evaluateDecision returns its first non-null
+T+1m     remaining = 4. The consensus evaluator returns its first non-null
          decision. If TAKE + slot still empty + market acceptingOrders:
          placeWithRetry forces a just-in-time book refresh, re-runs the
-         decision against that fresh book, and posts a V2 GTD post-only
-         BUY that expires at T+5m - ORDER_CANCEL_MARGIN_MS. On postOnly
-         rejection it refreshes the book again and re-evaluates against
-         the moved spread; gives up when the edge drops below MIN_EDGE
-         or the venue GTD validity buffer would be violated.
+         consensus decision against that fresh book, walks chosen-side ask
+         depth, and posts a FAK taker BUY capped by the worst consumed ask.
+         Legacy maker mode still uses the GTD post-only retry branch.
 
 T+2m,3m,4m  remaining flips to 3, 2, 1. The placement loop only fires
          at most once per window (slot stops being empty after the
@@ -237,10 +248,10 @@ straighter route to Polymarket's AWS infrastructure.
 the United States; works over any non-US VPN and natively from EU
 hosts.
 
-| Endpoint                           | Usage                                           | Frequency                                                        | Median latency                                                                |
-| ---------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Endpoint                           | Usage                                              | Frequency                                                         | Median latency                                                                |
+| ---------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `GET /fapi/v1/klines?interval=5m`  | Boot-time bar-buffer hydration; exact-bar fallback | 5 calls at boot, then only when the buffer missed the prior close | **274 ms**                                                                    |
-| `wss://fstream.binance.com/stream` | Combined `bookTicker` + `kline_5m` for 5 assets | Continuous (1 socket)                                            | **~750 ms** to first frame after connect; thousands of ticks/sec steady-state |
+| `wss://fstream.binance.com/stream` | Combined `bookTicker` + `kline_5m` for 5 assets    | Continuous (1 socket)                                             | **~750 ms** to first frame after connect; thousands of ticks/sec steady-state |
 
 Reconnect schedule: `[1, 2, 5, 10, 30] s` exponential. Stale-frame
 watchdog resets the socket if no message lands for 5 s.
@@ -315,29 +326,28 @@ The runner is built to keep going through every transient failure
 that doesn't put real money at risk. Cataloged so an operator
 reading a long log stretch knows what's normal:
 
-| Symptom                                      | What's happening                                          | Runner behaviour                                                                                                                   |
-| -------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `binance-perp ws disconnected`               | Socket dropped (network blip, Binance hiccup)             | Exponential reconnect; price decisions are stale until it returns                                                                  |
-| `polymarket user ws disconnected`            | Same, on the user channel                                 | Same exponential reconnect; fills missed during the gap surface on next hydration                                                  |
-| `${asset} no polymarket market for window …` | Slug not yet in gamma-api                                 | Skip this asset for the window; retry on next 5m boundary                                                                          |
-| `${asset} postOnly rejection (#N)`           | Price moved between book read and post                    | Re-fetch book → re-evaluate → retry; counted in window summary as `Cross-book rejections`                                          |
-| `${asset} place failed (after retry)`        | Generic post error, even after one silent retry           | Skip this asset for the window; fire-and-forget Telegram alert                                                                     |
-| `lifetime pnl reconciliation failed`         | Startup venue-truth scan failed after a checkpoint loaded | Keep the loaded checkpoint and continue; operator can run `trading:hydrate-lifetime-pnl` manually                                  |
-| `lifetime pnl persist failed`                | Disk error on the checkpoint write                        | Continue; the in-memory accumulator is still correct, next window will retry the persist                                           |
-| `window summary telegram send failed`        | Telegram API hiccup                                       | Continue; the next window's summary will reflect the same lifetime total                                                           |
-| `${asset} state hydration failed`            | `getOpenOrders` or `getTrades` failed at boot             | Slot starts empty; if there was a leftover open order on the venue we'll observe its fill via the user WS, or cancel it at wrap-up |
+| Symptom                                                              | What's happening                                                                       | Runner behaviour                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `binance-perp ws disconnected`                                       | Socket dropped (network blip, Binance hiccup)                                          | Exponential reconnect; price decisions are stale until it returns                                                                                                                                              |
+| `polymarket user ws disconnected`                                    | Same, on the user channel                                                              | Same exponential reconnect; fills missed during the gap surface on next hydration                                                                                                                              |
+| `${asset} no polymarket market for window …`                         | Slug not yet in gamma-api                                                              | Skip this asset for the window; retry on next 5m boundary                                                                                                                                                      |
+| `${asset} postOnly rejection (#N)`                                   | Legacy maker mode only: price moved between book read and post                         | Re-fetch book → re-evaluate → retry; counted in window summary as `Cross-book rejections`                                                                                                                      |
+| `${asset} taker book walk failed before placement`                   | Chosen ask book had no usable taker depth                                              | Skip this asset for the window                                                                                                                                                                                 |
+| `${asset} place failed (after retry)`                                | Generic post error, even after one silent retry                                        | Skip this asset for the window; fire-and-forget Telegram alert                                                                                                                                                 |
+| `lifetime pnl reconciliation failed`                                 | Startup venue-truth scan failed after a checkpoint loaded                              | Keep the loaded checkpoint and continue; operator can run `trading:hydrate-lifetime-pnl` manually                                                                                                              |
+| `lifetime pnl persist failed`                                        | Disk error on the checkpoint write                                                     | Continue; the in-memory accumulator is still correct, next window will retry the persist                                                                                                                       |
+| `window summary telegram send failed`                                | Telegram API hiccup                                                                    | Continue; the next window's summary will reflect the same lifetime total                                                                                                                                       |
+| `${asset} state hydration failed`                                    | `getOpenOrders` or `getTrades` failed at boot                                          | Slot starts empty; if there was a leftover open order on the venue we'll observe its fill via the user WS, or cancel it at wrap-up                                                                             |
 | `window … settlement gave up after 30 retries; finalizing without …` | The 5m closing bar for some asset never arrived (Binance gap or REST fallback failure) | Window finalizes without the missing asset's outcome; that asset's bet contributes 0 to PnL for the window. Capped at 30 retries (~60s total) so a permanent gap can't hold a `WindowRecord` in memory forever |
 
 What the runner explicitly **doesn't** do, by design:
 
-- Place a market order. Maker-only is enforced via `postOnly: true`;
-  cross-the-book rejections are normal and silent.
 - Hold more than one order or position per asset at a time. The slot
   state machine refuses to start a new placement unless the slot is
   empty.
-- Carry orders or positions across windows. Residual orders are
-  cancelled at T+5m − 10 s; positions settle on the venue at T+5m
-  and become USDC.
+- Carry orders or positions across windows. Taker orders are FAK, and
+  any legacy maker residual orders are cancelled at T+5m − 10 s;
+  positions settle on the venue at T+5m and become USDC.
 - Persist anything except the lifetime-PnL counter. Every other
   piece of state is reconstructed from the venue on the next boot.
 
@@ -414,10 +424,10 @@ model change shows up as a reviewable diff.
 
 ### `trading:dry-run`
 
-`bun alea trading:dry-run` runs the live decision and maker-order
-preparation path against real feeds without signing, placing, or
-cancelling any order. See [Dry Trading](./DRY_TRADING.md) for the
-fill model, JSONL ledger, Telegram behavior, and report interpretation.
+`bun alea trading:dry-run` runs the live four-source consensus/taker
+decision path against real feeds without signing, placing, or cancelling
+any order. See [Dry Trading](./DRY_TRADING.md) for the fill model, JSONL
+ledger, Telegram behavior, and report interpretation.
 
 ### `trading:dry-run-report`
 
@@ -432,12 +442,12 @@ for the canonical report schema and metric definitions.
 
 `bun alea trading:live --commit` is the production trader.
 Constructs the Polymarket vendor with `eagerAuth: true` (fails fast
-on missing wallet env), opens all the streams, places maker-only
-GTD limit BUYs ($20 stake) with venue-provided tick/min-size
-constraints, watches fills via the user WS, settles each window with
-real PnL net of the same normalized Polymarket fill fees used by the
-performance dashboard, and ships the per-window Telegram summary.
-Refuses to start without `--commit`.
+on missing wallet env), opens all the streams, places FAK taker BUYs
+($20 stake) for four-source consensus signals with venue-provided
+tick/min-size constraints, watches fills via the user WS, settles each
+window with real PnL net of the same normalized Polymarket fill fees
+used by the performance dashboard, and ships the per-window Telegram
+summary. Refuses to start without `--commit`.
 
 ### `trading:hydrate-lifetime-pnl`
 

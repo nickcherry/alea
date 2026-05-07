@@ -1,9 +1,9 @@
-import { trainingCandleSeries } from "@alea/constants/training";
 import { STAKE_USD } from "@alea/constants/trading";
+import { trainingCandleSeries } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
-  FIVE_MINUTES_MS,
   currentWindowStartMs,
+  FIVE_MINUTES_MS,
 } from "@alea/lib/livePrices/fiveMinuteWindow";
 import {
   createRegimeTrackers,
@@ -23,9 +23,9 @@ import {
 import { loadMarketEvents } from "@alea/lib/trading/replay/loadMarketEvents";
 import {
   buildLeadTimeForOrder,
-  replayWindow,
   type ReplayAssetResult,
   type ReplayOrderEnvelope,
+  replayWindow,
 } from "@alea/lib/trading/replay/replayWindow";
 import {
   bucketChainlinkByAsset,
@@ -37,8 +37,8 @@ import type {
   ReplayRunEvent,
   ReplayTickSource,
 } from "@alea/lib/trading/replay/types";
-import { loadTrainingCandles } from "@alea/lib/training/loadTrainingCandles";
 import type { ProbabilityTable } from "@alea/lib/trading/types";
+import { loadTrainingCandles } from "@alea/lib/training/loadTrainingCandles";
 import type { Asset } from "@alea/types/assets";
 
 const TRACKER_BOOTSTRAP_BARS = 70;
@@ -195,7 +195,13 @@ export async function runReplay({
     });
   }
   if (signal.aborted) {
-    return abortResult({ writer, sessionMetrics: emptyMetrics(), windowsProcessed: 0, windowsSkipped: 0, emit });
+    return abortResult({
+      writer,
+      sessionMetrics: emptyMetrics(),
+      windowsProcessed: 0,
+      windowsSkipped: 0,
+      emit,
+    });
   }
 
   // Chainlink slice (pre-loaded once for the whole range; the per-
@@ -494,7 +500,9 @@ function emptyMetrics(): DryAggregateMetrics {
 function countMarkets({
   manifest,
 }: {
-  readonly manifest: { readonly byWindow: ReadonlyMap<number, ReadonlyMap<Asset, unknown>> };
+  readonly manifest: {
+    readonly byWindow: ReadonlyMap<number, ReadonlyMap<Asset, unknown>>;
+  };
 }): number {
   let total = 0;
   for (const perAsset of manifest.byWindow.values()) {
@@ -570,6 +578,7 @@ function serializeOrder({
     observedAtLimitShares: order.observedAtLimitShares,
     canonicalFilledShares: order.canonicalFilledShares,
     canonicalCostUsd: order.canonicalCostUsd,
+    canonicalFeesUsd: order.canonicalFeesUsd,
     canonicalFirstFillAtMs: order.canonicalFirstFillAtMs,
     canonicalFullFillAtMs: order.canonicalFullFillAtMs,
     touchFilledAtMs: order.touchFilledAtMs,
@@ -606,8 +615,7 @@ function serializeOrder({
     // reference value — the mismatch we want surfaced.
     officialOutcome: outcome === null ? null : outcome.winningSide,
     proxyOutcome: outcome?.polymarketResolution?.winningSide ?? null,
-    officialResolvedAtMs:
-      outcome?.polymarketResolution?.resolvedAtMs ?? null,
+    officialResolvedAtMs: outcome?.polymarketResolution?.resolvedAtMs ?? null,
     officialPendingReason: null,
     replayOutcome: outcome,
   };
@@ -676,4 +684,3 @@ function upperBoundOpenTime({
   }
   return lo;
 }
-

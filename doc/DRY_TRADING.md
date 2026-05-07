@@ -2,15 +2,14 @@
 
 Dry trading is the production trading loop run in simulation mode. It uses
 real Binance-perp price updates, real Polymarket market discovery, real
-Polymarket order books, and the same shared decision and maker-order
-preparation path as live trading. It never signs, places, or cancels an
+Polymarket order books, and the same four-source consensus decision path as
+live trading. It never signs, places, or cancels an
 order.
 
 Use it to answer the live-execution question:
 
-> If the strategy prepared these maker BUY orders, which ones would likely
-> have filled, how long did they take to fill, and how did filled trades
-> compare with all prepared orders?
+> If the strategy submitted these taker BUY orders, what would the real-depth
+> fill, fee, and settlement PnL have looked like?
 
 ## Commands
 
@@ -40,12 +39,11 @@ bun alea trading:dry-run-report --session tmp/dry-trading/dry-trading_2026-05-04
 
 ## Runtime Behavior
 
-`trading:dry-run` runs the live decision and maker-order preparation path
+`trading:dry-run` runs the live consensus/taker decision path
 against real feeds without signing, placing, or cancelling any order. It
 discovers real Polymarket markets, hydrates real books, performs the same
-just-in-time book refresh before entry, prepares the same GTD maker BUY shape
-live would post, and then tracks whether public market trades would likely
-have filled it.
+just-in-time book refresh before entry, and records the same real-depth taker
+book walk live uses to cap its FAK order.
 
 The runner subscribes to:
 
@@ -61,7 +59,14 @@ dry-run messages.
 
 ## Fill Model
 
-Canonical dry fills are queue-aware:
+The current canonical dry fill is the real-depth taker fill:
+
+- Walk the chosen-side ask book with the fixed stake.
+- Use the depth-weighted average price and estimated taker fee for PnL.
+- Treat unfilled stake as unfilled, matching the live FAK order policy.
+
+The older maker simulator remains available in code for replay/research paths.
+Its queue-aware model is:
 
 - A later trade below our BUY limit fills the simulated order at our limit.
 - A later trade exactly at our limit fills only after observed size clears the
@@ -115,9 +120,8 @@ telemetry for post-run analysis:
   would have observed a touch or through-limit trade before expiry. These
   are touch/cross diagnostics only; they do not claim queue-aware exact-price
   fills for hypothetical earlier placement.
-- `takerCounterfactual`: best-ask fill size and estimated fee at entry, used
-  by the report JSON to compute a taker-at-ask PnL counterfactual once the
-  official outcome is known.
+- `takerCounterfactual`: real-depth taker fill size, average/worst consumed
+  ask, and estimated fee at entry.
 
 ## Report
 
@@ -126,8 +130,8 @@ under `tmp/`.
 
 The report is organized around the core execution comparison:
 
-- **Filled only**: orders that became inventory under the canonical
-  queue-aware fill model.
+- **Filled only**: orders that became inventory under the canonical fill model
+  (currently real-depth taker).
 - **Filled + unfilled**: every finalized prepared order treated as if it got
   filled.
 - **Unfilled only**: finalized prepared orders that did not fill under the

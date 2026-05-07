@@ -18,7 +18,7 @@ import type { LeadingSide, ProbabilityTable } from "@alea/lib/trading/types";
 import type { RegimeClassifierInput } from "@alea/lib/training/regimeAlgos/types";
 import type { Asset } from "@alea/types/assets";
 
-export type DecisionInputs = {
+export type DecisionInputsBase = {
   readonly asset: Asset;
   readonly windowStartMs: number;
   readonly nowMs: number;
@@ -38,11 +38,22 @@ export type DecisionInputs = {
   readonly upBestBid: number | null;
   /** Best bid for the down-YES token, or `null` if nothing is resting. */
   readonly downBestBid: number | null;
+  /** Best ask for the up-YES token, when the caller has book context. */
+  readonly upBestAsk?: number | null;
+  /** Best ask for the down-YES token, when the caller has book context. */
+  readonly downBestAsk?: number | null;
   readonly upTokenId: string;
   readonly downTokenId: string;
-  readonly table: ProbabilityTable;
   readonly minEdge: number;
 };
+
+export type DecisionInputs = DecisionInputsBase & {
+  readonly table: ProbabilityTable;
+};
+
+export type TradeDecisionEvaluator = (
+  inputs: DecisionInputsBase,
+) => TradeDecision;
 
 /**
  * Pure decision evaluator implementing the multi-algo greedy strategy.
@@ -163,17 +174,20 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
       tokenId: inputs.downTokenId,
       bid: inputs.downBestBid,
       ourProbability: ourProbDown,
-      edge: inputs.downBestBid === null ? null : ourProbDown - inputs.downBestBid,
+      edge:
+        inputs.downBestBid === null ? null : ourProbDown - inputs.downBestBid,
     };
     if (
       upEdge.edge !== null &&
-      (bestUp === null || (bestUp.edge.edge ?? Number.NEGATIVE_INFINITY) < upEdge.edge)
+      (bestUp === null ||
+        (bestUp.edge.edge ?? Number.NEGATIVE_INFINITY) < upEdge.edge)
     ) {
       bestUp = { lookup, edge: upEdge };
     }
     if (
       downEdge.edge !== null &&
-      (bestDown === null || (bestDown.edge.edge ?? Number.NEGATIVE_INFINITY) < downEdge.edge)
+      (bestDown === null ||
+        (bestDown.edge.edge ?? Number.NEGATIVE_INFINITY) < downEdge.edge)
     ) {
       bestDown = { lookup, edge: downEdge };
     }
@@ -185,11 +199,23 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
   const upDiag: SideEdge =
     bestUp !== null
       ? bestUp.edge
-      : noBidSide({ side: "up", tokenId: inputs.upTokenId, bid: inputs.upBestBid, lookups, currentSide });
+      : noBidSide({
+          side: "up",
+          tokenId: inputs.upTokenId,
+          bid: inputs.upBestBid,
+          lookups,
+          currentSide,
+        });
   const downDiag: SideEdge =
     bestDown !== null
       ? bestDown.edge
-      : noBidSide({ side: "down", tokenId: inputs.downTokenId, bid: inputs.downBestBid, lookups, currentSide });
+      : noBidSide({
+          side: "down",
+          tokenId: inputs.downTokenId,
+          bid: inputs.downBestBid,
+          lookups,
+          currentSide,
+        });
 
   if (bestUp === null && bestDown === null) {
     return skipWithSnapshot({
@@ -249,7 +275,9 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
   };
 }
 
-function skipNoSnapshot(reason: "out-of-window" | "too-close-to-line"): TradeDecision {
+function skipNoSnapshot(
+  reason: "out-of-window" | "too-close-to-line",
+): TradeDecision {
   return {
     kind: "skip",
     reason,
@@ -267,7 +295,12 @@ function skipWithSnapshot({
   up,
   down,
 }: {
-  readonly reason: "warmup" | "no-bucket" | "no-bid" | "thin-edge" | "low-confidence";
+  readonly reason:
+    | "warmup"
+    | "no-bucket"
+    | "no-bid"
+    | "thin-edge"
+    | "low-confidence";
   readonly snapshot: DecisionSnapshot;
   readonly winningRegime: WinningRegime | null;
   readonly up: SideEdge | null;

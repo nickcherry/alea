@@ -56,8 +56,9 @@ The canonical URL set lives in
   rather than trusting array order. Book responses also carry
   `min_order_size`, `tick_size`, and `neg_risk`; the adapter merges those with
   the `/clob-markets` metadata before placement. The adapter now preserves the
-  parsed depth levels as well as top-of-book so dry trading can estimate queue
-  ahead at the simulated maker price.
+  parsed depth levels as well as top-of-book so taker dry-run and live paths
+  can walk the chosen ask book before entry. The legacy maker simulator also
+  uses the bid levels to estimate queue ahead.
 - The public market WebSocket subscription sends
   `{ type: "market", assets_ids: [...tokenIds], custom_feature_enabled: true }`.
   Dry trading consumes `book`/`best_bid_ask` for market state,
@@ -65,14 +66,12 @@ The canonical URL set lives in
   operator-visible venue metadata, and `market_resolved` for official-first
   dry settlement. REST resolution remains the fallback if the websocket event
   is missed.
-- Live order placement is maker-only and GTD. The adapter floors prices to the
-  venue tick, rejects sizes below the venue minimum, signs a V2 BUY order with
-  a pre-close expiration, and posts it as
-  `postOrder(order, OrderType.GTD, true, false)` where the third argument is
-  `postOnly`. Polymarket does not expose a stable machine-readable post-only
-  rejection code through the TypeScript client, so the adapter translates known
-  rejection phrases into
-  `PostOnlyRejectionError`.
+- Current live order placement is FAK taker BUY. The adapter caps the order at
+  the just-in-time book walk's worst consumed ask, rejects expected fills below
+  the venue minimum, signs a market BUY, and posts it as
+  `createAndPostMarketOrder(..., OrderType.FAK)`. The legacy maker path still
+  posts GTD post-only orders and translates known post-only rejection phrases
+  into `PostOnlyRejectionError`.
 - Dry order preparation uses the same Polymarket tick/size/GTD validation as
   live order placement but stops before signing or posting. This is exposed as
   `Vendor.prepareMakerLimitBuy` and is safe without wallet credentials.

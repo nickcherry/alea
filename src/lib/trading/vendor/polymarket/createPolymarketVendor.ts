@@ -8,6 +8,7 @@ import {
   placePolymarketMakerLimitBuy,
   preparePolymarketMakerLimitBuy,
 } from "@alea/lib/trading/vendor/polymarket/placeMakerLimitBuy";
+import { placePolymarketTakerMarketBuy } from "@alea/lib/trading/vendor/polymarket/placeTakerMarketBuy";
 import { resolvePolymarketMarketOutcome } from "@alea/lib/trading/vendor/polymarket/resolveMarketOutcome";
 import { scanPolymarketLifetimePnl } from "@alea/lib/trading/vendor/polymarket/scanLifetimePnl";
 import { streamPolymarketMarketData } from "@alea/lib/trading/vendor/polymarket/streamMarketData";
@@ -30,12 +31,11 @@ export type CreatePolymarketVendorOptions = {
  *
  * **Auth is lazy by default** — the factory only mints the L2 API
  * key bundle when an authenticated method (`placeMakerLimitBuy`,
- * `cancelOrder`, `streamUserFills`, `hydrateMarketState`,
- * `scanLifetimePnl`) is first invoked. The dry-run runner can
- * construct a vendor without any wallet env set; only the live runner,
- * which calls those methods, requires the full credential set. Pass
- * `eagerAuth: true` to fail fast at construction when running the
- * live trader.
+ * `placeTakerMarketBuy`, `cancelOrder`, `streamUserFills`,
+ * `hydrateMarketState`, `scanLifetimePnl`) is first invoked. The dry-run
+ * runner can construct a vendor without any wallet env set; only the live
+ * runner, which calls those methods, requires the full credential set. Pass
+ * `eagerAuth: true` to fail fast at construction when running the live trader.
  *
  * `constraintsByConditionId` is the only piece of vendor-internal state
  * the implementation maintains beyond the auth bundle: it caches the
@@ -164,6 +164,33 @@ export async function createPolymarketVendor(
         limitPrice,
         stakeUsd,
         expireBeforeMs,
+        constraints,
+      });
+    },
+
+    async placeTakerMarketBuy({
+      market,
+      side,
+      limitPrice,
+      sharesIfFilled,
+      stakeUsd,
+    }) {
+      const { client } = await auth();
+      const constraints =
+        constraintsByConditionId.get(market.vendorRef) ??
+        (market.constraints as PolymarketOrderConstraints | undefined);
+      if (constraints === undefined) {
+        throw new Error(
+          `Polymarket constraints missing for ${market.vendorRef}; refusing to place an order without venue tick/min-size parameters.`,
+        );
+      }
+      return placePolymarketTakerMarketBuy({
+        client,
+        market,
+        side,
+        limitPrice,
+        sharesIfFilled,
+        stakeUsd,
         constraints,
       });
     },

@@ -98,6 +98,7 @@ export type DryTakerCounterfactual = {
   readonly askPrice: number;
   readonly bestAskPrice: number;
   readonly avgPrice: number;
+  readonly worstPrice: number;
   readonly fillSize: number;
   readonly sharesIfFilled: number;
   readonly costUsd: number;
@@ -374,6 +375,7 @@ export function buildTakerCounterfactual({
     askPrice: avgPrice,
     bestAskPrice,
     avgPrice,
+    worstPrice: fill.worstPrice,
     fillSize: fill.shares,
     sharesIfFilled: fill.shares,
     costUsd: fill.costUsd,
@@ -389,6 +391,7 @@ type TakerBookWalk = {
   readonly shares: number;
   readonly costUsd: number;
   readonly levelsConsumed: number;
+  readonly worstPrice: number;
   readonly feeBasis: readonly {
     readonly shares: number;
     readonly price: number;
@@ -420,6 +423,7 @@ function walkAskBook({
   let shares = 0;
   let costUsd = 0;
   let levelsConsumed = 0;
+  let worstPrice = fallbackAskPrice;
   const feeBasis: Array<{ shares: number; price: number }> = [];
   for (const level of levels) {
     if (remainingUsd <= 0) {
@@ -436,6 +440,7 @@ function walkAskBook({
     costUsd += fillCost;
     remainingUsd -= fillCost;
     levelsConsumed += 1;
+    worstPrice = Math.max(worstPrice, level.price);
     feeBasis.push({ shares: fillShares, price: level.price });
   }
   if (shares <= 0 || costUsd <= 0) {
@@ -445,6 +450,7 @@ function walkAskBook({
     shares,
     costUsd,
     levelsConsumed,
+    worstPrice,
     feeBasis,
   };
 }

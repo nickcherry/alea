@@ -52,6 +52,7 @@ export function computeDryAggregateMetrics({
         }
         return {
           shares,
+          feesUsd: resolution.order.canonicalFeesUsd,
           latencyMs: canonicalFillLatencyMs({ order: resolution.order }),
         };
       },
@@ -63,6 +64,7 @@ export function computeDryAggregateMetrics({
           ? null
           : {
               shares: resolution.order.sharesIfFilled,
+              feesUsd: 0,
               latencyMs: touchFillLatencyMs({ order: resolution.order }),
             },
     }),
@@ -70,6 +72,7 @@ export function computeDryAggregateMetrics({
       resolutions,
       select: (resolution) => ({
         shares: resolution.order.sharesIfFilled,
+        feesUsd: 0,
         latencyMs: 0,
       }),
     }),
@@ -79,6 +82,7 @@ export function computeDryAggregateMetrics({
       ),
       select: (resolution) => ({
         shares: resolution.order.sharesIfFilled,
+        feesUsd: 0,
         latencyMs: 0,
       }),
     }),
@@ -92,7 +96,11 @@ function computeFillMetrics({
   readonly resolutions: readonly DryOrderResolution[];
   readonly select: (
     resolution: DryOrderResolution,
-  ) => { readonly shares: number; readonly latencyMs: number | null } | null;
+  ) => {
+    readonly shares: number;
+    readonly feesUsd: number;
+    readonly latencyMs: number | null;
+  } | null;
 }): DryFillMetrics {
   let filledCount = 0;
   let wins = 0;
@@ -111,7 +119,7 @@ function computeFillMetrics({
       shares: fill.shares,
       price: resolution.order.limitPrice,
       won: resolution.order.side === resolution.officialWinningSide,
-    });
+    }) - fill.feesUsd;
     if (fill.latencyMs !== null) {
       latencies.push(fill.latencyMs);
     }

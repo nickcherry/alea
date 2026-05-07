@@ -19,6 +19,7 @@ export type SimulatedDryOrder = {
   observedAtLimitShares: number;
   canonicalFilledShares: number;
   canonicalCostUsd: number;
+  canonicalFeesUsd: number;
   canonicalFirstFillAtMs: number | null;
   canonicalFullFillAtMs: number | null;
   touchFilledAtMs: number | null;
@@ -29,6 +30,7 @@ export type CreateSimulatedDryOrderInput = Omit<
   | "observedAtLimitShares"
   | "canonicalFilledShares"
   | "canonicalCostUsd"
+  | "canonicalFeesUsd"
   | "canonicalFirstFillAtMs"
   | "canonicalFullFillAtMs"
   | "touchFilledAtMs"
@@ -42,10 +44,38 @@ export function createSimulatedDryOrder(
     observedAtLimitShares: 0,
     canonicalFilledShares: 0,
     canonicalCostUsd: 0,
+    canonicalFeesUsd: 0,
     canonicalFirstFillAtMs: null,
     canonicalFullFillAtMs: null,
     touchFilledAtMs: null,
   };
+}
+
+export function markSimulatedOrderFilled({
+  order,
+  shares,
+  costUsd,
+  feesUsd,
+  atMs,
+}: {
+  readonly order: SimulatedDryOrder;
+  readonly shares: number;
+  readonly costUsd: number;
+  readonly feesUsd: number;
+  readonly atMs: number;
+}): void {
+  if (shares <= PRICE_EPSILON || costUsd <= 0) {
+    return;
+  }
+  order.canonicalFilledShares = Math.min(shares, order.sharesIfFilled);
+  order.canonicalCostUsd = costUsd;
+  order.canonicalFeesUsd = Math.max(0, feesUsd);
+  order.canonicalFirstFillAtMs = atMs;
+  order.canonicalFullFillAtMs =
+    order.canonicalFilledShares + PRICE_EPSILON >= order.sharesIfFilled
+      ? atMs
+      : null;
+  order.touchFilledAtMs = atMs;
 }
 
 export function applyTradeToSimulatedOrder({
@@ -85,7 +115,11 @@ export function applyTradeToSimulatedOrder({
   if (Math.abs(trade.price - order.limitPrice) > PRICE_EPSILON) {
     return changed;
   }
-  if (order.queueAheadShares === null || trade.size === null || trade.size <= 0) {
+  if (
+    order.queueAheadShares === null ||
+    trade.size === null ||
+    trade.size <= 0
+  ) {
     return changed;
   }
 
@@ -133,7 +167,10 @@ function fillCanonical({
   readonly shares: number;
   readonly atMs: number;
 }): void {
-  const bounded = Math.min(shares, order.sharesIfFilled - order.canonicalFilledShares);
+  const bounded = Math.min(
+    shares,
+    order.sharesIfFilled - order.canonicalFilledShares,
+  );
   if (bounded <= PRICE_EPSILON) {
     return;
   }

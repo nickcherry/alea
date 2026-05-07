@@ -29,6 +29,7 @@ import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
 import {
   applyTradeToSimulatedOrder,
   createSimulatedDryOrder,
+  markSimulatedOrderFilled,
   type SimulatedDryOrder,
 } from "@alea/lib/trading/dryRun/fillSimulation";
 import { formatDryOrderPrepared } from "@alea/lib/trading/dryRun/formatDryOrderPrepared";
@@ -92,6 +93,9 @@ export type DryRunParams = {
   readonly vendor: Vendor;
   readonly assets: readonly Asset[];
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
+  readonly strategyLabel?: string;
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly priceSource?: LivePriceSource;
   readonly logWriter?: DryTradingJsonlWriter;
@@ -110,6 +114,9 @@ export async function runDryRun({
   vendor,
   assets,
   table,
+  decisionEvaluator,
+  strategyLabel = "single-table maker",
+  placementMode = "maker",
   minEdge,
   priceSource = binancePerpLivePriceSource,
   logWriter,
@@ -148,6 +155,8 @@ export async function runDryRun({
       priceSource: priceSource.id,
       assets,
       minEdge,
+      strategyLabel,
+      placementMode,
       stakeUsd: STAKE_USD,
       tableRange: formatTableRange({ table }),
       telegramAlerts: notifyTelegram !== null,
@@ -157,7 +166,7 @@ export async function runDryRun({
   emit({
     kind: "info",
     atMs: Date.now(),
-    message: `dry-trading starting: vendor=${vendor.id} priceSource=${priceSource.id} assets=${assets.join(",")} stake=$${STAKE_USD} minEdge=${minEdge.toFixed(3)} log=${writer.path}`,
+    message: `dry-trading starting: strategy=${strategyLabel} placement=${placementMode} vendor=${vendor.id} priceSource=${priceSource.id} assets=${assets.join(",")} stake=$${STAKE_USD} minEdge=${minEdge.toFixed(3)} log=${writer.path}`,
   });
 
   for (const asset of assets) {
@@ -348,6 +357,8 @@ export async function runDryRun({
         trackers,
         books,
         table,
+        decisionEvaluator,
+        placementMode,
         minEdge,
         writer,
         notifyTelegram,
@@ -430,7 +441,7 @@ type DryAssetState = {
 
 type DryOrderEnvelope = {
   readonly order: SimulatedDryOrder;
-  readonly prepared: PreparedMakerLimitOrder;
+  readonly prepared: DryPreparedOrder;
   readonly decision: Extract<
     NonNullable<ReturnType<typeof evaluateRecordDecision>>,
     { kind: "trade" }
@@ -446,6 +457,10 @@ type DryOrderEnvelope = {
   readonly entryBookTelemetry: DryEntryBookTelemetry;
   readonly preEntryMarketTelemetry: DryPreEntryMarketTelemetry;
   readonly takerCounterfactual: DryTakerCounterfactual | null;
+};
+
+type DryPreparedOrder = PreparedMakerLimitOrder & {
+  readonly placementMode: "maker" | "taker";
 };
 
 type DryProxyOutcome = {
@@ -675,6 +690,8 @@ function stepDryAsset({
   trackers,
   books,
   table,
+  decisionEvaluator,
+  placementMode,
   minEdge,
   writer,
   notifyTelegram,
@@ -690,6 +707,8 @@ function stepDryAsset({
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator: TradeDecisionEvaluator | undefined;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly writer: DryTradingJsonlWriter;
   readonly notifyTelegram: DryTelegramNotifier | null;
@@ -740,6 +759,7 @@ function stepDryAsset({
     trackers,
     books,
     table,
+    decisionEvaluator,
     minEdge,
     nowMs,
   });
@@ -781,6 +801,8 @@ function stepDryAsset({
       trackers,
       books,
       table,
+      decisionEvaluator,
+      placementMode,
       minEdge,
       writer,
       notifyTelegram,
@@ -800,6 +822,8 @@ async function prepareDryOrder({
   trackers,
   books,
   table,
+  decisionEvaluator,
+  placementMode,
   minEdge,
   writer,
   notifyTelegram,
@@ -815,6 +839,8 @@ async function prepareDryOrder({
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator: TradeDecisionEvaluator | undefined;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly writer: DryTradingJsonlWriter;
   readonly notifyTelegram: DryTelegramNotifier | null;
@@ -826,7 +852,7 @@ async function prepareDryOrder({
     signal.aborted ||
     Date.now() >= state.window.windowEndMs - PLACE_GIVE_UP_BEFORE_END_MS ||
     record.market === null ||
-    vendor.prepareMakerLimitBuy === undefined
+    (placementMode === "maker" && vendor.prepareMakerLimitBuy === undefined)
   ) {
     record.slot = { kind: "empty" };
     return;
@@ -853,6 +879,7 @@ async function prepareDryOrder({
     trackers,
     books,
     table,
+    decisionEvaluator,
     minEdge,
     nowMs: Date.now(),
   });
@@ -864,28 +891,54 @@ async function prepareDryOrder({
     record.slot = { kind: "empty" };
     return;
   }
-  const prepared = await vendor.prepareMakerLimitBuy({
-    market: fresh.market,
-    side: decision.chosen.side,
-    limitPrice: decision.chosen.bid,
-    stakeUsd: STAKE_USD,
-    expireBeforeMs: state.window.windowEndMs - ORDER_CANCEL_MARGIN_MS,
-  });
-  if (prepared.expiresAtMs === null) {
-    record.slot = { kind: "empty" };
-    return;
-  }
   const tick = lastTick.get(asset);
   const line = record.line;
   if (tick === undefined || line === null) {
     record.slot = { kind: "empty" };
     return;
   }
-  const queueAheadShares = queueAheadAtLimit({
+  const takerCounterfactual = buildTakerCounterfactual({
     book: fresh,
-    side: prepared.side,
-    limitPrice: prepared.limitPrice,
+    side: decision.chosen.side,
+    stakeUsd: STAKE_USD,
   });
+  const prepared =
+    placementMode === "taker"
+      ? takerCounterfactual === null
+        ? null
+        : ({
+            placementMode,
+            side: decision.chosen.side,
+            outcomeRef: decision.chosen.tokenId,
+            limitPrice: takerCounterfactual.avgPrice,
+            sharesIfFilled: takerCounterfactual.sharesIfFilled,
+            feeRateBps: takerCounterfactual.estimatedFeeRateBps ?? 0,
+            orderType: "GTD",
+            expiresAtMs: state.window.windowEndMs - ORDER_CANCEL_MARGIN_MS,
+            preparedAtMs: Date.now(),
+          } satisfies DryPreparedOrder)
+      : ({
+          placementMode,
+          ...(await vendor.prepareMakerLimitBuy!({
+            market: fresh.market,
+            side: decision.chosen.side,
+            limitPrice: decision.chosen.bid,
+            stakeUsd: STAKE_USD,
+            expireBeforeMs: state.window.windowEndMs - ORDER_CANCEL_MARGIN_MS,
+          })),
+        } satisfies DryPreparedOrder);
+  if (prepared === null || prepared.expiresAtMs === null) {
+    record.slot = { kind: "empty" };
+    return;
+  }
+  const queueAheadShares =
+    placementMode === "maker"
+      ? queueAheadAtLimit({
+          book: fresh,
+          side: prepared.side,
+          limitPrice: prepared.limitPrice,
+        })
+      : null;
   // Queue-depth gate (iter 3 of overnight 2026-05-05). A near-empty
   // chosen-side bid queue at our limit is over-represented in adverse
   // fills: in the 2026-05-04 baseline the bottom queue quartile
@@ -895,6 +948,7 @@ async function prepareDryOrder({
   // queue depth — `null` passes (rare, only when the book read
   // returned no level info).
   if (
+    placementMode === "maker" &&
     queueAheadShares !== null &&
     queueAheadShares < MIN_QUEUE_AHEAD_SHARES
   ) {
@@ -923,6 +977,15 @@ async function prepareDryOrder({
     expiresAtMs: prepared.expiresAtMs,
     queueAheadShares,
   });
+  if (placementMode === "taker" && takerCounterfactual !== null) {
+    markSimulatedOrderFilled({
+      order,
+      shares: takerCounterfactual.fillSize,
+      costUsd: takerCounterfactual.costUsd,
+      feesUsd: takerCounterfactual.estimatedFeeUsd ?? 0,
+      atMs: prepared.preparedAtMs,
+    });
+  }
   const top = topForSide({ book: fresh, side: prepared.side });
   const outcomeTrades =
     state.marketTradesByOutcome.get(prepared.outcomeRef) ?? [];
@@ -957,24 +1020,20 @@ async function prepareDryOrder({
       placedAtMs: prepared.preparedAtMs,
       limitPrice: prepared.limitPrice,
     }),
-    takerCounterfactual: buildTakerCounterfactual({
-      book: fresh,
-      side: prepared.side,
-      stakeUsd: STAKE_USD,
-    }),
+    takerCounterfactual,
   };
   record.slot = {
     kind: "active",
     market: fresh.market,
     side: prepared.side,
     outcomeRef: prepared.outcomeRef,
-    orderId: order.id,
+    orderId: placementMode === "maker" ? order.id : null,
     limitPrice: prepared.limitPrice,
     sharesIfFilled: prepared.sharesIfFilled,
-    sharesFilled: 0,
-    costUsd: 0,
-    feesUsd: 0,
-    feeRateBpsAvg: 0,
+    sharesFilled: order.canonicalFilledShares,
+    costUsd: order.canonicalCostUsd,
+    feesUsd: order.canonicalFeesUsd,
+    feeRateBpsAvg: prepared.feeRateBps,
   };
   const body = formatDryOrderPrepared({
     asset,
@@ -987,6 +1046,7 @@ async function prepareDryOrder({
     modelProbability: decision.chosen.ourProbability,
     edge: decision.chosen.edge,
     queueAheadShares,
+    placementMode,
     windowEndMs: state.window.windowEndMs,
     nowMs: Date.now(),
   });
@@ -1505,6 +1565,7 @@ function dryWindowSummaryOrders({
       sharesIfFilled: envelope.order.sharesIfFilled,
       placedAtMs: envelope.order.placedAtMs,
       canonicalFilledShares: envelope.order.canonicalFilledShares,
+      canonicalFeesUsd: envelope.order.canonicalFeesUsd,
       canonicalFirstFillAtMs: envelope.order.canonicalFirstFillAtMs,
       touchFilledAtMs: envelope.order.touchFilledAtMs,
       officialWinningSide: assetState.officialOutcome,
@@ -1653,6 +1714,7 @@ function serializeDryOrder({
     observedAtLimitShares: order.observedAtLimitShares,
     canonicalFilledShares: order.canonicalFilledShares,
     canonicalCostUsd: order.canonicalCostUsd,
+    canonicalFeesUsd: order.canonicalFeesUsd,
     canonicalFirstFillAtMs: order.canonicalFirstFillAtMs,
     canonicalFullFillAtMs: order.canonicalFullFillAtMs,
     touchFilledAtMs: order.touchFilledAtMs,
@@ -1697,3 +1759,4 @@ function formatTableRange({
     .slice(0, 10);
   return `${first}..${last}`;
 }
+import type { TradeDecisionEvaluator } from "@alea/lib/trading/decision/evaluateDecision";

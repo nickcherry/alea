@@ -81,6 +81,12 @@ export type SideEdge = {
  *     `MIN_EDGE`.
  *   - `low-confidence` — best edge clears `MIN_EDGE` but the chosen
  *     side's probability is below `MIN_MODEL_PROBABILITY`.
+ *   - `no-consensus` — the research-challenger source tables did not
+ *     unanimously choose the same tradeable side.
+ *   - `execution-quality` — the consensus side passed model gates but
+ *     failed the taker execution-quality filters.
+ *   - `asset-excluded` — asset is outside the active research
+ *     challenger roster.
  *   - `too-close-to-line` — distance below `MIN_ACTIONABLE_DISTANCE_BP`.
  *   - `out-of-window` — `(now - windowStart)` is outside [1, 5)m.
  */
@@ -91,7 +97,10 @@ export type DecisionSkipReason =
   | "no-bucket"
   | "no-bid"
   | "thin-edge"
-  | "low-confidence";
+  | "low-confidence"
+  | "no-consensus"
+  | "execution-quality"
+  | "asset-excluded";
 
 export type TradeDecision =
   | {

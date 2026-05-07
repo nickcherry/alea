@@ -2,6 +2,8 @@ import { ORDER_CANCEL_MARGIN_MS, STAKE_USD } from "@alea/constants/trading";
 import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
 import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
+import type { TradeDecisionEvaluator } from "@alea/lib/trading/decision/evaluateDecision";
+import { buildTakerCounterfactual } from "@alea/lib/trading/dryRun/telemetry";
 import { evaluateRecordDecision } from "@alea/lib/trading/live/evaluateRecordDecision";
 import { activeSlotFromHydration } from "@alea/lib/trading/live/slotHydration";
 import type {
@@ -17,7 +19,9 @@ import type { ProbabilityTable } from "@alea/lib/trading/types";
 import type { LeadingSide } from "@alea/lib/trading/types";
 import {
   type PlacedOrder,
+  type PlacedTakerMarketBuy,
   PostOnlyRejectionError,
+  type UpDownBook,
   type Vendor,
 } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
@@ -28,8 +32,9 @@ const PLACE_GIVE_UP_BEFORE_END_MS =
   ORDER_CANCEL_MARGIN_MS + GTD_MIN_VALIDITY_BUFFER_MS;
 
 /**
- * Places one maker-only limit BUY for `record`'s asset, with the
- * full chunk-2-review error handling policy:
+ * Places one BUY for `record`'s asset. Current live mode is FAK taker;
+ * the legacy maker branch keeps the full chunk-2-review error handling
+ * policy:
  *
  *   - **postOnly rejection** (price moved between book read and post):
  *     silent on Telegram, increments `window.rejectedCount`. The loop
@@ -55,6 +60,8 @@ export async function placeWithRetry({
   trackers,
   books,
   table,
+  decisionEvaluator,
+  placementMode = "maker",
   minEdge,
   telegramBotToken,
   telegramChatId,
@@ -69,6 +76,8 @@ export async function placeWithRetry({
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly telegramBotToken: string;
   readonly telegramChatId: string;
@@ -95,8 +104,9 @@ export async function placeWithRetry({
       record.slot = { kind: "empty" };
       return;
     }
+    let fresh: UpDownBook;
     try {
-      const fresh = await vendor.fetchBook({ market, signal });
+      fresh = await vendor.fetchBook({ market, signal });
       books.set(market.vendorRef, fresh);
       record.market = fresh.market;
     } catch (error) {
@@ -116,6 +126,7 @@ export async function placeWithRetry({
       trackers,
       books,
       table,
+      decisionEvaluator,
       minEdge,
       nowMs: Date.now(),
     });
@@ -124,6 +135,24 @@ export async function placeWithRetry({
       return;
     }
     const orderMarket = record.market ?? market;
+    const takerCounterfactual =
+      placementMode === "taker"
+        ? buildTakerCounterfactual({
+            book: fresh,
+            side: decision.side,
+            stakeUsd: STAKE_USD,
+          })
+        : null;
+    if (placementMode === "taker" && takerCounterfactual === null) {
+      record.slot = { kind: "empty" };
+      emit({
+        kind: "warn",
+        atMs: Date.now(),
+        message: `${labelAsset(asset)} taker book walk failed before placement`,
+      });
+      return;
+    }
+    const slotLimitPrice = takerCounterfactual?.avgPrice ?? decision.bid;
 
     // Reflect the freshly re-evaluated side/price on the placeholder
     // slot so log/UI events reading the slot mid-loop see truth.
@@ -133,21 +162,30 @@ export async function placeWithRetry({
       side: decision.side,
       outcomeRef: decision.outcomeRef,
       orderId: null,
-      limitPrice: decision.bid,
-      sharesIfFilled: 0,
+      limitPrice: slotLimitPrice,
+      sharesIfFilled: takerCounterfactual?.sharesIfFilled ?? 0,
       sharesFilled: 0,
       costUsd: 0,
       feesUsd: 0,
-      feeRateBpsAvg: 0,
+      feeRateBpsAvg: takerCounterfactual?.estimatedFeeRateBps ?? 0,
     };
 
-    const attempt = await attemptPlace({
-      vendor,
-      market: orderMarket,
-      side: decision.side,
-      bid: decision.bid,
-      expireBeforeMs: window.windowEndMs - ORDER_CANCEL_MARGIN_MS,
-    });
+    const attempt =
+      placementMode === "taker"
+        ? await attemptPlaceTaker({
+            vendor,
+            market: orderMarket,
+            side: decision.side,
+            limitPrice: takerCounterfactual?.worstPrice ?? slotLimitPrice,
+            sharesIfFilled: takerCounterfactual?.sharesIfFilled ?? 0,
+          })
+        : await attemptPlaceMaker({
+            vendor,
+            market: orderMarket,
+            side: decision.side,
+            bid: decision.bid,
+            expireBeforeMs: window.windowEndMs - ORDER_CANCEL_MARGIN_MS,
+          });
 
     if (attempt.kind === "ok") {
       const observed = matchingActiveSlot({
@@ -163,7 +201,10 @@ export async function placeWithRetry({
         market: orderMarket,
         side: attempt.placed.side,
         outcomeRef: attempt.placed.outcomeRef,
-        orderId: orderFullyFilled ? null : attempt.placed.orderId,
+        orderId:
+          placementMode === "taker" || orderFullyFilled
+            ? null
+            : (attempt.placed as PlacedOrder).orderId,
         limitPrice: attempt.placed.limitPrice,
         sharesIfFilled: attempt.placed.sharesIfFilled,
         sharesFilled,
@@ -272,6 +313,7 @@ function currentDecision({
   trackers,
   books,
   table,
+  decisionEvaluator,
   minEdge,
   nowMs,
 }: {
@@ -282,6 +324,7 @@ function currentDecision({
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
   readonly minEdge: number;
   readonly nowMs: number;
 }): CurrentDecision | null {
@@ -297,6 +340,7 @@ function currentDecision({
     trackers,
     books,
     table,
+    decisionEvaluator,
     minEdge,
     nowMs,
   });
@@ -315,11 +359,11 @@ function currentDecision({
 }
 
 type PlaceAttempt =
-  | { readonly kind: "ok"; readonly placed: PlacedOrder }
+  | { readonly kind: "ok"; readonly placed: PlacedOrder | PlacedTakerMarketBuy }
   | { readonly kind: "postOnly"; readonly errorMessage: string }
   | { readonly kind: "generic"; readonly errorMessage: string };
 
-async function attemptPlace({
+async function attemptPlaceMaker({
   vendor,
   market,
   side,
@@ -346,6 +390,39 @@ async function attemptPlace({
     if (error instanceof PostOnlyRejectionError) {
       return { kind: "postOnly", errorMessage: message };
     }
+    return { kind: "generic", errorMessage: message };
+  }
+}
+
+async function attemptPlaceTaker({
+  vendor,
+  market,
+  side,
+  limitPrice,
+  sharesIfFilled,
+}: {
+  readonly vendor: Vendor;
+  readonly market: AssetWindowRecord["market"] & object;
+  readonly side: LeadingSide;
+  readonly limitPrice: number;
+  readonly sharesIfFilled: number;
+}): Promise<PlaceAttempt> {
+  try {
+    if (vendor.placeTakerMarketBuy === undefined) {
+      throw new Error(
+        `${vendor.id} vendor does not implement taker market buys`,
+      );
+    }
+    const placed = await vendor.placeTakerMarketBuy({
+      market,
+      side,
+      limitPrice,
+      sharesIfFilled,
+      stakeUsd: STAKE_USD,
+    });
+    return { kind: "ok", placed };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return { kind: "generic", errorMessage: message };
   }
 }

@@ -10,6 +10,7 @@ export type DryWindowSummaryOrder = {
   readonly sharesIfFilled: number;
   readonly placedAtMs: number;
   readonly canonicalFilledShares: number;
+  readonly canonicalFeesUsd: number;
   readonly canonicalFirstFillAtMs: number | null;
   readonly touchFilledAtMs: number | null;
   readonly officialWinningSide: LeadingSide;
@@ -133,11 +134,12 @@ function formatOrderLine({
   });
   const proxyLabel = formatProxyLabel({ order });
   if (order.canonicalFilledShares > 0) {
-    const pnlUsd = computeDryPnlUsd({
-      shares: order.canonicalFilledShares,
-      price: order.limitPrice,
-      won,
-    });
+    const pnlUsd =
+      computeDryPnlUsd({
+        shares: order.canonicalFilledShares,
+        price: order.limitPrice,
+        won,
+      }) - order.canonicalFeesUsd;
     return `${tag} ${arrowOf({ side: order.side })} @ ${formatLimitPrice({ value: order.limitPrice })} → filled ${formatShares({ value: order.canonicalFilledShares })}/${formatShares({ value: order.sharesIfFilled })} in ${formatLatency({ placedAtMs: order.placedAtMs, filledAtMs: order.canonicalFirstFillAtMs })}, ${won ? "won" : "lost"} ${formatSignedUsd({ value: pnlUsd })}${proxyLabel}`;
   }
   return `${tag} ${arrowOf({ side: order.side })} @ ${formatLimitPrice({ value: order.limitPrice })} → didn't fill; would have ${won ? "won" : "lost"} ${formatSignedUsd({ value: allFilledPnlUsd })} if filled${proxyLabel}`;

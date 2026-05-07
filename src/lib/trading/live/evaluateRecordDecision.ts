@@ -2,9 +2,15 @@ import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
 import { computeRegimeClassifierInput } from "@alea/lib/livePrices/regimeContext";
 import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
-import { evaluateDecision } from "@alea/lib/trading/decision/evaluateDecision";
+import {
+  evaluateDecision,
+  type TradeDecisionEvaluator,
+} from "@alea/lib/trading/decision/evaluateDecision";
 import type { TradeDecision } from "@alea/lib/trading/decision/types";
-import { tickIsFresh, usableBookForMarket } from "@alea/lib/trading/live/freshness";
+import {
+  tickIsFresh,
+  usableBookForMarket,
+} from "@alea/lib/trading/live/freshness";
 import type {
   AssetWindowRecord,
   BookCache,
@@ -21,6 +27,7 @@ export function evaluateRecordDecision({
   trackers,
   books,
   table,
+  decisionEvaluator,
   minEdge,
   nowMs,
 }: {
@@ -30,10 +37,16 @@ export function evaluateRecordDecision({
   readonly lastTick: ReadonlyMap<Asset, LivePriceTick>;
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
-  readonly table: ProbabilityTable;
+  readonly table?: ProbabilityTable;
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
   readonly minEdge: number;
   readonly nowMs: number;
 }): TradeDecision | null {
+  if (table === undefined && decisionEvaluator === undefined) {
+    throw new Error(
+      "evaluateRecordDecision requires table or decisionEvaluator",
+    );
+  }
   const market = record.market;
   if (
     market === null ||
@@ -70,7 +83,7 @@ export function evaluateRecordDecision({
     windowStartMs: market.windowStartMs,
     nowMs,
   });
-  return evaluateDecision({
+  const baseInputs = {
     asset,
     windowStartMs: window.windowStartMs,
     nowMs,
@@ -79,9 +92,17 @@ export function evaluateRecordDecision({
     regimeInput,
     upBestBid: book?.up.bestBid ?? null,
     downBestBid: book?.down.bestBid ?? null,
+    upBestAsk: book?.up.bestAsk ?? null,
+    downBestAsk: book?.down.bestAsk ?? null,
     upTokenId: market.upRef,
     downTokenId: market.downRef,
-    table,
     minEdge,
+  };
+  if (decisionEvaluator !== undefined) {
+    return decisionEvaluator(baseInputs);
+  }
+  return evaluateDecision({
+    ...baseInputs,
+    table: table as ProbabilityTable,
   });
 }

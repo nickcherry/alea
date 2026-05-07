@@ -1,4 +1,3 @@
-import { assetValues } from "@alea/constants/assets";
 import { env } from "@alea/constants/env";
 import { MIN_EDGE } from "@alea/constants/trading";
 import { CliUsageError } from "@alea/lib/cli/CliUsageError";
@@ -6,7 +5,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { formatDryRunEvent } from "@alea/lib/trading/dryRun/formatDryRunEvent";
 import { runDryRun } from "@alea/lib/trading/dryRun/runDryRun";
-import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
+import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -16,14 +15,14 @@ import { z } from "zod";
  * Long-running dry trader. No orders are placed and no auth is
  * exercised. The daemon connects to the same live price source as the
  * live trader, discovers current Polymarket markets, subscribes to the
- * public market-data websocket, prepares virtual maker orders through
- * the vendor order-prep path, and simulates queue-aware fills.
+ * public market-data websocket, evaluates the current research
+ * challenger, and simulates real-depth taker fills.
  */
 export const tradingDryRunCommand = defineCommand({
   name: "trading:dry-run",
   summary: "Simulate live trading against real feeds without placing orders",
   description:
-    "Loads the committed probability table, hydrates moving trackers from the configured live price source, opens live price and Polymarket public market-data websockets, runs the same decision and maker-order preparation path as trading:live, and simulates queue-aware fills instead of signing or posting orders. Sends Telegram alerts for virtual orders and per-window dry summaries, appends JSONL session/window records under tmp/dry-trading/, and exits cleanly on SIGINT.",
+    "Loads the committed 4-source research-challenger probability tables, hydrates moving trackers from the configured live price source, opens live price and Polymarket public market-data websockets, runs the same consensus decision path as trading:live, and simulates real-depth taker fills instead of signing or posting orders. Sends Telegram alerts for virtual orders and per-window dry summaries, appends JSONL session/window records under tmp/dry-trading/, and exits cleanly on SIGINT.",
   options: [
     defineValueOption({
       key: "assets",
@@ -33,8 +32,12 @@ export const tradingDryRunCommand = defineCommand({
         .string()
         .optional()
         .transform((value) => parseList(value))
-        .pipe(z.array(assetSchema).default([...assetValues]))
-        .describe("Comma-separated asset list (default: all whitelisted)."),
+        .pipe(
+          z.array(assetSchema).default([...researchChallengerStrategy.assets]),
+        )
+        .describe(
+          "Comma-separated asset list (default: research challenger roster).",
+        ),
     }),
     defineValueOption({
       key: "minEdge",
@@ -59,9 +62,10 @@ export const tradingDryRunCommand = defineCommand({
   sideEffects:
     "Opens live price and Polymarket public market-data WebSockets; calls price-source REST at boot and settlement; polls Polymarket gamma-api/CLOB read endpoints; sends Telegram messages using TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID; appends JSONL files under alea/tmp/dry-trading/. No orders are placed, cancelled, signed, or authenticated.",
   async run({ io, options }) {
-    if (probabilityTable.assets.length === 0) {
+    const primaryTable = researchChallengerStrategy.tables[0]?.table;
+    if (primaryTable === undefined || primaryTable.assets.length === 0) {
       throw new CliUsageError(
-        "probability table is empty — run `bun alea trading:gen-probability-table` first.",
+        "research challenger probability tables are empty — regenerate the committed table artifact first.",
       );
     }
     const telegramBotToken = env.telegramBotToken;
@@ -86,7 +90,10 @@ export const tradingDryRunCommand = defineCommand({
       await runDryRun({
         vendor,
         assets: options.assets,
-        table: probabilityTable,
+        table: primaryTable,
+        decisionEvaluator: researchChallengerStrategy.decisionEvaluator,
+        strategyLabel: researchChallengerStrategy.label,
+        placementMode: researchChallengerStrategy.placementMode,
         minEdge: options.minEdge,
         telegramBotToken,
         telegramChatId,

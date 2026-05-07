@@ -23,6 +23,7 @@ import type {
   ClosedFiveMinuteBar,
   LivePriceTick,
 } from "@alea/lib/livePrices/types";
+import type { TradeDecisionEvaluator } from "@alea/lib/trading/decision/evaluateDecision";
 import { applyFill } from "@alea/lib/trading/live/applyFill";
 import { cancelResidualOrders } from "@alea/lib/trading/live/cancelResidualOrders";
 import { evaluateRecordDecision } from "@alea/lib/trading/live/evaluateRecordDecision";
@@ -58,6 +59,9 @@ export type RunLiveParams = {
   readonly vendor: Vendor;
   readonly assets: readonly Asset[];
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
+  readonly strategyLabel?: string;
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly priceSource?: LivePriceSource;
   readonly telegramBotToken: string;
@@ -100,6 +104,9 @@ export async function runLive({
   vendor,
   assets,
   table,
+  decisionEvaluator,
+  strategyLabel = "single-table maker",
+  placementMode = "maker",
   minEdge,
   priceSource = binancePerpLivePriceSource,
   telegramBotToken,
@@ -110,7 +117,7 @@ export async function runLive({
   emit({
     kind: "info",
     atMs: Date.now(),
-    message: `live trader starting: vendor=${vendor.id} priceSource=${priceSource.id} assets=${assets.join(",")} stake=$${STAKE_USD} minEdge=${minEdge.toFixed(3)} wallet=${vendor.walletAddress.slice(0, 10)}…`,
+    message: `live trader starting: strategy=${strategyLabel} placement=${placementMode} vendor=${vendor.id} priceSource=${priceSource.id} assets=${assets.join(",")} stake=$${STAKE_USD} minEdge=${minEdge.toFixed(3)} wallet=${vendor.walletAddress.slice(0, 10)}…`,
   });
 
   const lifetimePnl: LifetimePnlBox = { value: 0 };
@@ -334,6 +341,8 @@ export async function runLive({
         trackers,
         books,
         table,
+        decisionEvaluator,
+        placementMode,
         minEdge,
         vendor,
         telegramBotToken,
@@ -466,6 +475,8 @@ function stepAsset({
   trackers,
   books,
   table,
+  decisionEvaluator,
+  placementMode,
   minEdge,
   vendor,
   telegramBotToken,
@@ -481,6 +492,8 @@ function stepAsset({
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly books: BookCache;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator: TradeDecisionEvaluator | undefined;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly vendor: Vendor;
   readonly telegramBotToken: string;
@@ -541,6 +554,7 @@ function stepAsset({
     trackers,
     books,
     table,
+    decisionEvaluator,
     minEdge,
     nowMs,
   });
@@ -580,6 +594,8 @@ function stepAsset({
       trackers,
       books,
       table,
+      decisionEvaluator,
+      placementMode,
       minEdge,
       telegramBotToken,
       telegramChatId,

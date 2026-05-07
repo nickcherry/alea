@@ -17,6 +17,7 @@ export function formatDryOrderPrepared({
   modelProbability,
   edge,
   queueAheadShares,
+  placementMode = "maker",
   windowEndMs,
   nowMs,
 }: {
@@ -30,11 +31,15 @@ export function formatDryOrderPrepared({
   readonly modelProbability: number;
   readonly edge: number | null;
   readonly queueAheadShares: number | null;
+  readonly placementMode?: "maker" | "taker";
   readonly windowEndMs: number;
   readonly nowMs: number;
 }): string {
   const arrow = side === "up" ? "↑" : "↓";
-  const headline = `DRY RUN: prepared virtual order for $${formatStake({ stakeUsd })} of ${asset.toUpperCase()} ${arrow} at ${formatLimitPrice({ value: limitPrice })}`;
+  const headline =
+    placementMode === "maker"
+      ? `DRY RUN: prepared virtual order for $${formatStake({ stakeUsd })} of ${asset.toUpperCase()} ${arrow} at ${formatLimitPrice({ value: limitPrice })}`
+      : `DRY RUN: prepared virtual taker order for $${formatStake({ stakeUsd })} of ${asset.toUpperCase()} ${arrow} at ${formatLimitPrice({ value: limitPrice })}`;
   const linePctLabel = formatLineRelativePercent({
     linePrice,
     underlyingPrice,
@@ -45,7 +50,7 @@ export function formatDryOrderPrepared({
     headline,
     "",
     `Underlying is ${formatUnderlyingPrice({ asset, value: underlyingPrice })}. ${lineLabel}.`,
-    `Model p=${modelProbability.toFixed(3)}, edge=${edge === null ? "--" : formatSigned({ value: edge })}; shares=${formatShares({ value: sharesIfFilled })}; queue ahead=${queueAheadShares === null ? "unknown" : formatShares({ value: queueAheadShares })}.`,
+    `Model p=${modelProbability.toFixed(3)}, edge=${edge === null ? "--" : formatSigned({ value: edge })}; shares=${formatShares({ value: sharesIfFilled })}${placementMode === "maker" ? `; queue ahead=${queueAheadShares === null ? "unknown" : formatShares({ value: queueAheadShares })}` : ""}.`,
     expiresLabel,
   ].join("\n");
 }
