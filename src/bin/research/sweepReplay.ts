@@ -101,6 +101,9 @@ type FilterSpec = {
    * 60s analog.
    */
   readonly minSideAlignedMomentum60sBp?: number;
+  // Time-of-day gate (UTC hours, inclusive on both ends)
+  readonly hoursUtc?: readonly number[];
+  readonly excludeHoursUtc?: readonly number[];
   readonly minPreEntry30sFavorableDelta?: number; // signed: positive == favorable for our side
   readonly maxPreEntry30sBelowLimit?: number; // skip if too many trades already cut through limit
   readonly minPreEntry30sTradeCount?: number;
@@ -477,6 +480,19 @@ function applyFilter({
     if (filter.minChosenAskSizeAtBestAsk !== undefined) {
       if (o.chosenAskSizeAtBestAsk === null) return false;
       if (o.chosenAskSizeAtBestAsk < filter.minChosenAskSizeAtBestAsk)
+        return false;
+    }
+    if (
+      filter.hoursUtc !== undefined ||
+      filter.excludeHoursUtc !== undefined
+    ) {
+      const hr = new Date(o.placedAtMs).getUTCHours();
+      if (filter.hoursUtc !== undefined && !filter.hoursUtc.includes(hr))
+        return false;
+      if (
+        filter.excludeHoursUtc !== undefined &&
+        filter.excludeHoursUtc.includes(hr)
+      )
         return false;
     }
     return true;

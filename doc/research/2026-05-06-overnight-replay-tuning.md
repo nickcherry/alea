@@ -228,3 +228,85 @@ clearly in the "thousands" target.
 Much more stable than canonical maker (no 50%-win bucket). Win rate
 across all 4 buckets: 73-85%.
 
+
+### 00:25 EDT — TIME-OF-DAY effect
+
+Sliced PnL by UTC hour of placement (with `minEdge:0.06` filter).
+Discovery: there's a massive intraday seasonality.
+
+| UTC hour | n | Maker PnL | Taker PnL | Win |
+|---:|---:|---:|---:|---:|
+| 0 | 33 | +$55 | +$84 | 76% |
+| 1 | 23 | +$86 | +$140 | 87% |
+| **2** | 24 | +$194 | +$176 | 88% |
+| 3 | 32 | +$91 | +$53 | 72% |
+| 4 | 34 | +$45 | +$20 | 68% |
+| 5 | 23 | +$30 | +$8 | 65% |
+| 6 | 22 | +$47 | +$58 | 73% |
+| 7 | 18 | -$81 | -$94 | 50% |
+| 8 | 18 | +$62 | +$62 | 78% |
+| 11 | 12 | +$57 | +$37 | 83% |
+| 16 | 33 | -$198 | -$188 | 45% |
+| 17 | 52 | -$120 | -$91 | 58% |
+| 18 | 66 | -$190 | -$149 | 55% |
+| 19 | 59 | -$60 | +$39 | 64% |
+| **20** | 63 | +$0.37 | **+$327** | 78% |
+| 21 | 28 | -$124 | -$15 | 57% |
+| 22 | 23 | +$40 | +$70 | 78% |
+| 23 | 17 | -$141 | -$81 | 47% |
+
+Pattern: Asian + early Europe (0-6) + scattered evening (19, 20, 22) wins;
+US business hours (16-18) and late-evening (21, 23) lose. Hour 20 is a
+GIFT for taker — model is right 78% of the time but maker can barely
+fill (queue ahead doesn't clear when price moves favorably for us).
+
+Probable explanation: more sophisticated traders during US hours →
+tighter pricing, more adverse selection. During quiet hours our model
+finds inefficiencies that bigger players have already arbitraged out
+during active hours.
+
+### 00:35 EDT — current best filter
+
+```json
+{
+  "hoursUtc":[0,1,2,3,4,5,6,8,11,15,19,20,22],
+  "minEdge":0.06
+}
+```
+
+**+$648 maker / +$1,100 taker / 369 orders / 74.5% taker win** at $20
+stake.
+
+| Bucket | Start | n | Maker | Taker | Taker Win |
+|---|---|---:|---:|---:|---:|
+| 0 | 19:03 | 94 | +$158 | +$476 | 79.8% |
+| 1 | 02:28 | 144 | +$335 | +$268 | 71.5% |
+| 2 | 09:54 | 15 | +$57 | +$64 | 86.7% |
+| 3 | 17:20 | 116 | +$98 | +$293 | 72.4% |
+
+All positive. Fee-sensitivity (taker):
+
+| feeBps | PnL |
+|---:|---:|
+| 0 | +$1291 |
+| 200 | +$1238 |
+| 400 | +$1185 |
+| 720 | +$1100 |
+| 1000 | +$1026 |
+| 1500 | +$894 |
+
+Even at 15% taker fee we're +$894.
+
+Stake-scaling extrapolation (assuming linear, ignoring slippage):
+
+| Stake | Taker PnL / 32h |
+|---:|---:|
+| $20 | $1,100 |
+| $50 | $2,750 |
+| $100 | $5,500 |
+| $200 | $11,000 |
+
+Real-world slippage will bend the curve — at $200 with median ratio
+of 0.36 (depth/need at $20 stake), we'd be eating multiple book levels
+on most orders. Realistic $200 stake might be closer to $5–6K.
+
