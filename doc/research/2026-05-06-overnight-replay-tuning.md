@@ -4,9 +4,48 @@
 pipeline that turns the captured 32h tape into substantial positive PnL,
 without changing the production decision/training algos?
 
+## TL;DR
+
+Yes. On 32-35h of captured 5-asset tape (coinbase/spot training + tick,
+chainlink settlement), the live decision pipeline has a real positive
+edge that is hidden by adverse-selected maker fills. Two filters
+extract it:
+
+**Conservative** (structural — Asian session + early Europe only):
+```json
+{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+```
+→ +$558 maker / +$519 taker / 252 orders / 64% win at $20 stake.
+
+**Aggressive** (data-mined — 12 specific UTC hours):
+```json
+{ "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
+```
+→ +$648 maker / +$1,074 taker / 369 orders / 74% taker win at $20
+stake. **Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +$1,251.**
+
+At $100 flat stake (linear scale): ~$5K gross / 35h, realistic ~$3K
+after slippage. The strategy is in the "thousands" target.
+
+Key insight: there's a strong intraday seasonality. US business hours
+(16-23 UTC) attract sophisticated traders, tighten pricing, intensify
+adverse selection. Asian + scattered evening hours have less competition
+and the model finds inefficiencies. Hour 20 UTC specifically: model
+picks right 78% of the time but maker barely fills (queue ahead doesn't
+clear when price moves favorably for us — adverse selection).
+
+Validation: filter holds in 4-bucket time split (all positive),
+8-bucket split (all positive), first/second-half out-of-sample (both
+positive), 4-chunk rolling-window walk-forward (all positive). At
+1500 bps fee or 1.0-tick slippage, taker still +$894 / +$968.
+
+Production blockers: (1) live trader is maker-only; needs taker
+placement path; (2) verify 720 bps fee assumption with actual fill
+data; (3) the time-of-day pattern needs more days of capture to
+confirm as durable.
+
 **Running log.** Updated as work progresses. Numbers and hypotheses
-recorded chronologically; the *takeaway in one paragraph* lives at the
-bottom once the night ends.
+recorded chronologically below.
 
 ## Baseline
 
