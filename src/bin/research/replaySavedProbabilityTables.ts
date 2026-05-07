@@ -13,6 +13,15 @@ import { resolve } from "node:path";
 
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
+import type { DatabaseClient } from "@alea/lib/db/types";
+import {
+  currentWindowStartMs,
+  FIVE_MINUTES_MS,
+} from "@alea/lib/livePrices/fiveMinuteWindow";
+import type {
+  DecisionSkipReason,
+  TradeDecision,
+} from "@alea/lib/trading/decision/types";
 import { runReplay } from "@alea/lib/trading/replay/runReplay";
 import type { ReplayTickSource } from "@alea/lib/trading/replay/types";
 import type { ProbabilityTable } from "@alea/lib/trading/types";
@@ -64,6 +73,14 @@ async function main(): Promise<void> {
       console.log(
         `\n=== ${input.name} === from=${new Date(options.fromMs).toISOString()} to=${new Date(options.toMs).toISOString()} series=${table.series.source}/${table.series.product} tick=${options.tickSource}`,
       );
+      const diagnostics = createDecisionDiagnostics();
+      const coverage = await loadCandleCoverage({
+        db,
+        assets,
+        table,
+        firstWindowStartMs: currentWindowStartMs({ nowMs: options.fromMs }),
+      });
+      console.log(formatCandleCoverage({ coverage }));
       const result = await runReplay({
         db,
         assets,
@@ -76,6 +93,10 @@ async function main(): Promise<void> {
         candleProduct: table.series.product,
         signal: controller.signal,
         emit: (event) => {
+          if (event.kind === "decision") {
+            recordDecisionDiagnostic({ diagnostics, decision: event.decision });
+            return;
+          }
           if (event.kind === "info" || event.kind === "warn") {
             console.log(event.message);
           }
@@ -93,10 +114,228 @@ async function main(): Promise<void> {
           `log=${result.logPath}`,
         ].join(" "),
       );
+      console.log(formatDecisionDiagnostics({ diagnostics }));
     }
   } finally {
     await destroyDatabase(db);
   }
+}
+
+type CandleCoverage = {
+  readonly source: string;
+  readonly product: string;
+  readonly requiredLastOpenMs: number;
+  readonly latestByAsset: ReadonlyMap<Asset, number | null>;
+};
+
+async function loadCandleCoverage({
+  db,
+  assets,
+  table,
+  firstWindowStartMs,
+}: {
+  readonly db: DatabaseClient;
+  readonly assets: readonly Asset[];
+  readonly table: ProbabilityTable;
+  readonly firstWindowStartMs: number;
+}): Promise<CandleCoverage> {
+  const requiredLastOpenMs = firstWindowStartMs - FIVE_MINUTES_MS;
+  const rows = await db
+    .selectFrom("candles")
+    .select(["asset"])
+    .select((eb) => eb.fn.max("timestamp").as("latest_timestamp"))
+    .where("source", "=", table.series.source)
+    .where("product", "=", table.series.product)
+    .where("timeframe", "=", "5m")
+    .where("asset", "in", [...assets])
+    .where("timestamp", "<", new Date(firstWindowStartMs))
+    .groupBy("asset")
+    .execute();
+
+  const latestByAsset = new Map<Asset, number | null>();
+  for (const asset of assets) {
+    latestByAsset.set(asset, null);
+  }
+  for (const row of rows) {
+    assertAsset(row.asset, "candles table");
+    latestByAsset.set(row.asset, timestampMs({ value: row.latest_timestamp }));
+  }
+
+  return {
+    source: table.series.source,
+    product: table.series.product,
+    requiredLastOpenMs,
+    latestByAsset,
+  };
+}
+
+function formatCandleCoverage({
+  coverage,
+}: {
+  readonly coverage: CandleCoverage;
+}): string {
+  const stale = Array.from(coverage.latestByAsset.entries()).filter(
+    ([, latestMs]) =>
+      latestMs === null || latestMs < coverage.requiredLastOpenMs,
+  );
+  const latest = Array.from(coverage.latestByAsset.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(
+      ([asset, latestMs]) =>
+        `${asset}:${latestMs === null ? "none" : new Date(latestMs).toISOString()}`,
+    )
+    .join(",");
+  return [
+    "CANDLES",
+    `series=${coverage.source}/${coverage.product}`,
+    `requiredLastBar=${new Date(coverage.requiredLastOpenMs).toISOString()}`,
+    `status=${stale.length === 0 ? "fresh" : `stale(${stale.map(([asset]) => asset).join(",")})`}`,
+    `latest=${latest}`,
+  ].join(" ");
+}
+
+function timestampMs({
+  value,
+}: {
+  readonly value: Date | string | null;
+}): number | null {
+  if (value === null) {
+    return null;
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+type DecisionDiagnostics = {
+  decisions: number;
+  trades: number;
+  skips: number;
+  skipsWithoutSnapshot: number;
+  readonly skipsByReason: Map<DecisionSkipReason, number>;
+  readonly decisionsByAsset: Map<Asset, number>;
+  readonly tradesByAsset: Map<Asset, number>;
+  readonly skipsByAssetReason: Map<Asset, Map<DecisionSkipReason, number>>;
+};
+
+function createDecisionDiagnostics(): DecisionDiagnostics {
+  return {
+    decisions: 0,
+    trades: 0,
+    skips: 0,
+    skipsWithoutSnapshot: 0,
+    skipsByReason: new Map(),
+    decisionsByAsset: new Map(),
+    tradesByAsset: new Map(),
+    skipsByAssetReason: new Map(),
+  };
+}
+
+function recordDecisionDiagnostic({
+  diagnostics,
+  decision,
+}: {
+  readonly diagnostics: DecisionDiagnostics;
+  readonly decision: TradeDecision;
+}): void {
+  diagnostics.decisions += 1;
+  const asset = decision.snapshot?.asset ?? null;
+  if (asset !== null) {
+    incrementMap({ map: diagnostics.decisionsByAsset, key: asset });
+  }
+
+  if (decision.kind === "trade") {
+    diagnostics.trades += 1;
+    incrementMap({ map: diagnostics.tradesByAsset, key: decision.snapshot.asset });
+    return;
+  }
+
+  diagnostics.skips += 1;
+  incrementMap({ map: diagnostics.skipsByReason, key: decision.reason });
+  if (asset === null) {
+    diagnostics.skipsWithoutSnapshot += 1;
+    return;
+  }
+  let byReason = diagnostics.skipsByAssetReason.get(asset);
+  if (byReason === undefined) {
+    byReason = new Map();
+    diagnostics.skipsByAssetReason.set(asset, byReason);
+  }
+  incrementMap({ map: byReason, key: decision.reason });
+}
+
+function formatDecisionDiagnostics({
+  diagnostics,
+}: {
+  readonly diagnostics: DecisionDiagnostics;
+}): string {
+  const parts = [
+    "DECISIONS",
+    `total=${diagnostics.decisions}`,
+    `trades=${diagnostics.trades}`,
+    `skips=${diagnostics.skips}`,
+    `skipReasons=${formatMap({ map: diagnostics.skipsByReason })}`,
+  ];
+  if (diagnostics.skipsWithoutSnapshot > 0) {
+    parts.push(`skipNoSnapshot=${diagnostics.skipsWithoutSnapshot}`);
+  }
+  const assets = formatAssetDiagnostics({ diagnostics });
+  if (assets.length > 0) {
+    parts.push(`byAsset=${assets.join(";")}`);
+  }
+  return parts.join(" ");
+}
+
+function formatAssetDiagnostics({
+  diagnostics,
+}: {
+  readonly diagnostics: DecisionDiagnostics;
+}): string[] {
+  const assets = new Set<Asset>([
+    ...diagnostics.decisionsByAsset.keys(),
+    ...diagnostics.tradesByAsset.keys(),
+    ...diagnostics.skipsByAssetReason.keys(),
+  ]);
+  return Array.from(assets)
+    .sort()
+    .map((asset) => {
+      const decisions = diagnostics.decisionsByAsset.get(asset) ?? 0;
+      const trades = diagnostics.tradesByAsset.get(asset) ?? 0;
+      const skips = diagnostics.skipsByAssetReason.get(asset) ?? new Map();
+      return `${asset}:decisions=${decisions},trades=${trades},skips=${formatMap({ map: skips })}`;
+    });
+}
+
+function formatMap<K extends string>({
+  map,
+}: {
+  readonly map: ReadonlyMap<K, number>;
+}): string {
+  if (map.size === 0) {
+    return "none";
+  }
+  return Array.from(map.entries())
+    .sort((left, right) => {
+      const countDelta = right[1] - left[1];
+      if (countDelta !== 0) {
+        return countDelta;
+      }
+      return left[0].localeCompare(right[0]);
+    })
+    .map(([key, count]) => `${key}:${count}`)
+    .join(",");
+}
+
+function incrementMap<K>({
+  map,
+  key,
+}: {
+  readonly map: Map<K, number>;
+  readonly key: K;
+}): void {
+  map.set(key, (map.get(key) ?? 0) + 1);
 }
 
 function parseArgs({ args }: { readonly args: readonly string[] }): Options {

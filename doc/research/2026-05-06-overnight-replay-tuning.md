@@ -1230,11 +1230,34 @@ against fresh capture without mutating source-of-truth files.
 
 The clean post-generation slice, 2026-05-07 13:05 → 14:35 UTC, replayed
 16 resolved windows for all four tables and produced **zero orders**.
-That is not a PnL validation either way; those windows did not hit the
-current probability buckets.
+Follow-up diagnostics showed this was not a probability-bucket result:
+the replay emitted **zero decision events**. Market tape was present
+(Polymarket BBA/book rows and coinbase-spot ticks existed), but the
+source candle tables used to hydrate regime trackers were stale before
+the forward window started:
+
+| Table series | Required last 5m bar for 13:05 UTC replay | Latest available 5m bar |
+| ------------ | ----------------------------------------- | ----------------------- |
+| binance/perp | 2026-05-07 13:00 UTC | 2026-05-07 12:40 UTC |
+| binance/spot | 2026-05-07 13:00 UTC | 2026-05-07 12:40 UTC |
+| coinbase/perp | 2026-05-07 13:00 UTC | 2026-05-07 12:45 UTC |
+| coinbase/spot | 2026-05-07 13:00 UTC | 2026-05-07 12:45 UTC |
+
+`replayWindow` intentionally refuses to evaluate if the hydrated
+tracker's last closed 5m candle is not exactly `windowStart - 5m`.
+So the forward slice was blocked by candle coverage, not by the model
+choosing not to trade. `replaySavedProbabilityTables.ts` now prints
+candle coverage and decision counts before/after each saved-table replay
+so this failure mode is visible immediately.
 
 A slightly earlier overlap sanity check, 2026-05-07 12:50 → 14:35 UTC
 with the coinbase/perp table, produced only 3 orders and lost about
 -$29 taker. This sample is too small and partly overlaps table
-generation time, so I am not tuning from it. It mostly says we need
-more forward captured windows before promoting the new challenger.
+generation time, so I am not tuning from it. It likely only traded
+because the 12:50 UTC window had a fresh enough 12:45 UTC coinbase
+candle.
+
+Next forward validation step: backfill/sync 5m candles through the
+captured forward tape, then rerun the same saved-table replay. Until
+that is done, the post-generation replay is not evidence for or
+against the current challenger.
