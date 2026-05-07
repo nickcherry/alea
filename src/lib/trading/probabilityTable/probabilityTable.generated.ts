@@ -11,210 +11,165 @@ import type { ProbabilityTable } from "@alea/lib/trading/types";
 export const probabilityTable: ProbabilityTable = {
   "command": "trading:gen-probability-table",
   "schemaVersion": 1,
-  "generatedAtMs": 1778103594679,
+  "generatedAtMs": 1778116814011,
   "series": {
-    "source": "binance",
-    "product": "perp",
+    "source": "coinbase",
+    "product": "spot",
     "timeframe": "5m"
   },
   "minBucketSamples": 200,
   "trainingRangeMs": {
-    "firstWindowMs": 1683231540000,
-    "lastWindowMs": 1777766340000
+    "firstWindowMs": 1714917600000,
+    "lastWindowMs": 1778116740000
   },
   "assets": [
     {
       "asset": "btc",
-      "windowCount": 315116,
+      "windowCount": 210529,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.049305652521611086,
-          "avgLeadPp": 6.4613541215553365,
+          "windowShare": 0.03352507255532492,
+          "avgLeadPp": 6.084537979394394,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 1959,
-                  "probability": 0.8861664114344053
+                  "samples": 823,
+                  "probability": 0.8383961117861483
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1581,
-                  "probability": 0.9259962049335864
+                  "samples": 769,
+                  "probability": 0.9245773732119635
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 1388,
-                  "probability": 0.9373198847262247
+                  "samples": 630,
+                  "probability": 0.9142857142857143
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 1141,
-                  "probability": 0.9596844872918493
+                  "samples": 518,
+                  "probability": 0.9401544401544402
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 864,
-                  "probability": 0.9768518518518519
+                  "samples": 385,
+                  "probability": 0.9662337662337662
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 640,
-                  "probability": 0.9703125
+                  "samples": 349,
+                  "probability": 0.9713467048710601
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 525,
-                  "probability": 0.9847619047619047
+                  "samples": 244,
+                  "probability": 0.9836065573770492
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 416,
-                  "probability": 0.9783653846153846
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 345,
-                  "probability": 0.9942028985507246
-                },
-                {
-                  "distanceBp": 11,
-                  "samples": 264,
-                  "probability": 0.9924242424242424
-                },
-                {
-                  "distanceBp": 12,
-                  "samples": 212,
-                  "probability": 0.9811320754716981
+                  "samples": 219,
+                  "probability": 0.9771689497716894
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 2124,
-                  "probability": 0.795668549905838
+                  "samples": 913,
+                  "probability": 0.778751369112815
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1705,
-                  "probability": 0.86158357771261
+                  "samples": 755,
+                  "probability": 0.8304635761589404
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 1323,
-                  "probability": 0.8745275888133031
+                  "samples": 637,
+                  "probability": 0.8634222919937206
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 1024,
-                  "probability": 0.9091796875
+                  "samples": 507,
+                  "probability": 0.8915187376725838
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 836,
-                  "probability": 0.9282296650717703
+                  "samples": 407,
+                  "probability": 0.9115479115479116
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 618,
-                  "probability": 0.93042071197411
+                  "samples": 298,
+                  "probability": 0.9496644295302014
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 444,
-                  "probability": 0.9234234234234234
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 332,
-                  "probability": 0.9457831325301205
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 272,
-                  "probability": 0.9669117647058824
-                },
-                {
-                  "distanceBp": 11,
-                  "samples": 201,
-                  "probability": 0.9651741293532339
+                  "samples": 214,
+                  "probability": 0.9252336448598131
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 2182,
-                  "probability": 0.7488542621448213
+                  "samples": 1006,
+                  "probability": 0.7157057654075547
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1635,
-                  "probability": 0.7975535168195719
+                  "samples": 778,
+                  "probability": 0.7686375321336761
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 1234,
-                  "probability": 0.8371150729335495
+                  "samples": 608,
+                  "probability": 0.8289473684210527
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 907,
-                  "probability": 0.8654906284454245
+                  "samples": 480,
+                  "probability": 0.8458333333333333
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 646,
-                  "probability": 0.8544891640866873
+                  "samples": 297,
+                  "probability": 0.8114478114478114
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 454,
-                  "probability": 0.8898678414096917
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 333,
-                  "probability": 0.8888888888888888
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 283,
-                  "probability": 0.9328621908127208
+                  "samples": 238,
+                  "probability": 0.8991596638655462
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 2272,
-                  "probability": 0.6786971830985915
+                  "samples": 1021,
+                  "probability": 0.6816846229187071
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1442,
-                  "probability": 0.7420249653259362
+                  "samples": 741,
+                  "probability": 0.7449392712550608
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 965,
-                  "probability": 0.7595854922279792
+                  "samples": 484,
+                  "probability": 0.7066115702479339
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 614,
-                  "probability": 0.7736156351791531
+                  "samples": 313,
+                  "probability": 0.7763578274760383
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 391,
-                  "probability": 0.7672634271099744
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 257,
-                  "probability": 0.8093385214007782
+                  "samples": 208,
+                  "probability": 0.7788461538461539
                 }
               ]
             }
@@ -223,541 +178,476 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5949745490549512,
-          "avgLeadPp": 1.985865956332084,
+          "windowShare": 0.5976611298205948,
+          "avgLeadPp": 1.9277768713437715,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 19747,
-                  "probability": 0.8237706993467362
+                  "samples": 13173,
+                  "probability": 0.8050557959462536
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 17442,
-                  "probability": 0.8738103428505906
+                  "samples": 11732,
+                  "probability": 0.8578247528128197
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 15437,
-                  "probability": 0.9047742437002008
+                  "samples": 10303,
+                  "probability": 0.896923226244783
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13508,
-                  "probability": 0.9284868226236305
+                  "samples": 8981,
+                  "probability": 0.9180492150094645
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11405,
-                  "probability": 0.9483559842174485
+                  "samples": 7660,
+                  "probability": 0.9396866840731071
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9692,
-                  "probability": 0.9570780024762691
+                  "samples": 6672,
+                  "probability": 0.954136690647482
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8098,
-                  "probability": 0.9696221289207212
+                  "samples": 5605,
+                  "probability": 0.9666369313113292
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 6894,
-                  "probability": 0.9720046417174355
+                  "samples": 4612,
+                  "probability": 0.9694275802254987
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 5725,
-                  "probability": 0.9795633187772925
+                  "samples": 3943,
+                  "probability": 0.9774283540451433
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4856,
-                  "probability": 0.9794069192751236
+                  "samples": 3330,
+                  "probability": 0.9813813813813814
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4125,
-                  "probability": 0.9842424242424243
+                  "samples": 2899,
+                  "probability": 0.9855122456019317
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3488,
-                  "probability": 0.9810779816513762
+                  "samples": 2359,
+                  "probability": 0.9851632047477745
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2962,
-                  "probability": 0.9895340985820391
+                  "samples": 2038,
+                  "probability": 0.9842983316977428
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2359,
-                  "probability": 0.986858838490886
+                  "samples": 1668,
+                  "probability": 0.9886091127098321
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2100,
-                  "probability": 0.9880952380952381
+                  "samples": 1499,
+                  "probability": 0.9913275517011341
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1800,
-                  "probability": 0.995
+                  "samples": 1191,
+                  "probability": 0.9916036943744753
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1559,
-                  "probability": 0.9923027581783195
+                  "samples": 1075,
+                  "probability": 0.9916279069767442
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1282,
-                  "probability": 0.9945397815912637
+                  "samples": 890,
+                  "probability": 0.996629213483146
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1181,
-                  "probability": 0.9966130397967824
+                  "samples": 830,
+                  "probability": 0.9939759036144579
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 990,
-                  "probability": 0.98989898989899
+                  "samples": 703,
+                  "probability": 0.9943100995732574
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 824,
-                  "probability": 0.9951456310679612
+                  "samples": 566,
+                  "probability": 0.9946996466431095
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 770,
-                  "probability": 0.9948051948051948
+                  "samples": 496,
+                  "probability": 0.9959677419354839
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 614,
-                  "probability": 0.998371335504886
-                },
-                {
-                  "distanceBp": 25,
-                  "samples": 593,
-                  "probability": 0.9949409780775716
-                },
-                {
-                  "distanceBp": 26,
-                  "samples": 458,
+                  "samples": 451,
                   "probability": 1
                 },
                 {
+                  "distanceBp": 25,
+                  "samples": 373,
+                  "probability": 0.9946380697050938
+                },
+                {
+                  "distanceBp": 26,
+                  "samples": 318,
+                  "probability": 0.9968553459119497
+                },
+                {
                   "distanceBp": 27,
-                  "samples": 407,
-                  "probability": 0.995085995085995
+                  "samples": 284,
+                  "probability": 0.9964788732394366
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 361,
+                  "samples": 244,
                   "probability": 1
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 324,
+                  "samples": 235,
                   "probability": 1
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 289,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 272,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 224,
-                  "probability": 0.9955357142857143
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 203,
+                  "samples": 209,
                   "probability": 1
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 21373,
-                  "probability": 0.7467833247555327
+                  "samples": 14240,
+                  "probability": 0.7300561797752809
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 18745,
-                  "probability": 0.7975460122699386
+                  "samples": 12476,
+                  "probability": 0.7826226354600834
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 16132,
-                  "probability": 0.8325068187453508
+                  "samples": 10822,
+                  "probability": 0.8160229162816485
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13456,
-                  "probability": 0.8594678953626635
+                  "samples": 9135,
+                  "probability": 0.8471811713191023
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11392,
-                  "probability": 0.8810568820224719
+                  "samples": 7751,
+                  "probability": 0.8775641852664172
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9332,
-                  "probability": 0.9022717531075868
+                  "samples": 6375,
+                  "probability": 0.8956862745098039
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 7668,
-                  "probability": 0.9085811163275952
+                  "samples": 5256,
+                  "probability": 0.9117199391171994
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 6154,
-                  "probability": 0.9259018524536886
+                  "samples": 4234,
+                  "probability": 0.9253660840812471
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 5047,
-                  "probability": 0.9334257975034674
+                  "samples": 3421,
+                  "probability": 0.932475884244373
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4208,
-                  "probability": 0.9424904942965779
+                  "samples": 2895,
+                  "probability": 0.9450777202072539
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3437,
-                  "probability": 0.9479196974105324
+                  "samples": 2345,
+                  "probability": 0.9462686567164179
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2937,
-                  "probability": 0.9550561797752809
+                  "samples": 2035,
+                  "probability": 0.9508599508599509
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2475,
-                  "probability": 0.9567676767676768
+                  "samples": 1673,
+                  "probability": 0.9569635385534967
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2009,
-                  "probability": 0.9636635141861623
+                  "samples": 1407,
+                  "probability": 0.9545131485429993
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1747,
-                  "probability": 0.9639381797366915
+                  "samples": 1140,
+                  "probability": 0.968421052631579
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1480,
-                  "probability": 0.9702702702702702
+                  "samples": 1009,
+                  "probability": 0.9653121902874133
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1173,
-                  "probability": 0.969309462915601
+                  "samples": 840,
+                  "probability": 0.9702380952380952
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1009,
-                  "probability": 0.9752229930624381
+                  "samples": 719,
+                  "probability": 0.9735744089012517
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 877,
-                  "probability": 0.976054732041049
+                  "samples": 578,
+                  "probability": 0.9809688581314879
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 767,
-                  "probability": 0.9830508474576272
+                  "samples": 521,
+                  "probability": 0.9750479846449136
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 650,
-                  "probability": 0.98
+                  "samples": 439,
+                  "probability": 0.9886104783599089
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 534,
-                  "probability": 0.9831460674157303
+                  "samples": 343,
+                  "probability": 0.9883381924198251
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 476,
-                  "probability": 0.9810924369747899
+                  "samples": 307,
+                  "probability": 0.9804560260586319
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 380,
-                  "probability": 0.9894736842105263
+                  "samples": 275,
+                  "probability": 0.9890909090909091
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 331,
-                  "probability": 0.9788519637462235
-                },
-                {
-                  "distanceBp": 27,
-                  "samples": 302,
-                  "probability": 0.9900662251655629
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 244,
-                  "probability": 0.9836065573770492
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 226,
-                  "probability": 0.9867256637168141
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 203,
-                  "probability": 0.9950738916256158
+                  "samples": 218,
+                  "probability": 0.9908256880733946
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 23714,
-                  "probability": 0.6931348570464705
+                  "samples": 15881,
+                  "probability": 0.6755242113217051
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 19901,
-                  "probability": 0.7394603286267022
+                  "samples": 13500,
+                  "probability": 0.7231851851851852
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 16198,
-                  "probability": 0.7731201382886776
+                  "samples": 10958,
+                  "probability": 0.7649206059499909
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13221,
-                  "probability": 0.8034188034188035
+                  "samples": 9025,
+                  "probability": 0.7871468144044321
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10588,
-                  "probability": 0.8144125425009444
+                  "samples": 7239,
+                  "probability": 0.811299903301561
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 8489,
-                  "probability": 0.8315467075038285
+                  "samples": 5801,
+                  "probability": 0.8343389070849854
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 6504,
-                  "probability": 0.8531672816728167
+                  "samples": 4411,
+                  "probability": 0.8462933575153027
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5343,
-                  "probability": 0.8629983155530601
+                  "samples": 3655,
+                  "probability": 0.8604651162790697
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4119,
-                  "probability": 0.8798252002913328
+                  "samples": 2880,
+                  "probability": 0.8815972222222223
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3323,
-                  "probability": 0.8955762864881132
+                  "samples": 2267,
+                  "probability": 0.8928098808998677
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2675,
-                  "probability": 0.8874766355140187
+                  "samples": 1834,
+                  "probability": 0.8991275899672846
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2169,
-                  "probability": 0.9142461964038727
+                  "samples": 1422,
+                  "probability": 0.9113924050632911
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1740,
-                  "probability": 0.9074712643678161
+                  "samples": 1184,
+                  "probability": 0.9096283783783784
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1454,
-                  "probability": 0.9195323246217332
+                  "samples": 979,
+                  "probability": 0.9193054136874361
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1137,
-                  "probability": 0.9296394019349165
+                  "samples": 753,
+                  "probability": 0.9176626826029216
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 970,
-                  "probability": 0.931958762886598
+                  "samples": 636,
+                  "probability": 0.9355345911949685
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 786,
-                  "probability": 0.9173027989821882
+                  "samples": 531,
+                  "probability": 0.9265536723163842
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 638,
-                  "probability": 0.945141065830721
+                  "samples": 467,
+                  "probability": 0.9400428265524625
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 514,
-                  "probability": 0.9280155642023347
+                  "samples": 353,
+                  "probability": 0.9235127478753541
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 468,
-                  "probability": 0.9444444444444444
+                  "samples": 305,
+                  "probability": 0.9508196721311475
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 412,
-                  "probability": 0.9466019417475728
+                  "samples": 267,
+                  "probability": 0.947565543071161
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 308,
-                  "probability": 0.9577922077922078
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 279,
-                  "probability": 0.9354838709677419
-                },
-                {
-                  "distanceBp": 25,
-                  "samples": 271,
-                  "probability": 0.9704797047970479
-                },
-                {
-                  "distanceBp": 26,
-                  "samples": 216,
-                  "probability": 0.9675925925925926
+                  "samples": 204,
+                  "probability": 0.9705882352941176
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 27133,
-                  "probability": 0.6507942358014226
+                  "samples": 18270,
+                  "probability": 0.6386425834701697
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 20637,
-                  "probability": 0.6828027329553714
+                  "samples": 14249,
+                  "probability": 0.6768896062881605
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 15483,
-                  "probability": 0.7149777174966092
+                  "samples": 10573,
+                  "probability": 0.7015038305116807
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 11444,
-                  "probability": 0.7357567284166375
+                  "samples": 7744,
+                  "probability": 0.7317923553719008
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 8328,
-                  "probability": 0.7556436119116234
+                  "samples": 5529,
+                  "probability": 0.7549285585096762
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5795,
-                  "probability": 0.7704918032786885
+                  "samples": 3998,
+                  "probability": 0.7728864432216108
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 4320,
-                  "probability": 0.7872685185185185
+                  "samples": 2992,
+                  "probability": 0.7847593582887701
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3248,
-                  "probability": 0.7943349753694581
+                  "samples": 2221,
+                  "probability": 0.7933363349842414
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2346,
-                  "probability": 0.8128729752770674
+                  "samples": 1641,
+                  "probability": 0.8147471054235222
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1811,
-                  "probability": 0.8299282164549973
+                  "samples": 1182,
+                  "probability": 0.8434856175972927
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1382,
-                  "probability": 0.8429811866859623
+                  "samples": 900,
+                  "probability": 0.8355555555555556
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1047,
-                  "probability": 0.8357211079274116
+                  "samples": 707,
+                  "probability": 0.842998585572843
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 741,
-                  "probability": 0.8515519568151148
+                  "samples": 541,
+                  "probability": 0.8539741219963032
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 581,
-                  "probability": 0.8261617900172117
+                  "samples": 396,
+                  "probability": 0.8383838383838383
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 463,
-                  "probability": 0.8898488120950324
+                  "samples": 307,
+                  "probability": 0.8729641693811075
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 356,
-                  "probability": 0.8258426966292135
-                },
-                {
-                  "distanceBp": 18,
-                  "samples": 277,
-                  "probability": 0.8953068592057761
-                },
-                {
-                  "distanceBp": 19,
-                  "samples": 244,
-                  "probability": 0.8729508196721312
-                },
-                {
-                  "distanceBp": 20,
-                  "samples": 214,
-                  "probability": 0.897196261682243
+                  "samples": 234,
+                  "probability": 0.8675213675213675
                 }
               ]
             }
@@ -766,396 +656,351 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.2511709973470087,
-          "avgLeadPp": 2.494712819802099,
+          "windowShare": 0.24134917279804682,
+          "avgLeadPp": 2.5236861947313836,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 8668,
-                  "probability": 0.8307568066451315
+                  "samples": 5521,
+                  "probability": 0.8051077703314616
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7583,
-                  "probability": 0.8805222207569563
+                  "samples": 4880,
+                  "probability": 0.8696721311475409
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6711,
-                  "probability": 0.9122336462524214
+                  "samples": 4237,
+                  "probability": 0.9041774840689167
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5788,
-                  "probability": 0.9310642709053214
+                  "samples": 3696,
+                  "probability": 0.9264069264069265
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4818,
-                  "probability": 0.9516396845163968
+                  "samples": 3044,
+                  "probability": 0.9434954007884363
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3933,
-                  "probability": 0.9588100686498856
+                  "samples": 2658,
+                  "probability": 0.9574868322046651
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3343,
-                  "probability": 0.9682919533353276
+                  "samples": 2161,
+                  "probability": 0.967144840351689
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2757,
-                  "probability": 0.9698948132027566
+                  "samples": 1758,
+                  "probability": 0.9670079635949943
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2334,
-                  "probability": 0.9820051413881749
+                  "samples": 1574,
+                  "probability": 0.974587039390089
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2057,
-                  "probability": 0.9786096256684492
+                  "samples": 1267,
+                  "probability": 0.9865824782951855
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1661,
-                  "probability": 0.9885611077664058
+                  "samples": 1174,
+                  "probability": 0.9838160136286201
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1349,
-                  "probability": 0.977761304670126
+                  "samples": 891,
+                  "probability": 0.9820426487093153
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1183,
-                  "probability": 0.9932375316990701
+                  "samples": 797,
+                  "probability": 0.9874529485570891
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 928,
-                  "probability": 0.9859913793103449
+                  "samples": 597,
+                  "probability": 0.9882747068676717
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 845,
-                  "probability": 0.991715976331361
+                  "samples": 542,
+                  "probability": 0.992619926199262
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 709,
-                  "probability": 0.997179125528914
+                  "samples": 469,
+                  "probability": 0.9936034115138592
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 606,
-                  "probability": 0.9900990099009901
+                  "samples": 388,
+                  "probability": 0.9819587628865979
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 460,
-                  "probability": 0.991304347826087
+                  "samples": 314,
+                  "probability": 0.9936305732484076
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 445,
-                  "probability": 0.9932584269662922
+                  "samples": 288,
+                  "probability": 0.9930555555555556
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 353,
-                  "probability": 0.9886685552407932
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 302,
-                  "probability": 0.9966887417218543
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 280,
-                  "probability": 0.9928571428571429
-                },
-                {
-                  "distanceBp": 25,
-                  "samples": 204,
-                  "probability": 1
+                  "samples": 251,
+                  "probability": 0.9960159362549801
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 9407,
-                  "probability": 0.7538003614329755
+                  "samples": 5969,
+                  "probability": 0.7319484000670129
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8090,
-                  "probability": 0.803708281829419
+                  "samples": 5153,
+                  "probability": 0.7952648942363671
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6857,
-                  "probability": 0.8413300277089106
+                  "samples": 4473,
+                  "probability": 0.8247261345852895
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5716,
-                  "probability": 0.8693142057382786
+                  "samples": 3681,
+                  "probability": 0.8557457212713936
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4700,
-                  "probability": 0.885531914893617
+                  "samples": 3079,
+                  "probability": 0.8791815524520948
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3857,
-                  "probability": 0.8983666061705989
+                  "samples": 2498,
+                  "probability": 0.9059247397918335
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3069,
-                  "probability": 0.9175627240143369
+                  "samples": 2034,
+                  "probability": 0.9223205506391348
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2555,
-                  "probability": 0.9299412915851272
+                  "samples": 1623,
+                  "probability": 0.9242144177449169
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2035,
-                  "probability": 0.9341523341523341
+                  "samples": 1320,
+                  "probability": 0.943939393939394
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1690,
-                  "probability": 0.9437869822485208
+                  "samples": 1107,
+                  "probability": 0.95483288166215
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1365,
-                  "probability": 0.9501831501831501
+                  "samples": 909,
+                  "probability": 0.9405940594059405
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1138,
-                  "probability": 0.9595782073813708
+                  "samples": 738,
+                  "probability": 0.94579945799458
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 967,
-                  "probability": 0.9555325749741469
+                  "samples": 610,
+                  "probability": 0.9524590163934427
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 777,
-                  "probability": 0.9626769626769627
+                  "samples": 533,
+                  "probability": 0.9530956848030019
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 669,
-                  "probability": 0.9611360239162929
+                  "samples": 408,
+                  "probability": 0.9852941176470589
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 547,
-                  "probability": 0.9744058500914077
+                  "samples": 362,
+                  "probability": 0.9640883977900553
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 425,
-                  "probability": 0.9741176470588235
+                  "samples": 281,
+                  "probability": 0.9715302491103203
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 351,
-                  "probability": 0.9629629629629629
-                },
-                {
-                  "distanceBp": 20,
-                  "samples": 323,
-                  "probability": 0.9845201238390093
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 300,
-                  "probability": 0.9866666666666667
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 204,
-                  "probability": 0.9803921568627451
+                  "samples": 241,
+                  "probability": 0.970954356846473
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 10326,
-                  "probability": 0.694944799535154
+                  "samples": 6608,
+                  "probability": 0.6825060532687651
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8497,
-                  "probability": 0.748264093209368
+                  "samples": 5529,
+                  "probability": 0.7277988786398987
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6875,
-                  "probability": 0.7746909090909091
+                  "samples": 4407,
+                  "probability": 0.7703653278874518
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5473,
-                  "probability": 0.8079663804129362
+                  "samples": 3581,
+                  "probability": 0.7913990505445406
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4379,
-                  "probability": 0.822333866179493
+                  "samples": 2880,
+                  "probability": 0.8225694444444445
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3481,
-                  "probability": 0.841424877908647
+                  "samples": 2250,
+                  "probability": 0.8448888888888889
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2633,
-                  "probability": 0.8606152677554121
+                  "samples": 1644,
+                  "probability": 0.8564476885644768
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2107,
-                  "probability": 0.8803986710963455
+                  "samples": 1373,
+                  "probability": 0.8747268754552076
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1592,
-                  "probability": 0.8869346733668342
+                  "samples": 1079,
+                  "probability": 0.8962001853568119
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1300,
-                  "probability": 0.9030769230769231
+                  "samples": 838,
+                  "probability": 0.8949880668257757
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1066,
-                  "probability": 0.8864915572232646
+                  "samples": 694,
+                  "probability": 0.8919308357348703
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 828,
-                  "probability": 0.9070048309178744
+                  "samples": 529,
+                  "probability": 0.9168241965973535
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 667,
-                  "probability": 0.9235382308845578
+                  "samples": 411,
+                  "probability": 0.9148418491484185
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 535,
-                  "probability": 0.9196261682242991
+                  "samples": 371,
+                  "probability": 0.9326145552560647
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 424,
-                  "probability": 0.9410377358490566
+                  "samples": 272,
+                  "probability": 0.9301470588235294
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 352,
-                  "probability": 0.9545454545454546
+                  "samples": 233,
+                  "probability": 0.9356223175965666
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 323,
-                  "probability": 0.8947368421052632
-                },
-                {
-                  "distanceBp": 19,
-                  "samples": 224,
-                  "probability": 0.9508928571428571
+                  "samples": 201,
+                  "probability": 0.9353233830845771
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 11633,
-                  "probability": 0.6524542250494284
+                  "samples": 7485,
+                  "probability": 0.6480961923847696
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8551,
-                  "probability": 0.6881066541924921
+                  "samples": 5675,
+                  "probability": 0.6761233480176212
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6416,
-                  "probability": 0.725997506234414
+                  "samples": 4230,
+                  "probability": 0.7113475177304964
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4588,
-                  "probability": 0.7502179598953792
+                  "samples": 2961,
+                  "probability": 0.7480580884836204
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3291,
-                  "probability": 0.7705864478881799
+                  "samples": 2060,
+                  "probability": 0.7742718446601942
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2277,
-                  "probability": 0.7742643829600351
+                  "samples": 1517,
+                  "probability": 0.7719182597231378
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1703,
-                  "probability": 0.7850851438637698
+                  "samples": 1115,
+                  "probability": 0.7937219730941704
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1215,
-                  "probability": 0.8197530864197531
+                  "samples": 816,
+                  "probability": 0.8051470588235294
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 904,
-                  "probability": 0.8141592920353983
+                  "samples": 616,
+                  "probability": 0.8198051948051948
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 718,
-                  "probability": 0.8161559888579387
+                  "samples": 404,
+                  "probability": 0.844059405940594
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 531,
-                  "probability": 0.8493408662900188
+                  "samples": 322,
+                  "probability": 0.8385093167701864
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 359,
-                  "probability": 0.8579387186629527
-                },
-                {
-                  "distanceBp": 14,
-                  "samples": 268,
-                  "probability": 0.8507462686567164
-                },
-                {
-                  "distanceBp": 15,
-                  "samples": 218,
-                  "probability": 0.8577981651376146
+                  "samples": 255,
+                  "probability": 0.8509803921568627
                 }
               ]
             }
@@ -1164,386 +1009,341 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.25176442960687495,
-          "avgLeadPp": 2.5701864290894916,
+          "windowShare": 0.25991193612281444,
+          "avgLeadPp": 2.2836492581959384,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 5818,
-                  "probability": 0.8279477483671365
+                  "samples": 3919,
+                  "probability": 0.8091349834141363
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5186,
-                  "probability": 0.874469726185885
+                  "samples": 3632,
+                  "probability": 0.852147577092511
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4738,
-                  "probability": 0.9010130856901646
+                  "samples": 3166,
+                  "probability": 0.8935565382185723
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4047,
-                  "probability": 0.9318013343217197
+                  "samples": 2768,
+                  "probability": 0.9132947976878613
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3526,
-                  "probability": 0.9463981849120817
+                  "samples": 2440,
+                  "probability": 0.9422131147540984
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3126,
-                  "probability": 0.9612923864363404
+                  "samples": 2149,
+                  "probability": 0.9520707305723592
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2528,
-                  "probability": 0.973496835443038
+                  "samples": 1815,
+                  "probability": 0.9735537190082645
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2243,
-                  "probability": 0.9768167632634864
+                  "samples": 1505,
+                  "probability": 0.9760797342192691
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1757,
-                  "probability": 0.9795105293113261
+                  "samples": 1241,
+                  "probability": 0.9790491539081386
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1458,
-                  "probability": 0.9814814814814815
+                  "samples": 1095,
+                  "probability": 0.9817351598173516
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1294,
-                  "probability": 0.9868624420401855
+                  "samples": 892,
+                  "probability": 0.9887892376681614
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1090,
-                  "probability": 0.9825688073394495
+                  "samples": 731,
+                  "probability": 0.9917920656634747
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 901,
-                  "probability": 0.9922308546059934
+                  "samples": 612,
+                  "probability": 0.988562091503268
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 732,
-                  "probability": 0.9972677595628415
+                  "samples": 545,
+                  "probability": 0.9963302752293578
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 634,
-                  "probability": 0.9858044164037855
+                  "samples": 490,
+                  "probability": 0.9918367346938776
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 557,
-                  "probability": 0.992818671454219
+                  "samples": 359,
+                  "probability": 0.9944289693593314
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 490,
-                  "probability": 0.9959183673469387
+                  "samples": 350,
+                  "probability": 0.9942857142857143
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 430,
-                  "probability": 0.9976744186046511
+                  "samples": 276,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 385,
-                  "probability": 0.9974025974025974
+                  "samples": 266,
+                  "probability": 0.9924812030075187
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 285,
-                  "probability": 0.9894736842105263
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 252,
-                  "probability": 0.996031746031746
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 236,
-                  "probability": 0.9957627118644068
+                  "samples": 231,
+                  "probability": 0.9913419913419913
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 6176,
-                  "probability": 0.7529145077720207
+                  "samples": 4255,
+                  "probability": 0.7377203290246769
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5560,
-                  "probability": 0.7998201438848921
+                  "samples": 3803,
+                  "probability": 0.7817512490139363
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4921,
-                  "probability": 0.8331639910587278
+                  "samples": 3325,
+                  "probability": 0.8150375939849624
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4067,
-                  "probability": 0.8564052126874846
+                  "samples": 2884,
+                  "probability": 0.8408460471567267
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3501,
-                  "probability": 0.884318766066838
+                  "samples": 2413,
+                  "probability": 0.8856195607128057
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2875,
-                  "probability": 0.9137391304347826
+                  "samples": 2057,
+                  "probability": 0.8925619834710744
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2404,
-                  "probability": 0.9101497504159733
+                  "samples": 1653,
+                  "probability": 0.9195402298850575
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1895,
-                  "probability": 0.9287598944591029
+                  "samples": 1391,
+                  "probability": 0.9266714593817398
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1583,
-                  "probability": 0.936197094125079
+                  "samples": 1080,
+                  "probability": 0.9314814814814815
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1354,
-                  "probability": 0.9497784342688331
+                  "samples": 952,
+                  "probability": 0.9474789915966386
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1059,
-                  "probability": 0.9508970727101038
+                  "samples": 730,
+                  "probability": 0.9561643835616438
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 922,
-                  "probability": 0.9631236442516269
+                  "samples": 682,
+                  "probability": 0.9633431085043989
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 780,
-                  "probability": 0.9666666666666667
+                  "samples": 541,
+                  "probability": 0.9630314232902033
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 636,
-                  "probability": 0.9669811320754716
+                  "samples": 438,
+                  "probability": 0.9611872146118722
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 553,
-                  "probability": 0.9710669077757685
+                  "samples": 371,
+                  "probability": 0.9568733153638814
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 468,
-                  "probability": 0.9700854700854701
+                  "samples": 317,
+                  "probability": 0.9652996845425867
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 377,
-                  "probability": 0.9708222811671088
+                  "samples": 294,
+                  "probability": 0.9693877551020408
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 331,
-                  "probability": 0.9848942598187311
-                },
-                {
-                  "distanceBp": 20,
-                  "samples": 295,
-                  "probability": 0.9796610169491525
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 225,
-                  "probability": 0.9733333333333334
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 214,
-                  "probability": 0.9906542056074766
+                  "samples": 222,
+                  "probability": 0.9864864864864865
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 6849,
-                  "probability": 0.7113447218572054
+                  "samples": 4729,
+                  "probability": 0.6834425882850497
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5858,
-                  "probability": 0.7531580744281324
+                  "samples": 4085,
+                  "probability": 0.7297429620563035
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4776,
-                  "probability": 0.783500837520938
+                  "samples": 3388,
+                  "probability": 0.7744982290436836
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4047,
-                  "probability": 0.8169014084507042
+                  "samples": 2809,
+                  "probability": 0.7985048059807761
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3221,
-                  "probability": 0.8214840111766533
+                  "samples": 2293,
+                  "probability": 0.8046227649367641
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2578,
-                  "probability": 0.8273855702094647
+                  "samples": 1890,
+                  "probability": 0.8306878306878307
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2013,
-                  "probability": 0.8564331843020367
+                  "samples": 1413,
+                  "probability": 0.8478414720452937
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1696,
-                  "probability": 0.8637971698113207
+                  "samples": 1194,
+                  "probability": 0.8576214405360134
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1283,
-                  "probability": 0.8784099766173032
+                  "samples": 954,
+                  "probability": 0.8647798742138365
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1022,
-                  "probability": 0.8923679060665362
+                  "samples": 717,
+                  "probability": 0.9037656903765691
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 797,
-                  "probability": 0.9109159347553325
+                  "samples": 567,
+                  "probability": 0.9223985890652557
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 706,
-                  "probability": 0.9277620396600567
+                  "samples": 486,
+                  "probability": 0.9176954732510288
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 563,
-                  "probability": 0.9023090586145648
+                  "samples": 405,
+                  "probability": 0.9209876543209876
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 457,
-                  "probability": 0.9299781181619255
+                  "samples": 297,
+                  "probability": 0.9158249158249159
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 336,
-                  "probability": 0.9196428571428571
-                },
-                {
-                  "distanceBp": 17,
-                  "samples": 312,
-                  "probability": 0.9294871794871795
-                },
-                {
-                  "distanceBp": 18,
-                  "samples": 214,
-                  "probability": 0.9205607476635514
-                },
-                {
-                  "distanceBp": 19,
-                  "samples": 219,
-                  "probability": 0.9726027397260274
+                  "samples": 232,
+                  "probability": 0.9094827586206896
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 7707,
-                  "probability": 0.6600493058258726
+                  "samples": 5442,
+                  "probability": 0.647372289599412
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5962,
-                  "probability": 0.6997651794699765
+                  "samples": 4230,
+                  "probability": 0.6869976359338061
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4501,
-                  "probability": 0.727393912463897
+                  "samples": 3146,
+                  "probability": 0.7082008900190718
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3376,
-                  "probability": 0.7408175355450237
+                  "samples": 2416,
+                  "probability": 0.7442052980132451
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2501,
-                  "probability": 0.7497001199520192
+                  "samples": 1784,
+                  "probability": 0.7628923766816144
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1807,
-                  "probability": 0.7841726618705036
+                  "samples": 1232,
+                  "probability": 0.7702922077922078
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1282,
-                  "probability": 0.8088923556942278
+                  "samples": 947,
+                  "probability": 0.7856388595564942
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1038,
-                  "probability": 0.7957610789980732
+                  "samples": 690,
+                  "probability": 0.8
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 713,
-                  "probability": 0.8162692847124825
+                  "samples": 520,
+                  "probability": 0.8346153846153846
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 535,
-                  "probability": 0.8467289719626169
+                  "samples": 382,
+                  "probability": 0.8534031413612565
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 407,
-                  "probability": 0.8452088452088452
+                  "samples": 296,
+                  "probability": 0.8445945945945946
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 332,
-                  "probability": 0.8373493975903614
-                },
-                {
-                  "distanceBp": 14,
-                  "samples": 237,
-                  "probability": 0.8481012658227848
+                  "samples": 218,
+                  "probability": 0.8669724770642202
                 }
               ]
             }
@@ -1553,201 +1353,141 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "eth",
-      "windowCount": 315116,
+      "windowCount": 210522,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.03208659668185684,
-          "avgLeadPp": 7.262090183833073,
+          "windowShare": 0.022035701731885505,
+          "avgLeadPp": 6.863291250829715,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 1129,
-                  "probability": 0.83348095659876
+                  "samples": 459,
+                  "probability": 0.7995642701525054
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1006,
-                  "probability": 0.8946322067594433
+                  "samples": 438,
+                  "probability": 0.8767123287671232
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 869,
-                  "probability": 0.9344073647871116
+                  "samples": 378,
+                  "probability": 0.873015873015873
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 725,
-                  "probability": 0.9337931034482758
+                  "samples": 313,
+                  "probability": 0.9073482428115016
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 552,
-                  "probability": 0.947463768115942
+                  "samples": 280,
+                  "probability": 0.9214285714285714
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 496,
-                  "probability": 0.9596774193548387
+                  "samples": 234,
+                  "probability": 0.9658119658119658
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 432,
-                  "probability": 0.9745370370370371
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 329,
-                  "probability": 0.9665653495440729
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 270,
-                  "probability": 0.9851851851851852
-                },
-                {
-                  "distanceBp": 11,
-                  "samples": 221,
-                  "probability": 0.9773755656108597
-                },
-                {
-                  "distanceBp": 12,
-                  "samples": 217,
-                  "probability": 0.9907834101382489
+                  "samples": 248,
+                  "probability": 0.9596774193548387
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 1198,
-                  "probability": 0.7687813021702838
+                  "samples": 525,
+                  "probability": 0.7409523809523809
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1056,
-                  "probability": 0.8248106060606061
+                  "samples": 455,
+                  "probability": 0.778021978021978
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 823,
-                  "probability": 0.8541919805589308
+                  "samples": 378,
+                  "probability": 0.8227513227513228
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 715,
-                  "probability": 0.8657342657342657
+                  "samples": 307,
+                  "probability": 0.7947882736156352
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 594,
-                  "probability": 0.8956228956228957
+                  "samples": 293,
+                  "probability": 0.8430034129692833
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 461,
-                  "probability": 0.911062906724512
+                  "samples": 213,
+                  "probability": 0.8967136150234741
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 376,
-                  "probability": 0.8856382978723404
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 286,
-                  "probability": 0.9370629370629371
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 235,
-                  "probability": 0.9106382978723404
-                },
-                {
-                  "distanceBp": 11,
-                  "samples": 212,
-                  "probability": 0.9528301886792453
+                  "samples": 227,
+                  "probability": 0.8766519823788547
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 1301,
-                  "probability": 0.7332820906994619
+                  "samples": 562,
+                  "probability": 0.6886120996441281
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1103,
-                  "probability": 0.7688123300090662
+                  "samples": 484,
+                  "probability": 0.7334710743801653
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 869,
-                  "probability": 0.7917146144994246
+                  "samples": 451,
+                  "probability": 0.7427937915742794
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 660,
-                  "probability": 0.8227272727272728
+                  "samples": 343,
+                  "probability": 0.7842565597667639
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 506,
-                  "probability": 0.8636363636363636
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 371,
-                  "probability": 0.8598382749326146
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 330,
-                  "probability": 0.8696969696969697
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 241,
-                  "probability": 0.8713692946058091
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 202,
-                  "probability": 0.8861386138613861
+                  "samples": 255,
+                  "probability": 0.8274509803921568
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 1412,
-                  "probability": 0.6550991501416431
+                  "samples": 638,
+                  "probability": 0.622257053291536
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1074,
-                  "probability": 0.664804469273743
+                  "samples": 518,
+                  "probability": 0.6698841698841699
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 736,
-                  "probability": 0.7350543478260869
+                  "samples": 378,
+                  "probability": 0.7222222222222222
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 556,
-                  "probability": 0.7446043165467626
+                  "samples": 305,
+                  "probability": 0.6786885245901639
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 369,
-                  "probability": 0.7804878048780488
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 281,
-                  "probability": 0.7615658362989324
+                  "samples": 211,
+                  "probability": 0.6966824644549763
                 }
               ]
             }
@@ -1756,676 +1496,636 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5975291638634661,
-          "avgLeadPp": 1.7431059946179137,
+          "windowShare": 0.5988970273890615,
+          "avgLeadPp": 1.8029006013105275,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 15767,
-                  "probability": 0.773514302023213
+                  "samples": 9472,
+                  "probability": 0.7377533783783784
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 14726,
-                  "probability": 0.8275838652723074
+                  "samples": 9237,
+                  "probability": 0.7956046335390278
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 13424,
-                  "probability": 0.8686680572109654
+                  "samples": 8464,
+                  "probability": 0.8380198487712666
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 12267,
-                  "probability": 0.8919866307980762
+                  "samples": 8106,
+                  "probability": 0.8772514187021959
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10949,
-                  "probability": 0.919536030687734
+                  "samples": 7273,
+                  "probability": 0.9049910628351436
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9814,
-                  "probability": 0.9330548196454045
+                  "samples": 6676,
+                  "probability": 0.9281006590772918
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8817,
-                  "probability": 0.9479414766927526
+                  "samples": 6061,
+                  "probability": 0.9430786998845075
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7730,
-                  "probability": 0.9551099611901682
+                  "samples": 5435,
+                  "probability": 0.9492180312787488
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6920,
-                  "probability": 0.9651734104046242
+                  "samples": 4819,
+                  "probability": 0.9584976136127827
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6022,
-                  "probability": 0.9676187313184988
+                  "samples": 4255,
+                  "probability": 0.9647473560517039
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5184,
-                  "probability": 0.9747299382716049
+                  "samples": 3905,
+                  "probability": 0.9736235595390526
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4685,
-                  "probability": 0.9765208110992529
+                  "samples": 3388,
+                  "probability": 0.9701889020070839
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3968,
-                  "probability": 0.9788306451612904
+                  "samples": 2965,
+                  "probability": 0.9801011804384485
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3705,
-                  "probability": 0.9824561403508771
+                  "samples": 2640,
+                  "probability": 0.9787878787878788
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3157,
-                  "probability": 0.9819448843839088
+                  "samples": 2366,
+                  "probability": 0.9860524091293322
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2615,
-                  "probability": 0.990057361376673
+                  "samples": 2116,
+                  "probability": 0.9877126654064272
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2513,
-                  "probability": 0.9884600079586152
+                  "samples": 1890,
+                  "probability": 0.9867724867724867
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2154,
-                  "probability": 0.9907149489322191
+                  "samples": 1680,
+                  "probability": 0.9892857142857143
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1921,
-                  "probability": 0.9927121290994274
+                  "samples": 1478,
+                  "probability": 0.986468200270636
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1769,
-                  "probability": 0.9954776710005653
+                  "samples": 1329,
+                  "probability": 0.9947328818660647
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1489,
-                  "probability": 0.9926124916051041
+                  "samples": 1142,
+                  "probability": 0.9964973730297724
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1385,
-                  "probability": 0.992057761732852
+                  "samples": 1055,
+                  "probability": 0.990521327014218
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1243,
-                  "probability": 0.9935639581657281
+                  "samples": 915,
+                  "probability": 0.9890710382513661
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1148,
-                  "probability": 0.990418118466899
+                  "samples": 868,
+                  "probability": 0.9907834101382489
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 971,
-                  "probability": 0.9948506694129763
+                  "samples": 774,
+                  "probability": 0.9896640826873385
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 915,
-                  "probability": 0.9923497267759562
+                  "samples": 688,
+                  "probability": 0.997093023255814
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 700,
-                  "probability": 0.9957142857142857
+                  "samples": 595,
+                  "probability": 0.9882352941176471
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 648,
-                  "probability": 0.9969135802469136
+                  "samples": 490,
+                  "probability": 0.9979591836734694
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 631,
-                  "probability": 0.993660855784469
+                  "samples": 478,
+                  "probability": 0.997907949790795
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 556,
-                  "probability": 0.9946043165467626
+                  "samples": 423,
+                  "probability": 0.9952718676122931
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 521,
-                  "probability": 0.9942418426103646
+                  "samples": 405,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 428,
-                  "probability": 0.9976635514018691
+                  "samples": 343,
+                  "probability": 0.9883381924198251
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 391,
-                  "probability": 0.9948849104859335
+                  "samples": 321,
+                  "probability": 0.9968847352024922
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 378,
-                  "probability": 0.9947089947089947
+                  "samples": 289,
+                  "probability": 0.9965397923875432
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 355,
-                  "probability": 0.9943661971830986
+                  "samples": 305,
+                  "probability": 0.9967213114754099
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 328,
+                  "samples": 245,
                   "probability": 1
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 287,
+                  "samples": 233,
                   "probability": 1
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 257,
+                  "samples": 211,
                   "probability": 1
-                },
-                {
-                  "distanceBp": 40,
-                  "samples": 238,
-                  "probability": 0.9957983193277311
-                },
-                {
-                  "distanceBp": 41,
-                  "samples": 208,
-                  "probability": 0.9951923076923077
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 17463,
-                  "probability": 0.7010822882666209
+                  "samples": 10562,
+                  "probability": 0.6624692293126302
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 15817,
-                  "probability": 0.7490042359486628
+                  "samples": 9992,
+                  "probability": 0.7174739791833467
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 14301,
-                  "probability": 0.7839311936228236
+                  "samples": 9431,
+                  "probability": 0.7585621885271976
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 12839,
-                  "probability": 0.8172754887452294
+                  "samples": 8426,
+                  "probability": 0.7944457631141705
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11521,
-                  "probability": 0.8433295720857564
+                  "samples": 7673,
+                  "probability": 0.8172813762543986
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9951,
-                  "probability": 0.8652396744045825
+                  "samples": 6859,
+                  "probability": 0.8493949555328765
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8652,
-                  "probability": 0.8801433194637078
+                  "samples": 6017,
+                  "probability": 0.8655476150905766
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7355,
-                  "probability": 0.8981645139360979
+                  "samples": 5372,
+                  "probability": 0.8957557706626954
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6601,
-                  "probability": 0.8992576882290562
+                  "samples": 4826,
+                  "probability": 0.8903854123497721
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 5782,
-                  "probability": 0.9164648910411622
+                  "samples": 4164,
+                  "probability": 0.9053794428434198
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4774,
-                  "probability": 0.9214495182237118
+                  "samples": 3464,
+                  "probability": 0.9183025404157044
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4152,
-                  "probability": 0.9311175337186898
+                  "samples": 3101,
+                  "probability": 0.9222831344727507
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3565,
-                  "probability": 0.932398316970547
+                  "samples": 2679,
+                  "probability": 0.9316909294512878
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3188,
-                  "probability": 0.9485570890840652
+                  "samples": 2330,
+                  "probability": 0.9424892703862661
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2739,
-                  "probability": 0.941219423147134
+                  "samples": 2040,
+                  "probability": 0.9475490196078431
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2380,
-                  "probability": 0.9512605042016806
+                  "samples": 1795,
+                  "probability": 0.9481894150417828
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1998,
-                  "probability": 0.9569569569569569
+                  "samples": 1563,
+                  "probability": 0.9571337172104927
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1829,
-                  "probability": 0.9606342263531985
+                  "samples": 1389,
+                  "probability": 0.953203743700504
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1562,
-                  "probability": 0.9654289372599232
+                  "samples": 1189,
+                  "probability": 0.9621530698065601
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1385,
-                  "probability": 0.9725631768953069
+                  "samples": 1052,
+                  "probability": 0.9695817490494296
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1195,
-                  "probability": 0.9640167364016736
+                  "samples": 903,
+                  "probability": 0.973421926910299
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1117,
-                  "probability": 0.9785138764547896
+                  "samples": 840,
+                  "probability": 0.9702380952380952
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 955,
-                  "probability": 0.9654450261780104
+                  "samples": 741,
+                  "probability": 0.9541160593792173
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 800,
-                  "probability": 0.975
+                  "samples": 628,
+                  "probability": 0.9665605095541401
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 712,
-                  "probability": 0.9691011235955056
+                  "samples": 553,
+                  "probability": 0.976491862567812
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 634,
-                  "probability": 0.9763406940063092
+                  "samples": 468,
+                  "probability": 0.9722222222222222
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 527,
-                  "probability": 0.9753320683111955
+                  "samples": 451,
+                  "probability": 0.9623059866962306
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 519,
-                  "probability": 0.9691714836223507
+                  "samples": 391,
+                  "probability": 0.9744245524296675
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 449,
-                  "probability": 0.9732739420935412
+                  "samples": 372,
+                  "probability": 0.9704301075268817
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 395,
-                  "probability": 0.9772151898734177
+                  "samples": 336,
+                  "probability": 0.9851190476190477
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 395,
-                  "probability": 0.9822784810126582
+                  "samples": 264,
+                  "probability": 0.9772727272727273
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 320,
-                  "probability": 0.990625
+                  "samples": 265,
+                  "probability": 0.9811320754716981
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 302,
-                  "probability": 0.9768211920529801
+                  "samples": 225,
+                  "probability": 0.9911111111111112
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 262,
-                  "probability": 0.9961832061068703
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 249,
-                  "probability": 0.9839357429718876
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 217,
-                  "probability": 0.9907834101382489
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 204,
-                  "probability": 0.9950980392156863
+                  "samples": 239,
+                  "probability": 0.9874476987447699
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 19643,
-                  "probability": 0.6577406709769383
+                  "samples": 12306,
+                  "probability": 0.6188850967007964
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 17558,
-                  "probability": 0.6903405854880966
+                  "samples": 11475,
+                  "probability": 0.6665795206971677
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 15366,
-                  "probability": 0.7321358844201484
+                  "samples": 10175,
+                  "probability": 0.710958230958231
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13378,
-                  "probability": 0.7605023172372551
+                  "samples": 9021,
+                  "probability": 0.7340649595388538
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11478,
-                  "probability": 0.7799268165185572
+                  "samples": 7921,
+                  "probability": 0.7648024239363717
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9673,
-                  "probability": 0.7961335676625659
+                  "samples": 6854,
+                  "probability": 0.7793988911584476
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8142,
-                  "probability": 0.8144190616556128
+                  "samples": 5937,
+                  "probability": 0.7970355398349335
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 6919,
-                  "probability": 0.8304668304668305
+                  "samples": 4956,
+                  "probability": 0.8171912832929782
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 5811,
-                  "probability": 0.8452934090517983
+                  "samples": 4253,
+                  "probability": 0.8412885022337174
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4868,
-                  "probability": 0.8557929334428923
+                  "samples": 3513,
+                  "probability": 0.8548249359521777
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4023,
-                  "probability": 0.8580661198110863
+                  "samples": 2981,
+                  "probability": 0.850050318685005
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3560,
-                  "probability": 0.8730337078651685
+                  "samples": 2648,
+                  "probability": 0.8564954682779456
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2894,
-                  "probability": 0.8818244644091223
+                  "samples": 2214,
+                  "probability": 0.8947606142728094
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2466,
-                  "probability": 0.8856447688564477
+                  "samples": 1875,
+                  "probability": 0.8901333333333333
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2141,
-                  "probability": 0.9014479215319944
+                  "samples": 1561,
+                  "probability": 0.8885329916720052
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1792,
-                  "probability": 0.8962053571428571
+                  "samples": 1400,
+                  "probability": 0.9014285714285715
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1491,
-                  "probability": 0.9061032863849765
+                  "samples": 1094,
+                  "probability": 0.9159049360146252
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1317,
-                  "probability": 0.911921032649962
+                  "samples": 954,
+                  "probability": 0.9035639412997903
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1109,
-                  "probability": 0.9251577998196574
+                  "samples": 841,
+                  "probability": 0.9108204518430439
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 897,
-                  "probability": 0.9253065774804905
+                  "samples": 655,
+                  "probability": 0.9083969465648855
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 794,
-                  "probability": 0.9332493702770781
+                  "samples": 629,
+                  "probability": 0.931637519872814
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 739,
-                  "probability": 0.9228687415426252
+                  "samples": 519,
+                  "probability": 0.9402697495183044
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 586,
-                  "probability": 0.9197952218430034
+                  "samples": 488,
+                  "probability": 0.9139344262295082
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 540,
-                  "probability": 0.912962962962963
+                  "samples": 444,
+                  "probability": 0.9166666666666666
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 484,
-                  "probability": 0.9338842975206612
+                  "samples": 368,
+                  "probability": 0.9157608695652174
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 433,
-                  "probability": 0.953810623556582
+                  "samples": 323,
+                  "probability": 0.9318885448916409
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 354,
-                  "probability": 0.9124293785310734
+                  "samples": 289,
+                  "probability": 0.9411764705882353
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 314,
-                  "probability": 0.9235668789808917
+                  "samples": 269,
+                  "probability": 0.9368029739776952
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 271,
-                  "probability": 0.9446494464944649
+                  "samples": 231,
+                  "probability": 0.935064935064935
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 249,
-                  "probability": 0.9678714859437751
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 253,
-                  "probability": 0.9565217391304348
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 219,
-                  "probability": 0.9634703196347032
+                  "samples": 225,
+                  "probability": 0.96
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 24236,
-                  "probability": 0.6199867965010728
+                  "samples": 15847,
+                  "probability": 0.6042784123177889
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 20142,
-                  "probability": 0.6490418031972992
+                  "samples": 13602,
+                  "probability": 0.6252756947507719
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 16698,
-                  "probability": 0.6742723679482573
+                  "samples": 11316,
+                  "probability": 0.6640155531990103
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13131,
-                  "probability": 0.6941588607112938
+                  "samples": 9510,
+                  "probability": 0.6903259726603576
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10572,
-                  "probability": 0.7219069239500567
+                  "samples": 7532,
+                  "probability": 0.7118959107806692
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 8163,
-                  "probability": 0.738453999754992
+                  "samples": 5892,
+                  "probability": 0.7163951120162932
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 6404,
-                  "probability": 0.7507807620237351
+                  "samples": 4620,
+                  "probability": 0.7512987012987012
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5040,
-                  "probability": 0.7734126984126984
+                  "samples": 3746,
+                  "probability": 0.7522690870261612
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4067,
-                  "probability": 0.7784607819031227
+                  "samples": 2949,
+                  "probability": 0.7846727704306544
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3168,
-                  "probability": 0.7894570707070707
+                  "samples": 2292,
+                  "probability": 0.787521815008726
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2406,
-                  "probability": 0.7930174563591023
+                  "samples": 1853,
+                  "probability": 0.7900701565029682
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1995,
-                  "probability": 0.8230576441102757
+                  "samples": 1490,
+                  "probability": 0.7993288590604026
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1622,
-                  "probability": 0.8045622688039458
+                  "samples": 1194,
+                  "probability": 0.8140703517587939
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1243,
-                  "probability": 0.8230088495575221
+                  "samples": 942,
+                  "probability": 0.8142250530785563
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 975,
-                  "probability": 0.8246153846153846
+                  "samples": 760,
+                  "probability": 0.8302631578947368
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 873,
-                  "probability": 0.845360824742268
+                  "samples": 653,
+                  "probability": 0.8499234303215927
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 654,
-                  "probability": 0.8394495412844036
+                  "samples": 520,
+                  "probability": 0.8326923076923077
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 544,
-                  "probability": 0.8621323529411765
+                  "samples": 401,
+                  "probability": 0.8478802992518704
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 481,
-                  "probability": 0.8523908523908524
+                  "samples": 354,
+                  "probability": 0.8389830508474576
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 382,
-                  "probability": 0.8691099476439791
+                  "samples": 311,
+                  "probability": 0.8681672025723473
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 322,
-                  "probability": 0.84472049689441
+                  "samples": 255,
+                  "probability": 0.8745098039215686
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 282,
-                  "probability": 0.8475177304964538
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 244,
-                  "probability": 0.889344262295082
+                  "samples": 227,
+                  "probability": 0.8149779735682819
                 }
               ]
             }
@@ -2434,506 +2134,461 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.25437299280265047,
-          "avgLeadPp": 2.2052168905833396,
+          "windowShare": 0.2487198487568995,
+          "avgLeadPp": 2.3400563171012636,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 6973,
-                  "probability": 0.7827334002581385
+                  "samples": 4171,
+                  "probability": 0.7461040517861424
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6453,
-                  "probability": 0.8363551836355184
+                  "samples": 3937,
+                  "probability": 0.8046736093472187
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 5853,
-                  "probability": 0.8727148470869639
+                  "samples": 3622,
+                  "probability": 0.841800110436223
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5439,
-                  "probability": 0.8966721823864681
+                  "samples": 3529,
+                  "probability": 0.8807027486540097
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4738,
-                  "probability": 0.9193752638243985
+                  "samples": 3071,
+                  "probability": 0.9111038749592967
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4207,
-                  "probability": 0.9353458521511766
+                  "samples": 2811,
+                  "probability": 0.9299181785841337
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3750,
-                  "probability": 0.9533333333333334
+                  "samples": 2557,
+                  "probability": 0.9417285881892843
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3281,
-                  "probability": 0.9545870161536117
+                  "samples": 2208,
+                  "probability": 0.9528985507246377
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2859,
-                  "probability": 0.9674711437565582
+                  "samples": 1924,
+                  "probability": 0.9573804573804574
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2477,
-                  "probability": 0.9660880096891401
+                  "samples": 1677,
+                  "probability": 0.9672033392963626
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2081,
-                  "probability": 0.9788563190773667
+                  "samples": 1558,
+                  "probability": 0.9698331193838254
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1911,
-                  "probability": 0.9790685504971219
+                  "samples": 1368,
+                  "probability": 0.9722222222222222
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1650,
-                  "probability": 0.98
+                  "samples": 1172,
+                  "probability": 0.9786689419795221
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1514,
-                  "probability": 0.9801849405548216
+                  "samples": 1066,
+                  "probability": 0.9821763602251408
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1236,
-                  "probability": 0.9805825242718447
+                  "samples": 898,
+                  "probability": 0.9844097995545658
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 996,
-                  "probability": 0.9909638554216867
+                  "samples": 795,
+                  "probability": 0.9861635220125786
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 969,
-                  "probability": 0.9855521155830753
+                  "samples": 727,
+                  "probability": 0.984869325997249
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 878,
-                  "probability": 0.9886104783599089
+                  "samples": 669,
+                  "probability": 0.9850523168908819
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 742,
-                  "probability": 0.9932614555256065
+                  "samples": 568,
+                  "probability": 0.9859154929577465
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 704,
-                  "probability": 0.9957386363636364
+                  "samples": 519,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 634,
-                  "probability": 0.9921135646687698
+                  "samples": 445,
+                  "probability": 0.9977528089887641
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 525,
-                  "probability": 0.9904761904761905
+                  "samples": 397,
+                  "probability": 0.9848866498740554
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 505,
-                  "probability": 0.994059405940594
+                  "samples": 330,
+                  "probability": 0.990909090909091
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 419,
-                  "probability": 0.9928400954653938
+                  "samples": 346,
+                  "probability": 0.9971098265895953
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 408,
-                  "probability": 0.9950980392156863
+                  "samples": 305,
+                  "probability": 0.9934426229508196
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 350,
-                  "probability": 0.9971428571428571
+                  "samples": 264,
+                  "probability": 0.9962121212121212
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 278,
-                  "probability": 0.9928057553956835
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 248,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 245,
-                  "probability": 0.9959183673469387
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 203,
-                  "probability": 0.9950738916256158
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 217,
-                  "probability": 1
+                  "samples": 241,
+                  "probability": 0.9875518672199171
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 7778,
-                  "probability": 0.7046798662895346
+                  "samples": 4518,
+                  "probability": 0.6673306772908366
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6906,
-                  "probability": 0.756154068925572
+                  "samples": 4263,
+                  "probability": 0.72366877785597
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6195,
-                  "probability": 0.7888619854721549
+                  "samples": 4018,
+                  "probability": 0.7625684420109508
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5513,
-                  "probability": 0.8213313985126066
+                  "samples": 3608,
+                  "probability": 0.8068181818181818
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 5059,
-                  "probability": 0.8466100019766752
+                  "samples": 3234,
+                  "probability": 0.8200371057513914
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4210,
-                  "probability": 0.8752969121140143
+                  "samples": 2866,
+                  "probability": 0.8569434752267969
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3566,
-                  "probability": 0.8841839596186203
+                  "samples": 2406,
+                  "probability": 0.8724023275145469
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3059,
-                  "probability": 0.9025825433148088
+                  "samples": 2200,
+                  "probability": 0.8986363636363637
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2768,
-                  "probability": 0.8945086705202312
+                  "samples": 1962,
+                  "probability": 0.8863404689092762
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2399,
-                  "probability": 0.9208003334722801
+                  "samples": 1670,
+                  "probability": 0.9035928143712575
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1933,
-                  "probability": 0.9275737196068288
+                  "samples": 1417,
+                  "probability": 0.9160197600564574
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1644,
-                  "probability": 0.9409975669099757
+                  "samples": 1235,
+                  "probability": 0.9352226720647774
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1438,
-                  "probability": 0.935326842837274
+                  "samples": 1046,
+                  "probability": 0.9321223709369025
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1326,
-                  "probability": 0.9487179487179487
+                  "samples": 946,
+                  "probability": 0.9460887949260042
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1116,
-                  "probability": 0.9381720430107527
+                  "samples": 782,
+                  "probability": 0.948849104859335
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 903,
-                  "probability": 0.955703211517165
+                  "samples": 729,
+                  "probability": 0.9423868312757202
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 813,
-                  "probability": 0.9532595325953259
+                  "samples": 610,
+                  "probability": 0.9459016393442623
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 717,
-                  "probability": 0.9651324965132496
+                  "samples": 525,
+                  "probability": 0.9619047619047619
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 604,
-                  "probability": 0.9652317880794702
+                  "samples": 468,
+                  "probability": 0.9636752136752137
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 541,
-                  "probability": 0.9685767097966729
+                  "samples": 407,
+                  "probability": 0.972972972972973
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 485,
-                  "probability": 0.9690721649484536
+                  "samples": 344,
+                  "probability": 0.9680232558139535
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 440,
-                  "probability": 0.9704545454545455
+                  "samples": 307,
+                  "probability": 0.9706840390879479
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 358,
-                  "probability": 0.9720670391061452
+                  "samples": 271,
+                  "probability": 0.9630996309963099
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 304,
-                  "probability": 0.9736842105263158
+                  "samples": 247,
+                  "probability": 0.97165991902834
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 279,
-                  "probability": 0.967741935483871
-                },
-                {
-                  "distanceBp": 27,
-                  "samples": 246,
-                  "probability": 0.9796747967479674
+                  "samples": 213,
+                  "probability": 0.9765258215962441
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 8622,
-                  "probability": 0.6627232660635584
+                  "samples": 5292,
+                  "probability": 0.6273620559334845
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7538,
-                  "probability": 0.6958079066065269
+                  "samples": 4853,
+                  "probability": 0.6707191427982692
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6599,
-                  "probability": 0.731777542051826
+                  "samples": 4226,
+                  "probability": 0.7181732134406058
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5719,
-                  "probability": 0.7639447455848924
+                  "samples": 3775,
+                  "probability": 0.7422516556291391
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4808,
-                  "probability": 0.7913893510815307
+                  "samples": 3232,
+                  "probability": 0.7694925742574258
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4023,
-                  "probability": 0.8036291324881929
+                  "samples": 2788,
+                  "probability": 0.7869440459110474
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3400,
-                  "probability": 0.8279411764705882
+                  "samples": 2411,
+                  "probability": 0.817917876399834
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2831,
-                  "probability": 0.837160014129283
+                  "samples": 1988,
+                  "probability": 0.8174044265593562
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2387,
-                  "probability": 0.8466694595726854
+                  "samples": 1712,
+                  "probability": 0.8411214953271028
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2008,
-                  "probability": 0.8466135458167331
+                  "samples": 1437,
+                  "probability": 0.8510786360473208
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1660,
-                  "probability": 0.8596385542168675
+                  "samples": 1216,
+                  "probability": 0.8421052631578947
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1405,
-                  "probability": 0.8733096085409253
+                  "samples": 1049,
+                  "probability": 0.8474737845567207
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1174,
-                  "probability": 0.8926746166950597
+                  "samples": 852,
+                  "probability": 0.9096244131455399
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1021,
-                  "probability": 0.8863858961802155
+                  "samples": 708,
+                  "probability": 0.903954802259887
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 815,
-                  "probability": 0.90920245398773
+                  "samples": 602,
+                  "probability": 0.8920265780730897
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 687,
-                  "probability": 0.9053857350800583
+                  "samples": 542,
+                  "probability": 0.922509225092251
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 579,
-                  "probability": 0.92573402417962
+                  "samples": 414,
+                  "probability": 0.9371980676328503
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 492,
-                  "probability": 0.9186991869918699
+                  "samples": 365,
+                  "probability": 0.9095890410958904
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 436,
-                  "probability": 0.9334862385321101
+                  "samples": 330,
+                  "probability": 0.9242424242424242
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 375,
-                  "probability": 0.9333333333333333
+                  "samples": 258,
+                  "probability": 0.9031007751937985
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 281,
-                  "probability": 0.9359430604982206
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 297,
-                  "probability": 0.9528619528619529
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 212,
-                  "probability": 0.9150943396226415
+                  "samples": 225,
+                  "probability": 0.9555555555555556
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 10636,
-                  "probability": 0.6211921775103423
+                  "samples": 6793,
+                  "probability": 0.6147504784336817
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8735,
-                  "probability": 0.6552947910704064
+                  "samples": 5707,
+                  "probability": 0.6365866479761696
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 7089,
-                  "probability": 0.6847228099873043
+                  "samples": 4685,
+                  "probability": 0.6749199573105656
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5445,
-                  "probability": 0.6999081726354454
+                  "samples": 3834,
+                  "probability": 0.6940532081377152
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4426,
-                  "probability": 0.728874830546769
+                  "samples": 3086,
+                  "probability": 0.7141931302657162
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3360,
-                  "probability": 0.7401785714285715
+                  "samples": 2383,
+                  "probability": 0.7184221569450273
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2681,
-                  "probability": 0.7616560984707199
+                  "samples": 1833,
+                  "probability": 0.7463175122749591
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1986,
-                  "probability": 0.7779456193353474
+                  "samples": 1438,
+                  "probability": 0.7649513212795549
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1599,
-                  "probability": 0.7967479674796748
+                  "samples": 1175,
+                  "probability": 0.7982978723404255
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1262,
-                  "probability": 0.8129952456418383
+                  "samples": 892,
+                  "probability": 0.8094170403587444
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 945,
-                  "probability": 0.8
+                  "samples": 726,
+                  "probability": 0.7988980716253443
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 764,
-                  "probability": 0.8520942408376964
+                  "samples": 543,
+                  "probability": 0.8342541436464088
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 618,
-                  "probability": 0.8122977346278317
+                  "samples": 452,
+                  "probability": 0.831858407079646
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 489,
-                  "probability": 0.8282208588957055
+                  "samples": 335,
+                  "probability": 0.7880597014925373
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 372,
-                  "probability": 0.8225806451612904
+                  "samples": 295,
+                  "probability": 0.8372881355932204
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 334,
-                  "probability": 0.8473053892215568
-                },
-                {
-                  "distanceBp": 18,
-                  "samples": 257,
-                  "probability": 0.8365758754863813
-                },
-                {
-                  "distanceBp": 19,
-                  "samples": 209,
-                  "probability": 0.8277511961722488
+                  "samples": 255,
+                  "probability": 0.8274509803921568
                 }
               ]
             }
@@ -2942,466 +2597,436 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.2512503332106272,
-          "avgLeadPp": 2.150638702870711,
+          "windowShare": 0.25718927238008377,
+          "avgLeadPp": 2.1465650251133024,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 4571,
-                  "probability": 0.7705097352876832
+                  "samples": 2788,
+                  "probability": 0.7356527977044476
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4350,
-                  "probability": 0.8204597701149425
+                  "samples": 2747,
+                  "probability": 0.78704040771751
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3869,
-                  "probability": 0.8686999224605841
+                  "samples": 2505,
+                  "probability": 0.8355289421157684
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3624,
-                  "probability": 0.8843818984547461
+                  "samples": 2395,
+                  "probability": 0.8784968684759916
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3233,
-                  "probability": 0.922981750695948
+                  "samples": 2137,
+                  "probability": 0.9007955077211044
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2982,
-                  "probability": 0.9312541918175721
+                  "samples": 2056,
+                  "probability": 0.9289883268482491
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2751,
-                  "probability": 0.9432933478735005
+                  "samples": 1868,
+                  "probability": 0.9486081370449678
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2352,
-                  "probability": 0.9625850340136054
+                  "samples": 1711,
+                  "probability": 0.9473991817650497
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2190,
-                  "probability": 0.9689497716894977
+                  "samples": 1492,
+                  "probability": 0.975201072386059
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1855,
-                  "probability": 0.9762803234501348
+                  "samples": 1383,
+                  "probability": 0.9645697758496024
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1663,
-                  "probability": 0.9699338544798557
+                  "samples": 1278,
+                  "probability": 0.9796557120500783
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1470,
-                  "probability": 0.9761904761904762
+                  "samples": 1066,
+                  "probability": 0.9727954971857411
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1236,
-                  "probability": 0.9773462783171522
+                  "samples": 977,
+                  "probability": 0.9805527123848515
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1150,
-                  "probability": 0.9852173913043478
+                  "samples": 834,
+                  "probability": 0.9772182254196643
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1005,
-                  "probability": 0.9850746268656716
+                  "samples": 741,
+                  "probability": 0.99055330634278
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 877,
-                  "probability": 0.9874572405929305
+                  "samples": 706,
+                  "probability": 0.9915014164305949
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 777,
-                  "probability": 0.9935649935649936
+                  "samples": 592,
+                  "probability": 0.9881756756756757
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 652,
-                  "probability": 0.9923312883435583
+                  "samples": 504,
+                  "probability": 0.996031746031746
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 608,
-                  "probability": 0.9950657894736842
+                  "samples": 490,
+                  "probability": 0.9857142857142858
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 516,
-                  "probability": 0.9941860465116279
+                  "samples": 378,
+                  "probability": 0.9894179894179894
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 418,
-                  "probability": 0.9976076555023924
+                  "samples": 368,
+                  "probability": 0.9918478260869565
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 445,
-                  "probability": 0.9932584269662922
+                  "samples": 337,
+                  "probability": 0.9910979228486647
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 375,
-                  "probability": 0.9946666666666667
+                  "samples": 278,
+                  "probability": 0.9928057553956835
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 369,
-                  "probability": 0.986449864498645
+                  "samples": 292,
+                  "probability": 0.9965753424657534
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 269,
-                  "probability": 1
+                  "samples": 233,
+                  "probability": 0.9914163090128756
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 277,
-                  "probability": 0.9891696750902527
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 220,
-                  "probability": 0.9954545454545455
+                  "samples": 205,
+                  "probability": 0.9951219512195122
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 5009,
-                  "probability": 0.7083250149730486
+                  "samples": 3124,
+                  "probability": 0.6776568501920615
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4690,
-                  "probability": 0.7417910447761195
+                  "samples": 3021,
+                  "probability": 0.7159880834160874
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4194,
-                  "probability": 0.7873152122079161
+                  "samples": 2862,
+                  "probability": 0.7536687631027253
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3820,
-                  "probability": 0.824869109947644
+                  "samples": 2557,
+                  "probability": 0.7876417676965194
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3395,
-                  "probability": 0.8415316642120766
+                  "samples": 2307,
+                  "probability": 0.8205461638491548
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3013,
-                  "probability": 0.8669100564221706
+                  "samples": 2102,
+                  "probability": 0.8549000951474786
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2671,
-                  "probability": 0.8854361662298764
+                  "samples": 1895,
+                  "probability": 0.8733509234828496
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2289,
-                  "probability": 0.9043250327653998
+                  "samples": 1637,
+                  "probability": 0.8930971288943189
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2060,
-                  "probability": 0.9067961165048544
+                  "samples": 1541,
+                  "probability": 0.8955223880597015
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1770,
-                  "probability": 0.9203389830508475
+                  "samples": 1306,
+                  "probability": 0.9058192955589587
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1494,
-                  "probability": 0.9176706827309237
+                  "samples": 1081,
+                  "probability": 0.9333950046253469
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1312,
-                  "probability": 0.9329268292682927
+                  "samples": 968,
+                  "probability": 0.9235537190082644
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1104,
-                  "probability": 0.9429347826086957
+                  "samples": 841,
+                  "probability": 0.9369797859690844
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 949,
-                  "probability": 0.946259220231823
+                  "samples": 724,
+                  "probability": 0.9378453038674033
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 811,
-                  "probability": 0.9519112207151664
+                  "samples": 624,
+                  "probability": 0.9647435897435898
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 784,
-                  "probability": 0.9579081632653061
+                  "samples": 551,
+                  "probability": 0.9655172413793104
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 632,
-                  "probability": 0.9715189873417721
+                  "samples": 519,
+                  "probability": 0.9672447013487476
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 559,
-                  "probability": 0.960644007155635
+                  "samples": 435,
+                  "probability": 0.9632183908045977
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 496,
-                  "probability": 0.9717741935483871
+                  "samples": 367,
+                  "probability": 0.9754768392370572
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 425,
-                  "probability": 0.9811764705882353
+                  "samples": 342,
+                  "probability": 0.9707602339181286
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 367,
-                  "probability": 0.9618528610354223
+                  "samples": 277,
+                  "probability": 0.9783393501805054
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 344,
-                  "probability": 0.9912790697674418
+                  "samples": 284,
+                  "probability": 0.9683098591549296
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 312,
-                  "probability": 0.967948717948718
-                },
-                {
-                  "distanceBp": 25,
                   "samples": 253,
-                  "probability": 0.9762845849802372
-                },
-                {
-                  "distanceBp": 26,
-                  "samples": 206,
-                  "probability": 0.9805825242718447
+                  "probability": 0.9486166007905138
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 5595,
-                  "probability": 0.6625558534405719
+                  "samples": 3594,
+                  "probability": 0.6243739565943238
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5140,
-                  "probability": 0.7017509727626459
+                  "samples": 3439,
+                  "probability": 0.6728700203547543
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4479,
-                  "probability": 0.7365483366822951
+                  "samples": 3083,
+                  "probability": 0.7158611741809925
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4024,
-                  "probability": 0.7691351888667992
+                  "samples": 2726,
+                  "probability": 0.7252384446074835
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3447,
-                  "probability": 0.7771975630983464
+                  "samples": 2475,
+                  "probability": 0.7608080808080808
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2909,
-                  "probability": 0.7944310759711241
+                  "samples": 2104,
+                  "probability": 0.7832699619771863
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2497,
-                  "probability": 0.8189827793352022
+                  "samples": 1830,
+                  "probability": 0.8
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2157,
-                  "probability": 0.8354195642095503
+                  "samples": 1609,
+                  "probability": 0.8259788688626476
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1786,
-                  "probability": 0.8538633818589025
+                  "samples": 1344,
+                  "probability": 0.8519345238095238
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1519,
-                  "probability": 0.8630678077682686
+                  "samples": 1089,
+                  "probability": 0.8512396694214877
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1225,
-                  "probability": 0.8595918367346939
+                  "samples": 910,
+                  "probability": 0.8637362637362638
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1133,
-                  "probability": 0.8826125330979699
+                  "samples": 808,
+                  "probability": 0.879950495049505
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 823,
-                  "probability": 0.8784933171324423
+                  "samples": 677,
+                  "probability": 0.8921713441654358
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 753,
-                  "probability": 0.9083665338645418
+                  "samples": 612,
+                  "probability": 0.9035947712418301
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 643,
-                  "probability": 0.9160186625194401
+                  "samples": 486,
+                  "probability": 0.8950617283950617
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 540,
-                  "probability": 0.8962962962962963
+                  "samples": 452,
+                  "probability": 0.8893805309734514
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 483,
-                  "probability": 0.8902691511387164
+                  "samples": 326,
+                  "probability": 0.9171779141104295
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 409,
-                  "probability": 0.9242053789731052
+                  "samples": 295,
+                  "probability": 0.9050847457627119
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 327,
-                  "probability": 0.926605504587156
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 261,
-                  "probability": 0.9386973180076629
+                  "samples": 251,
+                  "probability": 0.9243027888446215
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 278,
-                  "probability": 0.9316546762589928
-                },
-                {
-                  "distanceBp": 23,
                   "samples": 202,
-                  "probability": 0.9405940594059405
+                  "probability": 0.9306930693069307
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 6853,
-                  "probability": 0.6384065372829418
+                  "samples": 4551,
+                  "probability": 0.6104152933421226
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5669,
-                  "probability": 0.6551420003527959
+                  "samples": 3955,
+                  "probability": 0.6265486725663717
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4744,
-                  "probability": 0.6859190556492412
+                  "samples": 3359,
+                  "probability": 0.6623995236677582
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3871,
-                  "probability": 0.705760785326789
+                  "samples": 2906,
+                  "probability": 0.7040605643496215
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3029,
-                  "probability": 0.7296137339055794
+                  "samples": 2232,
+                  "probability": 0.7226702508960573
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2425,
-                  "probability": 0.7542268041237113
+                  "samples": 1773,
+                  "probability": 0.7320924985899605
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1860,
-                  "probability": 0.7569892473118279
+                  "samples": 1395,
+                  "probability": 0.7620071684587814
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1523,
-                  "probability": 0.7859487852921865
+                  "samples": 1175,
+                  "probability": 0.7685106382978724
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1202,
-                  "probability": 0.7703826955074875
+                  "samples": 887,
+                  "probability": 0.7824126268320181
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 961,
-                  "probability": 0.7804370447450573
+                  "samples": 715,
+                  "probability": 0.779020979020979
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 718,
-                  "probability": 0.8259052924791086
+                  "samples": 549,
+                  "probability": 0.819672131147541
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 589,
-                  "probability": 0.8064516129032258
+                  "samples": 462,
+                  "probability": 0.8008658008658008
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 508,
-                  "probability": 0.7952755905511811
+                  "samples": 380,
+                  "probability": 0.8184210526315789
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 377,
-                  "probability": 0.8461538461538461
+                  "samples": 319,
+                  "probability": 0.8213166144200627
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 307,
-                  "probability": 0.8469055374592834
-                },
-                {
-                  "distanceBp": 17,
-                  "samples": 256,
-                  "probability": 0.828125
+                  "samples": 237,
+                  "probability": 0.8354430379746836
                 }
               ]
             }
@@ -3411,916 +3036,751 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "sol",
-      "windowCount": 315116,
+      "windowCount": 210506,
       "leadingTables": [
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5938416329224794,
-          "avgLeadPp": 1.5626685253887715,
+          "windowShare": 0.5954557114761575,
+          "avgLeadPp": 1.5896592359530932,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 10842,
-                  "probability": 0.678380372624977
+                  "samples": 8135,
+                  "probability": 0.689121081745544
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 10260,
-                  "probability": 0.7406432748538012
+                  "samples": 7266,
+                  "probability": 0.7484172859895403
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 9718,
-                  "probability": 0.7912121835768676
+                  "samples": 6922,
+                  "probability": 0.791967639410575
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9231,
-                  "probability": 0.817571227385982
+                  "samples": 6437,
+                  "probability": 0.8303557557868573
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 8779,
-                  "probability": 0.8498690055815014
+                  "samples": 6083,
+                  "probability": 0.8617458490876212
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 8439,
-                  "probability": 0.8830430145751866
+                  "samples": 5839,
+                  "probability": 0.8888508306216818
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 7899,
-                  "probability": 0.9015065198126345
+                  "samples": 5468,
+                  "probability": 0.9116678858814923
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7507,
-                  "probability": 0.9052883974956707
+                  "samples": 5153,
+                  "probability": 0.9237337473316515
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 7041,
-                  "probability": 0.9233063485300383
+                  "samples": 4872,
+                  "probability": 0.9277504105090312
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6531,
-                  "probability": 0.9373755933241463
+                  "samples": 4450,
+                  "probability": 0.9404494382022472
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 6033,
-                  "probability": 0.9428145201392342
+                  "samples": 4024,
+                  "probability": 0.9527833001988072
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5621,
-                  "probability": 0.9542785981142146
+                  "samples": 3831,
+                  "probability": 0.9571913338553902
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 5400,
-                  "probability": 0.9603703703703703
+                  "samples": 3531,
+                  "probability": 0.9626168224299065
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4825,
-                  "probability": 0.9699481865284975
+                  "samples": 3224,
+                  "probability": 0.9764267990074442
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 4473,
-                  "probability": 0.9709367315001117
+                  "samples": 2941,
+                  "probability": 0.9748384903094186
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 4242,
-                  "probability": 0.9677039132484677
+                  "samples": 2798,
+                  "probability": 0.9746247319513939
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 3725,
-                  "probability": 0.978523489932886
+                  "samples": 2514,
+                  "probability": 0.986873508353222
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 3508,
-                  "probability": 0.9717787913340935
+                  "samples": 2192,
+                  "probability": 0.9826642335766423
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 3312,
-                  "probability": 0.9794685990338164
+                  "samples": 2091,
+                  "probability": 0.9818268770923003
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 3009,
-                  "probability": 0.9830508474576272
+                  "samples": 1949,
+                  "probability": 0.9794766546947152
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 2656,
-                  "probability": 0.9800451807228916
+                  "samples": 1728,
+                  "probability": 0.9861111111111112
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 2536,
-                  "probability": 0.9810725552050473
+                  "samples": 1616,
+                  "probability": 0.9882425742574258
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 2249,
-                  "probability": 0.9888839484215207
+                  "samples": 1425,
+                  "probability": 0.9859649122807017
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 2152,
-                  "probability": 0.9879182156133829
+                  "samples": 1329,
+                  "probability": 0.9917231000752446
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1905,
-                  "probability": 0.9916010498687664
+                  "samples": 1165,
+                  "probability": 0.9914163090128756
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1821,
-                  "probability": 0.9950576606260296
+                  "samples": 1078,
+                  "probability": 0.9925788497217068
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 1533,
-                  "probability": 0.9889106327462491
+                  "samples": 1016,
+                  "probability": 0.9921259842519685
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 1500,
-                  "probability": 0.988
+                  "samples": 890,
+                  "probability": 0.9932584269662922
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 1367,
-                  "probability": 0.9890270665691295
+                  "samples": 803,
+                  "probability": 0.9900373599003736
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 1296,
-                  "probability": 0.9915123456790124
+                  "samples": 736,
+                  "probability": 0.9918478260869565
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 1169,
-                  "probability": 0.9905902480752781
+                  "samples": 717,
+                  "probability": 0.9944211994421199
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 1081,
-                  "probability": 0.9953746530989824
+                  "samples": 608,
+                  "probability": 0.9967105263157895
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 1023,
-                  "probability": 0.9970674486803519
+                  "samples": 625,
+                  "probability": 0.9936
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 913,
-                  "probability": 0.9934282584884995
+                  "samples": 519,
+                  "probability": 0.9961464354527938
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 858,
-                  "probability": 0.9965034965034965
+                  "samples": 505,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 781,
-                  "probability": 0.9948783610755442
+                  "samples": 403,
+                  "probability": 0.9975186104218362
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 711,
-                  "probability": 0.9957805907172996
+                  "samples": 404,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 679,
-                  "probability": 0.9970544918998527
+                  "samples": 370,
+                  "probability": 0.9918918918918919
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 648,
-                  "probability": 0.9969135802469136
+                  "samples": 346,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 589,
-                  "probability": 0.9915110356536503
+                  "samples": 308,
+                  "probability": 0.9935064935064936
                 },
                 {
                   "distanceBp": 42,
-                  "samples": 511,
-                  "probability": 0.9921722113502935
+                  "samples": 335,
+                  "probability": 0.9970149253731343
                 },
                 {
                   "distanceBp": 43,
-                  "samples": 480,
-                  "probability": 0.9958333333333333
+                  "samples": 270,
+                  "probability": 0.9962962962962963
                 },
                 {
                   "distanceBp": 44,
-                  "samples": 458,
-                  "probability": 0.9956331877729258
+                  "samples": 238,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 45,
-                  "samples": 449,
-                  "probability": 0.9955456570155902
+                  "samples": 231,
+                  "probability": 0.9956709956709957
                 },
                 {
                   "distanceBp": 46,
-                  "samples": 409,
-                  "probability": 0.9951100244498777
-                },
-                {
-                  "distanceBp": 47,
-                  "samples": 358,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 48,
-                  "samples": 316,
-                  "probability": 0.9936708860759493
-                },
-                {
-                  "distanceBp": 49,
-                  "samples": 319,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 50,
-                  "samples": 271,
-                  "probability": 0.996309963099631
-                },
-                {
-                  "distanceBp": 51,
-                  "samples": 273,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 52,
-                  "samples": 229,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 53,
-                  "samples": 242,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 54,
-                  "samples": 240,
-                  "probability": 0.9958333333333333
-                },
-                {
-                  "distanceBp": 55,
-                  "samples": 215,
-                  "probability": 0.9953488372093023
-                },
-                {
-                  "distanceBp": 56,
-                  "samples": 207,
-                  "probability": 0.9951690821256038
+                  "samples": 208,
+                  "probability": 0.9903846153846154
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 12029,
-                  "probability": 0.6274004489151218
+                  "samples": 8987,
+                  "probability": 0.6259040836764215
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11346,
-                  "probability": 0.6682531288559845
+                  "samples": 8151,
+                  "probability": 0.682615629984051
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10861,
-                  "probability": 0.7109842555934076
+                  "samples": 7803,
+                  "probability": 0.7071639113161604
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 10022,
-                  "probability": 0.7332867691079625
+                  "samples": 6966,
+                  "probability": 0.7497846683893196
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 9426,
-                  "probability": 0.7736049225546361
+                  "samples": 6465,
+                  "probability": 0.7781902552204176
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9029,
-                  "probability": 0.7920035441355632
+                  "samples": 6257,
+                  "probability": 0.805657663416973
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8538,
-                  "probability": 0.8158819395643008
+                  "samples": 5840,
+                  "probability": 0.8273972602739726
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7744,
-                  "probability": 0.8303202479338843
+                  "samples": 5335,
+                  "probability": 0.8376757263355201
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 7263,
-                  "probability": 0.8518518518518519
+                  "samples": 4923,
+                  "probability": 0.8612634572415194
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6600,
-                  "probability": 0.8689393939393939
+                  "samples": 4373,
+                  "probability": 0.877887034072719
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 6080,
-                  "probability": 0.8853618421052631
+                  "samples": 4100,
+                  "probability": 0.8924390243902439
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5558,
-                  "probability": 0.8898884490824037
+                  "samples": 3782,
+                  "probability": 0.8958223162347964
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 5221,
-                  "probability": 0.8981038115303581
+                  "samples": 3314,
+                  "probability": 0.9091732045866023
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4791,
-                  "probability": 0.9041953663118347
+                  "samples": 3087,
+                  "probability": 0.9099449303530937
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 4143,
-                  "probability": 0.9058653149891384
+                  "samples": 2739,
+                  "probability": 0.9131069733479372
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3921,
-                  "probability": 0.9268043866360622
+                  "samples": 2512,
+                  "probability": 0.929140127388535
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 3461,
-                  "probability": 0.9266108061253973
+                  "samples": 2274,
+                  "probability": 0.9371152154793315
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 3165,
-                  "probability": 0.9292259083728278
+                  "samples": 2031,
+                  "probability": 0.9399310684391925
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2873,
-                  "probability": 0.9356073790462931
+                  "samples": 1817,
+                  "probability": 0.9499174463401211
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2581,
-                  "probability": 0.9372336303758233
+                  "samples": 1608,
+                  "probability": 0.9458955223880597
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 2452,
-                  "probability": 0.9424959216965743
+                  "samples": 1502,
+                  "probability": 0.9587217043941412
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 2303,
-                  "probability": 0.9400781589231437
+                  "samples": 1367,
+                  "probability": 0.958302852962692
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 2004,
-                  "probability": 0.9575848303393214
+                  "samples": 1205,
+                  "probability": 0.9493775933609958
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1752,
-                  "probability": 0.9531963470319634
+                  "samples": 1088,
+                  "probability": 0.9604779411764706
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1612,
-                  "probability": 0.9578163771712159
+                  "samples": 920,
+                  "probability": 0.966304347826087
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1479,
-                  "probability": 0.9628127112914131
+                  "samples": 839,
+                  "probability": 0.9678188319427891
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 1327,
-                  "probability": 0.9577995478522984
+                  "samples": 781,
+                  "probability": 0.9628681177976952
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 1216,
-                  "probability": 0.9654605263157895
+                  "samples": 720,
+                  "probability": 0.9736111111111111
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 1154,
-                  "probability": 0.9670710571923743
+                  "samples": 657,
+                  "probability": 0.974124809741248
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 1025,
-                  "probability": 0.9560975609756097
+                  "samples": 587,
+                  "probability": 0.9761499148211243
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 956,
-                  "probability": 0.9738493723849372
+                  "samples": 535,
+                  "probability": 0.9700934579439252
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 862,
-                  "probability": 0.9756380510440835
+                  "samples": 523,
+                  "probability": 0.9808795411089866
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 858,
-                  "probability": 0.9708624708624709
+                  "samples": 462,
+                  "probability": 0.9632034632034632
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 719,
-                  "probability": 0.9568845618915159
+                  "samples": 411,
+                  "probability": 0.9732360097323601
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 684,
-                  "probability": 0.9751461988304093
+                  "samples": 368,
+                  "probability": 0.9646739130434783
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 586,
-                  "probability": 0.9709897610921502
+                  "samples": 318,
+                  "probability": 0.9874213836477987
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 522,
-                  "probability": 0.9712643678160919
+                  "samples": 280,
+                  "probability": 0.9785714285714285
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 504,
-                  "probability": 0.9642857142857143
+                  "samples": 241,
+                  "probability": 0.9875518672199171
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 419,
-                  "probability": 0.9809069212410502
+                  "samples": 231,
+                  "probability": 0.9826839826839827
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 420,
-                  "probability": 0.9738095238095238
+                  "samples": 217,
+                  "probability": 0.9907834101382489
                 },
                 {
                   "distanceBp": 42,
-                  "samples": 401,
-                  "probability": 0.9800498753117207
-                },
-                {
-                  "distanceBp": 43,
-                  "samples": 335,
-                  "probability": 0.9880597014925373
-                },
-                {
-                  "distanceBp": 44,
-                  "samples": 364,
-                  "probability": 0.9945054945054945
-                },
-                {
-                  "distanceBp": 45,
-                  "samples": 308,
-                  "probability": 0.987012987012987
-                },
-                {
-                  "distanceBp": 46,
-                  "samples": 295,
-                  "probability": 0.9830508474576272
-                },
-                {
-                  "distanceBp": 47,
-                  "samples": 273,
-                  "probability": 0.9853479853479854
-                },
-                {
-                  "distanceBp": 48,
-                  "samples": 284,
-                  "probability": 0.9647887323943662
-                },
-                {
-                  "distanceBp": 49,
-                  "samples": 214,
-                  "probability": 0.9953271028037384
-                },
-                {
-                  "distanceBp": 51,
-                  "samples": 208,
-                  "probability": 0.9711538461538461
+                  "samples": 216,
+                  "probability": 0.9861111111111112
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 14265,
-                  "probability": 0.6011917280056082
+                  "samples": 10445,
+                  "probability": 0.6025849688846338
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 13123,
-                  "probability": 0.6303436714165969
+                  "samples": 9366,
+                  "probability": 0.6360239162929746
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 12267,
-                  "probability": 0.6634874052335534
+                  "samples": 8848,
+                  "probability": 0.6672694394213382
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 11266,
-                  "probability": 0.6886206284395526
+                  "samples": 7747,
+                  "probability": 0.6892990835161998
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10434,
-                  "probability": 0.7080697718995591
+                  "samples": 7079,
+                  "probability": 0.71874558553468
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9807,
-                  "probability": 0.7372285102477822
+                  "samples": 6718,
+                  "probability": 0.7427805894611491
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 9033,
-                  "probability": 0.7534595372522971
+                  "samples": 6167,
+                  "probability": 0.7643911139938382
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 8019,
-                  "probability": 0.7724155131562539
+                  "samples": 5343,
+                  "probability": 0.7754070746771476
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 7547,
-                  "probability": 0.7948853849211607
+                  "samples": 4975,
+                  "probability": 0.8012060301507538
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6622,
-                  "probability": 0.8026276049531863
+                  "samples": 4464,
+                  "probability": 0.817652329749104
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5838,
-                  "probability": 0.8206577595066804
+                  "samples": 3915,
+                  "probability": 0.8268199233716476
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5196,
-                  "probability": 0.8296766743648961
+                  "samples": 3470,
+                  "probability": 0.8268011527377521
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4833,
-                  "probability": 0.8332298779226154
+                  "samples": 3020,
+                  "probability": 0.8433774834437087
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4180,
-                  "probability": 0.8454545454545455
+                  "samples": 2677,
+                  "probability": 0.8524467687710123
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3789,
-                  "probability": 0.8445500131960939
+                  "samples": 2280,
+                  "probability": 0.8535087719298246
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3352,
-                  "probability": 0.860381861575179
+                  "samples": 2142,
+                  "probability": 0.8800186741363212
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2909,
-                  "probability": 0.8704022000687521
+                  "samples": 1747,
+                  "probability": 0.8757870635374928
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2667,
-                  "probability": 0.8755155605549306
+                  "samples": 1571,
+                  "probability": 0.8841502227880331
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2323,
-                  "probability": 0.8872148084373654
+                  "samples": 1433,
+                  "probability": 0.8960223307745987
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2063,
-                  "probability": 0.8972370334464372
+                  "samples": 1299,
+                  "probability": 0.9022324865280985
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1864,
-                  "probability": 0.8910944206008584
+                  "samples": 1105,
+                  "probability": 0.9085972850678733
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1647,
-                  "probability": 0.8998178506375227
+                  "samples": 936,
+                  "probability": 0.905982905982906
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1486,
-                  "probability": 0.9037685060565276
+                  "samples": 865,
+                  "probability": 0.9086705202312139
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1306,
-                  "probability": 0.9142419601837672
+                  "samples": 774,
+                  "probability": 0.9354005167958657
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1248,
-                  "probability": 0.9006410256410257
+                  "samples": 658,
+                  "probability": 0.9194528875379939
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1020,
-                  "probability": 0.9117647058823529
+                  "samples": 574,
+                  "probability": 0.9303135888501742
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 953,
-                  "probability": 0.9139559286463799
+                  "samples": 511,
+                  "probability": 0.9275929549902152
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 870,
-                  "probability": 0.9264367816091954
+                  "samples": 454,
+                  "probability": 0.9361233480176211
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 759,
-                  "probability": 0.9183135704874835
+                  "samples": 392,
+                  "probability": 0.9056122448979592
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 669,
-                  "probability": 0.9282511210762332
+                  "samples": 368,
+                  "probability": 0.9320652173913043
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 636,
-                  "probability": 0.9198113207547169
+                  "samples": 342,
+                  "probability": 0.9444444444444444
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 535,
-                  "probability": 0.9345794392523364
+                  "samples": 303,
+                  "probability": 0.933993399339934
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 533,
-                  "probability": 0.924953095684803
+                  "samples": 268,
+                  "probability": 0.9402985074626866
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 469,
-                  "probability": 0.906183368869936
+                  "samples": 230,
+                  "probability": 0.9
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 424,
-                  "probability": 0.9221698113207547
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 376,
-                  "probability": 0.9228723404255319
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 350,
-                  "probability": 0.9285714285714286
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 306,
-                  "probability": 0.9411764705882353
-                },
-                {
-                  "distanceBp": 40,
-                  "samples": 294,
-                  "probability": 0.95578231292517
-                },
-                {
-                  "distanceBp": 41,
-                  "samples": 268,
-                  "probability": 0.9328358208955224
-                },
-                {
-                  "distanceBp": 42,
-                  "samples": 277,
-                  "probability": 0.9458483754512635
-                },
-                {
-                  "distanceBp": 43,
-                  "samples": 227,
-                  "probability": 0.9427312775330396
+                  "samples": 226,
+                  "probability": 0.9690265486725663
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 18610,
-                  "probability": 0.5858678130037615
+                  "samples": 14186,
+                  "probability": 0.5833920766953334
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 17222,
-                  "probability": 0.6001045174776449
+                  "samples": 11815,
+                  "probability": 0.611426153195091
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 15207,
-                  "probability": 0.6310909449595581
+                  "samples": 10601,
+                  "probability": 0.6376756909725497
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13156,
-                  "probability": 0.6503496503496503
+                  "samples": 9058,
+                  "probability": 0.6594170898653124
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11632,
-                  "probability": 0.6773555708390646
+                  "samples": 7787,
+                  "probability": 0.6745858482085527
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 10231,
-                  "probability": 0.6943602775877236
+                  "samples": 6725,
+                  "probability": 0.699182156133829
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8772,
-                  "probability": 0.7044003647970816
+                  "samples": 5650,
+                  "probability": 0.7224778761061947
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7442,
-                  "probability": 0.7192958882020962
+                  "samples": 4751,
+                  "probability": 0.7219532729951589
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6535,
-                  "probability": 0.7230298393267024
+                  "samples": 4133,
+                  "probability": 0.73118799903218
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 5586,
-                  "probability": 0.7391693519513068
+                  "samples": 3492,
+                  "probability": 0.7597365406643757
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4699,
-                  "probability": 0.7563311342838902
+                  "samples": 2872,
+                  "probability": 0.7534818941504178
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4002,
-                  "probability": 0.7681159420289855
+                  "samples": 2375,
+                  "probability": 0.7612631578947369
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3376,
-                  "probability": 0.7778436018957346
+                  "samples": 2042,
+                  "probability": 0.7943192948090108
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2855,
-                  "probability": 0.7674255691768826
+                  "samples": 1684,
+                  "probability": 0.7933491686460807
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2558,
-                  "probability": 0.7873338545738858
+                  "samples": 1417,
+                  "probability": 0.8045165843330981
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2048,
-                  "probability": 0.78271484375
+                  "samples": 1186,
+                  "probability": 0.8094435075885329
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1751,
-                  "probability": 0.8063963449457453
+                  "samples": 973,
+                  "probability": 0.8242548818088387
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1561,
-                  "probability": 0.820627802690583
+                  "samples": 842,
+                  "probability": 0.8230403800475059
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1321,
-                  "probability": 0.8122634367903103
+                  "samples": 733,
+                  "probability": 0.8321964529331515
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1147,
-                  "probability": 0.8186573670444638
+                  "samples": 565,
+                  "probability": 0.856637168141593
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 970,
-                  "probability": 0.8134020618556701
+                  "samples": 499,
+                  "probability": 0.7875751503006012
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 838,
-                  "probability": 0.7971360381861575
+                  "samples": 427,
+                  "probability": 0.8594847775175644
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 786,
-                  "probability": 0.8409669211195929
+                  "samples": 362,
+                  "probability": 0.8453038674033149
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 554,
-                  "probability": 0.8176895306859205
+                  "samples": 310,
+                  "probability": 0.8516129032258064
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 514,
-                  "probability": 0.8268482490272373
-                },
-                {
-                  "distanceBp": 27,
-                  "samples": 459,
-                  "probability": 0.8300653594771242
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 420,
-                  "probability": 0.8095238095238095
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 362,
-                  "probability": 0.8425414364640884
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 355,
-                  "probability": 0.8591549295774648
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 294,
-                  "probability": 0.8299319727891157
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 226,
-                  "probability": 0.8982300884955752
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 226,
-                  "probability": 0.8849557522123894
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 205,
-                  "probability": 0.8585365853658536
+                  "samples": 257,
+                  "probability": 0.8599221789883269
                 }
               ]
             }
@@ -4329,686 +3789,551 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.2416284796709783,
-          "avgLeadPp": 1.9400923639535521,
+          "windowShare": 0.22543775474333272,
+          "avgLeadPp": 2.0341475974251826,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 4455,
-                  "probability": 0.6877665544332211
+                  "samples": 3245,
+                  "probability": 0.70231124807396
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4310,
-                  "probability": 0.7475638051044083
+                  "samples": 2840,
+                  "probability": 0.7609154929577465
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4074,
-                  "probability": 0.7970054000981837
+                  "samples": 2673,
+                  "probability": 0.7875046763935653
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3876,
-                  "probability": 0.8204334365325078
+                  "samples": 2539,
+                  "probability": 0.8404883812524616
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3663,
-                  "probability": 0.8569478569478569
+                  "samples": 2423,
+                  "probability": 0.8666941807676434
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3454,
-                  "probability": 0.8894035900405327
+                  "samples": 2212,
+                  "probability": 0.8919529837251357
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3229,
-                  "probability": 0.904304738309074
+                  "samples": 2042,
+                  "probability": 0.9275220372184133
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3067,
-                  "probability": 0.9034887512226932
+                  "samples": 1922,
+                  "probability": 0.9240374609781478
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2867,
-                  "probability": 0.9312870596442274
+                  "samples": 1836,
+                  "probability": 0.9357298474945533
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2674,
-                  "probability": 0.9401645474943904
+                  "samples": 1715,
+                  "probability": 0.9521865889212828
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2444,
-                  "probability": 0.9472176759410802
+                  "samples": 1518,
+                  "probability": 0.958498023715415
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2308,
-                  "probability": 0.9584055459272097
+                  "samples": 1483,
+                  "probability": 0.9649359406608227
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2223,
-                  "probability": 0.9653621232568601
+                  "samples": 1323,
+                  "probability": 0.9674981103552532
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1972,
-                  "probability": 0.9731237322515213
+                  "samples": 1212,
+                  "probability": 0.971947194719472
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1773,
-                  "probability": 0.9667230682459109
+                  "samples": 1101,
+                  "probability": 0.9745685740236149
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1713,
-                  "probability": 0.9673088149445418
+                  "samples": 1008,
+                  "probability": 0.9781746031746031
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1469,
-                  "probability": 0.9795779441797141
+                  "samples": 931,
+                  "probability": 0.9881847475832438
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1420,
-                  "probability": 0.9711267605633803
+                  "samples": 784,
+                  "probability": 0.9783163265306123
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1313,
-                  "probability": 0.9817212490479817
+                  "samples": 783,
+                  "probability": 0.9846743295019157
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1193,
-                  "probability": 0.9815590947191953
+                  "samples": 718,
+                  "probability": 0.9846796657381616
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1046,
-                  "probability": 0.9847036328871893
+                  "samples": 629,
+                  "probability": 0.9920508744038156
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1028,
-                  "probability": 0.9785992217898832
+                  "samples": 584,
+                  "probability": 0.9897260273972602
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 902,
-                  "probability": 0.9922394678492239
+                  "samples": 507,
+                  "probability": 0.9861932938856016
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 827,
-                  "probability": 0.9854897218863361
+                  "samples": 487,
+                  "probability": 0.9856262833675564
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 739,
-                  "probability": 0.9905277401894452
+                  "samples": 408,
+                  "probability": 0.9975490196078431
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 723,
-                  "probability": 0.9944674965421854
+                  "samples": 372,
+                  "probability": 0.9919354838709677
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 582,
-                  "probability": 0.993127147766323
+                  "samples": 363,
+                  "probability": 0.9889807162534435
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 586,
-                  "probability": 0.9914675767918089
+                  "samples": 287,
+                  "probability": 0.9930313588850174
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 500,
-                  "probability": 0.988
+                  "samples": 276,
+                  "probability": 0.9963768115942029
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 487,
-                  "probability": 0.9958932238193019
+                  "samples": 243,
+                  "probability": 0.9917695473251029
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 430,
-                  "probability": 0.986046511627907
+                  "samples": 248,
+                  "probability": 0.9879032258064516
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 428,
-                  "probability": 0.9953271028037384
+                  "samples": 221,
+                  "probability": 0.995475113122172
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 398,
-                  "probability": 0.9949748743718593
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 338,
-                  "probability": 0.9970414201183432
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 332,
-                  "probability": 0.9939759036144579
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 295,
-                  "probability": 0.9966101694915255
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 283,
-                  "probability": 0.9929328621908127
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 256,
-                  "probability": 0.99609375
-                },
-                {
-                  "distanceBp": 40,
-                  "samples": 265,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 41,
-                  "samples": 251,
-                  "probability": 0.9920318725099602
-                },
-                {
-                  "distanceBp": 42,
-                  "samples": 212,
-                  "probability": 0.9858490566037735
+                  "samples": 222,
+                  "probability": 0.990990990990991
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 5059,
-                  "probability": 0.628780391381696
+                  "samples": 3491,
+                  "probability": 0.6253222572328846
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4776,
-                  "probability": 0.6754606365159129
+                  "samples": 3214,
+                  "probability": 0.6826384567517113
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4499,
-                  "probability": 0.7206045787952878
+                  "samples": 3027,
+                  "probability": 0.7198546415592997
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4212,
-                  "probability": 0.7409781576448243
+                  "samples": 2720,
+                  "probability": 0.7691176470588236
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3865,
-                  "probability": 0.7769728331177231
+                  "samples": 2494,
+                  "probability": 0.7838813151563753
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3788,
-                  "probability": 0.7954065469904963
+                  "samples": 2404,
+                  "probability": 0.8111480865224625
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3537,
-                  "probability": 0.8213175007068136
+                  "samples": 2239,
+                  "probability": 0.833407771326485
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3127,
-                  "probability": 0.8391429485129517
+                  "samples": 1985,
+                  "probability": 0.8408060453400503
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2926,
-                  "probability": 0.8656869446343131
+                  "samples": 1851,
+                  "probability": 0.8725013506212858
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2654,
-                  "probability": 0.8681235870384325
+                  "samples": 1665,
+                  "probability": 0.8852852852852853
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2468,
-                  "probability": 0.8946515397082658
+                  "samples": 1510,
+                  "probability": 0.8993377483443709
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2210,
-                  "probability": 0.893212669683258
+                  "samples": 1393,
+                  "probability": 0.9023689877961235
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2130,
-                  "probability": 0.9014084507042254
+                  "samples": 1176,
+                  "probability": 0.9183673469387755
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1955,
-                  "probability": 0.9063938618925831
+                  "samples": 1155,
+                  "probability": 0.9238095238095239
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1595,
-                  "probability": 0.9072100313479624
+                  "samples": 1007,
+                  "probability": 0.9126117179741807
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1519,
-                  "probability": 0.9216589861751152
+                  "samples": 895,
+                  "probability": 0.9340782122905028
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1342,
-                  "probability": 0.9262295081967213
+                  "samples": 814,
+                  "probability": 0.9336609336609336
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1257,
-                  "probability": 0.9315831344470963
+                  "samples": 767,
+                  "probability": 0.940026075619296
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1093,
-                  "probability": 0.9213174748398902
+                  "samples": 657,
+                  "probability": 0.958904109589041
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1019,
-                  "probability": 0.9450441609421001
+                  "samples": 580,
+                  "probability": 0.9293103448275862
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 957,
-                  "probability": 0.955067920585162
+                  "samples": 537,
+                  "probability": 0.9683426443202979
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 913,
-                  "probability": 0.9441401971522454
+                  "samples": 473,
+                  "probability": 0.9704016913319239
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 790,
-                  "probability": 0.9556962025316456
+                  "samples": 423,
+                  "probability": 0.9574468085106383
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 665,
-                  "probability": 0.9578947368421052
+                  "samples": 406,
+                  "probability": 0.9729064039408867
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 635,
-                  "probability": 0.9464566929133859
+                  "samples": 338,
+                  "probability": 0.9644970414201184
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 590,
-                  "probability": 0.9593220338983051
+                  "samples": 295,
+                  "probability": 0.9627118644067797
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 529,
-                  "probability": 0.9584120982986768
+                  "samples": 279,
+                  "probability": 0.9498207885304659
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 452,
-                  "probability": 0.9646017699115044
+                  "samples": 244,
+                  "probability": 0.9754098360655737
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 437,
-                  "probability": 0.9702517162471396
+                  "samples": 209,
+                  "probability": 0.9856459330143541
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 385,
-                  "probability": 0.9506493506493506
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 373,
-                  "probability": 0.9919571045576407
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 346,
-                  "probability": 0.9739884393063584
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 318,
-                  "probability": 0.9748427672955975
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 274,
-                  "probability": 0.9635036496350365
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 269,
-                  "probability": 0.9814126394052045
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 219,
-                  "probability": 0.9726027397260274
+                  "samples": 202,
+                  "probability": 0.9702970297029703
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 6007,
-                  "probability": 0.6037955718328617
+                  "samples": 4130,
+                  "probability": 0.6058111380145278
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5457,
-                  "probability": 0.6366135239142386
+                  "samples": 3808,
+                  "probability": 0.6349789915966386
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 5047,
-                  "probability": 0.6758470378442639
+                  "samples": 3408,
+                  "probability": 0.670481220657277
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4703,
-                  "probability": 0.6942377206038699
+                  "samples": 2869,
+                  "probability": 0.6981526664342976
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4272,
-                  "probability": 0.716058052434457
+                  "samples": 2680,
+                  "probability": 0.7347014925373134
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3975,
-                  "probability": 0.7325786163522012
+                  "samples": 2580,
+                  "probability": 0.7569767441860465
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3701,
-                  "probability": 0.7657389894623075
+                  "samples": 2432,
+                  "probability": 0.7705592105263158
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3253,
-                  "probability": 0.7795880725484169
+                  "samples": 1965,
+                  "probability": 0.7908396946564885
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2991,
-                  "probability": 0.8027415580073554
+                  "samples": 1828,
+                  "probability": 0.8025164113785558
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2531,
-                  "probability": 0.8103516396681154
+                  "samples": 1655,
+                  "probability": 0.8181268882175227
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2345,
-                  "probability": 0.8277185501066098
+                  "samples": 1410,
+                  "probability": 0.826950354609929
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2064,
-                  "probability": 0.8236434108527132
+                  "samples": 1243,
+                  "probability": 0.826226870474658
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1946,
-                  "probability": 0.8268242548818089
+                  "samples": 1110,
+                  "probability": 0.8477477477477477
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1648,
-                  "probability": 0.8513349514563107
+                  "samples": 959,
+                  "probability": 0.8529718456725756
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1514,
-                  "probability": 0.8401585204755614
+                  "samples": 812,
+                  "probability": 0.8682266009852216
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1318,
-                  "probability": 0.858877086494689
+                  "samples": 765,
+                  "probability": 0.9019607843137255
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1113,
-                  "probability": 0.87151841868823
+                  "samples": 628,
+                  "probability": 0.8742038216560509
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1062,
-                  "probability": 0.8832391713747646
+                  "samples": 545,
+                  "probability": 0.8844036697247707
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 926,
-                  "probability": 0.8876889848812095
+                  "samples": 504,
+                  "probability": 0.8869047619047619
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 779,
-                  "probability": 0.8985879332477535
+                  "samples": 463,
+                  "probability": 0.9114470842332614
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 710,
-                  "probability": 0.8816901408450705
+                  "samples": 411,
+                  "probability": 0.9172749391727494
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 665,
-                  "probability": 0.9007518796992481
+                  "samples": 338,
+                  "probability": 0.9319526627218935
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 611,
-                  "probability": 0.900163666121113
+                  "samples": 309,
+                  "probability": 0.9061488673139159
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 492,
-                  "probability": 0.9247967479674797
+                  "samples": 287,
+                  "probability": 0.9337979094076655
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 495,
-                  "probability": 0.907070707070707
-                },
-                {
-                  "distanceBp": 27,
-                  "samples": 401,
-                  "probability": 0.9102244389027432
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 379,
-                  "probability": 0.9129287598944591
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 323,
-                  "probability": 0.9164086687306502
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 315,
-                  "probability": 0.8920634920634921
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 251,
-                  "probability": 0.9402390438247012
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 245,
-                  "probability": 0.9306122448979591
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 201,
-                  "probability": 0.9104477611940298
+                  "samples": 224,
+                  "probability": 0.9151785714285714
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 7704,
-                  "probability": 0.5808670820353063
+                  "samples": 5530,
+                  "probability": 0.5721518987341773
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7138,
-                  "probability": 0.6024096385542169
+                  "samples": 4564,
+                  "probability": 0.6115249780893953
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6217,
-                  "probability": 0.6268296606080103
+                  "samples": 4006,
+                  "probability": 0.6435346979530704
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5346,
-                  "probability": 0.6569397680508792
+                  "samples": 3493,
+                  "probability": 0.6535929000858861
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4725,
-                  "probability": 0.6816931216931217
+                  "samples": 2863,
+                  "probability": 0.6695773663988823
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4112,
-                  "probability": 0.6918774319066148
+                  "samples": 2486,
+                  "probability": 0.7023330651649236
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3499,
-                  "probability": 0.710488711060303
+                  "samples": 2072,
+                  "probability": 0.736003861003861
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3043,
-                  "probability": 0.7186986526454157
+                  "samples": 1746,
+                  "probability": 0.7222222222222222
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2620,
-                  "probability": 0.7274809160305343
+                  "samples": 1505,
+                  "probability": 0.7308970099667774
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2240,
-                  "probability": 0.7598214285714285
+                  "samples": 1249,
+                  "probability": 0.7702161729383507
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1801,
-                  "probability": 0.7706829539144919
+                  "samples": 1023,
+                  "probability": 0.772238514173998
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1590,
-                  "probability": 0.7773584905660378
+                  "samples": 886,
+                  "probability": 0.781038374717833
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1337,
-                  "probability": 0.7756170531039641
+                  "samples": 755,
+                  "probability": 0.7841059602649006
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1117,
-                  "probability": 0.7573858549686661
+                  "samples": 614,
+                  "probability": 0.8045602605863192
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1028,
-                  "probability": 0.7830739299610895
+                  "samples": 513,
+                  "probability": 0.7777777777777778
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 798,
-                  "probability": 0.7894736842105263
+                  "samples": 401,
+                  "probability": 0.8204488778054863
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 664,
-                  "probability": 0.8162650602409639
+                  "samples": 322,
+                  "probability": 0.8354037267080745
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 600,
-                  "probability": 0.8216666666666667
+                  "samples": 290,
+                  "probability": 0.7896551724137931
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 492,
-                  "probability": 0.8191056910569106
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 435,
-                  "probability": 0.8413793103448276
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 377,
-                  "probability": 0.8275862068965517
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 322,
-                  "probability": 0.7919254658385093
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 294,
-                  "probability": 0.8809523809523809
-                },
-                {
-                  "distanceBp": 25,
-                  "samples": 234,
-                  "probability": 0.8290598290598291
-                },
-                {
-                  "distanceBp": 26,
-                  "samples": 212,
-                  "probability": 0.8113207547169812
+                  "samples": 247,
+                  "probability": 0.8502024291497976
                 }
               ]
             }
@@ -5017,631 +4342,541 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.2534590436537656,
-          "avgLeadPp": 2.4465387271206103,
+          "windowShare": 0.2668047466580525,
+          "avgLeadPp": 2.1459616558257393,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3242,
-                  "probability": 0.6801357186921654
+                  "samples": 2484,
+                  "probability": 0.6896135265700483
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3058,
-                  "probability": 0.7452583387835187
+                  "samples": 2237,
+                  "probability": 0.7496647295485025
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2870,
-                  "probability": 0.7986062717770035
+                  "samples": 2182,
+                  "probability": 0.7992667277726856
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2739,
-                  "probability": 0.8211025921869295
+                  "samples": 1996,
+                  "probability": 0.8316633266533067
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2641,
-                  "probability": 0.84967815221507
+                  "samples": 1817,
+                  "probability": 0.8536048431480462
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2541,
-                  "probability": 0.8866587957497049
+                  "samples": 1869,
+                  "probability": 0.889780631353665
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2425,
-                  "probability": 0.9051546391752577
+                  "samples": 1754,
+                  "probability": 0.9082098061573546
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2292,
-                  "probability": 0.9197207678883071
+                  "samples": 1651,
+                  "probability": 0.9248940036341611
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2186,
-                  "probability": 0.9204025617566332
+                  "samples": 1589,
+                  "probability": 0.9263687853996224
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1968,
-                  "probability": 0.9380081300813008
+                  "samples": 1397,
+                  "probability": 0.9377236936292055
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1905,
-                  "probability": 0.9464566929133859
+                  "samples": 1328,
+                  "probability": 0.9533132530120482
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1752,
-                  "probability": 0.9526255707762558
+                  "samples": 1234,
+                  "probability": 0.9529983792544571
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1664,
-                  "probability": 0.9573317307692307
+                  "samples": 1165,
+                  "probability": 0.9648068669527897
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1506,
-                  "probability": 0.9701195219123506
+                  "samples": 1104,
+                  "probability": 0.9782608695652174
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1402,
-                  "probability": 0.9714693295292439
+                  "samples": 968,
+                  "probability": 0.9731404958677686
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1297,
-                  "probability": 0.9753276792598303
+                  "samples": 926,
+                  "probability": 0.9794816414686826
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1192,
-                  "probability": 0.9790268456375839
+                  "samples": 789,
+                  "probability": 0.9873257287705957
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1093,
-                  "probability": 0.979871912168344
+                  "samples": 784,
+                  "probability": 0.9910714285714286
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1054,
-                  "probability": 0.9829222011385199
+                  "samples": 672,
+                  "probability": 0.9806547619047619
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 941,
-                  "probability": 0.9829968119022316
+                  "samples": 614,
+                  "probability": 0.9755700325732899
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 799,
-                  "probability": 0.9774718397997497
+                  "samples": 562,
+                  "probability": 0.9893238434163701
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 807,
-                  "probability": 0.9838909541511772
+                  "samples": 530,
+                  "probability": 0.9924528301886792
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 684,
-                  "probability": 0.9853801169590644
+                  "samples": 459,
+                  "probability": 0.9912854030501089
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 662,
-                  "probability": 0.9909365558912386
+                  "samples": 429,
+                  "probability": 0.9976689976689976
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 586,
-                  "probability": 0.9965870307167235
+                  "samples": 370,
+                  "probability": 0.9891891891891892
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 563,
-                  "probability": 0.9946714031971581
+                  "samples": 340,
+                  "probability": 0.9970588235294118
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 491,
-                  "probability": 0.9857433808553971
+                  "samples": 309,
+                  "probability": 0.9935275080906149
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 450,
-                  "probability": 0.9933333333333333
+                  "samples": 305,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 376,
-                  "probability": 0.9893617021276596
+                  "samples": 233,
+                  "probability": 0.9871244635193133
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 397,
-                  "probability": 0.9848866498740554
+                  "samples": 233,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 371,
-                  "probability": 0.9973045822102425
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 304,
+                  "samples": 221,
                   "probability": 1
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 311,
+                  "samples": 203,
                   "probability": 1
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 299,
-                  "probability": 0.9832775919732442
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 256,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 235,
-                  "probability": 0.9957446808510638
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 217,
-                  "probability": 0.9953917050691244
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3526,
-                  "probability": 0.6406693136698809
+                  "samples": 2792,
+                  "probability": 0.6318051575931232
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3325,
-                  "probability": 0.673984962406015
+                  "samples": 2478,
+                  "probability": 0.6791767554479419
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3271,
-                  "probability": 0.7101803729746256
+                  "samples": 2428,
+                  "probability": 0.7166392092257001
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2900,
-                  "probability": 0.7417241379310345
+                  "samples": 2153,
+                  "probability": 0.7454714352066883
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2816,
-                  "probability": 0.7816051136363636
+                  "samples": 2043,
+                  "probability": 0.7924620655898189
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2681,
-                  "probability": 0.8045505408429691
+                  "samples": 1939,
+                  "probability": 0.814337287261475
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2521,
-                  "probability": 0.8298294327647758
+                  "samples": 1884,
+                  "probability": 0.8290870488322718
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2396,
-                  "probability": 0.8313856427378965
+                  "samples": 1750,
+                  "probability": 0.844
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2259,
-                  "probability": 0.8618857901726428
+                  "samples": 1611,
+                  "probability": 0.8684047175667288
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2091,
-                  "probability": 0.8751793400286944
+                  "samples": 1418,
+                  "probability": 0.8843441466854725
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1803,
-                  "probability": 0.8912922906267332
+                  "samples": 1348,
+                  "probability": 0.8946587537091988
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1727,
-                  "probability": 0.8957730167921251
+                  "samples": 1255,
+                  "probability": 0.8940239043824701
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1563,
-                  "probability": 0.891874600127959
+                  "samples": 1122,
+                  "probability": 0.910873440285205
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1441,
-                  "probability": 0.9153365718251214
+                  "samples": 981,
+                  "probability": 0.8960244648318043
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1320,
-                  "probability": 0.9106060606060606
+                  "samples": 883,
+                  "probability": 0.9195922989807475
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1269,
-                  "probability": 0.9330181245074862
+                  "samples": 852,
+                  "probability": 0.9366197183098591
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1083,
-                  "probability": 0.9390581717451524
+                  "samples": 733,
+                  "probability": 0.9358799454297408
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 947,
-                  "probability": 0.9324181626187962
+                  "samples": 600,
+                  "probability": 0.9533333333333334
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 870,
-                  "probability": 0.9632183908045977
+                  "samples": 580,
+                  "probability": 0.9534482758620689
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 758,
-                  "probability": 0.9432717678100264
+                  "samples": 504,
+                  "probability": 0.9662698412698413
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 758,
-                  "probability": 0.9445910290237467
+                  "samples": 491,
+                  "probability": 0.9633401221995926
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 707,
-                  "probability": 0.9434229137199435
+                  "samples": 443,
+                  "probability": 0.9435665914221218
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 623,
-                  "probability": 0.9614767255216693
+                  "samples": 400,
+                  "probability": 0.9525
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 537,
-                  "probability": 0.9534450651769087
+                  "samples": 336,
+                  "probability": 0.9523809523809523
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 511,
-                  "probability": 0.9765166340508806
+                  "samples": 298,
+                  "probability": 0.9563758389261745
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 466,
-                  "probability": 0.9742489270386266
+                  "samples": 307,
+                  "probability": 0.9837133550488599
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 419,
-                  "probability": 0.9618138424821002
+                  "samples": 242,
+                  "probability": 0.9710743801652892
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 353,
-                  "probability": 0.9716713881019831
+                  "samples": 217,
+                  "probability": 0.967741935483871
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 375,
-                  "probability": 0.9626666666666667
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 315,
-                  "probability": 0.9555555555555556
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 274,
-                  "probability": 0.9635036496350365
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 275,
-                  "probability": 0.9709090909090909
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 265,
-                  "probability": 0.969811320754717
+                  "samples": 237,
+                  "probability": 0.9620253164556962
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 4184,
-                  "probability": 0.6259560229445507
+                  "samples": 3235,
+                  "probability": 0.609273570324575
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3846,
-                  "probability": 0.6453458138325533
+                  "samples": 2862,
+                  "probability": 0.6464011180992313
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3668,
-                  "probability": 0.6690294438386042
+                  "samples": 2743,
+                  "probability": 0.6802770689026614
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3315,
-                  "probability": 0.6953242835595776
+                  "samples": 2481,
+                  "probability": 0.6904474002418379
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3139,
-                  "probability": 0.7171073590315387
+                  "samples": 2165,
+                  "probability": 0.7233256351039261
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2945,
-                  "probability": 0.7460101867572156
+                  "samples": 2090,
+                  "probability": 0.745933014354067
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2610,
-                  "probability": 0.7586206896551724
+                  "samples": 1906,
+                  "probability": 0.7670514165792235
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2394,
-                  "probability": 0.7765246449456976
+                  "samples": 1714,
+                  "probability": 0.7847141190198367
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2301,
-                  "probability": 0.7996523250760539
+                  "samples": 1582,
+                  "probability": 0.8053097345132744
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2108,
-                  "probability": 0.8121442125237192
+                  "samples": 1458,
+                  "probability": 0.8257887517146777
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1756,
-                  "probability": 0.8194760820045558
+                  "samples": 1277,
+                  "probability": 0.8324197337509789
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1583,
-                  "probability": 0.8433354390397979
+                  "samples": 1151,
+                  "probability": 0.8444830582102519
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1489,
-                  "probability": 0.8482202820685023
+                  "samples": 948,
+                  "probability": 0.8364978902953587
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1255,
-                  "probability": 0.8549800796812749
+                  "samples": 865,
+                  "probability": 0.8404624277456647
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1094,
-                  "probability": 0.8628884826325411
+                  "samples": 726,
+                  "probability": 0.8608815426997245
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1054,
-                  "probability": 0.8586337760910816
+                  "samples": 685,
+                  "probability": 0.8802919708029197
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 914,
-                  "probability": 0.8818380743982495
+                  "samples": 535,
+                  "probability": 0.8841121495327103
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 783,
-                  "probability": 0.8850574712643678
+                  "samples": 502,
+                  "probability": 0.8924302788844621
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 652,
-                  "probability": 0.9187116564417178
+                  "samples": 447,
+                  "probability": 0.912751677852349
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 628,
-                  "probability": 0.9076433121019108
+                  "samples": 422,
+                  "probability": 0.9289099526066351
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 555,
-                  "probability": 0.9009009009009009
+                  "samples": 351,
+                  "probability": 0.9116809116809117
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 481,
-                  "probability": 0.9043659043659044
+                  "samples": 292,
+                  "probability": 0.8938356164383562
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 449,
-                  "probability": 0.9309576837416481
+                  "samples": 270,
+                  "probability": 0.9185185185185185
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 380,
-                  "probability": 0.9263157894736842
+                  "samples": 222,
+                  "probability": 0.9459459459459459
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 375,
-                  "probability": 0.92
-                },
-                {
-                  "distanceBp": 27,
-                  "samples": 292,
-                  "probability": 0.9246575342465754
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 268,
-                  "probability": 0.9365671641791045
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 255,
-                  "probability": 0.9058823529411765
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 210,
-                  "probability": 0.9428571428571428
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 210,
-                  "probability": 0.9333333333333333
+                  "samples": 225,
+                  "probability": 0.9288888888888889
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5333,
-                  "probability": 0.6101631351959498
+                  "samples": 4262,
+                  "probability": 0.6051149694978883
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5038,
-                  "probability": 0.6198888447796744
+                  "samples": 3633,
+                  "probability": 0.6289567850261492
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4492,
-                  "probability": 0.6522707034728406
+                  "samples": 3305,
+                  "probability": 0.6511346444780636
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3825,
-                  "probability": 0.6669281045751634
+                  "samples": 2784,
+                  "probability": 0.6616379310344828
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3481,
-                  "probability": 0.6931916116058604
+                  "samples": 2439,
+                  "probability": 0.6920869208692086
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2936,
-                  "probability": 0.7098092643051771
+                  "samples": 2088,
+                  "probability": 0.710727969348659
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2520,
-                  "probability": 0.7119047619047619
+                  "samples": 1739,
+                  "probability": 0.7320299022426682
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2179,
-                  "probability": 0.7388710417622762
+                  "samples": 1546,
+                  "probability": 0.7238033635187581
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1900,
-                  "probability": 0.7421052631578947
+                  "samples": 1246,
+                  "probability": 0.7504012841091493
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1612,
-                  "probability": 0.7320099255583127
+                  "samples": 1087,
+                  "probability": 0.7700091996320148
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1363,
-                  "probability": 0.7615553925165077
+                  "samples": 877,
+                  "probability": 0.758266818700114
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1157,
-                  "probability": 0.7614520311149524
+                  "samples": 720,
+                  "probability": 0.7541666666666667
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1007,
-                  "probability": 0.7606752730883813
+                  "samples": 624,
+                  "probability": 0.7996794871794872
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 831,
-                  "probability": 0.8086642599277978
+                  "samples": 508,
+                  "probability": 0.7893700787401575
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 728,
-                  "probability": 0.8104395604395604
+                  "samples": 442,
+                  "probability": 0.8371040723981901
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 597,
-                  "probability": 0.7721943048576214
+                  "samples": 375,
+                  "probability": 0.8373333333333334
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 510,
-                  "probability": 0.7980392156862746
+                  "samples": 320,
+                  "probability": 0.83125
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 416,
-                  "probability": 0.8413461538461539
+                  "samples": 242,
+                  "probability": 0.8388429752066116
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 392,
-                  "probability": 0.8290816326530612
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 327,
-                  "probability": 0.8287461773700305
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 267,
-                  "probability": 0.8314606741573034
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 255,
-                  "probability": 0.807843137254902
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 217,
-                  "probability": 0.8341013824884793
+                  "samples": 237,
+                  "probability": 0.8523206751054853
                 }
               ]
             }
@@ -5651,161 +4886,81 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "xrp",
-      "windowCount": 315116,
+      "windowCount": 210438,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.01680016247984869,
-          "avgLeadPp": 3.7334459232955926,
+          "windowShare": 0.012683070548094926,
+          "avgLeadPp": 4.075832942653989,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 387,
-                  "probability": 0.7545219638242894
+                  "samples": 235,
+                  "probability": 0.7787234042553192
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 483,
-                  "probability": 0.8405797101449275
+                  "samples": 201,
+                  "probability": 0.8756218905472637
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 391,
-                  "probability": 0.8823529411764706
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 293,
-                  "probability": 0.9044368600682594
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 340,
-                  "probability": 0.9176470588235294
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 264,
-                  "probability": 0.946969696969697
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 222,
-                  "probability": 0.9009009009009009
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 203,
-                  "probability": 0.9605911330049262
+                  "samples": 205,
+                  "probability": 0.8682926829268293
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 406,
-                  "probability": 0.6748768472906403
+                  "samples": 252,
+                  "probability": 0.6904761904761905
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 489,
-                  "probability": 0.754601226993865
+                  "samples": 211,
+                  "probability": 0.8009478672985783
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 421,
-                  "probability": 0.8123515439429929
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 321,
-                  "probability": 0.794392523364486
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 353,
-                  "probability": 0.8073654390934845
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 237,
-                  "probability": 0.8396624472573839
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 229,
-                  "probability": 0.8864628820960698
+                  "samples": 226,
+                  "probability": 0.8362831858407079
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 436,
-                  "probability": 0.6513761467889908
+                  "samples": 307,
+                  "probability": 0.6872964169381107
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 502,
-                  "probability": 0.6812749003984063
+                  "samples": 204,
+                  "probability": 0.6911764705882353
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 450,
-                  "probability": 0.7533333333333333
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 347,
-                  "probability": 0.7348703170028819
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 326,
-                  "probability": 0.8220858895705522
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 254,
-                  "probability": 0.8031496062992126
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 252,
-                  "probability": 0.8492063492063492
+                  "samples": 227,
+                  "probability": 0.775330396475771
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 605,
-                  "probability": 0.6148760330578512
+                  "samples": 411,
+                  "probability": 0.6326034063260341
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 619,
-                  "probability": 0.6429725363489499
+                  "samples": 246,
+                  "probability": 0.6422764227642277
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 422,
-                  "probability": 0.6682464454976303
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 370,
-                  "probability": 0.672972972972973
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 329,
-                  "probability": 0.6899696048632219
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 201,
-                  "probability": 0.7263681592039801
+                  "samples": 211,
+                  "probability": 0.6492890995260664
                 }
               ]
             }
@@ -5814,826 +4969,766 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.6005566204191473,
-          "avgLeadPp": 1.4508012760894726,
+          "windowShare": 0.5986703922295403,
+          "avgLeadPp": 1.3967060080665792,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 10534,
-                  "probability": 0.715872413138409
+                  "samples": 7697,
+                  "probability": 0.708327919968819
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 14973,
-                  "probability": 0.7943631870700595
+                  "samples": 9111,
+                  "probability": 0.7837778509494018
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10989,
-                  "probability": 0.8270998270998271
+                  "samples": 6600,
+                  "probability": 0.828939393939394
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 11539,
-                  "probability": 0.8749458358609932
+                  "samples": 8095,
+                  "probability": 0.8611488573193329
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10064,
-                  "probability": 0.8917925278219396
+                  "samples": 6155,
+                  "probability": 0.8849715678310317
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9516,
-                  "probability": 0.912358133669609
+                  "samples": 6227,
+                  "probability": 0.9116749638670306
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8180,
-                  "probability": 0.9254278728606357
+                  "samples": 5234,
+                  "probability": 0.9136415743217424
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 8265,
-                  "probability": 0.9426497277676951
+                  "samples": 5302,
+                  "probability": 0.9336099585062241
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6295,
-                  "probability": 0.9437648927720413
+                  "samples": 4420,
+                  "probability": 0.9343891402714932
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6959,
-                  "probability": 0.9554533697370312
+                  "samples": 4346,
+                  "probability": 0.9456971928209849
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5284,
-                  "probability": 0.9574186222558667
+                  "samples": 3477,
+                  "probability": 0.9554213402358355
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5167,
-                  "probability": 0.9682601122508225
+                  "samples": 3517,
+                  "probability": 0.9564970145009951
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4536,
-                  "probability": 0.966931216931217
+                  "samples": 3021,
+                  "probability": 0.9635882158225753
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4086,
-                  "probability": 0.9720998531571219
+                  "samples": 2779,
+                  "probability": 0.9708528247571069
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3618,
-                  "probability": 0.9759535655058044
+                  "samples": 2570,
+                  "probability": 0.9642023346303502
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3374,
-                  "probability": 0.976882039122703
+                  "samples": 2213,
+                  "probability": 0.9783099864437416
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2887,
-                  "probability": 0.9844128853481122
+                  "samples": 2101,
+                  "probability": 0.9738219895287958
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2780,
-                  "probability": 0.9809352517985611
+                  "samples": 1845,
+                  "probability": 0.975609756097561
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2413,
-                  "probability": 0.9838375466224617
+                  "samples": 1739,
+                  "probability": 0.9787234042553191
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2193,
-                  "probability": 0.9854081167350661
+                  "samples": 1527,
+                  "probability": 0.9764243614931237
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1964,
-                  "probability": 0.9862525458248472
+                  "samples": 1436,
+                  "probability": 0.9846796657381616
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1788,
-                  "probability": 0.9860178970917226
+                  "samples": 1324,
+                  "probability": 0.9856495468277946
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1604,
-                  "probability": 0.9850374064837906
+                  "samples": 1109,
+                  "probability": 0.9801623083859333
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1483,
-                  "probability": 0.9892110586648685
+                  "samples": 1080,
+                  "probability": 0.9814814814814815
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1330,
-                  "probability": 0.987218045112782
+                  "samples": 987,
+                  "probability": 0.9888551165146909
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1231,
-                  "probability": 0.9886271324126726
+                  "samples": 901,
+                  "probability": 0.9900110987791343
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 1131,
-                  "probability": 0.986737400530504
+                  "samples": 836,
+                  "probability": 0.9916267942583732
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 913,
-                  "probability": 0.9901423877327492
+                  "samples": 737,
+                  "probability": 0.9810040705563093
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 970,
-                  "probability": 0.988659793814433
+                  "samples": 670,
+                  "probability": 0.9865671641791045
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 825,
-                  "probability": 0.9890909090909091
+                  "samples": 601,
+                  "probability": 0.9900166389351082
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 762,
-                  "probability": 0.9881889763779528
+                  "samples": 583,
+                  "probability": 0.9931389365351629
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 686,
-                  "probability": 0.9854227405247813
+                  "samples": 557,
+                  "probability": 0.9910233393177738
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 666,
-                  "probability": 0.996996996996997
+                  "samples": 514,
+                  "probability": 0.9883268482490273
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 584,
-                  "probability": 0.9948630136986302
+                  "samples": 463,
+                  "probability": 0.9913606911447084
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 590,
-                  "probability": 0.9949152542372881
+                  "samples": 413,
+                  "probability": 0.9927360774818402
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 481,
-                  "probability": 0.9916839916839917
+                  "samples": 446,
+                  "probability": 0.9910313901345291
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 509,
-                  "probability": 0.9901768172888016
+                  "samples": 359,
+                  "probability": 0.9916434540389972
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 423,
-                  "probability": 0.9929078014184397
+                  "samples": 350,
+                  "probability": 0.9942857142857143
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 436,
-                  "probability": 0.9908256880733946
+                  "samples": 316,
+                  "probability": 0.9936708860759493
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 351,
-                  "probability": 0.9943019943019943
+                  "samples": 250,
+                  "probability": 0.992
                 },
                 {
                   "distanceBp": 42,
-                  "samples": 321,
-                  "probability": 1
+                  "samples": 291,
+                  "probability": 0.993127147766323
                 },
                 {
                   "distanceBp": 43,
-                  "samples": 330,
-                  "probability": 0.9848484848484849
+                  "samples": 257,
+                  "probability": 0.9922178988326849
                 },
                 {
                   "distanceBp": 44,
-                  "samples": 308,
-                  "probability": 0.9967532467532467
-                },
-                {
-                  "distanceBp": 45,
-                  "samples": 269,
-                  "probability": 0.9925650557620818
-                },
-                {
-                  "distanceBp": 46,
-                  "samples": 284,
-                  "probability": 0.9964788732394366
-                },
-                {
-                  "distanceBp": 47,
-                  "samples": 220,
+                  "samples": 227,
                   "probability": 1
                 },
                 {
-                  "distanceBp": 48,
-                  "samples": 206,
-                  "probability": 0.9854368932038835
+                  "distanceBp": 45,
+                  "samples": 237,
+                  "probability": 1
                 },
                 {
-                  "distanceBp": 49,
-                  "samples": 212,
-                  "probability": 0.9952830188679245
+                  "distanceBp": 46,
+                  "samples": 221,
+                  "probability": 0.995475113122172
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 11948,
-                  "probability": 0.6531637094074322
+                  "samples": 8633,
+                  "probability": 0.663500521255647
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 16209,
-                  "probability": 0.7214510457153434
+                  "samples": 10005,
+                  "probability": 0.7085457271364318
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 11943,
-                  "probability": 0.757766055429959
+                  "samples": 7244,
+                  "probability": 0.7395085588072888
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 12445,
-                  "probability": 0.7872237846524709
+                  "samples": 8562,
+                  "probability": 0.7834618079887876
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10350,
-                  "probability": 0.8142028985507246
+                  "samples": 6478,
+                  "probability": 0.7959246681074406
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9780,
-                  "probability": 0.8423312883435583
+                  "samples": 6378,
+                  "probability": 0.8322358105989338
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8435,
-                  "probability": 0.8552459988144635
+                  "samples": 5526,
+                  "probability": 0.8512486427795874
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 8177,
-                  "probability": 0.8720802250214015
+                  "samples": 5199,
+                  "probability": 0.8590113483362185
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6162,
-                  "probability": 0.8781239857189225
+                  "samples": 4277,
+                  "probability": 0.8887070376432079
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6598,
-                  "probability": 0.9017884207335556
+                  "samples": 4220,
+                  "probability": 0.8810426540284361
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5095,
-                  "probability": 0.8997055937193327
+                  "samples": 3364,
+                  "probability": 0.8950653983353151
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4713,
-                  "probability": 0.9104604286017399
+                  "samples": 3257,
+                  "probability": 0.8996008596868283
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4111,
-                  "probability": 0.9207005594745804
+                  "samples": 2848,
+                  "probability": 0.9101123595505618
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3855,
-                  "probability": 0.9286640726329443
+                  "samples": 2491,
+                  "probability": 0.9253311922922521
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3294,
-                  "probability": 0.9295689131754705
+                  "samples": 2303,
+                  "probability": 0.9166304819800261
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2945,
-                  "probability": 0.9314091680814941
+                  "samples": 2036,
+                  "probability": 0.918467583497053
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2532,
-                  "probability": 0.9324644549763034
+                  "samples": 1820,
+                  "probability": 0.9241758241758242
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2287,
-                  "probability": 0.939658941845212
+                  "samples": 1595,
+                  "probability": 0.9222570532915361
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2084,
-                  "probability": 0.9342610364683301
+                  "samples": 1513,
+                  "probability": 0.9279576999339062
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1894,
-                  "probability": 0.9435058078141499
+                  "samples": 1376,
+                  "probability": 0.938953488372093
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1718,
-                  "probability": 0.9615832363213038
+                  "samples": 1204,
+                  "probability": 0.9426910299003323
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1467,
-                  "probability": 0.950920245398773
+                  "samples": 1112,
+                  "probability": 0.9361510791366906
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1359,
-                  "probability": 0.9440765268579838
+                  "samples": 1005,
+                  "probability": 0.9582089552238806
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1238,
-                  "probability": 0.9515347334410339
+                  "samples": 883,
+                  "probability": 0.9445073612684032
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1065,
-                  "probability": 0.9530516431924883
+                  "samples": 733,
+                  "probability": 0.9549795361527967
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1007,
-                  "probability": 0.9503475670307845
+                  "samples": 767,
+                  "probability": 0.9491525423728814
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 940,
-                  "probability": 0.9744680851063829
+                  "samples": 706,
+                  "probability": 0.9546742209631728
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 758,
-                  "probability": 0.9630606860158312
+                  "samples": 648,
+                  "probability": 0.9598765432098766
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 754,
-                  "probability": 0.9681697612732095
+                  "samples": 545,
+                  "probability": 0.9577981651376147
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 693,
-                  "probability": 0.9682539682539683
+                  "samples": 521,
+                  "probability": 0.9616122840690979
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 611,
-                  "probability": 0.9623567921440261
+                  "samples": 493,
+                  "probability": 0.9553752535496958
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 550,
-                  "probability": 0.9690909090909091
+                  "samples": 462,
+                  "probability": 0.9545454545454546
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 495,
-                  "probability": 0.9636363636363636
+                  "samples": 363,
+                  "probability": 0.9614325068870524
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 461,
-                  "probability": 0.9566160520607375
+                  "samples": 372,
+                  "probability": 0.967741935483871
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 404,
-                  "probability": 0.9752475247524752
+                  "samples": 321,
+                  "probability": 0.940809968847352
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 410,
-                  "probability": 0.9560975609756097
+                  "samples": 276,
+                  "probability": 0.9637681159420289
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 332,
-                  "probability": 0.963855421686747
+                  "samples": 303,
+                  "probability": 0.9537953795379538
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 291,
-                  "probability": 0.9725085910652921
+                  "samples": 252,
+                  "probability": 0.9444444444444444
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 331,
-                  "probability": 0.9577039274924471
+                  "samples": 240,
+                  "probability": 0.9833333333333333
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 267,
-                  "probability": 0.9662921348314607
-                },
-                {
-                  "distanceBp": 42,
-                  "samples": 285,
-                  "probability": 0.9719298245614035
+                  "samples": 221,
+                  "probability": 0.9819004524886877
                 },
                 {
                   "distanceBp": 43,
-                  "samples": 232,
-                  "probability": 0.9612068965517241
-                },
-                {
-                  "distanceBp": 44,
-                  "samples": 213,
-                  "probability": 0.9812206572769953
-                },
-                {
-                  "distanceBp": 45,
-                  "samples": 226,
-                  "probability": 0.9778761061946902
-                },
-                {
-                  "distanceBp": 46,
-                  "samples": 218,
-                  "probability": 0.9678899082568807
+                  "samples": 202,
+                  "probability": 0.9801980198019802
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 13896,
-                  "probability": 0.6196027633851469
+                  "samples": 10108,
+                  "probability": 0.6302928373565493
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 18354,
-                  "probability": 0.6777814100468563
+                  "samples": 11350,
+                  "probability": 0.6684581497797357
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 13213,
-                  "probability": 0.7093014455460531
+                  "samples": 8028,
+                  "probability": 0.6879671150971599
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13198,
-                  "probability": 0.7307925443248977
+                  "samples": 9071,
+                  "probability": 0.7184433910263477
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10972,
-                  "probability": 0.7564710171345242
+                  "samples": 6745,
+                  "probability": 0.7386212008895479
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9631,
-                  "probability": 0.7830962516872599
+                  "samples": 6512,
+                  "probability": 0.7682739557739557
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8377,
-                  "probability": 0.7958696430703116
+                  "samples": 5460,
+                  "probability": 0.7919413919413919
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7818,
-                  "probability": 0.8114607316449219
+                  "samples": 4936,
+                  "probability": 0.7994327390599676
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 5751,
-                  "probability": 0.8137715179968701
+                  "samples": 4116,
+                  "probability": 0.8158406219630709
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 5903,
-                  "probability": 0.8360155852956124
+                  "samples": 3897,
+                  "probability": 0.8270464459840903
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4424,
-                  "probability": 0.849005424954792
+                  "samples": 3026,
+                  "probability": 0.8331130204890945
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4194,
-                  "probability": 0.8438245112064855
+                  "samples": 2901,
+                  "probability": 0.8369527749052051
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3609,
-                  "probability": 0.8506511499030203
+                  "samples": 2385,
+                  "probability": 0.8381551362683438
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3154,
-                  "probability": 0.87000634115409
+                  "samples": 2260,
+                  "probability": 0.8446902654867257
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2679,
-                  "probability": 0.864501679731243
+                  "samples": 1907,
+                  "probability": 0.8673308862087048
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2476,
-                  "probability": 0.8739903069466882
+                  "samples": 1776,
+                  "probability": 0.875
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2044,
-                  "probability": 0.8830724070450098
+                  "samples": 1438,
+                  "probability": 0.8643949930458971
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1803,
-                  "probability": 0.8835274542429284
+                  "samples": 1339,
+                  "probability": 0.8775205377147125
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1510,
-                  "probability": 0.8920529801324504
+                  "samples": 1126,
+                  "probability": 0.8801065719360568
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1385,
-                  "probability": 0.8996389891696751
+                  "samples": 990,
+                  "probability": 0.8838383838383839
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1290,
-                  "probability": 0.8906976744186047
+                  "samples": 997,
+                  "probability": 0.8816449348044132
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1074,
-                  "probability": 0.8966480446927374
+                  "samples": 831,
+                  "probability": 0.8904933814681107
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 970,
-                  "probability": 0.9030927835051547
+                  "samples": 751,
+                  "probability": 0.9067909454061251
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 876,
-                  "probability": 0.9189497716894978
+                  "samples": 642,
+                  "probability": 0.8987538940809969
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 839,
-                  "probability": 0.9094159713945172
+                  "samples": 562,
+                  "probability": 0.8932384341637011
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 673,
-                  "probability": 0.8989598811292719
+                  "samples": 562,
+                  "probability": 0.8896797153024911
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 632,
-                  "probability": 0.9034810126582279
+                  "samples": 494,
+                  "probability": 0.8927125506072875
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 548,
-                  "probability": 0.8941605839416058
+                  "samples": 474,
+                  "probability": 0.8734177215189873
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 576,
-                  "probability": 0.9270833333333334
+                  "samples": 384,
+                  "probability": 0.9244791666666666
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 435,
-                  "probability": 0.9057471264367816
+                  "samples": 370,
+                  "probability": 0.8945945945945946
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 404,
-                  "probability": 0.9158415841584159
+                  "samples": 304,
+                  "probability": 0.881578947368421
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 375,
-                  "probability": 0.912
+                  "samples": 294,
+                  "probability": 0.9013605442176871
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 331,
-                  "probability": 0.9123867069486404
+                  "samples": 260,
+                  "probability": 0.9076923076923077
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 316,
-                  "probability": 0.9240506329113924
+                  "samples": 231,
+                  "probability": 0.9134199134199135
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 277,
-                  "probability": 0.9133574007220217
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 272,
-                  "probability": 0.9117647058823529
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 221,
-                  "probability": 0.8959276018099548
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 206,
-                  "probability": 0.9514563106796117
-                },
-                {
-                  "distanceBp": 40,
-                  "samples": 208,
-                  "probability": 0.9278846153846154
+                  "samples": 218,
+                  "probability": 0.8899082568807339
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 17954,
-                  "probability": 0.59758271137351
+                  "samples": 13043,
+                  "probability": 0.5957218431342483
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 21776,
-                  "probability": 0.6384092578986039
+                  "samples": 13464,
+                  "probability": 0.6289364230540702
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 14751,
-                  "probability": 0.6592095451155854
+                  "samples": 9115,
+                  "probability": 0.6609983543609435
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 13713,
-                  "probability": 0.6931378983446365
+                  "samples": 9386,
+                  "probability": 0.6870871510760708
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10822,
-                  "probability": 0.7056921086675291
+                  "samples": 6890,
+                  "probability": 0.6986937590711175
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 8875,
-                  "probability": 0.7166197183098592
+                  "samples": 5911,
+                  "probability": 0.7093554390120115
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 7067,
-                  "probability": 0.7246356303947927
+                  "samples": 4816,
+                  "probability": 0.7207225913621262
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 6177,
-                  "probability": 0.7490691274081269
+                  "samples": 3986,
+                  "probability": 0.7320622177621676
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4514,
-                  "probability": 0.7461231723526806
+                  "samples": 3259,
+                  "probability": 0.7410248542497698
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4386,
-                  "probability": 0.758093935248518
+                  "samples": 2851,
+                  "probability": 0.7565766397755174
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3108,
-                  "probability": 0.7660875160875161
+                  "samples": 2148,
+                  "probability": 0.7523277467411545
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2721,
-                  "probability": 0.768834987137082
+                  "samples": 1991,
+                  "probability": 0.7744851833249623
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2295,
-                  "probability": 0.8030501089324619
+                  "samples": 1653,
+                  "probability": 0.7816091954022989
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1838,
-                  "probability": 0.7905331882480957
+                  "samples": 1347,
+                  "probability": 0.7720861172976986
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1617,
-                  "probability": 0.7977736549165121
+                  "samples": 1200,
+                  "probability": 0.7925
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1359,
-                  "probability": 0.7814569536423841
+                  "samples": 1008,
+                  "probability": 0.8005952380952381
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1111,
-                  "probability": 0.8172817281728173
+                  "samples": 895,
+                  "probability": 0.7754189944134078
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 975,
-                  "probability": 0.7887179487179488
+                  "samples": 743,
+                  "probability": 0.784656796769852
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 877,
-                  "probability": 0.8129988597491448
+                  "samples": 635,
+                  "probability": 0.8094488188976378
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 751,
-                  "probability": 0.8069241011984021
+                  "samples": 581,
+                  "probability": 0.7848537005163512
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 612,
-                  "probability": 0.8218954248366013
+                  "samples": 497,
+                  "probability": 0.8289738430583501
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 518,
-                  "probability": 0.8397683397683398
+                  "samples": 398,
+                  "probability": 0.821608040201005
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 494,
-                  "probability": 0.8157894736842105
+                  "samples": 371,
+                  "probability": 0.8328840970350404
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 417,
-                  "probability": 0.8561151079136691
+                  "samples": 318,
+                  "probability": 0.8144654088050315
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 341,
-                  "probability": 0.844574780058651
+                  "samples": 306,
+                  "probability": 0.7875816993464052
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 330,
-                  "probability": 0.8121212121212121
+                  "samples": 264,
+                  "probability": 0.8333333333333334
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 319,
-                  "probability": 0.8495297805642633
+                  "samples": 246,
+                  "probability": 0.8658536585365854
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 248,
-                  "probability": 0.8467741935483871
+                  "samples": 206,
+                  "probability": 0.8009708737864077
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 226,
-                  "probability": 0.8097345132743363
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 202,
-                  "probability": 0.8217821782178217
+                  "samples": 201,
+                  "probability": 0.8009950248756219
                 }
               ]
             }
@@ -6642,626 +5737,566 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.2591363180543038,
-          "avgLeadPp": 1.8393376638894505,
+          "windowShare": 0.24901871335025044,
+          "avgLeadPp": 1.7317789033843183,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 4591,
-                  "probability": 0.7185798301023743
+                  "samples": 3162,
+                  "probability": 0.7084123972169513
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6738,
-                  "probability": 0.7991985752448798
+                  "samples": 3975,
+                  "probability": 0.7924528301886793
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4842,
-                  "probability": 0.8250722841800908
+                  "samples": 2714,
+                  "probability": 0.8212969786293294
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5092,
-                  "probability": 0.8831500392772977
+                  "samples": 3439,
+                  "probability": 0.8676940971212562
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4353,
-                  "probability": 0.892258212726855
+                  "samples": 2535,
+                  "probability": 0.886785009861933
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4154,
-                  "probability": 0.9133365430909967
+                  "samples": 2710,
+                  "probability": 0.9125461254612546
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3621,
-                  "probability": 0.9182546257939795
+                  "samples": 2220,
+                  "probability": 0.9112612612612613
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3516,
-                  "probability": 0.9462457337883959
+                  "samples": 2260,
+                  "probability": 0.9336283185840708
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2699,
-                  "probability": 0.943312337902927
+                  "samples": 1832,
+                  "probability": 0.9339519650655022
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2999,
-                  "probability": 0.9569856618872957
+                  "samples": 1793,
+                  "probability": 0.9492470719464584
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2309,
-                  "probability": 0.9631875270679948
+                  "samples": 1459,
+                  "probability": 0.9588759424263193
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2122,
-                  "probability": 0.969368520263902
+                  "samples": 1447,
+                  "probability": 0.9523151347615757
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1914,
-                  "probability": 0.9686520376175548
+                  "samples": 1218,
+                  "probability": 0.9638752052545156
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1751,
-                  "probability": 0.9743003997715591
+                  "samples": 1174,
+                  "probability": 0.9718909710391823
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1540,
-                  "probability": 0.9759740259740259
+                  "samples": 1037,
+                  "probability": 0.9652844744455159
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1315,
-                  "probability": 0.979467680608365
+                  "samples": 903,
+                  "probability": 0.9767441860465116
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1179,
-                  "probability": 0.9830364715860899
+                  "samples": 816,
+                  "probability": 0.9779411764705882
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1138,
-                  "probability": 0.9815465729349736
+                  "samples": 726,
+                  "probability": 0.9738292011019284
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1017,
-                  "probability": 0.9852507374631269
+                  "samples": 712,
+                  "probability": 0.9817415730337079
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 922,
-                  "probability": 0.9869848156182213
+                  "samples": 611,
+                  "probability": 0.983633387888707
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 829,
-                  "probability": 0.991556091676719
+                  "samples": 564,
+                  "probability": 0.9804964539007093
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 726,
-                  "probability": 0.9834710743801653
+                  "samples": 519,
+                  "probability": 0.9922928709055877
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 685,
-                  "probability": 0.9854014598540146
+                  "samples": 459,
+                  "probability": 0.9847494553376906
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 585,
-                  "probability": 0.9914529914529915
+                  "samples": 448,
+                  "probability": 0.9821428571428571
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 526,
-                  "probability": 0.9942965779467681
+                  "samples": 374,
+                  "probability": 0.9946524064171123
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 507,
-                  "probability": 0.9842209072978304
+                  "samples": 369,
+                  "probability": 0.991869918699187
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 452,
-                  "probability": 0.995575221238938
+                  "samples": 336,
+                  "probability": 0.9910714285714286
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 377,
-                  "probability": 0.9920424403183024
+                  "samples": 285,
+                  "probability": 0.9894736842105263
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 427,
-                  "probability": 0.9882903981264637
+                  "samples": 266,
+                  "probability": 0.9849624060150376
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 322,
-                  "probability": 0.9937888198757764
+                  "samples": 254,
+                  "probability": 0.984251968503937
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 294,
-                  "probability": 0.9965986394557823
+                  "samples": 231,
+                  "probability": 0.9956709956709957
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 276,
-                  "probability": 0.9927536231884058
+                  "samples": 220,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 291,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 239,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 234,
-                  "probability": 0.9957264957264957
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 200,
-                  "probability": 0.99
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 204,
-                  "probability": 0.9950980392156863
+                  "samples": 206,
+                  "probability": 0.9902912621359223
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 5214,
-                  "probability": 0.658036056770234
+                  "samples": 3521,
+                  "probability": 0.6773643851178642
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7215,
-                  "probability": 0.7298683298683298
+                  "samples": 4374,
+                  "probability": 0.7210791037951532
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 5312,
-                  "probability": 0.7616716867469879
+                  "samples": 2976,
+                  "probability": 0.7459677419354839
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5483,
-                  "probability": 0.7908079518511764
+                  "samples": 3749,
+                  "probability": 0.7948786343024806
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4502,
-                  "probability": 0.8200799644602399
+                  "samples": 2682,
+                  "probability": 0.7979120059656972
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4216,
-                  "probability": 0.8420303605313093
+                  "samples": 2685,
+                  "probability": 0.8271880819366852
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3558,
-                  "probability": 0.858628442945475
+                  "samples": 2306,
+                  "probability": 0.8512575888985255
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3526,
-                  "probability": 0.8729438457175269
+                  "samples": 2142,
+                  "probability": 0.8613445378151261
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2627,
-                  "probability": 0.8846593071945185
+                  "samples": 1749,
+                  "probability": 0.8896512292738707
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2732,
-                  "probability": 0.9077598828696926
+                  "samples": 1660,
+                  "probability": 0.8801204819277109
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2232,
-                  "probability": 0.9036738351254481
+                  "samples": 1399,
+                  "probability": 0.9077912794853467
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1956,
-                  "probability": 0.9095092024539877
+                  "samples": 1342,
+                  "probability": 0.8956780923994039
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1719,
-                  "probability": 0.9255381035485748
+                  "samples": 1148,
+                  "probability": 0.9067944250871081
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1607,
-                  "probability": 0.9209707529558183
+                  "samples": 995,
+                  "probability": 0.9185929648241206
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1377,
-                  "probability": 0.9215686274509803
+                  "samples": 894,
+                  "probability": 0.9049217002237137
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1184,
-                  "probability": 0.9222972972972973
+                  "samples": 830,
+                  "probability": 0.9156626506024096
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1022,
-                  "probability": 0.9344422700587084
+                  "samples": 715,
+                  "probability": 0.9258741258741259
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 996,
-                  "probability": 0.9437751004016064
+                  "samples": 622,
+                  "probability": 0.909967845659164
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 871,
-                  "probability": 0.9242250287026407
+                  "samples": 626,
+                  "probability": 0.9281150159744409
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 766,
-                  "probability": 0.9516971279373369
+                  "samples": 569,
+                  "probability": 0.9437609841827768
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 725,
-                  "probability": 0.9517241379310345
+                  "samples": 500,
+                  "probability": 0.936
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 626,
-                  "probability": 0.9568690095846646
+                  "samples": 431,
+                  "probability": 0.9419953596287703
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 573,
-                  "probability": 0.9389179755671903
+                  "samples": 397,
+                  "probability": 0.9672544080604534
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 510,
-                  "probability": 0.9549019607843138
+                  "samples": 361,
+                  "probability": 0.9445983379501385
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 429,
-                  "probability": 0.9533799533799534
+                  "samples": 286,
+                  "probability": 0.958041958041958
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 409,
-                  "probability": 0.9633251833740831
+                  "samples": 319,
+                  "probability": 0.9592476489028213
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 383,
-                  "probability": 0.9686684073107049
+                  "samples": 297,
+                  "probability": 0.9528619528619529
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 330,
-                  "probability": 0.9545454545454546
+                  "samples": 261,
+                  "probability": 0.9655172413793104
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 317,
-                  "probability": 0.9747634069400631
+                  "samples": 228,
+                  "probability": 0.956140350877193
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 291,
-                  "probability": 0.9656357388316151
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 250,
-                  "probability": 0.976
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 223,
-                  "probability": 0.9730941704035875
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 200,
-                  "probability": 0.985
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 204,
-                  "probability": 0.9558823529411765
+                  "samples": 215,
+                  "probability": 0.9674418604651163
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 6039,
-                  "probability": 0.634542142738864
+                  "samples": 4166,
+                  "probability": 0.6334613538166106
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8064,
-                  "probability": 0.6840277777777778
+                  "samples": 4965,
+                  "probability": 0.6773413897280967
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 5757,
-                  "probability": 0.7154768108389786
+                  "samples": 3330,
+                  "probability": 0.6915915915915916
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5779,
-                  "probability": 0.7380169579512026
+                  "samples": 3911,
+                  "probability": 0.7299923293275377
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4725,
-                  "probability": 0.7578835978835979
+                  "samples": 2736,
+                  "probability": 0.7386695906432749
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4148,
-                  "probability": 0.7854387656702025
+                  "samples": 2722,
+                  "probability": 0.7736958119030125
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3619,
-                  "probability": 0.8010500138159713
+                  "samples": 2214,
+                  "probability": 0.7859078590785907
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3302,
-                  "probability": 0.8216232586311326
+                  "samples": 2030,
+                  "probability": 0.7975369458128079
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2445,
-                  "probability": 0.8233128834355828
+                  "samples": 1655,
+                  "probability": 0.8290030211480363
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2436,
-                  "probability": 0.8370279146141215
+                  "samples": 1621,
+                  "probability": 0.8328192473781616
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1881,
-                  "probability": 0.8575225943646996
+                  "samples": 1202,
+                  "probability": 0.8311148086522463
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1674,
-                  "probability": 0.8548387096774194
+                  "samples": 1159,
+                  "probability": 0.8576358930112166
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1532,
-                  "probability": 0.8557441253263708
+                  "samples": 932,
+                  "probability": 0.8465665236051502
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1343,
-                  "probability": 0.885331347728965
+                  "samples": 907,
+                  "probability": 0.844542447629548
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1120,
-                  "probability": 0.8651785714285715
+                  "samples": 783,
+                  "probability": 0.8837803320561941
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1003,
-                  "probability": 0.8604187437686939
+                  "samples": 708,
+                  "probability": 0.8728813559322034
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 885,
-                  "probability": 0.8757062146892656
+                  "samples": 588,
+                  "probability": 0.8554421768707483
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 717,
-                  "probability": 0.8688981868898187
+                  "samples": 564,
+                  "probability": 0.8528368794326241
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 607,
-                  "probability": 0.886326194398682
+                  "samples": 423,
+                  "probability": 0.8794326241134752
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 555,
-                  "probability": 0.8954954954954955
+                  "samples": 395,
+                  "probability": 0.8886075949367088
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 528,
-                  "probability": 0.8977272727272727
+                  "samples": 398,
+                  "probability": 0.9020100502512562
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 436,
-                  "probability": 0.9220183486238532
+                  "samples": 329,
+                  "probability": 0.8936170212765957
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 419,
-                  "probability": 0.9045346062052506
+                  "samples": 307,
+                  "probability": 0.9218241042345277
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 368,
-                  "probability": 0.9347826086956522
+                  "samples": 249,
+                  "probability": 0.9156626506024096
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 339,
-                  "probability": 0.887905604719764
+                  "samples": 214,
+                  "probability": 0.8878504672897196
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 266,
-                  "probability": 0.8834586466165414
+                  "samples": 233,
+                  "probability": 0.9141630901287554
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 260,
-                  "probability": 0.9038461538461539
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 227,
-                  "probability": 0.8942731277533039
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 234,
-                  "probability": 0.9401709401709402
+                  "samples": 201,
+                  "probability": 0.8855721393034826
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 7839,
-                  "probability": 0.5998214057915551
+                  "samples": 5357,
+                  "probability": 0.6040694418517827
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 9570,
-                  "probability": 0.6409613375130616
+                  "samples": 5815,
+                  "probability": 0.6261392949269131
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6288,
-                  "probability": 0.6701653944020356
+                  "samples": 3654,
+                  "probability": 0.6713191023535852
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5891,
-                  "probability": 0.6968256662705823
+                  "samples": 3989,
+                  "probability": 0.6876410127851592
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4552,
-                  "probability": 0.7067223198594025
+                  "samples": 2735,
+                  "probability": 0.6917733089579524
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3783,
-                  "probability": 0.7295796986518636
+                  "samples": 2461,
+                  "probability": 0.7054043071921983
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3004,
-                  "probability": 0.7250332889480693
+                  "samples": 1959,
+                  "probability": 0.7269014803471159
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2544,
-                  "probability": 0.7429245283018868
+                  "samples": 1607,
+                  "probability": 0.7218419415059116
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1911,
-                  "probability": 0.7514390371533228
+                  "samples": 1367,
+                  "probability": 0.7490855888807608
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1885,
-                  "probability": 0.763395225464191
+                  "samples": 1106,
+                  "probability": 0.7676311030741411
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1285,
-                  "probability": 0.7665369649805448
+                  "samples": 875,
+                  "probability": 0.7497142857142857
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1092,
-                  "probability": 0.7710622710622711
+                  "samples": 792,
+                  "probability": 0.7651515151515151
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 935,
-                  "probability": 0.827807486631016
+                  "samples": 619,
+                  "probability": 0.8109854604200323
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 759,
-                  "probability": 0.8102766798418972
+                  "samples": 578,
+                  "probability": 0.7785467128027682
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 657,
-                  "probability": 0.8112633181126332
+                  "samples": 496,
+                  "probability": 0.8104838709677419
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 566,
-                  "probability": 0.7720848056537103
+                  "samples": 376,
+                  "probability": 0.8085106382978723
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 441,
-                  "probability": 0.8208616780045351
+                  "samples": 365,
+                  "probability": 0.7945205479452054
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 399,
-                  "probability": 0.8270676691729323
+                  "samples": 276,
+                  "probability": 0.8369565217391305
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 377,
-                  "probability": 0.8328912466843501
+                  "samples": 264,
+                  "probability": 0.8106060606060606
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 302,
-                  "probability": 0.8245033112582781
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 222,
-                  "probability": 0.8513513513513513
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 218,
-                  "probability": 0.8715596330275229
+                  "samples": 229,
+                  "probability": 0.7947598253275109
                 }
               ]
             }
@@ -7270,546 +6305,491 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.24775320834232473,
-          "avgLeadPp": 1.848872731004257,
+          "windowShare": 0.2551630408956557,
+          "avgLeadPp": 1.7584213145935044,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3039,
-                  "probability": 0.7163540638367885
+                  "samples": 2314,
+                  "probability": 0.709161624891962
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4234,
-                  "probability": 0.7926310817194142
+                  "samples": 2643,
+                  "probability": 0.7832009080590239
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3186,
-                  "probability": 0.8298807281858129
+                  "samples": 1968,
+                  "probability": 0.8358739837398373
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3392,
-                  "probability": 0.8688089622641509
+                  "samples": 2426,
+                  "probability": 0.8602638087386645
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2966,
-                  "probability": 0.8924477410654079
+                  "samples": 1891,
+                  "probability": 0.8836594394500265
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2755,
-                  "probability": 0.9136116152450091
+                  "samples": 1845,
+                  "probability": 0.9208672086720867
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2396,
-                  "probability": 0.9332220367278798
+                  "samples": 1578,
+                  "probability": 0.9188846641318125
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2498,
-                  "probability": 0.94435548438751
+                  "samples": 1631,
+                  "probability": 0.9393010423053342
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1855,
-                  "probability": 0.9504043126684636
+                  "samples": 1325,
+                  "probability": 0.9381132075471698
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2143,
-                  "probability": 0.9570695286980868
+                  "samples": 1349,
+                  "probability": 0.9458858413639734
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1517,
-                  "probability": 0.9551746868820039
+                  "samples": 1054,
+                  "probability": 0.961100569259962
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1587,
-                  "probability": 0.9697542533081286
+                  "samples": 1096,
+                  "probability": 0.9635036496350365
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1407,
-                  "probability": 0.9722814498933902
+                  "samples": 963,
+                  "probability": 0.9626168224299065
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1225,
-                  "probability": 0.9681632653061224
+                  "samples": 822,
+                  "probability": 0.9732360097323601
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1050,
-                  "probability": 0.9771428571428571
+                  "samples": 788,
+                  "probability": 0.9682741116751269
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1059,
-                  "probability": 0.9782813975448537
+                  "samples": 646,
+                  "probability": 0.9860681114551083
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 829,
-                  "probability": 0.9831121833534379
+                  "samples": 633,
+                  "probability": 0.9684044233807267
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 848,
-                  "probability": 0.9858490566037735
+                  "samples": 582,
+                  "probability": 0.9776632302405498
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 735,
-                  "probability": 0.9877551020408163
+                  "samples": 512,
+                  "probability": 0.974609375
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 678,
-                  "probability": 0.9867256637168141
+                  "samples": 452,
+                  "probability": 0.9690265486725663
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 570,
-                  "probability": 0.9824561403508771
+                  "samples": 451,
+                  "probability": 0.9889135254988913
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 540,
-                  "probability": 0.987037037037037
+                  "samples": 423,
+                  "probability": 0.9881796690307328
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 479,
-                  "probability": 0.9812108559498957
+                  "samples": 330,
+                  "probability": 0.9696969696969697
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 463,
-                  "probability": 0.9956803455723542
+                  "samples": 330,
+                  "probability": 0.9848484848484849
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 411,
-                  "probability": 0.9902676399026764
+                  "samples": 310,
+                  "probability": 0.9903225806451613
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 348,
-                  "probability": 0.9913793103448276
+                  "samples": 261,
+                  "probability": 0.9885057471264368
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 342,
-                  "probability": 0.97953216374269
+                  "samples": 257,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 254,
-                  "probability": 0.9921259842519685
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 263,
-                  "probability": 0.9885931558935361
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 248,
-                  "probability": 0.9838709677419355
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 232,
-                  "probability": 0.978448275862069
+                  "samples": 215,
+                  "probability": 0.9720930232558139
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3398,
-                  "probability": 0.6533254855797528
+                  "samples": 2556,
+                  "probability": 0.6525821596244131
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4551,
-                  "probability": 0.7270929466051417
+                  "samples": 2853,
+                  "probability": 0.7055730809674028
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3335,
-                  "probability": 0.7634182908545727
+                  "samples": 2172,
+                  "probability": 0.7352670349907919
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3559,
-                  "probability": 0.7895476257375668
+                  "samples": 2452,
+                  "probability": 0.7871125611745514
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3024,
-                  "probability": 0.8128306878306878
+                  "samples": 1948,
+                  "probability": 0.803388090349076
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2832,
-                  "probability": 0.855225988700565
+                  "samples": 1939,
+                  "probability": 0.8401237751418257
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2592,
-                  "probability": 0.8530092592592593
+                  "samples": 1682,
+                  "probability": 0.8519619500594531
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2391,
-                  "probability": 0.8795483061480552
+                  "samples": 1613,
+                  "probability": 0.8586484810911346
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1826,
-                  "probability": 0.8866374589266156
+                  "samples": 1296,
+                  "probability": 0.9020061728395061
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2024,
-                  "probability": 0.9046442687747036
+                  "samples": 1337,
+                  "probability": 0.8982797307404637
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1506,
-                  "probability": 0.8957503320053121
+                  "samples": 1049,
+                  "probability": 0.8722592945662536
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1413,
-                  "probability": 0.9186128803963199
+                  "samples": 1007,
+                  "probability": 0.9046673286991063
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1264,
-                  "probability": 0.9169303797468354
+                  "samples": 911,
+                  "probability": 0.9165751920965971
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1190,
-                  "probability": 0.9403361344537815
+                  "samples": 779,
+                  "probability": 0.9306803594351734
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 979,
-                  "probability": 0.9417773237997957
+                  "samples": 741,
+                  "probability": 0.9244264507422402
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 916,
-                  "probability": 0.9486899563318777
+                  "samples": 623,
+                  "probability": 0.9390048154093098
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 784,
-                  "probability": 0.9413265306122449
+                  "samples": 600,
+                  "probability": 0.93
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 678,
-                  "probability": 0.9469026548672567
+                  "samples": 498,
+                  "probability": 0.9497991967871486
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 594,
-                  "probability": 0.9427609427609428
+                  "samples": 440,
+                  "probability": 0.9409090909090909
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 580,
-                  "probability": 0.95
+                  "samples": 412,
+                  "probability": 0.9393203883495146
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 501,
-                  "probability": 0.9680638722554891
+                  "samples": 347,
+                  "probability": 0.9596541786743515
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 414,
-                  "probability": 0.9516908212560387
+                  "samples": 345,
+                  "probability": 0.927536231884058
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 373,
-                  "probability": 0.9490616621983914
+                  "samples": 291,
+                  "probability": 0.9450171821305842
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 353,
-                  "probability": 0.9546742209631728
+                  "samples": 215,
+                  "probability": 0.9441860465116279
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 291,
-                  "probability": 0.9587628865979382
+                  "samples": 216,
+                  "probability": 0.9629629629629629
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 297,
-                  "probability": 0.9427609427609428
-                },
-                {
-                  "distanceBp": 28,
-                  "samples": 269,
-                  "probability": 0.9851301115241635
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 213,
-                  "probability": 0.971830985915493
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 214,
-                  "probability": 0.9579439252336449
+                  "samples": 219,
+                  "probability": 0.9771689497716894
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 3912,
-                  "probability": 0.6196319018404908
+                  "samples": 2996,
+                  "probability": 0.6285046728971962
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5176,
-                  "probability": 0.6833462132921174
+                  "samples": 3265,
+                  "probability": 0.6728943338437978
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3829,
-                  "probability": 0.70018281535649
+                  "samples": 2413,
+                  "probability": 0.6862826357231662
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3806,
-                  "probability": 0.7369942196531792
+                  "samples": 2679,
+                  "probability": 0.7125793206420306
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3169,
-                  "probability": 0.7627011675607447
+                  "samples": 2037,
+                  "probability": 0.7422680412371134
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2799,
-                  "probability": 0.7945694891032512
+                  "samples": 1935,
+                  "probability": 0.7808785529715763
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2385,
-                  "probability": 0.8092243186582809
+                  "samples": 1655,
+                  "probability": 0.795166163141994
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2326,
-                  "probability": 0.8116938950988822
+                  "samples": 1492,
+                  "probability": 0.8183646112600537
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1696,
-                  "probability": 0.8189858490566038
+                  "samples": 1284,
+                  "probability": 0.822429906542056
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1785,
-                  "probability": 0.8420168067226891
+                  "samples": 1201,
+                  "probability": 0.8226477935054122
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1309,
-                  "probability": 0.841100076394194
+                  "samples": 931,
+                  "probability": 0.8302900107411385
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1288,
-                  "probability": 0.8462732919254659
+                  "samples": 902,
+                  "probability": 0.8226164079822617
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1058,
-                  "probability": 0.8572778827977315
+                  "samples": 759,
+                  "probability": 0.8313570487483531
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 916,
-                  "probability": 0.8657205240174672
+                  "samples": 694,
+                  "probability": 0.8559077809798271
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 823,
-                  "probability": 0.8687727825030377
+                  "samples": 585,
+                  "probability": 0.8547008547008547
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 738,
-                  "probability": 0.8834688346883469
+                  "samples": 538,
+                  "probability": 0.8773234200743495
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 606,
-                  "probability": 0.8811881188118812
+                  "samples": 422,
+                  "probability": 0.8601895734597157
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 553,
-                  "probability": 0.8969258589511754
+                  "samples": 422,
+                  "probability": 0.8957345971563981
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 421,
-                  "probability": 0.9026128266033254
+                  "samples": 354,
+                  "probability": 0.8728813559322034
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 413,
-                  "probability": 0.8958837772397095
-                },
-                {
-                  "distanceBp": 22,
-                  "samples": 393,
-                  "probability": 0.8702290076335878
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 314,
-                  "probability": 0.8789808917197452
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 280,
+                  "samples": 300,
                   "probability": 0.9
                 },
                 {
-                  "distanceBp": 25,
-                  "samples": 268,
-                  "probability": 0.917910447761194
+                  "distanceBp": 22,
+                  "samples": 312,
+                  "probability": 0.8525641025641025
                 },
                 {
-                  "distanceBp": 26,
-                  "samples": 257,
-                  "probability": 0.933852140077821
+                  "distanceBp": 23,
+                  "samples": 265,
+                  "probability": 0.8754716981132076
                 },
                 {
-                  "distanceBp": 27,
-                  "samples": 200,
-                  "probability": 0.895
+                  "distanceBp": 24,
+                  "samples": 231,
+                  "probability": 0.8961038961038961
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5156,
-                  "probability": 0.6045384018619084
+                  "samples": 3902,
+                  "probability": 0.5996924654023578
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6098,
-                  "probability": 0.6487372909150542
+                  "samples": 3812,
+                  "probability": 0.642707240293809
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4290,
-                  "probability": 0.6624708624708625
+                  "samples": 2807,
+                  "probability": 0.6537228357677235
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3895,
-                  "probability": 0.6993581514762516
+                  "samples": 2735,
+                  "probability": 0.6983546617915904
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3258,
-                  "probability": 0.716390423572744
+                  "samples": 2080,
+                  "probability": 0.7139423076923077
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2566,
-                  "probability": 0.7104442712392829
+                  "samples": 1765,
+                  "probability": 0.715014164305949
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2032,
-                  "probability": 0.7401574803149606
+                  "samples": 1482,
+                  "probability": 0.7125506072874493
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1811,
-                  "probability": 0.7620099392600773
+                  "samples": 1204,
+                  "probability": 0.7450166112956811
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1319,
-                  "probability": 0.7520849128127369
+                  "samples": 949,
+                  "probability": 0.761854583772392
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1273,
-                  "probability": 0.7808326787117046
+                  "samples": 889,
+                  "probability": 0.7592800899887514
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 939,
-                  "probability": 0.7539936102236422
+                  "samples": 663,
+                  "probability": 0.7541478129713424
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 821,
-                  "probability": 0.7746650426309378
+                  "samples": 609,
+                  "probability": 0.8013136288998358
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 688,
-                  "probability": 0.8023255813953488
+                  "samples": 488,
+                  "probability": 0.7663934426229508
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 538,
-                  "probability": 0.7620817843866171
+                  "samples": 397,
+                  "probability": 0.7758186397984886
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 462,
-                  "probability": 0.7943722943722944
+                  "samples": 352,
+                  "probability": 0.7869318181818182
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 397,
-                  "probability": 0.8236775818639799
+                  "samples": 310,
+                  "probability": 0.8064516129032258
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 306,
-                  "probability": 0.8660130718954249
+                  "samples": 282,
+                  "probability": 0.7411347517730497
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 274,
-                  "probability": 0.7481751824817519
-                },
-                {
-                  "distanceBp": 20,
-                  "samples": 244,
-                  "probability": 0.819672131147541
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 215,
-                  "probability": 0.8186046511627907
+                  "samples": 216,
+                  "probability": 0.7638888888888888
                 }
               ]
             }
@@ -7819,1099 +6799,826 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "doge",
-      "windowCount": 315116,
+      "windowCount": 207293,
       "leadingTables": [
-        {
-          "algoId": "vol_only_3",
-          "regime": "low_vol",
-          "windowShare": 0.017412635346983334,
-          "avgLeadPp": 3.5703594863483943,
-          "surface": {
-            "byRemaining": {
-              "1": [
-                {
-                  "distanceBp": 2,
-                  "samples": 319,
-                  "probability": 0.7398119122257053
-                },
-                {
-                  "distanceBp": 3,
-                  "samples": 381,
-                  "probability": 0.7979002624671916
-                },
-                {
-                  "distanceBp": 4,
-                  "samples": 445,
-                  "probability": 0.849438202247191
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 317,
-                  "probability": 0.9085173501577287
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 294,
-                  "probability": 0.9319727891156463
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 272,
-                  "probability": 0.9154411764705882
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 235,
-                  "probability": 0.9361702127659575
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 233,
-                  "probability": 0.9227467811158798
-                },
-                {
-                  "distanceBp": 10,
-                  "samples": 213,
-                  "probability": 0.9577464788732394
-                }
-              ],
-              "2": [
-                {
-                  "distanceBp": 2,
-                  "samples": 410,
-                  "probability": 0.6634146341463415
-                },
-                {
-                  "distanceBp": 3,
-                  "samples": 396,
-                  "probability": 0.7474747474747475
-                },
-                {
-                  "distanceBp": 4,
-                  "samples": 421,
-                  "probability": 0.7529691211401425
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 309,
-                  "probability": 0.7993527508090615
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 339,
-                  "probability": 0.8348082595870207
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 266,
-                  "probability": 0.8195488721804511
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 275,
-                  "probability": 0.8763636363636363
-                },
-                {
-                  "distanceBp": 9,
-                  "samples": 233,
-                  "probability": 0.8454935622317596
-                }
-              ],
-              "3": [
-                {
-                  "distanceBp": 2,
-                  "samples": 467,
-                  "probability": 0.6059957173447538
-                },
-                {
-                  "distanceBp": 3,
-                  "samples": 444,
-                  "probability": 0.7094594594594594
-                },
-                {
-                  "distanceBp": 4,
-                  "samples": 490,
-                  "probability": 0.7142857142857143
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 359,
-                  "probability": 0.7604456824512534
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 295,
-                  "probability": 0.7694915254237288
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 270,
-                  "probability": 0.7666666666666667
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 261,
-                  "probability": 0.7931034482758621
-                }
-              ],
-              "4": [
-                {
-                  "distanceBp": 2,
-                  "samples": 571,
-                  "probability": 0.5919439579684763
-                },
-                {
-                  "distanceBp": 3,
-                  "samples": 517,
-                  "probability": 0.6499032882011605
-                },
-                {
-                  "distanceBp": 4,
-                  "samples": 510,
-                  "probability": 0.6941176470588235
-                },
-                {
-                  "distanceBp": 5,
-                  "samples": 343,
-                  "probability": 0.6909620991253644
-                },
-                {
-                  "distanceBp": 6,
-                  "samples": 335,
-                  "probability": 0.7223880597014926
-                },
-                {
-                  "distanceBp": 7,
-                  "samples": 224,
-                  "probability": 0.7589285714285714
-                },
-                {
-                  "distanceBp": 8,
-                  "samples": 209,
-                  "probability": 0.7272727272727273
-                }
-              ]
-            }
-          }
-        },
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5986525596923038,
-          "avgLeadPp": 1.547771588643214,
+          "windowShare": 0.5940432141944012,
+          "avgLeadPp": 1.6272153179571744,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 10561,
-                  "probability": 0.7041946785342297
+                  "samples": 6792,
+                  "probability": 0.6706419316843345
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11357,
-                  "probability": 0.774852513868099
+                  "samples": 6554,
+                  "probability": 0.7291730241074154
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 11223,
-                  "probability": 0.8131515637530072
+                  "samples": 6620,
+                  "probability": 0.7848942598187311
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9212,
-                  "probability": 0.8390143291359097
+                  "samples": 6006,
+                  "probability": 0.8125208125208125
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 9855,
-                  "probability": 0.8742770167427701
+                  "samples": 5744,
+                  "probability": 0.8377437325905293
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 8397,
-                  "probability": 0.8851970942003097
+                  "samples": 5704,
+                  "probability": 0.8678120617110799
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8295,
-                  "probability": 0.9091018685955394
+                  "samples": 5319,
+                  "probability": 0.8915209625869525
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7597,
-                  "probability": 0.9237857048835066
+                  "samples": 4890,
+                  "probability": 0.9220858895705522
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6548,
-                  "probability": 0.9273060476481368
+                  "samples": 4562,
+                  "probability": 0.9256904866286716
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6470,
-                  "probability": 0.9423493044822256
+                  "samples": 4303,
+                  "probability": 0.938182663258192
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5924,
-                  "probability": 0.949527346387576
+                  "samples": 3969,
+                  "probability": 0.9370118417737465
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5139,
-                  "probability": 0.9566063436466239
+                  "samples": 3662,
+                  "probability": 0.9524849808847624
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4981,
-                  "probability": 0.9602489459947802
+                  "samples": 3389,
+                  "probability": 0.962820891118324
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4423,
-                  "probability": 0.9640515487225865
+                  "samples": 3168,
+                  "probability": 0.9633838383838383
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 4232,
-                  "probability": 0.9647920604914934
+                  "samples": 2894,
+                  "probability": 0.9678645473393227
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3775,
-                  "probability": 0.9713907284768212
+                  "samples": 2736,
+                  "probability": 0.9682017543859649
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 3411,
-                  "probability": 0.9721489299325711
+                  "samples": 2496,
+                  "probability": 0.9747596153846154
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 3239,
-                  "probability": 0.9783883914788515
+                  "samples": 2300,
+                  "probability": 0.9778260869565217
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2860,
-                  "probability": 0.9832167832167832
+                  "samples": 2205,
+                  "probability": 0.98140589569161
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2646,
-                  "probability": 0.9822373393801965
+                  "samples": 2009,
+                  "probability": 0.9830761572921851
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 2496,
-                  "probability": 0.9863782051282052
+                  "samples": 1861,
+                  "probability": 0.9860290166577109
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 2277,
-                  "probability": 0.9824330259112868
+                  "samples": 1705,
+                  "probability": 0.9917888563049854
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 2050,
-                  "probability": 0.9878048780487805
+                  "samples": 1557,
+                  "probability": 0.9916506101477199
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1888,
-                  "probability": 0.9867584745762712
+                  "samples": 1321,
+                  "probability": 0.987887963663891
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1843,
-                  "probability": 0.989148128052089
+                  "samples": 1305,
+                  "probability": 0.9900383141762452
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1674,
-                  "probability": 0.9874551971326165
+                  "samples": 1218,
+                  "probability": 0.9942528735632183
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 1494,
-                  "probability": 0.9906291834002677
+                  "samples": 1054,
+                  "probability": 0.9857685009487666
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 1347,
-                  "probability": 0.9836674090571641
+                  "samples": 948,
+                  "probability": 0.9862869198312236
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 1228,
-                  "probability": 0.991042345276873
+                  "samples": 956,
+                  "probability": 0.9895397489539749
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 1126,
-                  "probability": 0.9902309058614565
+                  "samples": 875,
+                  "probability": 0.9897142857142858
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 1068,
-                  "probability": 0.9925093632958801
+                  "samples": 752,
+                  "probability": 0.9960106382978723
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 1001,
-                  "probability": 0.983016983016983
+                  "samples": 719,
+                  "probability": 0.9930458970792768
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 889,
-                  "probability": 0.9955005624296963
+                  "samples": 650,
+                  "probability": 0.9938461538461538
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 833,
-                  "probability": 0.992797118847539
+                  "samples": 614,
+                  "probability": 0.988599348534202
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 779,
-                  "probability": 0.9884467265725289
+                  "samples": 521,
+                  "probability": 0.9904030710172744
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 679,
-                  "probability": 0.9911634756995582
+                  "samples": 555,
+                  "probability": 0.9945945945945946
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 652,
-                  "probability": 0.99079754601227
+                  "samples": 433,
+                  "probability": 0.9930715935334873
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 639,
-                  "probability": 0.9968701095461658
+                  "samples": 458,
+                  "probability": 0.9934497816593887
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 555,
-                  "probability": 0.990990990990991
+                  "samples": 415,
+                  "probability": 0.9975903614457832
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 566,
-                  "probability": 0.9876325088339223
+                  "samples": 368,
+                  "probability": 0.9918478260869565
                 },
                 {
                   "distanceBp": 42,
-                  "samples": 504,
-                  "probability": 0.998015873015873
+                  "samples": 353,
+                  "probability": 0.9971671388101983
                 },
                 {
                   "distanceBp": 43,
-                  "samples": 473,
-                  "probability": 0.9936575052854123
+                  "samples": 316,
+                  "probability": 0.9936708860759493
                 },
                 {
                   "distanceBp": 44,
-                  "samples": 417,
-                  "probability": 0.9952038369304557
+                  "samples": 268,
+                  "probability": 0.9888059701492538
                 },
                 {
                   "distanceBp": 45,
-                  "samples": 392,
-                  "probability": 0.9948979591836735
+                  "samples": 268,
+                  "probability": 0.9925373134328358
                 },
                 {
                   "distanceBp": 46,
-                  "samples": 338,
-                  "probability": 0.9970414201183432
+                  "samples": 284,
+                  "probability": 0.9929577464788732
                 },
                 {
                   "distanceBp": 47,
-                  "samples": 361,
-                  "probability": 0.9916897506925207
+                  "samples": 248,
+                  "probability": 0.9838709677419355
                 },
                 {
                   "distanceBp": 48,
-                  "samples": 350,
-                  "probability": 0.9971428571428571
+                  "samples": 222,
+                  "probability": 0.9954954954954955
                 },
                 {
                   "distanceBp": 49,
-                  "samples": 307,
-                  "probability": 0.993485342019544
+                  "samples": 217,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 50,
-                  "samples": 291,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 51,
-                  "samples": 268,
-                  "probability": 0.996268656716418
-                },
-                {
-                  "distanceBp": 52,
-                  "samples": 275,
-                  "probability": 0.9927272727272727
-                },
-                {
-                  "distanceBp": 53,
-                  "samples": 238,
-                  "probability": 0.9957983193277311
-                },
-                {
-                  "distanceBp": 54,
-                  "samples": 231,
-                  "probability": 1
-                },
-                {
-                  "distanceBp": 55,
-                  "samples": 206,
-                  "probability": 0.9951456310679612
-                },
-                {
-                  "distanceBp": 56,
-                  "samples": 211,
-                  "probability": 0.995260663507109
-                },
-                {
-                  "distanceBp": 57,
-                  "samples": 201,
+                  "samples": 212,
                   "probability": 1
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 11945,
-                  "probability": 0.6485558811218083
+                  "samples": 7610,
+                  "probability": 0.6250985545335085
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 12687,
-                  "probability": 0.701505478048396
+                  "samples": 7490,
+                  "probability": 0.6590120160213618
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 12113,
-                  "probability": 0.7402790390489556
+                  "samples": 7233,
+                  "probability": 0.6977740909719342
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9933,
-                  "probability": 0.7557636162287326
+                  "samples": 6639,
+                  "probability": 0.7300798312998945
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10455,
-                  "probability": 0.8024868483978957
+                  "samples": 6189,
+                  "probability": 0.7636128615285184
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9017,
-                  "probability": 0.8137961628035932
+                  "samples": 6025,
+                  "probability": 0.8004979253112033
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8674,
-                  "probability": 0.8425178694950427
+                  "samples": 5689,
+                  "probability": 0.8177184039374231
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7799,
-                  "probability": 0.846262341325811
+                  "samples": 5117,
+                  "probability": 0.8340824701973812
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6632,
-                  "probability": 0.8531363088057901
+                  "samples": 4683,
+                  "probability": 0.8518043988896007
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6455,
-                  "probability": 0.8731216111541441
+                  "samples": 4312,
+                  "probability": 0.8601576994434137
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5688,
-                  "probability": 0.8920534458509142
+                  "samples": 4024,
+                  "probability": 0.8754970178926441
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 5044,
-                  "probability": 0.8901665344964313
+                  "samples": 3623,
+                  "probability": 0.8893182445487166
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4634,
-                  "probability": 0.9087181700474752
+                  "samples": 3268,
+                  "probability": 0.8993268053855569
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 4216,
-                  "probability": 0.9041745730550285
+                  "samples": 3111,
+                  "probability": 0.9080681452909033
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3960,
-                  "probability": 0.9133838383838384
+                  "samples": 2826,
+                  "probability": 0.9104741684359519
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3545,
-                  "probability": 0.9204513399153738
+                  "samples": 2559,
+                  "probability": 0.9101211410707307
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 3194,
-                  "probability": 0.9308077645585473
+                  "samples": 2308,
+                  "probability": 0.9311091854419411
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2945,
-                  "probability": 0.9320882852292021
+                  "samples": 2107,
+                  "probability": 0.9378262933080209
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2649,
-                  "probability": 0.9399773499433749
+                  "samples": 1970,
+                  "probability": 0.9360406091370559
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2424,
-                  "probability": 0.9377062706270627
+                  "samples": 1713,
+                  "probability": 0.9334500875656743
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 2150,
-                  "probability": 0.9367441860465117
+                  "samples": 1616,
+                  "probability": 0.943069306930693
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 2011,
-                  "probability": 0.947289905519642
+                  "samples": 1468,
+                  "probability": 0.9393732970027248
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1807,
-                  "probability": 0.945213060320974
+                  "samples": 1309,
+                  "probability": 0.9533995416348358
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1538,
-                  "probability": 0.9466840052015605
+                  "samples": 1148,
+                  "probability": 0.9581881533101045
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1492,
-                  "probability": 0.9423592493297587
+                  "samples": 1125,
+                  "probability": 0.96
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 1353,
-                  "probability": 0.9571322985957132
+                  "samples": 981,
+                  "probability": 0.9480122324159022
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 1216,
-                  "probability": 0.9547697368421053
+                  "samples": 855,
+                  "probability": 0.9415204678362573
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 1135,
-                  "probability": 0.958590308370044
+                  "samples": 818,
+                  "probability": 0.9669926650366748
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 1050,
-                  "probability": 0.9714285714285714
+                  "samples": 738,
+                  "probability": 0.9607046070460704
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 954,
-                  "probability": 0.9696016771488469
+                  "samples": 644,
+                  "probability": 0.9720496894409938
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 876,
-                  "probability": 0.9531963470319634
+                  "samples": 605,
+                  "probability": 0.9619834710743802
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 802,
-                  "probability": 0.9613466334164589
+                  "samples": 559,
+                  "probability": 0.9677996422182469
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 715,
-                  "probability": 0.9636363636363636
+                  "samples": 526,
+                  "probability": 0.973384030418251
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 676,
-                  "probability": 0.9585798816568047
+                  "samples": 508,
+                  "probability": 0.9566929133858267
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 582,
-                  "probability": 0.9725085910652921
+                  "samples": 445,
+                  "probability": 0.9640449438202248
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 555,
-                  "probability": 0.9657657657657658
+                  "samples": 390,
+                  "probability": 0.9512820512820512
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 494,
-                  "probability": 0.9757085020242915
+                  "samples": 356,
+                  "probability": 0.9859550561797753
                 },
                 {
                   "distanceBp": 39,
-                  "samples": 505,
-                  "probability": 0.9801980198019802
+                  "samples": 349,
+                  "probability": 0.9742120343839542
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 476,
-                  "probability": 0.9663865546218487
+                  "samples": 328,
+                  "probability": 0.975609756097561
                 },
                 {
                   "distanceBp": 41,
-                  "samples": 405,
-                  "probability": 0.9753086419753086
+                  "samples": 275,
+                  "probability": 0.9672727272727273
                 },
                 {
                   "distanceBp": 42,
-                  "samples": 361,
-                  "probability": 0.9806094182825484
+                  "samples": 239,
+                  "probability": 0.9707112970711297
                 },
                 {
                   "distanceBp": 43,
-                  "samples": 333,
-                  "probability": 0.975975975975976
+                  "samples": 242,
+                  "probability": 0.9586776859504132
                 },
                 {
                   "distanceBp": 44,
-                  "samples": 318,
-                  "probability": 0.9654088050314465
+                  "samples": 208,
+                  "probability": 0.9855769230769231
                 },
                 {
                   "distanceBp": 45,
-                  "samples": 292,
-                  "probability": 0.9794520547945206
-                },
-                {
-                  "distanceBp": 46,
-                  "samples": 275,
-                  "probability": 0.9709090909090909
-                },
-                {
-                  "distanceBp": 47,
-                  "samples": 304,
-                  "probability": 0.9638157894736842
-                },
-                {
-                  "distanceBp": 48,
-                  "samples": 243,
-                  "probability": 0.9629629629629629
-                },
-                {
-                  "distanceBp": 49,
-                  "samples": 205,
-                  "probability": 0.9804878048780488
-                },
-                {
-                  "distanceBp": 50,
-                  "samples": 224,
-                  "probability": 0.96875
+                  "samples": 223,
+                  "probability": 0.9641255605381166
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 13988,
-                  "probability": 0.60573348584501
+                  "samples": 9180,
+                  "probability": 0.5913943355119826
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 14516,
-                  "probability": 0.6583769633507853
+                  "samples": 8768,
+                  "probability": 0.6360629562043796
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 13575,
-                  "probability": 0.6921546961325967
+                  "samples": 8230,
+                  "probability": 0.670352369380316
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 10975,
-                  "probability": 0.7192710706150341
+                  "samples": 7398,
+                  "probability": 0.6931603135982698
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 10943,
-                  "probability": 0.7393767705382436
+                  "samples": 6881,
+                  "probability": 0.713413748001744
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9516,
-                  "probability": 0.7548339638503573
+                  "samples": 6368,
+                  "probability": 0.7320979899497487
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8591,
-                  "probability": 0.7782563147479921
+                  "samples": 5813,
+                  "probability": 0.7529674866678135
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 7677,
-                  "probability": 0.7930181060310016
+                  "samples": 5203,
+                  "probability": 0.7676340572746493
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 6449,
-                  "probability": 0.7959373546286246
+                  "samples": 4738,
+                  "probability": 0.7927395525538202
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 6210,
-                  "probability": 0.8181964573268921
+                  "samples": 4252,
+                  "probability": 0.8057384760112888
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 5584,
-                  "probability": 0.8329154727793696
+                  "samples": 3823,
+                  "probability": 0.8260528380852733
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 4748,
-                  "probability": 0.8327716933445661
+                  "samples": 3495,
+                  "probability": 0.8271816881258941
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 4278,
-                  "probability": 0.8359046283309958
+                  "samples": 3033,
+                  "probability": 0.8371249587866798
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3785,
-                  "probability": 0.8430647291941876
+                  "samples": 2729,
+                  "probability": 0.8512275558812752
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 3416,
-                  "probability": 0.857728337236534
+                  "samples": 2390,
+                  "probability": 0.8451882845188284
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 3031,
-                  "probability": 0.8521939953810623
+                  "samples": 2170,
+                  "probability": 0.871889400921659
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2698,
-                  "probability": 0.876945885841364
+                  "samples": 1970,
+                  "probability": 0.867005076142132
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2333,
-                  "probability": 0.8692670381483069
+                  "samples": 1703,
+                  "probability": 0.8725778038755138
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2144,
-                  "probability": 0.8684701492537313
+                  "samples": 1586,
+                  "probability": 0.8631778058007566
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1956,
-                  "probability": 0.8732106339468303
+                  "samples": 1447,
+                  "probability": 0.8818244644091223
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1750,
-                  "probability": 0.88
+                  "samples": 1191,
+                  "probability": 0.874895046179681
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1545,
-                  "probability": 0.8996763754045307
+                  "samples": 1106,
+                  "probability": 0.8833634719710669
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1427,
-                  "probability": 0.8857743517869656
+                  "samples": 949,
+                  "probability": 0.9199157007376185
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1211,
-                  "probability": 0.8976052848885219
+                  "samples": 858,
+                  "probability": 0.8986013986013986
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1089,
-                  "probability": 0.8953168044077136
+                  "samples": 816,
+                  "probability": 0.9031862745098039
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 975,
-                  "probability": 0.8943589743589744
+                  "samples": 710,
+                  "probability": 0.9070422535211268
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 927,
-                  "probability": 0.9018338727076591
+                  "samples": 670,
+                  "probability": 0.9059701492537313
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 750,
-                  "probability": 0.9053333333333333
+                  "samples": 556,
+                  "probability": 0.9064748201438849
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 760,
-                  "probability": 0.8986842105263158
+                  "samples": 516,
+                  "probability": 0.9186046511627907
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 652,
-                  "probability": 0.9141104294478528
+                  "samples": 470,
+                  "probability": 0.902127659574468
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 610,
-                  "probability": 0.9180327868852459
+                  "samples": 404,
+                  "probability": 0.9183168316831684
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 530,
-                  "probability": 0.909433962264151
+                  "samples": 361,
+                  "probability": 0.925207756232687
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 491,
-                  "probability": 0.9287169042769857
+                  "samples": 343,
+                  "probability": 0.9037900874635568
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 441,
-                  "probability": 0.9342403628117913
+                  "samples": 310,
+                  "probability": 0.896774193548387
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 424,
-                  "probability": 0.9221698113207547
+                  "samples": 266,
+                  "probability": 0.9360902255639098
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 377,
-                  "probability": 0.9230769230769231
+                  "samples": 255,
+                  "probability": 0.9411764705882353
                 },
                 {
                   "distanceBp": 38,
-                  "samples": 354,
-                  "probability": 0.943502824858757
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 320,
-                  "probability": 0.934375
+                  "samples": 254,
+                  "probability": 0.9291338582677166
                 },
                 {
                   "distanceBp": 40,
-                  "samples": 288,
-                  "probability": 0.9166666666666666
-                },
-                {
-                  "distanceBp": 41,
-                  "samples": 276,
-                  "probability": 0.9420289855072463
-                },
-                {
-                  "distanceBp": 42,
-                  "samples": 242,
-                  "probability": 0.9338842975206612
-                },
-                {
-                  "distanceBp": 43,
-                  "samples": 210,
-                  "probability": 0.9238095238095239
-                },
-                {
-                  "distanceBp": 44,
-                  "samples": 218,
-                  "probability": 0.9220183486238532
-                },
-                {
-                  "distanceBp": 45,
-                  "samples": 217,
-                  "probability": 0.9400921658986175
+                  "samples": 207,
+                  "probability": 0.8985507246376812
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 18134,
-                  "probability": 0.5912650270210654
+                  "samples": 12387,
+                  "probability": 0.5742310486800678
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 17574,
-                  "probability": 0.6226243313986571
+                  "samples": 11240,
+                  "probability": 0.6100533807829182
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 15614,
-                  "probability": 0.6483284232099398
+                  "samples": 10179,
+                  "probability": 0.631594459180666
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 12526,
-                  "probability": 0.661903241258183
+                  "samples": 8748,
+                  "probability": 0.6522633744855967
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 11615,
-                  "probability": 0.6973740852346104
+                  "samples": 7595,
+                  "probability": 0.6784726793943384
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 9622,
-                  "probability": 0.7040116399916857
+                  "samples": 6500,
+                  "probability": 0.6912307692307692
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 8195,
-                  "probability": 0.7276388041488713
+                  "samples": 5623,
+                  "probability": 0.712253245598435
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 6966,
-                  "probability": 0.7299741602067183
+                  "samples": 4730,
+                  "probability": 0.7260042283298097
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 5739,
-                  "probability": 0.734622756577801
+                  "samples": 4052,
+                  "probability": 0.7287759131293189
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 5061,
-                  "probability": 0.7494566291246789
+                  "samples": 3500,
+                  "probability": 0.7408571428571429
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4260,
-                  "probability": 0.75
+                  "samples": 2990,
+                  "probability": 0.7568561872909699
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3589,
-                  "probability": 0.7729172471440513
+                  "samples": 2485,
+                  "probability": 0.7613682092555332
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3062,
-                  "probability": 0.760287393860222
+                  "samples": 2203,
+                  "probability": 0.7571493418066273
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2576,
-                  "probability": 0.7725155279503105
+                  "samples": 1836,
+                  "probability": 0.7701525054466231
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2297,
-                  "probability": 0.7762298650413583
+                  "samples": 1529,
+                  "probability": 0.7867887508175277
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1938,
-                  "probability": 0.7956656346749226
+                  "samples": 1297,
+                  "probability": 0.7895142636854279
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1597,
-                  "probability": 0.7971195992485911
+                  "samples": 1111,
+                  "probability": 0.7821782178217822
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1424,
-                  "probability": 0.8139044943820225
+                  "samples": 945,
+                  "probability": 0.8317460317460318
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1171,
-                  "probability": 0.7899231426131511
+                  "samples": 790,
+                  "probability": 0.7974683544303798
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1062,
-                  "probability": 0.7843691148775894
+                  "samples": 701,
+                  "probability": 0.8259629101283881
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 905,
-                  "probability": 0.7977900552486188
+                  "samples": 601,
+                  "probability": 0.8336106489184693
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 782,
-                  "probability": 0.8222506393861893
+                  "samples": 570,
+                  "probability": 0.8175438596491228
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 726,
-                  "probability": 0.8319559228650137
+                  "samples": 418,
+                  "probability": 0.7918660287081339
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 615,
-                  "probability": 0.8113821138211382
+                  "samples": 414,
+                  "probability": 0.855072463768116
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 569,
-                  "probability": 0.8347978910369068
+                  "samples": 349,
+                  "probability": 0.8595988538681948
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 492,
-                  "probability": 0.8434959349593496
+                  "samples": 313,
+                  "probability": 0.8083067092651757
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 456,
-                  "probability": 0.8399122807017544
+                  "samples": 277,
+                  "probability": 0.8339350180505415
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 355,
-                  "probability": 0.7971830985915493
+                  "samples": 225,
+                  "probability": 0.8088888888888889
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 370,
-                  "probability": 0.8297297297297297
+                  "samples": 213,
+                  "probability": 0.863849765258216
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 296,
-                  "probability": 0.8040540540540541
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 254,
-                  "probability": 0.8188976377952756
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 233,
-                  "probability": 0.8497854077253219
+                  "samples": 206,
+                  "probability": 0.8252427184466019
                 }
               ]
             }
@@ -8920,686 +7627,601 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.25346221708831035,
-          "avgLeadPp": 1.9388093700095357,
+          "windowShare": 0.23252594154168255,
+          "avgLeadPp": 1.8616843456631682,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 4586,
-                  "probability": 0.6977758395115569
+                  "samples": 2746,
+                  "probability": 0.6755280407865987
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4901,
-                  "probability": 0.7794327688226892
+                  "samples": 2618,
+                  "probability": 0.7207792207792207
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4945,
-                  "probability": 0.8186046511627907
+                  "samples": 2636,
+                  "probability": 0.7928679817905918
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3968,
-                  "probability": 0.8490423387096774
+                  "samples": 2438,
+                  "probability": 0.8215750615258408
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4306,
-                  "probability": 0.8764514630747794
+                  "samples": 2257,
+                  "probability": 0.82233052724856
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3625,
-                  "probability": 0.8855172413793103
+                  "samples": 2306,
+                  "probability": 0.8655680832610582
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3574,
-                  "probability": 0.9171796306659206
+                  "samples": 2148,
+                  "probability": 0.888733705772812
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3281,
-                  "probability": 0.9207558671136848
+                  "samples": 1921,
+                  "probability": 0.91827173347215
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2751,
-                  "probability": 0.935659760087241
+                  "samples": 1766,
+                  "probability": 0.9269535673839184
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2736,
-                  "probability": 0.9418859649122807
+                  "samples": 1720,
+                  "probability": 0.9406976744186046
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2519,
-                  "probability": 0.9595077411671298
+                  "samples": 1513,
+                  "probability": 0.9471249173826835
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2210,
-                  "probability": 0.9588235294117647
+                  "samples": 1435,
+                  "probability": 0.956794425087108
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2090,
-                  "probability": 0.9655502392344497
+                  "samples": 1326,
+                  "probability": 0.9638009049773756
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1861,
-                  "probability": 0.9661472326706072
+                  "samples": 1283,
+                  "probability": 0.9641465315666407
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1720,
-                  "probability": 0.9593023255813954
+                  "samples": 1152,
+                  "probability": 0.9626736111111112
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1570,
-                  "probability": 0.9719745222929936
+                  "samples": 1079,
+                  "probability": 0.9657089898053753
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1356,
-                  "probability": 0.976401179941003
+                  "samples": 936,
+                  "probability": 0.9829059829059829
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1303,
-                  "probability": 0.9792785878741366
+                  "samples": 860,
+                  "probability": 0.9825581395348837
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1156,
-                  "probability": 0.9826989619377162
+                  "samples": 808,
+                  "probability": 0.9814356435643564
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1132,
-                  "probability": 0.9858657243816255
+                  "samples": 764,
+                  "probability": 0.9829842931937173
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 998,
-                  "probability": 0.9829659318637275
+                  "samples": 711,
+                  "probability": 0.9887482419127989
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 951,
-                  "probability": 0.9863301787592008
+                  "samples": 610,
+                  "probability": 0.9885245901639345
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 773,
-                  "probability": 0.9909443725743855
+                  "samples": 608,
+                  "probability": 0.9950657894736842
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 776,
-                  "probability": 0.9935567010309279
+                  "samples": 510,
+                  "probability": 0.9921568627450981
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 763,
-                  "probability": 0.9921363040629095
+                  "samples": 501,
+                  "probability": 0.9920159680638723
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 699,
-                  "probability": 0.9871244635193133
+                  "samples": 471,
+                  "probability": 0.9957537154989384
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 560,
-                  "probability": 0.9928571428571429
+                  "samples": 385,
+                  "probability": 0.9844155844155844
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 532,
-                  "probability": 0.9887218045112782
+                  "samples": 360,
+                  "probability": 0.9888888888888889
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 498,
-                  "probability": 0.9899598393574297
+                  "samples": 367,
+                  "probability": 0.9918256130790191
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 458,
-                  "probability": 0.9934497816593887
+                  "samples": 349,
+                  "probability": 0.9914040114613181
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 414,
-                  "probability": 0.9951690821256038
+                  "samples": 273,
+                  "probability": 0.9963369963369964
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 402,
-                  "probability": 0.9875621890547264
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 347,
+                  "samples": 234,
                   "probability": 1
                 },
                 {
+                  "distanceBp": 34,
+                  "samples": 232,
+                  "probability": 0.9956896551724138
+                },
+                {
                   "distanceBp": 35,
-                  "samples": 326,
-                  "probability": 0.99079754601227
+                  "samples": 212,
+                  "probability": 0.9858490566037735
                 },
                 {
                   "distanceBp": 36,
-                  "samples": 294,
-                  "probability": 0.9965986394557823
+                  "samples": 205,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 37,
-                  "samples": 246,
-                  "probability": 0.983739837398374
-                },
-                {
-                  "distanceBp": 38,
-                  "samples": 265,
-                  "probability": 0.9924528301886792
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 263,
-                  "probability": 0.9961977186311787
-                },
-                {
-                  "distanceBp": 40,
-                  "samples": 237,
-                  "probability": 0.9873417721518988
-                },
-                {
-                  "distanceBp": 41,
-                  "samples": 237,
-                  "probability": 0.9873417721518988
+                  "samples": 216,
+                  "probability": 0.9953703703703703
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 5293,
-                  "probability": 0.6406574721330058
+                  "samples": 3000,
+                  "probability": 0.6263333333333333
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5454,
-                  "probability": 0.7101210121012101
+                  "samples": 3009,
+                  "probability": 0.6590229312063809
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 5249,
-                  "probability": 0.7468089159839969
+                  "samples": 2914,
+                  "probability": 0.7158544955387783
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4152,
-                  "probability": 0.7632466281310212
+                  "samples": 2624,
+                  "probability": 0.7248475609756098
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4596,
-                  "probability": 0.8013489991296779
+                  "samples": 2485,
+                  "probability": 0.7653923541247485
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3953,
-                  "probability": 0.8155831014419428
+                  "samples": 2408,
+                  "probability": 0.8056478405315615
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3700,
-                  "probability": 0.851081081081081
+                  "samples": 2261,
+                  "probability": 0.8310482087571871
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3353,
-                  "probability": 0.8541604533253803
+                  "samples": 1969,
+                  "probability": 0.8293550025393601
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2791,
-                  "probability": 0.8602651379433894
+                  "samples": 1856,
+                  "probability": 0.8410560344827587
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2649,
-                  "probability": 0.8750471876179691
+                  "samples": 1709,
+                  "probability": 0.8589818607372732
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2412,
-                  "probability": 0.8955223880597015
+                  "samples": 1592,
+                  "probability": 0.8881909547738693
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2068,
-                  "probability": 0.9013539651837524
+                  "samples": 1377,
+                  "probability": 0.9026870007262164
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1963,
-                  "probability": 0.9220580743759552
+                  "samples": 1258,
+                  "probability": 0.910174880763116
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1701,
-                  "probability": 0.9047619047619048
+                  "samples": 1231,
+                  "probability": 0.8960194963444355
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1626,
-                  "probability": 0.9218942189421894
+                  "samples": 1091,
+                  "probability": 0.9120073327222732
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1476,
-                  "probability": 0.9254742547425474
+                  "samples": 1000,
+                  "probability": 0.914
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1348,
-                  "probability": 0.9391691394658753
+                  "samples": 918,
+                  "probability": 0.9226579520697168
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1185,
-                  "probability": 0.9308016877637131
+                  "samples": 807,
+                  "probability": 0.942998760842627
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1088,
-                  "probability": 0.9402573529411765
+                  "samples": 738,
+                  "probability": 0.9376693766937669
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1010,
-                  "probability": 0.9415841584158415
+                  "samples": 651,
+                  "probability": 0.9247311827956989
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 821,
-                  "probability": 0.9378806333739342
+                  "samples": 607,
+                  "probability": 0.9472817133443163
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 826,
-                  "probability": 0.9443099273607748
+                  "samples": 558,
+                  "probability": 0.9480286738351255
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 746,
-                  "probability": 0.9517426273458445
+                  "samples": 494,
+                  "probability": 0.9473684210526315
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 617,
-                  "probability": 0.9529983792544571
+                  "samples": 422,
+                  "probability": 0.9620853080568721
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 613,
-                  "probability": 0.9298531810766721
+                  "samples": 425,
+                  "probability": 0.9576470588235294
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 543,
-                  "probability": 0.9594843462246777
+                  "samples": 378,
+                  "probability": 0.955026455026455
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 457,
-                  "probability": 0.9540481400437637
+                  "samples": 300,
+                  "probability": 0.9566666666666667
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 428,
-                  "probability": 0.9485981308411215
+                  "samples": 316,
+                  "probability": 0.9683544303797469
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 412,
-                  "probability": 0.9757281553398058
+                  "samples": 271,
+                  "probability": 0.9630996309963099
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 366,
-                  "probability": 0.9699453551912568
+                  "samples": 226,
+                  "probability": 0.9734513274336283
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 356,
-                  "probability": 0.949438202247191
+                  "samples": 228,
+                  "probability": 0.9605263157894737
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 311,
-                  "probability": 0.977491961414791
-                },
-                {
-                  "distanceBp": 34,
-                  "samples": 298,
-                  "probability": 0.9697986577181208
-                },
-                {
-                  "distanceBp": 35,
-                  "samples": 254,
-                  "probability": 0.9606299212598425
-                },
-                {
-                  "distanceBp": 36,
                   "samples": 218,
-                  "probability": 0.9862385321100917
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 220,
-                  "probability": 0.9818181818181818
-                },
-                {
-                  "distanceBp": 39,
-                  "samples": 201,
-                  "probability": 0.9701492537313433
+                  "probability": 0.9587155963302753
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 6214,
-                  "probability": 0.6145799806887673
+                  "samples": 3672,
+                  "probability": 0.5866013071895425
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6170,
-                  "probability": 0.6614262560777958
+                  "samples": 3492,
+                  "probability": 0.6440435280641467
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6027,
-                  "probability": 0.6952049112327858
+                  "samples": 3225,
+                  "probability": 0.6815503875968992
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 4665,
-                  "probability": 0.7217577706323687
+                  "samples": 2941,
+                  "probability": 0.6960217613056784
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4705,
-                  "probability": 0.7366631243358129
+                  "samples": 2685,
+                  "probability": 0.719925512104283
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4066,
-                  "probability": 0.7621741269060501
+                  "samples": 2544,
+                  "probability": 0.7291666666666666
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3656,
-                  "probability": 0.7891137855579868
+                  "samples": 2346,
+                  "probability": 0.7595907928388747
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3207,
-                  "probability": 0.7960710944808232
+                  "samples": 2046,
+                  "probability": 0.7634408602150538
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2716,
-                  "probability": 0.7993372606774669
+                  "samples": 1833,
+                  "probability": 0.7970540098199672
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2594,
-                  "probability": 0.8261372397841172
+                  "samples": 1655,
+                  "probability": 0.802416918429003
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2342,
-                  "probability": 0.8381725021349274
+                  "samples": 1487,
+                  "probability": 0.8312037659717552
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1970,
-                  "probability": 0.8431472081218274
+                  "samples": 1370,
+                  "probability": 0.8394160583941606
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1744,
-                  "probability": 0.8411697247706422
+                  "samples": 1241,
+                  "probability": 0.8485092667203867
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1558,
-                  "probability": 0.8498074454428755
+                  "samples": 1031,
+                  "probability": 0.8622696411251213
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1348,
-                  "probability": 0.8486646884272997
+                  "samples": 890,
+                  "probability": 0.8314606741573034
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1264,
-                  "probability": 0.8623417721518988
+                  "samples": 803,
+                  "probability": 0.8792029887920298
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1091,
-                  "probability": 0.8735105407882676
+                  "samples": 770,
+                  "probability": 0.8675324675324675
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 973,
-                  "probability": 0.8715313463514902
+                  "samples": 626,
+                  "probability": 0.8865814696485623
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 835,
-                  "probability": 0.8766467065868263
+                  "samples": 580,
+                  "probability": 0.8793103448275862
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 770,
-                  "probability": 0.887012987012987
+                  "samples": 559,
+                  "probability": 0.8944543828264758
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 673,
-                  "probability": 0.8930163447251115
+                  "samples": 446,
+                  "probability": 0.8811659192825112
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 624,
-                  "probability": 0.9086538461538461
+                  "samples": 405,
+                  "probability": 0.891358024691358
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 563,
-                  "probability": 0.8863232682060391
+                  "samples": 347,
+                  "probability": 0.9106628242074928
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 480,
-                  "probability": 0.9125
+                  "samples": 307,
+                  "probability": 0.9120521172638436
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 427,
-                  "probability": 0.8992974238875878
+                  "samples": 295,
+                  "probability": 0.9050847457627119
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 386,
-                  "probability": 0.9067357512953368
+                  "samples": 248,
+                  "probability": 0.8951612903225806
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 367,
-                  "probability": 0.888283378746594
+                  "samples": 256,
+                  "probability": 0.92578125
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 304,
-                  "probability": 0.9144736842105263
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 293,
-                  "probability": 0.9044368600682594
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 267,
-                  "probability": 0.9026217228464419
-                },
-                {
-                  "distanceBp": 32,
-                  "samples": 235,
-                  "probability": 0.9148936170212766
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 219,
-                  "probability": 0.863013698630137
+                  "samples": 218,
+                  "probability": 0.908256880733945
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 7938,
-                  "probability": 0.5988914084152179
+                  "samples": 4978,
+                  "probability": 0.5713137806347931
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7556,
-                  "probability": 0.6236103758602435
+                  "samples": 4508,
+                  "probability": 0.6282165039929015
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6749,
-                  "probability": 0.6553563490887538
+                  "samples": 4029,
+                  "probability": 0.6232315711094565
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 5233,
-                  "probability": 0.6629084655073572
+                  "samples": 3477,
+                  "probability": 0.6468219729651998
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 4949,
-                  "probability": 0.6975146494241261
+                  "samples": 2893,
+                  "probability": 0.6774974075354303
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 4067,
-                  "probability": 0.6992869436931399
+                  "samples": 2543,
+                  "probability": 0.7034998033818325
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 3329,
-                  "probability": 0.7401622108741364
+                  "samples": 2181,
+                  "probability": 0.723062815222375
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2804,
-                  "probability": 0.7450071326676176
+                  "samples": 1758,
+                  "probability": 0.7309442548350398
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2348,
-                  "probability": 0.7333901192504259
+                  "samples": 1608,
+                  "probability": 0.7201492537313433
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2091,
-                  "probability": 0.7527498804399809
+                  "samples": 1383,
+                  "probability": 0.7288503253796096
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1729,
-                  "probability": 0.7455176402544823
+                  "samples": 1132,
+                  "probability": 0.7570671378091873
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1472,
-                  "probability": 0.7785326086956522
+                  "samples": 949,
+                  "probability": 0.7787144362486829
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1245,
-                  "probability": 0.7710843373493976
+                  "samples": 847,
+                  "probability": 0.7650531286894924
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1034,
-                  "probability": 0.7756286266924565
+                  "samples": 645,
+                  "probability": 0.7488372093023256
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 909,
-                  "probability": 0.7733773377337734
+                  "samples": 553,
+                  "probability": 0.8083182640144665
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 766,
-                  "probability": 0.7911227154046997
+                  "samples": 504,
+                  "probability": 0.8035714285714286
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 657,
-                  "probability": 0.802130898021309
+                  "samples": 413,
+                  "probability": 0.7651331719128329
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 559,
-                  "probability": 0.815742397137746
+                  "samples": 360,
+                  "probability": 0.8472222222222222
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 441,
-                  "probability": 0.8163265306122449
+                  "samples": 278,
+                  "probability": 0.7913669064748201
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 400,
-                  "probability": 0.7975
+                  "samples": 254,
+                  "probability": 0.8661417322834646
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 340,
-                  "probability": 0.7617647058823529
-                },
-                {
-                  "distanceBp": 23,
-                  "samples": 314,
-                  "probability": 0.8535031847133758
-                },
-                {
-                  "distanceBp": 24,
-                  "samples": 279,
-                  "probability": 0.8637992831541219
-                },
-                {
-                  "distanceBp": 25,
-                  "samples": 240,
-                  "probability": 0.8291666666666667
-                },
-                {
-                  "distanceBp": 26,
-                  "samples": 232,
-                  "probability": 0.8491379310344828
+                  "samples": 229,
+                  "probability": 0.851528384279476
                 }
               ]
             }
@@ -9608,616 +8230,576 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.25023166072176595,
-          "avgLeadPp": 2.2224276752837024,
+          "windowShare": 0.26489075849160365,
+          "avgLeadPp": 2.1301924408650383,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3087,
-                  "probability": 0.7162293488824101
+                  "samples": 2054,
+                  "probability": 0.6742940603700097
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3273,
-                  "probability": 0.7812404521845402
+                  "samples": 1986,
+                  "probability": 0.74269889224572
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3189,
-                  "probability": 0.821574161179053
+                  "samples": 2048,
+                  "probability": 0.78076171875
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2697,
-                  "probability": 0.8427882832777159
+                  "samples": 1860,
+                  "probability": 0.8145161290322581
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2946,
-                  "probability": 0.8730482009504412
+                  "samples": 1764,
+                  "probability": 0.8537414965986394
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2489,
-                  "probability": 0.8907191643230213
+                  "samples": 1740,
+                  "probability": 0.8816091954022989
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2490,
-                  "probability": 0.9072289156626506
+                  "samples": 1666,
+                  "probability": 0.8913565426170468
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2299,
-                  "probability": 0.9299695519791213
+                  "samples": 1554,
+                  "probability": 0.924066924066924
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2010,
-                  "probability": 0.9238805970149254
+                  "samples": 1482,
+                  "probability": 0.9244264507422402
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1964,
-                  "probability": 0.9424643584521385
+                  "samples": 1381,
+                  "probability": 0.9268645908761767
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1810,
-                  "probability": 0.949171270718232
+                  "samples": 1294,
+                  "probability": 0.9319938176197836
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1516,
-                  "probability": 0.9544854881266491
+                  "samples": 1174,
+                  "probability": 0.9497444633730835
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1534,
-                  "probability": 0.9595827900912647
+                  "samples": 1077,
+                  "probability": 0.9721448467966574
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1356,
-                  "probability": 0.9682890855457227
+                  "samples": 983,
+                  "probability": 0.9664292980671414
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1305,
-                  "probability": 0.9747126436781609
+                  "samples": 910,
+                  "probability": 0.9703296703296703
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1168,
-                  "probability": 0.9674657534246576
+                  "samples": 893,
+                  "probability": 0.9742441209406495
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1062,
-                  "probability": 0.9717514124293786
+                  "samples": 821,
+                  "probability": 0.9707673568818515
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1000,
-                  "probability": 0.977
+                  "samples": 740,
+                  "probability": 0.9797297297297297
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 884,
-                  "probability": 0.9852941176470589
+                  "samples": 725,
+                  "probability": 0.9779310344827586
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 807,
-                  "probability": 0.9789343246592317
+                  "samples": 650,
+                  "probability": 0.98
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 796,
-                  "probability": 0.9886934673366834
+                  "samples": 607,
+                  "probability": 0.9818780889621087
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 709,
-                  "probability": 0.9788434414668548
+                  "samples": 554,
+                  "probability": 0.9963898916967509
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 651,
-                  "probability": 0.9877112135176651
+                  "samples": 502,
+                  "probability": 0.9880478087649402
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 552,
-                  "probability": 0.9836956521739131
+                  "samples": 404,
+                  "probability": 0.9851485148514851
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 559,
-                  "probability": 0.9892665474060823
+                  "samples": 415,
+                  "probability": 0.9855421686746988
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 493,
-                  "probability": 0.9898580121703854
+                  "samples": 391,
+                  "probability": 0.989769820971867
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 457,
-                  "probability": 0.9934354485776805
+                  "samples": 330,
+                  "probability": 0.996969696969697
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 414,
-                  "probability": 0.9806763285024155
+                  "samples": 294,
+                  "probability": 0.9931972789115646
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 379,
-                  "probability": 0.9894459102902374
+                  "samples": 295,
+                  "probability": 0.9898305084745763
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 319,
-                  "probability": 0.987460815047022
+                  "samples": 262,
+                  "probability": 0.9923664122137404
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 340,
-                  "probability": 0.9911764705882353
+                  "samples": 236,
+                  "probability": 1
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 289,
-                  "probability": 0.9792387543252595
+                  "samples": 228,
+                  "probability": 0.9912280701754386
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 266,
-                  "probability": 0.9924812030075187
+                  "samples": 212,
+                  "probability": 0.9952830188679245
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 265,
-                  "probability": 0.9962264150943396
-                },
-                {
-                  "distanceBp": 36,
-                  "samples": 259,
-                  "probability": 0.9806949806949807
-                },
-                {
-                  "distanceBp": 37,
-                  "samples": 223,
-                  "probability": 1
+                  "samples": 206,
+                  "probability": 0.9854368932038835
                 }
               ],
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3312,
-                  "probability": 0.658816425120773
+                  "samples": 2322,
+                  "probability": 0.6283376399655469
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3651,
-                  "probability": 0.7118597644480964
+                  "samples": 2286,
+                  "probability": 0.6666666666666666
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3545,
-                  "probability": 0.7559943582510579
+                  "samples": 2214,
+                  "probability": 0.6973803071364046
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2962,
-                  "probability": 0.7586090479405807
+                  "samples": 2087,
+                  "probability": 0.7264015333013896
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3011,
-                  "probability": 0.8067087346396546
+                  "samples": 1879,
+                  "probability": 0.7791378392762107
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2697,
-                  "probability": 0.8223952539859103
+                  "samples": 1859,
+                  "probability": 0.7972027972027972
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2575,
-                  "probability": 0.843495145631068
+                  "samples": 1772,
+                  "probability": 0.8239277652370203
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2239,
-                  "probability": 0.84323358642251
+                  "samples": 1678,
+                  "probability": 0.8379022646007152
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2031,
-                  "probability": 0.8567208271787297
+                  "samples": 1507,
+                  "probability": 0.8573324485733245
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1946,
-                  "probability": 0.8751284686536485
+                  "samples": 1319,
+                  "probability": 0.8688400303260045
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1760,
-                  "probability": 0.8954545454545455
+                  "samples": 1233,
+                  "probability": 0.8710462287104623
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1559,
-                  "probability": 0.8922386144964721
+                  "samples": 1169,
+                  "probability": 0.8828058169375534
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1401,
-                  "probability": 0.8993576017130621
+                  "samples": 1061,
+                  "probability": 0.8925541941564562
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1361,
-                  "probability": 0.9052167523879501
+                  "samples": 992,
+                  "probability": 0.9153225806451613
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1198,
-                  "probability": 0.9156928213689483
+                  "samples": 918,
+                  "probability": 0.9074074074074074
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1082,
-                  "probability": 0.9158964879852126
+                  "samples": 838,
+                  "probability": 0.9033412887828163
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 943,
-                  "probability": 0.9374337221633086
+                  "samples": 704,
+                  "probability": 0.9460227272727273
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 939,
-                  "probability": 0.9382321618743344
+                  "samples": 673,
+                  "probability": 0.9361069836552749
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 812,
-                  "probability": 0.9458128078817734
+                  "samples": 656,
+                  "probability": 0.961890243902439
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 730,
-                  "probability": 0.9452054794520548
+                  "samples": 541,
+                  "probability": 0.9482439926062847
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 681,
-                  "probability": 0.933920704845815
+                  "samples": 547,
+                  "probability": 0.9396709323583181
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 610,
-                  "probability": 0.9459016393442623
+                  "samples": 482,
+                  "probability": 0.9356846473029046
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 563,
-                  "probability": 0.9431616341030196
+                  "samples": 435,
+                  "probability": 0.9632183908045977
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 487,
-                  "probability": 0.946611909650924
+                  "samples": 380,
+                  "probability": 0.9631578947368421
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 449,
-                  "probability": 0.9576837416481069
+                  "samples": 339,
+                  "probability": 0.9646017699115044
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 426,
-                  "probability": 0.9624413145539906
+                  "samples": 327,
+                  "probability": 0.9388379204892966
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 396,
-                  "probability": 0.9696969696969697
+                  "samples": 266,
+                  "probability": 0.943609022556391
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 353,
-                  "probability": 0.9660056657223796
+                  "samples": 260,
+                  "probability": 0.9769230769230769
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 320,
-                  "probability": 0.96875
-                },
-                {
-                  "distanceBp": 31,
-                  "samples": 274,
-                  "probability": 0.9635036496350365
+                  "samples": 245,
+                  "probability": 0.9795918367346939
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 264,
-                  "probability": 0.9545454545454546
-                },
-                {
-                  "distanceBp": 33,
-                  "samples": 253,
-                  "probability": 0.9683794466403162
+                  "samples": 200,
+                  "probability": 0.97
                 }
               ],
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 3848,
-                  "probability": 0.6070686070686071
+                  "samples": 2775,
+                  "probability": 0.601081081081081
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4244,
-                  "probability": 0.6722431668237512
+                  "samples": 2647,
+                  "probability": 0.6365697015489233
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3825,
-                  "probability": 0.7108496732026144
+                  "samples": 2563,
+                  "probability": 0.6699180647678502
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3210,
-                  "probability": 0.7252336448598131
+                  "samples": 2313,
+                  "probability": 0.6964980544747081
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3222,
-                  "probability": 0.7588454376163873
+                  "samples": 2159,
+                  "probability": 0.7197776748494673
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2740,
-                  "probability": 0.756934306569343
+                  "samples": 1962,
+                  "probability": 0.7283384301732926
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2525,
-                  "probability": 0.7778217821782178
+                  "samples": 1822,
+                  "probability": 0.7639956092206367
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2304,
-                  "probability": 0.8020833333333334
+                  "samples": 1623,
+                  "probability": 0.773875539125077
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1908,
-                  "probability": 0.7940251572327044
+                  "samples": 1484,
+                  "probability": 0.8079514824797843
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1863,
-                  "probability": 0.8234031132581857
+                  "samples": 1316,
+                  "probability": 0.8206686930091185
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1728,
-                  "probability": 0.8379629629629629
+                  "samples": 1177,
+                  "probability": 0.8411214953271028
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1379,
-                  "probability": 0.8317621464829587
+                  "samples": 1116,
+                  "probability": 0.8261648745519713
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1283,
-                  "probability": 0.8425565081839439
+                  "samples": 933,
+                  "probability": 0.8338692390139335
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1118,
-                  "probability": 0.8586762075134168
+                  "samples": 869,
+                  "probability": 0.8515535097813579
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1093,
-                  "probability": 0.869167429094236
+                  "samples": 805,
+                  "probability": 0.8571428571428571
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 928,
-                  "probability": 0.8566810344827587
+                  "samples": 742,
+                  "probability": 0.8787061994609164
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 827,
-                  "probability": 0.8923821039903265
+                  "samples": 588,
+                  "probability": 0.8775510204081632
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 680,
-                  "probability": 0.8720588235294118
+                  "samples": 565,
+                  "probability": 0.8761061946902655
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 692,
-                  "probability": 0.8641618497109826
+                  "samples": 498,
+                  "probability": 0.8433734939759037
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 601,
-                  "probability": 0.8735440931780366
+                  "samples": 470,
+                  "probability": 0.8829787234042553
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 572,
-                  "probability": 0.8951048951048951
+                  "samples": 396,
+                  "probability": 0.8888888888888888
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 494,
-                  "probability": 0.9068825910931174
+                  "samples": 362,
+                  "probability": 0.8674033149171271
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 432,
-                  "probability": 0.8958333333333334
+                  "samples": 300,
+                  "probability": 0.93
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 358,
-                  "probability": 0.9134078212290503
+                  "samples": 284,
+                  "probability": 0.897887323943662
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 332,
-                  "probability": 0.9036144578313253
+                  "samples": 249,
+                  "probability": 0.9236947791164659
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 261,
-                  "probability": 0.9003831417624522
+                  "samples": 229,
+                  "probability": 0.925764192139738
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 290,
-                  "probability": 0.9137931034482759
-                },
-                {
-                  "distanceBp": 29,
-                  "samples": 232,
-                  "probability": 0.9008620689655172
-                },
-                {
-                  "distanceBp": 30,
-                  "samples": 231,
-                  "probability": 0.8787878787878788
+                  "samples": 209,
+                  "probability": 0.9043062200956937
                 }
               ],
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5064,
-                  "probability": 0.5985387045813586
+                  "samples": 3761,
+                  "probability": 0.5886732252060622
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5010,
-                  "probability": 0.6415169660678642
+                  "samples": 3426,
+                  "probability": 0.6059544658493871
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4412,
-                  "probability": 0.6570716228467816
+                  "samples": 3180,
+                  "probability": 0.6449685534591195
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3661,
-                  "probability": 0.6806883365200764
+                  "samples": 2664,
+                  "probability": 0.6681681681681682
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3422,
-                  "probability": 0.7121566335476329
+                  "samples": 2416,
+                  "probability": 0.6966059602649006
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2763,
-                  "probability": 0.7300036192544336
+                  "samples": 1996,
+                  "probability": 0.6973947895791583
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2414,
-                  "probability": 0.7274233637116818
+                  "samples": 1746,
+                  "probability": 0.7004581901489118
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2093,
-                  "probability": 0.736741519350215
+                  "samples": 1525,
+                  "probability": 0.7304918032786886
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1697,
-                  "probability": 0.7507365939893931
+                  "samples": 1259,
+                  "probability": 0.7529785544082606
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1489,
-                  "probability": 0.7528542646071189
+                  "samples": 1080,
+                  "probability": 0.7731481481481481
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1284,
-                  "probability": 0.780373831775701
+                  "samples": 972,
+                  "probability": 0.7777777777777778
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1102,
-                  "probability": 0.7604355716878403
+                  "samples": 778,
+                  "probability": 0.7583547557840618
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 901,
-                  "probability": 0.7425083240843507
+                  "samples": 698,
+                  "probability": 0.7535816618911175
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 778,
-                  "probability": 0.7853470437017995
+                  "samples": 577,
+                  "probability": 0.7850953206239168
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 709,
-                  "probability": 0.7968970380818053
+                  "samples": 499,
+                  "probability": 0.781563126252505
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 577,
-                  "probability": 0.8058925476603119
+                  "samples": 399,
+                  "probability": 0.7969924812030075
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 460,
-                  "probability": 0.8173913043478261
+                  "samples": 340,
+                  "probability": 0.8088235294117647
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 433,
-                  "probability": 0.8106235565819861
+                  "samples": 264,
+                  "probability": 0.8106060606060606
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 343,
-                  "probability": 0.7755102040816326
-                },
-                {
-                  "distanceBp": 21,
-                  "samples": 355,
-                  "probability": 0.7943661971830986
-                },
-                {
-                  "distanceBp": 22,
                   "samples": 260,
                   "probability": 0.8192307692307692
                 },
                 {
-                  "distanceBp": 23,
-                  "samples": 237,
-                  "probability": 0.8270042194092827
+                  "distanceBp": 21,
+                  "samples": 213,
+                  "probability": 0.812206572769953
                 },
                 {
-                  "distanceBp": 24,
-                  "samples": 221,
-                  "probability": 0.8552036199095022
+                  "distanceBp": 22,
+                  "samples": 208,
+                  "probability": 0.875
                 }
               ]
             }
