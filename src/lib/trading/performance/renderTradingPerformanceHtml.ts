@@ -186,7 +186,7 @@ function renderTableMeta({
   if (total <= shown) {
     return "";
   }
-  return `<p class="markets-table-meta">Showing the ${shown.toLocaleString()} most recent of ${total.toLocaleString()} markets. The chart above includes every market.</p>`;
+  return `<p class="markets-table-meta">Below are the most recent ${shown.toLocaleString()} of ${total.toLocaleString()} trades.</p>`;
 }
 
 function renderRolePill({
