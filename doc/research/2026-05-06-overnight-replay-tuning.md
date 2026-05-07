@@ -928,3 +928,176 @@ non-geo-blocked region. With this in place, `bun alea candles:sync
 --sources binance --products perp` covers the full historical-to-
 current range without manual intervention.
 
+### 13:55 EDT (2026-05-07) — competing in US hours without an hour gate
+
+Goal for this pass: try to make the weak 16-23 UTC slice tradable
+without simply leaning on the "avoid US hours" hypothesis. Treated
+16-23 UTC as an evaluation slice only, then tested source choice,
+edge floors, chosen-side spread, taker ask price, placement timing,
+momentum, and asset exclusions.
+
+Analyzer patch: `src/bin/research/sweepReplay.ts` now reports a
+`us` sweep, UTC-hour buckets, and a hybrid taker/maker lens. It also
+supports spread/ask/timing filters and preserves outer constraints
+on union filters.
+
+#### US-hours findings
+
+1. **High edge alone helps, but is low-volume.** Across the four
+   training sources, `minEdge>=0.15` in 16-23 UTC produces roughly
+   +$275 to +$388 taker PnL on only 44-49 orders. This is a useful
+   "compete only when the model screams" fallback, but not enough
+   flow to be the main answer.
+
+2. **Tight chosen-side spread is the better structural lever.**
+   At `minEdge>=0.06`, requiring `chosenSpread<=0.08` flips US hours
+   positive across sources:
+
+| Training source | US taker PnL |   n |
+| --------------- | -----------: | --: |
+| binance/perp    |        +$293 | 208 |
+| binance/spot    |        +$475 | 209 |
+| coinbase/perp   |        +$432 | 198 |
+| coinbase/spot   |        +$366 | 201 |
+
+This is not a clock rule: it says compete in tighter Polymarket
+markets where taker spread drag is bounded and the book is not
+obviously stale/wide.
+
+3. **DOGE is structurally bad in US hours.** At `minEdge>=0.06`,
+   DOGE US-hours taker PnL is negative on every source (about
+   -$235 to -$388) with ~52-57% win rate. XRP is weaker/mixed and
+   is the asset that made the all-hours time split least stable.
+
+#### Best non-hour candidate from this pass
+
+```json
+{
+  "minEdge": 0.06,
+  "maxChosenSpread": 0.08,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+Execution lens: all taker. No hour gate.
+
+All-hours results on the same 35h tape:
+
+| Training source |   n | Taker PnL | 1.0-tick slippage PnL | US-hours PnL |
+| --------------- | --: | --------: | --------------------: | -----------: |
+| binance/perp    | 265 |     +$485 |                 +$386 |        +$284 |
+| binance/spot    | 273 |     +$628 |                 +$524 |        +$440 |
+| coinbase/perp   | 259 |     +$673 |                 +$572 |        +$418 |
+| coinbase/spot   | 267 |     +$670 |                 +$567 |        +$406 |
+
+Stability notes:
+
+- coinbase/perp is the cleanest version: all four chronological
+  all-hours buckets are positive (+$207, +$226, +$20, +$221 taker).
+- coinbase/spot is effectively the same total (+$670), with one
+  near-flat all-hours bucket (-$1 taker) and the other three positive.
+- binance-trained tables are positive overall but still show a weak
+  10-18 UTC bucket, so I would not prefer them for this specific
+  candidate.
+- US-hours split is positive in the two real US-session chunks on
+  every source; the tiny middle buckets have only 2-5 orders because
+  the replay span crosses non-US time between US sessions.
+
+#### Updated interpretation
+
+The hour filter is still the highest-PnL thing found so far, but it
+is not the only path. A tighter-spread, non-DOGE/non-XRP taker policy
+gets most of the way to the conservative Asian-only result while
+actively trading US hours:
+
+- It beats the simple all-hours `minEdge>=0.06` baseline on every
+  training source.
+- It turns 16-23 UTC from roughly flat/negative into +$284 to +$440.
+- It remains profitable after a full 1.0-tick taker slippage haircut.
+
+This is the current best "do not lean on hours" candidate. Still not
+production-ready: 35h is short, DOGE/XRP exclusion may be partly
+sample-specific, and real taker depth walking still needs to replace
+the simple best-ask-plus-slippage model.
+
+### 14:20 EDT (2026-05-07) — source consensus as an anti-overfit lever
+
+Next experiment: instead of adding another market-hour rule, require
+multiple independently-trained candle sources to agree on the same
+asset/window/side before taking the trade. This is a direct guard
+against one probability table finding a source-specific artifact in
+the 35h replay.
+
+Research patch: `src/bin/research/compareReplayConsensus.ts` loads
+the four replay JSONLs from the same tape and evaluates each source
+as the execution table while requiring 1/2/3/4 sources to pass the
+same filter and agree on direction. PnL is still measured with the
+execution source's own taker ask/fee telemetry.
+
+#### Conservative consensus candidate
+
+Base filter:
+
+```json
+{
+  "minEdge": 0.06,
+  "maxChosenSpread": 0.08,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+Additional confirmation: all 4 sources must agree on asset/window/side.
+No hour gate.
+
+| Execution source |   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL | US win |
+| ---------------- | --: | --------: | --------------------: | ------------: | -----------: | -----: |
+| binance/perp     | 202 |     +$586 |                 +$505 |           +$3 |        +$433 |    68% |
+| binance/spot     | 202 |     +$586 |                 +$505 |           +$3 |        +$433 |    68% |
+| coinbase/perp    | 202 |     +$587 |                 +$506 |           +$3 |        +$433 |    68% |
+| coinbase/spot    | 202 |     +$586 |                 +$505 |           +$3 |        +$433 |    68% |
+
+This is lower headline PnL than the single-source coinbase/perp
+version (+$673), but it is much cleaner: every chronological quarter
+is positive, the US slice is strongly positive, and the result is
+basically invariant to which source is treated as execution. This is
+the best current candidate if the priority is "improve PnL without
+just fitting the replay."
+
+#### More aggressive consensus candidate
+
+Base filter:
+
+```json
+{
+  "minEdge": 0.06,
+  "maxChosenSpread": 0.08,
+  "excludeAssets": ["doge"]
+}
+```
+
+Additional confirmation: at least 3 of 4 sources must agree. Execution
+source: coinbase/perp. No hour gate.
+
+|   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL | US win |
+| --: | --------: | --------------------: | ------------: | -----------: | -----: |
+| 263 |     +$730 |                 +$627 |          +$30 |        +$569 |    68% |
+
+This beats the conservative consensus candidate and improves the US
+slice materially, but it keeps XRP and depends on a specific execution
+source plus a 3-of-4 vote. I would track it as the aggressive variant,
+not the default.
+
+#### Interpretation
+
+Source consensus is a more defensible way to compete in US hours than
+the earlier hour whitelist. It trades fewer events, but it does so
+because independent probability tables agree, not because we found a
+profitable clock bucket on a short sample. The best next implementation
+path would be:
+
+1. Use the all-4 `BTC/ETH/SOL + minEdge>=0.06 + chosenSpread<=0.08`
+   rule as the conservative replay target.
+2. Keep the 3-of-4 `no DOGE` rule as an aggressive comparison.
+3. Re-run both on a longer tape before promoting either to live
+   config, and replace the simple 1-tick haircut with true taker depth
+   walking.

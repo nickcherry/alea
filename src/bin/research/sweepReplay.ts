@@ -12,7 +12,7 @@
  * data and never touches the live decision path.
  *
  * Usage:
- *   bun src/bin/research/sweepReplay.ts <jsonl-path> [--sweep min-edge|asset|regime|remaining|queue|side|combos]
+ *   bun src/bin/research/sweepReplay.ts <jsonl-path> [--sweep min-edge|asset|regime|remaining|queue|side|hour|us|combos]
  *   bun src/bin/research/sweepReplay.ts <jsonl-path> --filter '{"minEdge":0.10,"assets":["btc","eth"]}'
  */
 import { readFileSync } from "node:fs";
@@ -59,6 +59,7 @@ type ReplayOrder = {
   readonly chosenSpread: number | null;
   readonly oppositeSpread: number | null;
   readonly chosenAskSizeAtBestAsk: number | null;
+  readonly chosenAskDepthRatio: number | null;
 };
 
 type FilterSpec = {
@@ -104,6 +105,13 @@ type FilterSpec = {
   // Time-of-day gate (UTC hours, inclusive on both ends)
   readonly hoursUtc?: readonly number[];
   readonly excludeHoursUtc?: readonly number[];
+  readonly excludeAssetHoursUtc?: readonly string[];
+  readonly minSecondsIntoWindow?: number;
+  readonly maxSecondsIntoWindow?: number;
+  readonly minChosenAskDepthRatio?: number;
+  readonly maxChosenAskDepthRatio?: number;
+  readonly maxTakerAskPrice?: number;
+  readonly minTakerAskPrice?: number;
   readonly minPreEntry30sFavorableDelta?: number; // signed: positive == favorable for our side
   readonly maxPreEntry30sBelowLimit?: number; // skip if too many trades already cut through limit
   readonly minPreEntry30sTradeCount?: number;
@@ -131,6 +139,7 @@ type SweepResult = {
   readonly touch: LensMetrics;
   readonly allFilled: LensMetrics;
   readonly taker?: LensMetrics;
+  readonly hybrid?: LensMetrics;
 };
 
 /**
@@ -152,30 +161,48 @@ function takerFeeUsd({
   readonly price: number;
   readonly feeBps?: number;
 }): number {
-  if (shares <= 0 || price <= 0 || price >= 1 || feeBps <= 0) return 0;
+  if (shares <= 0 || price <= 0 || price >= 1 || feeBps <= 0) {
+    return 0;
+  }
   return shares * (feeBps / 10_000) * price * (1 - price);
 }
 
-function loadOrders({ path }: { readonly path: string }): readonly ReplayOrder[] {
+function loadOrders({
+  path,
+}: {
+  readonly path: string;
+}): readonly ReplayOrder[] {
   const text = readFileSync(path, "utf8");
   const out: ReplayOrder[] = [];
   for (const line of text.split("\n")) {
-    if (line.length === 0) continue;
+    if (line.length === 0) {
+      continue;
+    }
     let parsed: unknown;
     try {
       parsed = JSON.parse(line);
     } catch {
       continue;
     }
-    if (typeof parsed !== "object" || parsed === null) continue;
+    if (typeof parsed !== "object" || parsed === null) {
+      continue;
+    }
     const obj = parsed as Record<string, unknown>;
-    if (obj["type"] !== "window_finalized") continue;
+    if (obj["type"] !== "window_finalized") {
+      continue;
+    }
     const orders = obj["orders"];
-    if (!Array.isArray(orders)) continue;
+    if (!Array.isArray(orders)) {
+      continue;
+    }
     for (const o of orders) {
-      if (typeof o !== "object" || o === null) continue;
+      if (typeof o !== "object" || o === null) {
+        continue;
+      }
       const order = parseOrder(o as Record<string, unknown>);
-      if (order !== null) out.push(order);
+      if (order !== null) {
+        out.push(order);
+      }
     }
   }
   return out;
@@ -197,19 +224,22 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
   const officialRaw = raw["officialOutcome"];
   const officialOutcome: LeadingSide | null =
     officialRaw === "up" || officialRaw === "down" ? officialRaw : null;
-  if (officialOutcome === null) return null;
+  if (officialOutcome === null) {
+    return null;
+  }
 
   const regimeRaw = raw["regime"];
-  const regimeAlgoLabel =
-    typeof regimeRaw === "string" ? regimeRaw : null;
+  const regimeAlgoLabel = typeof regimeRaw === "string" ? regimeRaw : null;
 
   const ept = raw["entryPriceTelemetry"] as
     | Record<string, unknown>
     | null
     | undefined;
-  const eptLookbacks = (ept !== null && ept !== undefined
-    ? (ept["lookbacks"] as unknown[] | undefined) ?? []
-    : []) as Array<Record<string, unknown>>;
+  const eptLookbacks = (
+    ept !== null && ept !== undefined
+      ? ((ept["lookbacks"] as unknown[] | undefined) ?? [])
+      : []
+  ) as Array<Record<string, unknown>>;
   const findLookback = (ms: number) =>
     eptLookbacks.find((lb) => lb["lookbackMs"] === ms);
   const lb5 = findLookback(5000);
@@ -226,9 +256,11 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
     | Record<string, unknown>
     | null
     | undefined;
-  const pmtLookbacks = (pmt !== null && pmt !== undefined
-    ? (pmt["lookbacks"] as unknown[] | undefined) ?? []
-    : []) as Array<Record<string, unknown>>;
+  const pmtLookbacks = (
+    pmt !== null && pmt !== undefined
+      ? ((pmt["lookbacks"] as unknown[] | undefined) ?? [])
+      : []
+  ) as Array<Record<string, unknown>>;
   const pmt15 = pmtLookbacks.find((lb) => lb["lookbackMs"] === 15000);
   const pmt30 = pmtLookbacks.find((lb) => lb["lookbackMs"] === 30000);
 
@@ -238,16 +270,28 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
     | undefined;
   const takerBestAskFillSize =
     tc !== null && tc !== undefined && typeof tc["fillSize"] === "number"
-      ? (tc["fillSize"] as number)
+      ? tc["fillSize"]
       : null;
   const takerBestAskAvgPrice =
     tc !== null && tc !== undefined && typeof tc["avgPrice"] === "number"
-      ? (tc["avgPrice"] as number)
+      ? tc["avgPrice"]
       : null;
   const takerEstFeeUsd =
     tc !== null && tc !== undefined && typeof tc["estFeeUsd"] === "number"
-      ? (tc["estFeeUsd"] as number)
+      ? tc["estFeeUsd"]
       : null;
+  const chosenBestAsk =
+    ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestAsk"]) : null;
+  const chosenAskSizeAtBestAsk =
+    ebt !== null && ebt !== undefined
+      ? numOrNull(ebt["chosenAskSizeAtBestAsk"])
+      : null;
+  const chosenAskDepthRatio =
+    chosenAskSizeAtBestAsk === null ||
+    takerBestAskFillSize === null ||
+    takerBestAskFillSize <= 0
+      ? null
+      : chosenAskSizeAtBestAsk / takerBestAskFillSize;
 
   return {
     asset: asset as Asset,
@@ -269,7 +313,7 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
     officialOutcome,
     proxyOutcome:
       raw["proxyOutcome"] === "up" || raw["proxyOutcome"] === "down"
-        ? (raw["proxyOutcome"] as LeadingSide)
+        ? raw["proxyOutcome"]
         : null,
     takerBestAskFillSize,
     takerBestAskAvgPrice,
@@ -283,22 +327,29 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
     entry30sDeltaBp: lb30 ? numOrNull(lb30["deltaBp"]) : null,
     entry60sDeltaBp: lb60 ? numOrNull(lb60["deltaBp"]) : null,
     preEntry30sPriceDelta: pmt30 ? numOrNull(pmt30["priceDelta"]) : null,
-    preEntry30sBelowLimit: pmt30 ? numOrNull(pmt30["belowLimitTradeCount"]) : null,
-    preEntry30sAtOrBelow: pmt30 ? numOrNull(pmt30["atOrBelowLimitTradeCount"]) : null,
+    preEntry30sBelowLimit: pmt30
+      ? numOrNull(pmt30["belowLimitTradeCount"])
+      : null,
+    preEntry30sAtOrBelow: pmt30
+      ? numOrNull(pmt30["atOrBelowLimitTradeCount"])
+      : null,
     preEntry30sTradeCount: pmt30 ? numOrNull(pmt30["tradeCount"]) : null,
-    preEntry15sBelowLimit: pmt15 ? numOrNull(pmt15["belowLimitTradeCount"]) : null,
-    chosenBestAsk:
-      ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestAsk"]) : null,
+    preEntry15sBelowLimit: pmt15
+      ? numOrNull(pmt15["belowLimitTradeCount"])
+      : null,
+    chosenBestAsk,
     chosenBestBid:
-      ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestBid"]) : null,
+      ebt !== null && ebt !== undefined
+        ? numOrNull(ebt["chosenBestBid"])
+        : null,
     chosenSpread:
       ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenSpread"]) : null,
     oppositeSpread:
-      ebt !== null && ebt !== undefined ? numOrNull(ebt["oppositeSpread"]) : null,
-    chosenAskSizeAtBestAsk:
       ebt !== null && ebt !== undefined
-        ? numOrNull(ebt["chosenAskSizeAtBestAsk"])
+        ? numOrNull(ebt["oppositeSpread"])
         : null,
+    chosenAskSizeAtBestAsk,
+    chosenAskDepthRatio,
   };
 }
 
@@ -318,182 +369,296 @@ function applyFilter({
   readonly filter: FilterSpec;
 }): readonly ReplayOrder[] {
   return orders.filter((o) => {
-    if (filter.assets !== undefined && !filter.assets.includes(o.asset))
+    if (filter.assets !== undefined && !filter.assets.includes(o.asset)) {
       return false;
+    }
     if (
       filter.excludeAssets !== undefined &&
       filter.excludeAssets.includes(o.asset)
-    )
+    ) {
       return false;
+    }
     if (
       filter.minEdge !== undefined &&
       (o.edge === null || o.edge < filter.minEdge)
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxEdge !== undefined &&
       o.edge !== null &&
       o.edge > filter.maxEdge
-    )
+    ) {
       return false;
+    }
     if (
       filter.minProb !== undefined &&
       (o.modelProbability === null || o.modelProbability < filter.minProb)
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxProb !== undefined &&
       o.modelProbability !== null &&
       o.modelProbability > filter.maxProb
-    )
+    ) {
       return false;
-    if (filter.sides !== undefined && !filter.sides.includes(o.side))
+    }
+    if (filter.sides !== undefined && !filter.sides.includes(o.side)) {
       return false;
+    }
     if (
       filter.minRemainingMin !== undefined &&
       (o.remainingMin === null || o.remainingMin < filter.minRemainingMin)
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxRemainingMin !== undefined &&
       o.remainingMin !== null &&
       o.remainingMin > filter.maxRemainingMin
-    )
+    ) {
       return false;
+    }
     if (
       filter.minQueueAheadShares !== undefined &&
       (o.queueAheadShares === null ||
         o.queueAheadShares < filter.minQueueAheadShares)
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxLimitPrice !== undefined &&
       o.limitPrice > filter.maxLimitPrice
-    )
+    ) {
       return false;
+    }
     if (
       filter.minLimitPrice !== undefined &&
       o.limitPrice < filter.minLimitPrice
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxDistanceBp !== undefined &&
       o.distanceBp !== null &&
       Math.abs(o.distanceBp) > filter.maxDistanceBp
-    )
+    ) {
       return false;
+    }
     if (
       filter.regimeIncludes !== undefined &&
       o.regimeAlgoLabel !== null &&
       !filter.regimeIncludes.some((r) => o.regimeAlgoLabel!.includes(r))
-    )
+    ) {
       return false;
+    }
     if (
       filter.regimeExcludes !== undefined &&
       o.regimeAlgoLabel !== null &&
       filter.regimeExcludes.some((r) => o.regimeAlgoLabel!.includes(r))
-    )
+    ) {
       return false;
+    }
     if (
       filter.maxQueueAheadShares !== undefined &&
       o.queueAheadShares !== null &&
       o.queueAheadShares > filter.maxQueueAheadShares
-    )
+    ) {
       return false;
+    }
     if (filter.minSignedDistanceBp !== undefined) {
-      if (o.signedDistanceBp === null) return false;
-      if (o.signedDistanceBp < filter.minSignedDistanceBp) return false;
+      if (o.signedDistanceBp === null) {
+        return false;
+      }
+      if (o.signedDistanceBp < filter.minSignedDistanceBp) {
+        return false;
+      }
     }
     if (filter.maxSignedDistanceBp !== undefined) {
-      if (o.signedDistanceBp === null) return false;
-      if (o.signedDistanceBp > filter.maxSignedDistanceBp) return false;
+      if (o.signedDistanceBp === null) {
+        return false;
+      }
+      if (o.signedDistanceBp > filter.maxSignedDistanceBp) {
+        return false;
+      }
     }
     if (
       filter.minSideAlignedMomentumBp !== undefined ||
       filter.maxSideAlignedMomentumBp !== undefined
     ) {
-      if (o.entry30sDeltaBp === null) return false;
-      const m =
-        o.side === "down" ? -o.entry30sDeltaBp : o.entry30sDeltaBp;
+      if (o.entry30sDeltaBp === null) {
+        return false;
+      }
+      const m = o.side === "down" ? -o.entry30sDeltaBp : o.entry30sDeltaBp;
       if (
         filter.minSideAlignedMomentumBp !== undefined &&
         m < filter.minSideAlignedMomentumBp
-      )
+      ) {
         return false;
+      }
       if (
         filter.maxSideAlignedMomentumBp !== undefined &&
         m > filter.maxSideAlignedMomentumBp
-      )
+      ) {
         return false;
+      }
     }
     if (filter.minSideAlignedMomentum60sBp !== undefined) {
-      if (o.entry60sDeltaBp === null) return false;
-      const m =
-        o.side === "down" ? -o.entry60sDeltaBp : o.entry60sDeltaBp;
-      if (m < filter.minSideAlignedMomentum60sBp) return false;
+      if (o.entry60sDeltaBp === null) {
+        return false;
+      }
+      const m = o.side === "down" ? -o.entry60sDeltaBp : o.entry60sDeltaBp;
+      if (m < filter.minSideAlignedMomentum60sBp) {
+        return false;
+      }
     }
     if (
       filter.minTrendConfirmBp !== undefined ||
       filter.maxTrendConfirmBp !== undefined
     ) {
-      if (o.signedDistanceBp === null) return false;
+      if (o.signedDistanceBp === null) {
+        return false;
+      }
       const trendConfirm =
         o.side === "down" ? -o.signedDistanceBp : o.signedDistanceBp;
       if (
         filter.minTrendConfirmBp !== undefined &&
         trendConfirm < filter.minTrendConfirmBp
-      )
+      ) {
         return false;
+      }
       if (
         filter.maxTrendConfirmBp !== undefined &&
         trendConfirm > filter.maxTrendConfirmBp
-      )
+      ) {
         return false;
+      }
     }
     if (filter.minPreEntry30sFavorableDelta !== undefined) {
       // For "up" bets: favorable = price moved up (positive priceDelta).
       // For "down" bets: favorable = price moved down (negative priceDelta
       // → flip sign).
       const raw = o.preEntry30sPriceDelta;
-      if (raw === null) return false;
+      if (raw === null) {
+        return false;
+      }
       const signed = o.side === "up" ? raw : -raw;
-      if (signed < filter.minPreEntry30sFavorableDelta) return false;
+      if (signed < filter.minPreEntry30sFavorableDelta) {
+        return false;
+      }
     }
     if (filter.maxPreEntry30sBelowLimit !== undefined) {
-      if (o.preEntry30sBelowLimit === null) return false;
-      if (o.preEntry30sBelowLimit > filter.maxPreEntry30sBelowLimit)
+      if (o.preEntry30sBelowLimit === null) {
         return false;
+      }
+      if (o.preEntry30sBelowLimit > filter.maxPreEntry30sBelowLimit) {
+        return false;
+      }
     }
     if (filter.minPreEntry30sTradeCount !== undefined) {
-      if (o.preEntry30sTradeCount === null) return false;
-      if (o.preEntry30sTradeCount < filter.minPreEntry30sTradeCount)
+      if (o.preEntry30sTradeCount === null) {
         return false;
+      }
+      if (o.preEntry30sTradeCount < filter.minPreEntry30sTradeCount) {
+        return false;
+      }
     }
     if (filter.maxChosenSpread !== undefined) {
-      if (o.chosenSpread === null) return false;
-      if (o.chosenSpread > filter.maxChosenSpread) return false;
+      if (o.chosenSpread === null) {
+        return false;
+      }
+      if (o.chosenSpread > filter.maxChosenSpread) {
+        return false;
+      }
     }
     if (filter.maxOppositeSpread !== undefined) {
-      if (o.oppositeSpread === null) return false;
-      if (o.oppositeSpread > filter.maxOppositeSpread) return false;
+      if (o.oppositeSpread === null) {
+        return false;
+      }
+      if (o.oppositeSpread > filter.maxOppositeSpread) {
+        return false;
+      }
     }
     if (filter.minChosenAskSizeAtBestAsk !== undefined) {
-      if (o.chosenAskSizeAtBestAsk === null) return false;
-      if (o.chosenAskSizeAtBestAsk < filter.minChosenAskSizeAtBestAsk)
+      if (o.chosenAskSizeAtBestAsk === null) {
         return false;
+      }
+      if (o.chosenAskSizeAtBestAsk < filter.minChosenAskSizeAtBestAsk) {
+        return false;
+      }
     }
     if (
       filter.hoursUtc !== undefined ||
-      filter.excludeHoursUtc !== undefined
+      filter.excludeHoursUtc !== undefined ||
+      filter.excludeAssetHoursUtc !== undefined
     ) {
       const hr = new Date(o.placedAtMs).getUTCHours();
-      if (filter.hoursUtc !== undefined && !filter.hoursUtc.includes(hr))
+      if (filter.hoursUtc !== undefined && !filter.hoursUtc.includes(hr)) {
         return false;
+      }
       if (
         filter.excludeHoursUtc !== undefined &&
         filter.excludeHoursUtc.includes(hr)
-      )
+      ) {
         return false;
+      }
+      if (
+        filter.excludeAssetHoursUtc !== undefined &&
+        filter.excludeAssetHoursUtc.includes(`${o.asset}:${hr}`)
+      ) {
+        return false;
+      }
+    }
+    if (
+      filter.minSecondsIntoWindow !== undefined ||
+      filter.maxSecondsIntoWindow !== undefined
+    ) {
+      const secondsIntoWindow = (o.placedAtMs - o.windowStartMs) / 1000;
+      if (
+        filter.minSecondsIntoWindow !== undefined &&
+        secondsIntoWindow < filter.minSecondsIntoWindow
+      ) {
+        return false;
+      }
+      if (
+        filter.maxSecondsIntoWindow !== undefined &&
+        secondsIntoWindow > filter.maxSecondsIntoWindow
+      ) {
+        return false;
+      }
+    }
+    if (filter.minChosenAskDepthRatio !== undefined) {
+      if (o.chosenAskDepthRatio === null) {
+        return false;
+      }
+      if (o.chosenAskDepthRatio < filter.minChosenAskDepthRatio) {
+        return false;
+      }
+    }
+    if (filter.maxChosenAskDepthRatio !== undefined) {
+      if (o.chosenAskDepthRatio === null) {
+        return false;
+      }
+      if (o.chosenAskDepthRatio > filter.maxChosenAskDepthRatio) {
+        return false;
+      }
+    }
+    if (filter.maxTakerAskPrice !== undefined) {
+      if (o.chosenBestAsk === null) {
+        return false;
+      }
+      if (o.chosenBestAsk > filter.maxTakerAskPrice) {
+        return false;
+      }
+    }
+    if (filter.minTakerAskPrice !== undefined) {
+      if (o.chosenBestAsk === null) {
+        return false;
+      }
+      if (o.chosenBestAsk < filter.minTakerAskPrice) {
+        return false;
+      }
     }
     return true;
   });
@@ -527,11 +692,14 @@ function computeLens({
       queueN += 1;
     }
     const shares = selectShares(o);
-    if (shares <= 0) continue;
+    if (shares <= 0) {
+      continue;
+    }
     filled += 1;
-    const won =
-      o.officialOutcome !== null && o.side === o.officialOutcome;
-    if (won) wins += 1;
+    const won = o.officialOutcome !== null && o.side === o.officialOutcome;
+    if (won) {
+      wins += 1;
+    }
     const cost = shares * o.limitPrice;
     pnl += (won ? shares : 0) - cost;
   }
@@ -575,13 +743,83 @@ function computeTakerLens({
   let pnl = 0;
   for (const o of orders) {
     const baseAsk = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
-    if (baseAsk <= 0 || baseAsk >= 1) continue;
+    if (baseAsk <= 0 || baseAsk >= 1) {
+      continue;
+    }
     const askPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
     const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
-    if (sharesAtAsk <= 0 || o.officialOutcome === null) continue;
+    if (sharesAtAsk <= 0 || o.officialOutcome === null) {
+      continue;
+    }
     filled += 1;
     const won = o.side === o.officialOutcome;
-    if (won) wins += 1;
+    if (won) {
+      wins += 1;
+    }
+    const cost = sharesAtAsk * askPrice;
+    const fee = takerFeeUsd({ shares: sharesAtAsk, price: askPrice, feeBps });
+    pnl += (won ? sharesAtAsk : 0) - cost - fee;
+  }
+  return {
+    orderCount: orders.length,
+    filledCount: filled,
+    fillRate: orders.length === 0 ? 0 : filled / orders.length,
+    winRate: filled === 0 ? null : wins / filled,
+    pnlUsd: pnl,
+    pnlPerOrderUsd: orders.length === 0 ? 0 : pnl / orders.length,
+    pnlPerFilledUsd: filled === 0 ? null : pnl / filled,
+    avgEdge: null,
+    avgLimit: null,
+    avgQueue: null,
+  };
+}
+
+function computeHybridLens({
+  orders,
+  makerAssets,
+  feeBps = TAKER_FEE_BPS_DEFAULT,
+  stakeUsd = 20,
+  slippageTicks = 0,
+}: {
+  readonly orders: readonly ReplayOrder[];
+  readonly makerAssets: readonly Asset[];
+  readonly feeBps?: number;
+  readonly stakeUsd?: number;
+  readonly slippageTicks?: number;
+}): LensMetrics {
+  let filled = 0;
+  let wins = 0;
+  let pnl = 0;
+  for (const o of orders) {
+    if (o.officialOutcome === null) {
+      continue;
+    }
+    const won = o.side === o.officialOutcome;
+    if (makerAssets.includes(o.asset)) {
+      if (o.canonicalFilledShares <= 0) {
+        continue;
+      }
+      filled += 1;
+      if (won) {
+        wins += 1;
+      }
+      pnl += (won ? o.canonicalFilledShares : 0) - o.canonicalCostUsd;
+      continue;
+    }
+
+    const baseAsk = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
+    if (baseAsk <= 0 || baseAsk >= 1) {
+      continue;
+    }
+    const askPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
+    const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
+    if (sharesAtAsk <= 0) {
+      continue;
+    }
+    filled += 1;
+    if (won) {
+      wins += 1;
+    }
     const cost = sharesAtAsk * askPrice;
     const fee = takerFeeUsd({ shares: sharesAtAsk, price: askPrice, feeBps });
     pnl += (won ? sharesAtAsk : 0) - cost - fee;
@@ -618,14 +856,14 @@ function evaluate({
     }),
     touch: computeLens({
       orders: filtered,
-      selectShares: (o) =>
-        o.touchFilledAtMs === null ? 0 : o.sharesIfFilled,
+      selectShares: (o) => (o.touchFilledAtMs === null ? 0 : o.sharesIfFilled),
     }),
     allFilled: computeLens({
       orders: filtered,
       selectShares: (o) => o.sharesIfFilled,
     }),
     taker: computeTakerLens({ orders: filtered }),
+    hybrid: computeHybridLens({ orders: filtered, makerAssets: ["doge"] }),
   };
 }
 
@@ -643,8 +881,9 @@ function printResult(r: SweepResult): void {
   const a = r.allFilled;
   const t = r.touch;
   const k = r.taker;
+  const h = r.hybrid;
   console.log(
-    `${r.label.padEnd(38)} | n=${String(c.orderCount).padStart(4)} fill=${String(c.filledCount).padStart(4)}/${String(c.orderCount).padStart(4)} (${fmtPct(c.fillRate)}) | canon ${fmtUsd(c.pnlUsd)} (win ${fmtPct(c.winRate)}) | touch ${fmtUsd(t.pnlUsd)} | all-fill ${fmtUsd(a.pnlUsd)}${k ? ` | taker@720bps ${fmtUsd(k.pnlUsd)} (win ${fmtPct(k.winRate)})` : ""}`,
+    `${r.label.padEnd(38)} | n=${String(c.orderCount).padStart(4)} fill=${String(c.filledCount).padStart(4)}/${String(c.orderCount).padStart(4)} (${fmtPct(c.fillRate)}) | canon ${fmtUsd(c.pnlUsd)} (win ${fmtPct(c.winRate)}) | touch ${fmtUsd(t.pnlUsd)} | all-fill ${fmtUsd(a.pnlUsd)}${k ? ` | taker@720bps ${fmtUsd(k.pnlUsd)} (win ${fmtPct(k.winRate)})` : ""}${h ? ` | hybrid(doge-maker) ${fmtUsd(h.pnlUsd)} (fill ${fmtPct(h.fillRate)}, win ${fmtPct(h.winRate)})` : ""}`,
   );
 }
 
@@ -672,9 +911,39 @@ function printTakerFeeSweep({
   }
 }
 
+function printHybridFeeSweep({
+  orders,
+  label,
+}: {
+  readonly orders: readonly ReplayOrder[];
+  readonly label: string;
+}): void {
+  const fees = [0, 100, 200, 400, 600, 720, 1000, 1500];
+  console.log(`\n=== hybrid fee sensitivity for: ${label} ===`);
+  for (const feeBps of fees) {
+    const h = computeHybridLens({ orders, makerAssets: ["doge"], feeBps });
+    console.log(
+      `  feeBps=${String(feeBps).padStart(5)} | n=${String(h.orderCount).padStart(4)} | pnl ${fmtUsd(h.pnlUsd)} (fill ${fmtPct(h.fillRate)}, win ${fmtPct(h.winRate)})`,
+    );
+  }
+  console.log(`\n=== hybrid slippage sensitivity (720 bps fee) ===`);
+  for (const slippageTicks of [0, 0.25, 0.5, 0.75, 1.0]) {
+    const h = computeHybridLens({
+      orders,
+      makerAssets: ["doge"],
+      slippageTicks,
+    });
+    console.log(
+      `  slippage=${slippageTicks.toFixed(2)}tk | n=${String(h.orderCount).padStart(4)} | pnl ${fmtUsd(h.pnlUsd)} (fill ${fmtPct(h.fillRate)}, win ${fmtPct(h.winRate)})`,
+    );
+  }
+}
+
 function sweepMinEdge(orders: readonly ReplayOrder[]): void {
   console.log("\n=== min-edge sweep ===");
-  for (const minEdge of [0.05, 0.06, 0.07, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25, 0.30]) {
+  for (const minEdge of [
+    0.05, 0.06, 0.07, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25, 0.3,
+  ]) {
     printResult(
       evaluate({
         orders,
@@ -698,7 +967,7 @@ function sweepAsset(orders: readonly ReplayOrder[]): void {
     );
   }
   // per-asset at higher edge gates
-  for (const minEdge of [0.10, 0.15]) {
+  for (const minEdge of [0.1, 0.15]) {
     console.log(`\n  -- per-asset @ minEdge>=${minEdge.toFixed(2)} --`);
     for (const asset of allAssets) {
       printResult(
@@ -738,6 +1007,170 @@ function sweepSide(orders: readonly ReplayOrder[]): void {
   }
 }
 
+function sweepHour(orders: readonly ReplayOrder[]): void {
+  console.log("\n=== per UTC hour ===");
+  for (let hour = 0; hour < 24; hour += 1) {
+    printResult(
+      evaluate({
+        orders,
+        filter: { hoursUtc: [hour] },
+        label: `hour=${String(hour).padStart(2, "0")}Z`,
+      }),
+    );
+  }
+}
+
+const US_HOURS_UTC = [16, 17, 18, 19, 20, 21, 22, 23] as const;
+
+function withUsHours(filter: FilterSpec): FilterSpec {
+  return { ...filter, hoursUtc: US_HOURS_UTC };
+}
+
+function sweepUsHours(orders: readonly ReplayOrder[]): void {
+  console.log("\n=== US-hours competition sweep (16-23 UTC) ===");
+  printResult(
+    evaluate({
+      orders,
+      filter: withUsHours({ minEdge: 0.06 }),
+      label: "us minEdge>=0.06",
+    }),
+  );
+
+  console.log("\n  -- edge floors --");
+  for (const minEdge of [0.06, 0.08, 0.1, 0.12, 0.15, 0.2]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge }),
+        label: `us edge>=${minEdge.toFixed(2)}`,
+      }),
+    );
+  }
+
+  console.log("\n  -- per asset @ edge>=0.06 --");
+  for (const asset of ["btc", "eth", "sol", "xrp", "doge"] as const) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ assets: [asset], minEdge: 0.06 }),
+        label: `us asset=${asset}`,
+      }),
+    );
+  }
+
+  console.log("\n  -- side/remaining @ edge>=0.06 --");
+  for (const side of ["up", "down"] as const) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ sides: [side], minEdge: 0.06 }),
+        label: `us side=${side}`,
+      }),
+    );
+  }
+  for (const remaining of [2, 3, 4]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({
+          minRemainingMin: remaining,
+          maxRemainingMin: remaining,
+          minEdge: 0.06,
+        }),
+        label: `us remaining=${remaining}`,
+      }),
+    );
+  }
+
+  console.log("\n  -- price action gates @ edge>=0.06 --");
+  for (const minTrendConfirmBp of [0, 2, 4, 6, 8, 10]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, minTrendConfirmBp }),
+        label: `us trend>=${minTrendConfirmBp}`,
+      }),
+    );
+  }
+  for (const minSideAlignedMomentumBp of [0, 2, 5, 8]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, minSideAlignedMomentumBp }),
+        label: `us mom30>=${minSideAlignedMomentumBp}`,
+      }),
+    );
+  }
+  for (const minSideAlignedMomentum60sBp of [0, 3, 5, 10]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, minSideAlignedMomentum60sBp }),
+        label: `us mom60>=${minSideAlignedMomentum60sBp}`,
+      }),
+    );
+  }
+
+  console.log("\n  -- market microstructure gates @ edge>=0.06 --");
+  for (const maxChosenSpread of [0.02, 0.04, 0.06, 0.08, 0.1, 0.12]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, maxChosenSpread }),
+        label: `us spread<=${maxChosenSpread.toFixed(2)}`,
+      }),
+    );
+  }
+  for (const minChosenAskDepthRatio of [0.05, 0.1, 0.25, 0.5, 1, 2]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, minChosenAskDepthRatio }),
+        label: `us askDepthRatio>=${minChosenAskDepthRatio}`,
+      }),
+    );
+  }
+  for (const maxTakerAskPrice of [0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, maxTakerAskPrice }),
+        label: `us ask<=${maxTakerAskPrice.toFixed(2)}`,
+      }),
+    );
+  }
+  for (const maxPreEntry30sBelowLimit of [0, 2, 5, 10]) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({ minEdge: 0.06, maxPreEntry30sBelowLimit }),
+        label: `us below30<=${maxPreEntry30sBelowLimit}`,
+      }),
+    );
+  }
+
+  console.log("\n  -- timing gates @ edge>=0.06 --");
+  for (const [lo, hi] of [
+    [60, 120],
+    [120, 180],
+    [180, 240],
+    [60, 180],
+    [120, 240],
+  ] as const) {
+    printResult(
+      evaluate({
+        orders,
+        filter: withUsHours({
+          minEdge: 0.06,
+          minSecondsIntoWindow: lo,
+          maxSecondsIntoWindow: hi,
+        }),
+        label: `us sec ${lo}-${hi}`,
+      }),
+    );
+  }
+}
+
 function sweepQueue(orders: readonly ReplayOrder[]): void {
   console.log("\n=== queue-ahead-shares floor ===");
   for (const q of [0, 25, 50, 100, 200, 500, 1000]) {
@@ -761,7 +1194,9 @@ function sweepRegime(orders: readonly ReplayOrder[]): void {
   }
   const sorted = [...regimes.entries()].sort((a, b) => b[1] - a[1]);
   for (const [regime, count] of sorted) {
-    if (count < 10) continue;
+    if (count < 10) {
+      continue;
+    }
     printResult(
       evaluate({
         orders,
@@ -795,7 +1230,9 @@ function sweepLimitPrice(orders: readonly ReplayOrder[]): void {
 }
 
 function sweepSignedDistance(orders: readonly ReplayOrder[]): void {
-  console.log("\n=== signed distance bp (where price is vs line in our direction) ===");
+  console.log(
+    "\n=== signed distance bp (where price is vs line in our direction) ===",
+  );
   for (const [lo, hi] of [
     [-Infinity, -10],
     [-10, -5],
@@ -807,8 +1244,8 @@ function sweepSignedDistance(orders: readonly ReplayOrder[]): void {
     [10, Infinity],
   ] as const) {
     const filter: FilterSpec = {
-      ...(Number.isFinite(lo) ? { minSignedDistanceBp: lo as number } : {}),
-      ...(Number.isFinite(hi) ? { maxSignedDistanceBp: hi as number } : {}),
+      ...(Number.isFinite(lo) ? { minSignedDistanceBp: lo } : {}),
+      ...(Number.isFinite(hi) ? { maxSignedDistanceBp: hi } : {}),
     };
     printResult(
       evaluate({
@@ -821,10 +1258,12 @@ function sweepSignedDistance(orders: readonly ReplayOrder[]): void {
 }
 
 function sweepPreEntryFavorable(orders: readonly ReplayOrder[]): void {
-  console.log("\n=== pre-entry 30s favorable delta (positive=trend in our favor) ===");
+  console.log(
+    "\n=== pre-entry 30s favorable delta (positive=trend in our favor) ===",
+  );
   for (const minDelta of [-Infinity, -2, -1, -0.5, 0, 0.5, 1, 2, 5]) {
     const filter: FilterSpec = Number.isFinite(minDelta)
-      ? { minPreEntry30sFavorableDelta: minDelta as number }
+      ? { minPreEntry30sFavorableDelta: minDelta }
       : {};
     printResult(
       evaluate({
@@ -837,10 +1276,12 @@ function sweepPreEntryFavorable(orders: readonly ReplayOrder[]): void {
 }
 
 function sweepMaxBelowLimit(orders: readonly ReplayOrder[]): void {
-  console.log("\n=== max pre-entry 30s below-limit trades (cap adverse pressure) ===");
+  console.log(
+    "\n=== max pre-entry 30s below-limit trades (cap adverse pressure) ===",
+  );
   for (const max of [Infinity, 50, 30, 20, 10, 5, 2, 0]) {
     const filter: FilterSpec = Number.isFinite(max)
-      ? { maxPreEntry30sBelowLimit: max as number }
+      ? { maxPreEntry30sBelowLimit: max }
       : {};
     printResult(
       evaluate({
@@ -853,7 +1294,9 @@ function sweepMaxBelowLimit(orders: readonly ReplayOrder[]): void {
 }
 
 function sweepBookGates(orders: readonly ReplayOrder[]): void {
-  console.log("\n=== chosen-side ask size (bigger = more sellers ready to hit our limit) ===");
+  console.log(
+    "\n=== chosen-side ask size (bigger = more sellers ready to hit our limit) ===",
+  );
   for (const min of [0, 50, 100, 200, 500, 1000]) {
     printResult(
       evaluate({
@@ -866,7 +1309,9 @@ function sweepBookGates(orders: readonly ReplayOrder[]): void {
 }
 
 function sweepEntryMomentum(orders: readonly ReplayOrder[]): void {
-  console.log("\n=== entry 30s deltaBp (recent price momentum, signed by our side) ===");
+  console.log(
+    "\n=== entry 30s deltaBp (recent price momentum, signed by our side) ===",
+  );
   // The deltaBp is RAW (current - past); positive when up.
   // We don't have a 'side' marker on it directly, so evaluate raw buckets.
   for (const [lo, hi] of [
@@ -880,9 +1325,11 @@ function sweepEntryMomentum(orders: readonly ReplayOrder[]): void {
   ] as const) {
     const matched = orders.filter((o) => {
       const v = o.entry30sDeltaBp;
-      if (v === null) return false;
-      const lov = Number.isFinite(lo) ? (lo as number) : -Infinity;
-      const hiv = Number.isFinite(hi) ? (hi as number) : Infinity;
+      if (v === null) {
+        return false;
+      }
+      const lov = Number.isFinite(lo) ? lo : -Infinity;
+      const hiv = Number.isFinite(hi) ? hi : Infinity;
       return v >= lov && v < hiv;
     });
     const result = evaluate({
@@ -901,13 +1348,19 @@ function splitByTime({
   readonly orders: readonly ReplayOrder[];
   readonly splits: number;
 }): void {
-  if (orders.length === 0) return;
-  const sortedByPlaced = [...orders].sort((a, b) => a.placedAtMs - b.placedAtMs);
+  if (orders.length === 0) {
+    return;
+  }
+  const sortedByPlaced = [...orders].sort(
+    (a, b) => a.placedAtMs - b.placedAtMs,
+  );
   const minMs = sortedByPlaced[0]!.placedAtMs;
   const maxMs = sortedByPlaced[sortedByPlaced.length - 1]!.placedAtMs;
   const span = maxMs - minMs;
   const bucket = Math.ceil(span / splits);
-  console.log(`\n=== time-split (${splits} buckets, ${(span / 3600000).toFixed(1)}h span) ===`);
+  console.log(
+    `\n=== time-split (${splits} buckets, ${(span / 3600000).toFixed(1)}h span) ===`,
+  );
   for (let i = 0; i < splits; i += 1) {
     const lo = minMs + i * bucket;
     const hi = i === splits - 1 ? maxMs + 1 : minMs + (i + 1) * bucket;
@@ -935,17 +1388,49 @@ function summarizeBaseline(orders: readonly ReplayOrder[]): void {
 }
 
 const path = process.argv[2];
-const sweep = process.argv[3] ?? "all";
-const explicitFilter = process.argv[3] === "--filter" ? process.argv[4] : null;
 if (path === undefined) {
-  console.error("usage: bun src/bin/research/sweepReplay.ts <jsonl-path> [sweep|--filter '<json>']");
+  console.error(
+    "usage: bun src/bin/research/sweepReplay.ts <jsonl-path> [sweep|--filter '<json>']",
+  );
   process.exit(1);
 }
+
+let sweep = "all";
+let explicitFilter: string | null = null;
+const args = process.argv.slice(3);
+for (let index = 0; index < args.length; index += 1) {
+  const arg = args[index];
+  if (arg === "--filter") {
+    const value = args[index + 1];
+    if (value === undefined) {
+      throw new Error("--filter requires a JSON value");
+    }
+    explicitFilter = value;
+    index += 1;
+    continue;
+  }
+  if (arg === "--sweep") {
+    const value = args[index + 1];
+    if (value === undefined) {
+      throw new Error("--sweep requires a sweep name");
+    }
+    sweep = value;
+    index += 1;
+    continue;
+  }
+  if (index === 0) {
+    sweep = arg ?? "all";
+    continue;
+  }
+  throw new Error(`unknown argument ${arg}`);
+}
+
 const resolved = resolve(path);
 const orders = loadOrders({ path: resolved });
 console.log(`loaded ${orders.length} orders from ${resolved}`);
 
-type UnionFilter = { readonly any: readonly FilterSpec[] };
+type UnionFilter = FilterSpec & { readonly any: readonly FilterSpec[] };
+type LegacyUnionFilter = FilterSpec & { readonly union: readonly FilterSpec[] };
 
 function applyUnion({
   orders,
@@ -956,20 +1441,36 @@ function applyUnion({
 }): readonly ReplayOrder[] {
   const seen = new Set<ReplayOrder>();
   for (const f of filters) {
-    for (const o of applyFilter({ orders, filter: f })) seen.add(o);
+    for (const o of applyFilter({ orders, filter: f })) {
+      seen.add(o);
+    }
   }
   return [...seen];
+}
+
+function filtersForUnion({
+  parsed,
+}: {
+  readonly parsed: UnionFilter | LegacyUnionFilter;
+}): readonly FilterSpec[] {
+  if ("any" in parsed && Array.isArray(parsed.any)) {
+    const { any, ...base } = parsed;
+    return any.map((filter) => ({ ...base, ...filter }));
+  }
+  const legacy = parsed as LegacyUnionFilter;
+  const { union, ...base } = legacy;
+  return union.map((filter) => ({ ...base, ...filter }));
 }
 
 if (explicitFilter !== null && explicitFilter !== undefined) {
   const parsed = JSON.parse(explicitFilter) as
     | FilterSpec
     | UnionFilter
-    | { readonly union: readonly FilterSpec[] };
+    | LegacyUnionFilter;
   let result: SweepResult;
   let filtered: readonly ReplayOrder[];
-  if ("any" in parsed && Array.isArray((parsed as UnionFilter).any)) {
-    filtered = applyUnion({ orders, filters: (parsed as UnionFilter).any });
+  if ("any" in parsed && Array.isArray(parsed.any)) {
+    filtered = applyUnion({ orders, filters: filtersForUnion({ parsed }) });
     result = {
       label: "union",
       canonical: computeLens({
@@ -985,13 +1486,36 @@ if (explicitFilter !== null && explicitFilter !== undefined) {
         orders: filtered,
         selectShares: (o) => o.sharesIfFilled,
       }),
+      hybrid: computeHybridLens({ orders: filtered, makerAssets: ["doge"] }),
+    };
+  } else if ("union" in parsed && Array.isArray(parsed.union)) {
+    filtered = applyUnion({ orders, filters: filtersForUnion({ parsed }) });
+    result = {
+      label: "union",
+      canonical: computeLens({
+        orders: filtered,
+        selectShares: (o) => o.canonicalFilledShares,
+      }),
+      touch: computeLens({
+        orders: filtered,
+        selectShares: (o) =>
+          o.touchFilledAtMs === null ? 0 : o.sharesIfFilled,
+      }),
+      allFilled: computeLens({
+        orders: filtered,
+        selectShares: (o) => o.sharesIfFilled,
+      }),
+      hybrid: computeHybridLens({ orders: filtered, makerAssets: ["doge"] }),
     };
   } else {
-    const filter = parsed as FilterSpec;
+    const filter = parsed;
     filtered = applyFilter({ orders, filter });
     result = evaluate({ orders, filter, label: "filter" });
   }
-  if ("any" in parsed && Array.isArray((parsed as UnionFilter).any)) {
+  if (
+    ("any" in parsed && Array.isArray(parsed.any)) ||
+    ("union" in parsed && Array.isArray(parsed.union))
+  ) {
     // attach taker lens for union too
     (result as { taker?: LensMetrics }).taker = computeTakerLens({
       orders: filtered,
@@ -1001,18 +1525,49 @@ if (explicitFilter !== null && explicitFilter !== undefined) {
   // Also show stability across time-buckets (4 chunks)
   splitByTime({ orders: filtered, splits: 4 });
   printTakerFeeSweep({ orders: filtered, label: "filtered" });
+  printHybridFeeSweep({ orders: filtered, label: "filtered" });
 } else {
   summarizeBaseline(orders);
-  if (sweep === "all" || sweep === "min-edge") sweepMinEdge(orders);
-  if (sweep === "all" || sweep === "asset") sweepAsset(orders);
-  if (sweep === "all" || sweep === "remaining") sweepRemaining(orders);
-  if (sweep === "all" || sweep === "side") sweepSide(orders);
-  if (sweep === "all" || sweep === "queue") sweepQueue(orders);
-  if (sweep === "all" || sweep === "regime") sweepRegime(orders);
-  if (sweep === "all" || sweep === "limit") sweepLimitPrice(orders);
-  if (sweep === "all" || sweep === "signed-distance") sweepSignedDistance(orders);
-  if (sweep === "all" || sweep === "favorable") sweepPreEntryFavorable(orders);
-  if (sweep === "all" || sweep === "below-limit") sweepMaxBelowLimit(orders);
-  if (sweep === "all" || sweep === "book") sweepBookGates(orders);
-  if (sweep === "all" || sweep === "momentum") sweepEntryMomentum(orders);
+  if (sweep === "all" || sweep === "min-edge") {
+    sweepMinEdge(orders);
+  }
+  if (sweep === "all" || sweep === "asset") {
+    sweepAsset(orders);
+  }
+  if (sweep === "all" || sweep === "remaining") {
+    sweepRemaining(orders);
+  }
+  if (sweep === "all" || sweep === "side") {
+    sweepSide(orders);
+  }
+  if (sweep === "all" || sweep === "hour") {
+    sweepHour(orders);
+  }
+  if (sweep === "all" || sweep === "us") {
+    sweepUsHours(orders);
+  }
+  if (sweep === "all" || sweep === "queue") {
+    sweepQueue(orders);
+  }
+  if (sweep === "all" || sweep === "regime") {
+    sweepRegime(orders);
+  }
+  if (sweep === "all" || sweep === "limit") {
+    sweepLimitPrice(orders);
+  }
+  if (sweep === "all" || sweep === "signed-distance") {
+    sweepSignedDistance(orders);
+  }
+  if (sweep === "all" || sweep === "favorable") {
+    sweepPreEntryFavorable(orders);
+  }
+  if (sweep === "all" || sweep === "below-limit") {
+    sweepMaxBelowLimit(orders);
+  }
+  if (sweep === "all" || sweep === "book") {
+    sweepBookGates(orders);
+  }
+  if (sweep === "all" || sweep === "momentum") {
+    sweepEntryMomentum(orders);
+  }
 }
