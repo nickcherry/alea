@@ -274,18 +274,13 @@ export type MarketOutcome =
     };
 
 export type LifetimePnlScanProgress =
-  | { readonly kind: "trades-page"; readonly tradesSoFar: number }
-  | {
-      readonly kind: "markets-progress";
-      readonly resolved: number;
-      readonly total: number;
-    };
+  | { readonly kind: "activity-page"; readonly activitiesSoFar: number }
+  | { readonly kind: "positions-page"; readonly positionsSoFar: number };
 
 export type LifetimePnlScanResult = {
   readonly lifetimePnlUsd: number;
-  readonly resolvedMarketsCounted: number;
-  readonly unresolvedMarketsSkipped: number;
-  readonly tradesCounted: number;
+  readonly marketCount: number;
+  readonly openPositionCount: number;
 };
 
 /**

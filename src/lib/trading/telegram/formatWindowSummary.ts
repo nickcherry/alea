@@ -69,9 +69,9 @@ export type WindowPlacementStats = {
  * The blank line between the per-asset list and the latest-window block
  * separates the recent-market detail from aggregate stats; another
  * blank line separates the latest-window block from the lifetime
- * total. `Total Pnl` is cumulative across every window the running
- * process has summarized — it resets on restart, since chunk-2 keeps
- * the runtime DB-free.
+ * total. `Total Pnl` is the venue-truth lifetime PnL refreshed at
+ * wrap-up via the same data-api scan that backs the live trading
+ * dashboard, so this number always matches what the dashboard shows.
  */
 export function formatWindowSummary({
   outcomes,
@@ -81,10 +81,9 @@ export function formatWindowSummary({
   readonly outcomes: readonly AssetWindowOutcome[];
   readonly stats?: WindowPlacementStats;
   /**
-   * Lifetime PnL through and including this window — the value the
-   * runner accumulates by adding each window's net PnL as the
-   * summary fires. Pass the `latestWindowPnlUsd` argument too so the
-   * formatter can show both deltas without recomputing.
+   * Lifetime PnL through and including this window — the dashboard's
+   * live total, refreshed at wrap-up. Decoupled from the per-asset
+   * outcomes so the formatter can show both deltas without recomputing.
    */
   readonly totalPnlUsd: number;
 }): string {

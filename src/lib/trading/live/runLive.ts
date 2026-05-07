@@ -457,6 +457,7 @@ function schedulePerWindowTimers({
         telegramChatId,
         windowsAll,
         conditionIdIndex,
+        vendor,
         lifetimePnl,
         walletAddress,
         emit,

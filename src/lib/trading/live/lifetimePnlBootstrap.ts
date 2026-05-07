@@ -52,17 +52,17 @@ export async function bootstrapLifetimePnl({
   try {
     const scan = await vendor.scanLifetimePnl({
       onProgress: (event) => {
-        if (event.kind === "trades-page") {
+        if (event.kind === "activity-page") {
           emit({
             kind: "info",
             atMs: Date.now(),
-            message: `lifetime pnl scan: ${event.tradesSoFar} trades fetched`,
+            message: `lifetime pnl scan: ${event.activitiesSoFar} activity events fetched`,
           });
         } else {
           emit({
             kind: "info",
             atMs: Date.now(),
-            message: `lifetime pnl scan: ${event.resolved}/${event.total} markets resolved`,
+            message: `lifetime pnl scan: ${event.positionsSoFar} open positions fetched`,
           });
         }
       },
@@ -71,7 +71,7 @@ export async function bootstrapLifetimePnl({
     emit({
       kind: "info",
       atMs: Date.now(),
-      message: `lifetime pnl reconciled: $${scan.lifetimePnlUsd.toFixed(2)} across ${scan.resolvedMarketsCounted} resolved markets (${scan.unresolvedMarketsSkipped} skipped, ${scan.tradesCounted} trades counted)`,
+      message: `lifetime pnl reconciled: $${scan.lifetimePnlUsd.toFixed(2)} across ${scan.marketCount} markets (${scan.openPositionCount} open)`,
     });
     try {
       await persistLifetimePnl({

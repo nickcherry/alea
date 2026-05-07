@@ -73,9 +73,8 @@ describe("bootstrapLifetimePnl", () => {
       vendor: vendorWithScan({
         scan: async () => ({
           lifetimePnlUsd: 12.34,
-          resolvedMarketsCounted: 3,
-          unresolvedMarketsSkipped: 1,
-          tradesCounted: 5,
+          marketCount: 4,
+          openPositionCount: 1,
         }),
       }),
       lifetimePnl,

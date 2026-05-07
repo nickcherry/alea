@@ -10,26 +10,26 @@ import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/crea
 import pc from "picocolors";
 
 /**
- * Manually rescans the wallet's full vendor trade history, computes
- * lifetime PnL from scratch, and overwrites the on-disk checkpoint.
- * The live runner does this automatically on cold start; this command
- * is the operator's escape hatch when the checkpoint feels stale or
- * after manual trades on the wallet outside the bot.
+ * Manually rescans the wallet's lifetime PnL via the same Polymarket
+ * data-api scan that backs the live trading dashboard, and overwrites
+ * the on-disk checkpoint. The live runner refreshes this number on
+ * every window wrap-up; this command is the operator's escape hatch
+ * for an out-of-band refresh.
  *
  * Read-only against the venue. Does not place or cancel any orders.
  */
 export const tradingHydrateLifetimePnlCommand = defineCommand({
   name: "trading:hydrate-lifetime-pnl",
   summary:
-    "Rescan the wallet's full Polymarket trade history and refresh the lifetime PnL checkpoint",
+    "Rescan the wallet's Polymarket lifetime PnL and refresh the on-disk checkpoint",
   description:
-    "Pulls every fill on the configured Polymarket wallet via paginated getTradesPaginated, fetches each unique market's resolution via getMarket (concurrency 10), sums realized PnL per market, and writes the result to tmp/lifetime-pnl.json. Required when the on-disk checkpoint was deleted, became corrupt, or has drifted from reality due to manual trading on the wallet outside the bot.",
+    "Calls the same data-api `/activity` + `/positions` scan the live trading dashboard uses, and writes the resulting lifetime PnL to tmp/lifetime-pnl.json. Required when the on-disk checkpoint was deleted, became corrupt, or the operator wants an out-of-band refresh outside the live runner's per-window cycle.",
   options: [],
   examples: ["bun alea trading:hydrate-lifetime-pnl"],
   output:
-    "Per-step progress (trades fetched, markets resolved), the final lifetime PnL, and the path of the refreshed checkpoint file.",
+    "Per-step progress (activity events, open positions), the final lifetime PnL, and the path of the refreshed checkpoint file.",
   sideEffects:
-    "Reads from Polymarket REST endpoints. OVERWRITES tmp/lifetime-pnl.json. Does not place or cancel any orders.",
+    "Reads from Polymarket data-api endpoints. OVERWRITES tmp/lifetime-pnl.json. Does not place or cancel any orders.",
   async run({ io }) {
     if (
       env.polymarketPrivateKey === undefined ||
@@ -45,13 +45,13 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
     );
     const scan = await vendor.scanLifetimePnl({
       onProgress: (event) => {
-        if (event.kind === "trades-page") {
+        if (event.kind === "activity-page") {
           io.writeStdout(
-            `  ${pc.dim("trades fetched:")} ${event.tradesSoFar}\n`,
+            `  ${pc.dim("activity events fetched:")} ${event.activitiesSoFar}\n`,
           );
         } else {
           io.writeStdout(
-            `  ${pc.dim("markets resolved:")} ${event.resolved}/${event.total}\n`,
+            `  ${pc.dim("open positions fetched:")} ${event.positionsSoFar}\n`,
           );
         }
       },
@@ -62,9 +62,8 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
     });
     io.writeStdout(
       `\n${pc.green("lifetime pnl =")} ${formatUsd({ value: scan.lifetimePnlUsd })}\n` +
-        `  ${pc.dim("resolved markets counted:")} ${scan.resolvedMarketsCounted}\n` +
-        `  ${pc.dim("unresolved markets skipped:")} ${scan.unresolvedMarketsSkipped}\n` +
-        `  ${pc.dim("trades counted:")} ${scan.tradesCounted}\n` +
+        `  ${pc.dim("markets:")} ${scan.marketCount}\n` +
+        `  ${pc.dim("open positions:")} ${scan.openPositionCount}\n` +
         `${pc.green("wrote")} ${pc.dim(DEFAULT_LIFETIME_PNL_PATH)}\n`,
     );
   },

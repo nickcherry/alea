@@ -13,6 +13,7 @@ import {
   type AssetWindowOutcome,
   formatWindowSummary,
 } from "@alea/lib/trading/telegram/formatWindowSummary";
+import type { Vendor } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 
 const SETTLEMENT_RETRY_DELAY_MS = 2_000;
@@ -34,6 +35,7 @@ type WrapUpWindowParams = {
   readonly telegramChatId: string;
   readonly windowsAll: Map<number, WindowRecord>;
   readonly conditionIdIndex: ConditionIndex;
+  readonly vendor: Vendor;
   readonly lifetimePnl: LifetimePnlBox;
   readonly walletAddress: string;
   readonly priceSource: LivePriceSource;
@@ -44,8 +46,12 @@ type WrapUpWindowParams = {
  * End-of-window pipeline:
  *   1. Settle every per-asset record into its terminal slot, building
  *      the per-asset outcome list.
- *   2. Roll the window's net PnL into the lifetime accumulator.
- *   3. Persist the new lifetime total to the on-disk checkpoint.
+ *   2. Refresh lifetime PnL by re-scanning the venue with the same
+ *      data-api logic the live trading dashboard uses, so the
+ *      "Total Pnl" Telegram line matches what the dashboard shows.
+ *      A scan failure leaves the previous lifetime value in place
+ *      and emits a warn — the summary still goes out.
+ *   3. Persist the refreshed lifetime total to the on-disk checkpoint.
  *      Failures here are logged but don't block the summary.
  *   4. Format the Telegram body and ship it (await — the summary is
  *      the user-facing artifact for the window).
@@ -61,6 +67,7 @@ export async function wrapUpWindow(
     telegramChatId,
     windowsAll,
     conditionIdIndex,
+    vendor,
     lifetimePnl,
     walletAddress,
     priceSource,
@@ -108,13 +115,21 @@ export async function wrapUpWindow(
   }
   window.summarySent = true;
 
-  const windowPnl = outcomes.reduce(
-    (acc, o) => acc + (o.kind === "traded" ? o.netPnlUsd : 0),
-    0,
-  );
-  lifetimePnl.value += windowPnl;
+  // Re-scan the venue for the dashboard-truth lifetime PnL. A failure
+  // here is non-fatal — we keep whatever value the in-memory box held
+  // (boot scan or last successful refresh) and surface a warn.
+  try {
+    const scan = await vendor.scanLifetimePnl({});
+    lifetimePnl.value = scan.lifetimePnlUsd;
+  } catch (error) {
+    emit({
+      kind: "warn",
+      atMs: Date.now(),
+      message: `lifetime pnl refresh failed: ${(error as Error).message}; reusing $${lifetimePnl.value.toFixed(2)}`,
+    });
+  }
 
-  // Persist BEFORE Telegram so a crash between settle and notify
+  // Persist BEFORE Telegram so a crash between refresh and notify
   // still preserves the new total. A persist failure is non-fatal.
   try {
     await persistLifetimePnl({

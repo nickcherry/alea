@@ -50,11 +50,16 @@ export async function createPolymarketVendor(
     string,
     PolymarketOrderConstraints
   >();
-  let cachedAuth: { client: ClobClient; walletAddress: string } | null = null;
+  let cachedAuth: {
+    client: ClobClient;
+    walletAddress: string;
+    funderAddress: string;
+  } | null = null;
 
   const auth = async (): Promise<{
     client: ClobClient;
     walletAddress: string;
+    funderAddress: string;
   }> => {
     if (cachedAuth !== null) {
       return cachedAuth;
@@ -63,6 +68,7 @@ export async function createPolymarketVendor(
     cachedAuth = {
       client: state.client,
       walletAddress: state.walletAddress,
+      funderAddress: state.funderAddress,
     };
     return cachedAuth;
   };
@@ -221,8 +227,8 @@ export async function createPolymarketVendor(
     },
 
     async scanLifetimePnl({ onProgress }) {
-      const { client } = await auth();
-      return scanPolymarketLifetimePnl({ client, onProgress });
+      const { funderAddress } = await auth();
+      return scanPolymarketLifetimePnl({ funderAddress, onProgress });
     },
   };
 }
