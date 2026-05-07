@@ -61,8 +61,53 @@ export const MIN_ACTIONABLE_DISTANCE_BP = 2;
  *
  * Expressed as an absolute probability gap (e.g. `0.05` = 5pp). Tune
  * this against backtests and live calibration.
+ *
+ * This is a fast pre-filter: we still apply the EV / reward-risk
+ * gates below before placing.
  */
 export const MIN_EDGE = 0.05;
+
+/**
+ * Minimum expected value (in USD) for the bot to take a trade, after
+ * accounting for the venue fee and the asymmetric payoff. Computed as:
+ *
+ *   shares       = stake / fillPrice
+ *   grossWinUsd  = shares * $1                         (binary winner)
+ *   netWinUsd    = grossWinUsd − feeUsd − stake         (USD profit on win)
+ *   evUsd        = ourProb * netWinUsd − (1 − ourProb) * stake
+ *
+ * Why this exists: edge alone (ourProb − price) is dimensionless and
+ * scales the same at price 0.55 and price 0.85, but the dollar payoff
+ * doesn't. At a $20 stake and 0.85 fill price, a "winning" trade
+ * pockets ~$3 before fees while a losing trade still costs the full
+ * $20. The 5pp edge gate clears both, so the runner happily took the
+ * bad-RR trades. This gate enforces a minimum dollar-EV floor so
+ * those trades are filtered out automatically.
+ *
+ * Tunable. $1.00 is a conservative starting point: at a 0.60 hit
+ * rate that's roughly the threshold below which one losing trade
+ * wipes out 20+ winning trades' worth of EV. Lower it (e.g. $0.50)
+ * to take more thin-EV trades, raise it to be stricter.
+ */
+export const MIN_EXPECTED_VALUE_USD = 1.0;
+
+/**
+ * Minimum reward-to-risk ratio (`netWinUsd / stake`) for the bot to
+ * take a trade. Independent of model confidence, this caps the worst
+ * payoff geometry the runner is willing to accept. At a $20 stake:
+ *
+ *   - 0.20 → at least $4 net win required to risk $20
+ *   - 0.50 → at least $10 net win required to risk $20
+ *
+ * Pairs with `MIN_EXPECTED_VALUE_USD`: EV gate enforces "is this
+ * trade +EV given confidence?", RR gate enforces "is the upside
+ * worth the downside even when we're confident?". Both must pass.
+ *
+ * Concretely, MIN_REWARD_RISK_RATIO = 0.20 means the runner refuses
+ * any fill price above ~0.83 (gross win < $4.10 on $20 stake before
+ * fees), regardless of how confident the model is.
+ */
+export const MIN_REWARD_RISK_RATIO = 0.2;
 
 /**
  * Active asset roster for the 2026-05-07 research challenger. DOGE and

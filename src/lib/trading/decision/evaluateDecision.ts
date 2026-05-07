@@ -1,9 +1,13 @@
 import {
   LIVE_TRADING_REGIME_ALGOS,
   MIN_ACTIONABLE_DISTANCE_BP,
+  MIN_EXPECTED_VALUE_USD,
   MIN_MODEL_PROBABILITY,
+  MIN_REWARD_RISK_RATIO,
+  STAKE_USD,
 } from "@alea/constants/trading";
 import { flooredRemainingMinutes } from "@alea/lib/livePrices/fiveMinuteWindow";
+import { computeTradeEconomics } from "@alea/lib/trading/decision/computeTradeEconomics";
 import type {
   DecisionSnapshot,
   SideEdge,
@@ -45,6 +49,36 @@ export type DecisionInputsBase = {
   readonly upTokenId: string;
   readonly downTokenId: string;
   readonly minEdge: number;
+  /**
+   * Realized fill price for an up-side trade — the depth-weighted
+   * average price after walking the asks (taker mode), or the
+   * resting bid price (maker mode). Caller-supplied because the
+   * placement-mode-specific math (book walk, fee schedule) lives
+   * outside this pure evaluator.
+   *
+   * `null` means we have no fillable price on this side at our stake
+   * (book too thin, no resting orders, etc.). The EV / RR gate skips
+   * a side whose `upFillPrice` / `downFillPrice` is null.
+   *
+   * When omitted entirely (legacy callers), the evaluator falls
+   * back to the resting bid for the EV / RR computation. New
+   * callers should supply this.
+   */
+  readonly upFillPrice?: number | null;
+  readonly downFillPrice?: number | null;
+  /**
+   * Estimated venue fee in USD for an up-side / down-side fill at
+   * this stake. Maker fills typically pass 0; taker fills pass the
+   * book-walk-derived fee from `buildTakerCounterfactual`. Defaults
+   * to 0 when not supplied.
+   */
+  readonly upFeeUsd?: number;
+  readonly downFeeUsd?: number;
+  /**
+   * Stake size in USD for the EV calculation. Defaults to
+   * `STAKE_USD` when not supplied.
+   */
+  readonly stakeUsd?: number;
 };
 
 export type DecisionInputs = DecisionInputsBase & {
@@ -152,6 +186,16 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
     });
   }
 
+  // Per-side fill-price + fee inputs. fillPrice falls back to the
+  // resting bid when the caller didn't pass one (legacy / maker-mode
+  // callers); taker-mode callers must pass the walked-up avg price
+  // for the EV gate to reflect what they'll actually pay.
+  const upFillPrice = inputs.upFillPrice ?? inputs.upBestBid;
+  const downFillPrice = inputs.downFillPrice ?? inputs.downBestBid;
+  const upFeeUsd = inputs.upFeeUsd ?? 0;
+  const downFeeUsd = inputs.downFeeUsd ?? 0;
+  const stakeUsd = inputs.stakeUsd ?? STAKE_USD;
+
   // For each lookup × side, derive ourProbability + edge. Track the
   // overall winners on each side (for the diagnostic snapshot) plus
   // the absolute max-edge tuple (the trade we'd take).
@@ -168,6 +212,15 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
       bid: inputs.upBestBid,
       ourProbability: ourProbUp,
       edge: inputs.upBestBid === null ? null : ourProbUp - inputs.upBestBid,
+      economics:
+        upFillPrice === null
+          ? null
+          : computeTradeEconomics({
+              stakeUsd,
+              fillPrice: upFillPrice,
+              ourProbability: ourProbUp,
+              feeUsd: upFeeUsd,
+            }),
     };
     const downEdge: SideEdge = {
       side: "down",
@@ -176,6 +229,15 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
       ourProbability: ourProbDown,
       edge:
         inputs.downBestBid === null ? null : ourProbDown - inputs.downBestBid,
+      economics:
+        downFillPrice === null
+          ? null
+          : computeTradeEconomics({
+              stakeUsd,
+              fillPrice: downFillPrice,
+              ourProbability: ourProbDown,
+              feeUsd: downFeeUsd,
+            }),
     };
     if (
       upEdge.edge !== null &&
@@ -266,6 +328,33 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
       down: downDiag,
     });
   }
+  // Dollar-EV gate: refuse trades where the venue fee + asymmetric
+  // payoff combine to leave the expected USD return below
+  // `MIN_EXPECTED_VALUE_USD`. This catches the high-fill-price /
+  // low-payoff trades that pass the model gates but pay a tiny
+  // gross win against a full-stake loss. Reads `economics` attached
+  // to the chosen SideEdge upstream — null means the caller didn't
+  // supply a fillPrice (legacy callers), which we treat as "skip
+  // the gate" rather than "skip the trade" for backwards compat.
+  const econ = winningSideEdge.economics;
+  if (econ !== null && econ.evUsd < MIN_EXPECTED_VALUE_USD) {
+    return skipWithSnapshot({
+      reason: "thin-ev",
+      snapshot,
+      winningRegime,
+      up: upDiag,
+      down: downDiag,
+    });
+  }
+  if (econ !== null && econ.rewardRiskRatio < MIN_REWARD_RISK_RATIO) {
+    return skipWithSnapshot({
+      reason: "thin-rr",
+      snapshot,
+      winningRegime,
+      up: upDiag,
+      down: downDiag,
+    });
+  }
   return {
     kind: "trade",
     snapshot,
@@ -300,7 +389,9 @@ function skipWithSnapshot({
     | "no-bucket"
     | "no-bid"
     | "thin-edge"
-    | "low-confidence";
+    | "low-confidence"
+    | "thin-ev"
+    | "thin-rr";
   readonly snapshot: DecisionSnapshot;
   readonly winningRegime: WinningRegime | null;
   readonly up: SideEdge | null;
@@ -348,5 +439,6 @@ function noBidSide({
     bid,
     ourProbability: ourProb,
     edge: null,
+    economics: null,
   };
 }

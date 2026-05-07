@@ -557,6 +557,7 @@ function stepAsset({
     books,
     table,
     decisionEvaluator,
+    placementMode,
     minEdge,
     nowMs,
   });

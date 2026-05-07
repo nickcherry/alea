@@ -58,6 +58,12 @@ export type DecisionSnapshot = {
  * Per-side edge breakdown. `bid === null` means there are no resting
  * orders on that token's bid side; we cannot post a maker buy if we
  * have nothing to lean on.
+ *
+ * `economics` carries the dollar-denominated EV / reward-risk
+ * breakdown for the *realized* fill price (post book-walk for taker,
+ * the resting bid for maker). Null when the caller didn't supply a
+ * fill price for this side, or the inputs were out of range. The
+ * gates `thin-ev` and `thin-rr` read it.
  */
 export type SideEdge = {
   readonly side: LeadingSide;
@@ -65,6 +71,7 @@ export type SideEdge = {
   readonly bid: number | null;
   readonly ourProbability: number;
   readonly edge: number | null;
+  readonly economics: import("@alea/lib/trading/decision/computeTradeEconomics").TradeEconomics | null;
 };
 
 /**
@@ -81,6 +88,12 @@ export type SideEdge = {
  *     `MIN_EDGE`.
  *   - `low-confidence` — best edge clears `MIN_EDGE` but the chosen
  *     side's probability is below `MIN_MODEL_PROBABILITY`.
+ *   - `thin-ev` — chosen side passed all model gates but its EV in
+ *     USD is below `MIN_EXPECTED_VALUE_USD` once fees and the
+ *     asymmetric payoff are folded in.
+ *   - `thin-rr` — chosen side passed model + EV gates but its
+ *     reward-to-risk ratio (`netWinUsd / stake`) is below
+ *     `MIN_REWARD_RISK_RATIO`.
  *   - `no-consensus` — the research-challenger source tables did not
  *     unanimously choose the same tradeable side.
  *   - `execution-quality` — the consensus side passed model gates but
@@ -98,6 +111,8 @@ export type DecisionSkipReason =
   | "no-bid"
   | "thin-edge"
   | "low-confidence"
+  | "thin-ev"
+  | "thin-rr"
   | "no-consensus"
   | "execution-quality"
   | "asset-excluded";

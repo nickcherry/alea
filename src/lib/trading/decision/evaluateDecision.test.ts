@@ -228,4 +228,86 @@ describe("evaluateDecision", () => {
       expect(decision.reason).toBe("no-bucket");
     }
   });
+
+  it("returns thin-rr when the fill price is high enough that the win pays a tiny fraction of the stake", () => {
+    // distanceBp=10 → only vol_only_3 has data: P(up)=0.92, P(down)=0.08.
+    // Up-side bid 0.85, taker fillPrice 0.86 → shares ≈ 23.26, gross
+    // win ≈ $23.26, fee 700bps ≈ $0.28, net win ≈ $2.98 → RR ≈ 0.149.
+    // EV = 0.92 * 2.98 - 0.08 * 20 = 1.14 → above $1 EV floor BUT
+    // RR 0.149 < MIN_REWARD_RISK_RATIO (0.20) → thin-rr.
+    const decision = evaluateDecision({
+      ...baseInputs,
+      currentPrice: 100.1, // distanceBp = 10
+      upBestBid: 0.85,
+      downBestBid: 0.05,
+      upFillPrice: 0.86,
+      downFillPrice: 0.05,
+      upFeeUsd: 0.28,
+      downFeeUsd: 0,
+      stakeUsd: 20,
+    });
+    expect(decision.kind).toBe("skip");
+    if (decision.kind === "skip") {
+      expect(decision.reason).toBe("thin-rr");
+    }
+  });
+
+  it("returns thin-ev when the modeled edge clears minEdge but EV in USD is below the floor", () => {
+    // distanceBp=10 → vol_only_3 P(up)=0.92, P(down)=0.08.
+    // Up-side bid 0.85 → edge 0.07 (clears minEdge 0.05).
+    // P=0.92 ≥ MIN_MODEL_PROBABILITY 0.55.
+    // Taker fillPrice 0.92 → shares ≈ 21.74, gross win ≈ $21.74,
+    // fee = $0.20, net win ≈ $1.54 → RR ≈ 0.077 (also below 0.20).
+    // We expect thin-ev to fire FIRST (the gate runs before thin-rr).
+    // EV = 0.92 * 1.54 - 0.08 * 20 = -0.18 → fails $1 floor.
+    const decision = evaluateDecision({
+      ...baseInputs,
+      currentPrice: 100.1,
+      upBestBid: 0.85,
+      downBestBid: 0.05,
+      upFillPrice: 0.92,
+      downFillPrice: 0.05,
+      upFeeUsd: 0.2,
+      downFeeUsd: 0,
+      stakeUsd: 20,
+    });
+    expect(decision.kind).toBe("skip");
+    if (decision.kind === "skip") {
+      expect(decision.reason).toBe("thin-ev");
+    }
+  });
+
+  it("attaches per-side economics on a successful trade decision", () => {
+    const decision = evaluateDecision({
+      ...baseInputs,
+      upFillPrice: 0.6,
+      downFillPrice: 0.1,
+      upFeeUsd: 0.84,
+      downFeeUsd: 0,
+      stakeUsd: 20,
+    });
+    expect(decision.kind).toBe("trade");
+    if (decision.kind !== "trade") return;
+    expect(decision.chosen.economics).not.toBeNull();
+    if (decision.chosen.economics === null) return;
+    expect(decision.chosen.economics.fillPrice).toBe(0.6);
+    expect(decision.chosen.economics.shares).toBeCloseTo(20 / 0.6, 6);
+    // grossWin 33.33 - fee 0.84 - stake 20 = $12.49 net win
+    expect(decision.chosen.economics.netWinUsd).toBeCloseTo(12.49, 2);
+    // EV = 0.85 * 12.49 - 0.15 * 20 ≈ $7.62
+    expect(decision.chosen.economics.evUsd).toBeGreaterThan(7);
+  });
+
+  it("falls back to bid as the fill price when the caller does not supply fillPrice (legacy maker path)", () => {
+    // No upFillPrice / downFillPrice → evaluator uses bid (0.6 / 0.1)
+    // and zero fee. Equivalent to maker-mode placement: shares = 33.33,
+    // grossWin = $33.33, netWin = $13.33, EV = 0.85*13.33 - 0.15*20 ≈ $8.33.
+    const decision = evaluateDecision(baseInputs);
+    expect(decision.kind).toBe("trade");
+    if (decision.kind !== "trade") return;
+    expect(decision.chosen.economics).not.toBeNull();
+    if (decision.chosen.economics === null) return;
+    expect(decision.chosen.economics.fillPrice).toBe(0.6);
+    expect(decision.chosen.economics.feeUsd).toBe(0);
+  });
 });

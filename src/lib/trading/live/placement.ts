@@ -135,6 +135,7 @@ export async function placeWithRetry({
       books,
       table,
       decisionEvaluator,
+      placementMode,
       minEdge,
       nowMs: Date.now(),
     });
@@ -389,6 +390,7 @@ function currentDecision({
   books,
   table,
   decisionEvaluator,
+  placementMode,
   minEdge,
   nowMs,
 }: {
@@ -400,6 +402,7 @@ function currentDecision({
   readonly books: BookCache;
   readonly table: ProbabilityTable;
   readonly decisionEvaluator?: TradeDecisionEvaluator;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly nowMs: number;
 }): CurrentDecision | null {
@@ -416,6 +419,7 @@ function currentDecision({
     books,
     table,
     decisionEvaluator,
+    placementMode,
     minEdge,
     nowMs,
   });

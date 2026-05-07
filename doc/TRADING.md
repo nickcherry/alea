@@ -68,10 +68,69 @@ auto-promotion mechanics.
    populated bucket at `(remaining, distanceBp)`, compute the per-side
    edge against the resting Polymarket bid.
 3. Pick the (lookup, side) tuple with the maximum edge across all
-   matches. Trade if `edge ≥ MIN_EDGE` (0.05) AND
-   `ourProbability ≥ MIN_MODEL_PROBABILITY` (0.55); otherwise skip
-   with a typed reason (`thin-edge`, `low-confidence`, `no-bucket`,
-   `no-bid`, `warmup`, `too-close-to-line`, `out-of-window`).
+   matches. Trade only if **all** of the gates below pass; otherwise
+   skip with a typed reason. The gates run in this order; the first
+   failure short-circuits the rest:
+   - `edge ≥ MIN_EDGE` (0.05) — fast pre-filter on probability vs.
+     bid. Skip → `thin-edge`.
+   - `ourProbability ≥ MIN_MODEL_PROBABILITY` (0.55) — confidence
+     floor on the chosen side. Skip → `low-confidence`.
+   - `evUsd ≥ MIN_EXPECTED_VALUE_USD` ($1.00) — dollar-EV gate
+     (see "EV / reward-risk gate" below). Skip → `thin-ev`.
+   - `rewardRiskRatio ≥ MIN_REWARD_RISK_RATIO` (0.20) — payoff-
+     geometry gate. Skip → `thin-rr`.
+
+   Other typed reasons: `no-bucket`, `no-bid`, `warmup`,
+   `too-close-to-line`, `out-of-window`.
+
+### EV / reward-risk gate
+
+The `MIN_EDGE` gate is dimensionless: it asks "do we think the side
+is mispriced by ≥ 5pp?" but doesn't see the asymmetric payoff. A 5pp
+edge at fill price 0.55 buys $16+ of upside on a $20 stake; the same
+5pp edge at fill price 0.85 buys ~$3. Both pass `MIN_EDGE`, both
+risk a full $20 on a loss — but the second is a much worse trade.
+That asymmetry (consistently full-stake losses vs. occasional $5
+wins) is what motivated the additional dollar-denominated gate.
+
+The runner now folds two further checks into the decision:
+
+```
+shares          = stake / fillPrice
+grossWinUsd     = shares * $1                         (binary winner)
+netWinUsd       = grossWinUsd − feeUsd − stake
+evUsd           = ourProb * netWinUsd − (1 − ourProb) * stake
+rewardRiskRatio = netWinUsd / stake
+```
+
+- `evUsd ≥ MIN_EXPECTED_VALUE_USD` (default $1.00) — refuses
+  trades whose expected per-trade dollar return falls below the
+  floor once the venue fee and asymmetric payoff are folded in.
+  Catches the high-fillPrice / low-payoff trades that pass
+  `MIN_EDGE` but pay a tiny gross win against a full-stake loss.
+- `rewardRiskRatio ≥ MIN_REWARD_RISK_RATIO` (default 0.20) — caps
+  the worst payoff geometry the runner is willing to accept,
+  independent of model confidence. At a $20 stake this means
+  refusing any fill price above ~0.83 because the gross win
+  ($24/0.83 - $20 ≈ $4.10 before fees) wouldn't clear the floor.
+
+`fillPrice` is the **realized** entry price for the placement mode:
+- maker → resting bid
+- taker → depth-weighted average from the book walk
+  (`buildTakerCounterfactual.avgPrice`)
+
+`feeUsd` is the venue fee in USD at that fill (0 for maker; the
+`buildTakerCounterfactual.estimatedFeeUsd` for taker, currently
+~700bps on Polymarket crypto markets despite `/trades` reporting
+`fee_rate_bps: "0"`). The decision evaluator is pure — the caller
+(live `evaluateRecordDecision`, dry / replay paths) computes
+fillPrice and feeUsd per side and passes them in.
+
+Both gates apply to **all** placement paths — live trading, dry-run,
+and offline replay — so backtest results match production behavior.
+Tune `MIN_EXPECTED_VALUE_USD` and `MIN_REWARD_RISK_RATIO` in
+`src/constants/trading.ts`; both are committed-in-source policy
+levers and any change is a reviewable diff.
 
 The live and dry-run operator commands wrap that primitive with the current
 research challenger:

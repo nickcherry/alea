@@ -600,6 +600,11 @@ function tryDecide({
     book.fetchedAtMs >= market.windowStartMs &&
     nowMs - book.fetchedAtMs <= MAX_BOOK_AGE_MS;
 
+  // Replay simulates a maker-mode placement (`prepareMakerLimitBuy`
+  // semantics below), so the EV / RR gate uses bid as the fill price
+  // and fee = 0. If the analyzer ever adds a taker-mode replay path,
+  // walk the asks here to derive `upFillPrice` / `downFillPrice` /
+  // fee inputs from `buildTakerCounterfactual`.
   const decision = evaluateDecision({
     asset,
     windowStartMs: market.windowStartMs,
@@ -609,6 +614,11 @@ function tryDecide({
     regimeInput,
     upBestBid: useBook ? book.up.bestBid : null,
     downBestBid: useBook ? book.down.bestBid : null,
+    upFillPrice: useBook ? book.up.bestBid : null,
+    downFillPrice: useBook ? book.down.bestBid : null,
+    upFeeUsd: 0,
+    downFeeUsd: 0,
+    stakeUsd,
     upTokenId: market.upRef,
     downTokenId: market.downRef,
     table,

@@ -761,6 +761,7 @@ function stepDryAsset({
     books,
     table,
     decisionEvaluator,
+    placementMode,
     minEdge,
     nowMs,
   });
@@ -881,6 +882,7 @@ async function prepareDryOrder({
     books,
     table,
     decisionEvaluator,
+    placementMode,
     minEdge,
     nowMs: Date.now(),
   });

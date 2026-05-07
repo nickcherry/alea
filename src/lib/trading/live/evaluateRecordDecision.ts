@@ -1,3 +1,4 @@
+import { STAKE_USD } from "@alea/constants/trading";
 import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
 import { computeRegimeClassifierInput } from "@alea/lib/livePrices/regimeContext";
 import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
@@ -7,6 +8,7 @@ import {
   type TradeDecisionEvaluator,
 } from "@alea/lib/trading/decision/evaluateDecision";
 import type { TradeDecision } from "@alea/lib/trading/decision/types";
+import { buildTakerCounterfactual } from "@alea/lib/trading/dryRun/telemetry";
 import {
   tickIsFresh,
   usableBookForMarket,
@@ -17,6 +19,7 @@ import type {
   WindowRecord,
 } from "@alea/lib/trading/live/types";
 import type { LeadingSide, ProbabilityTable } from "@alea/lib/trading/types";
+import type { UpDownBook } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 
 export function evaluateRecordDecision({
@@ -28,6 +31,7 @@ export function evaluateRecordDecision({
   books,
   table,
   decisionEvaluator,
+  placementMode,
   minEdge,
   nowMs,
 }: {
@@ -39,6 +43,16 @@ export function evaluateRecordDecision({
   readonly books: BookCache;
   readonly table?: ProbabilityTable;
   readonly decisionEvaluator?: TradeDecisionEvaluator;
+  /**
+   * Tells the EV / RR gate which fill-price model to feed into the
+   * decision. Maker mode → fillPrice = bid, fee = 0. Taker mode →
+   * fillPrice = `buildTakerCounterfactual().avgPrice` per side, fee
+   * = the same helper's `estimatedFeeUsd`. Optional for backwards
+   * compat with callers that don't care about the EV gate (in which
+   * case the evaluator falls back to bid-as-fillPrice with zero
+   * fee, i.e. the maker assumption).
+   */
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly nowMs: number;
 }): TradeDecision | null {
@@ -83,6 +97,11 @@ export function evaluateRecordDecision({
     windowStartMs: market.windowStartMs,
     nowMs,
   });
+  const fillEconomics = computeFillEconomics({
+    book,
+    placementMode,
+    stakeUsd: STAKE_USD,
+  });
   const baseInputs = {
     asset,
     windowStartMs: window.windowStartMs,
@@ -97,6 +116,11 @@ export function evaluateRecordDecision({
     upTokenId: market.upRef,
     downTokenId: market.downRef,
     minEdge,
+    upFillPrice: fillEconomics.upFillPrice,
+    downFillPrice: fillEconomics.downFillPrice,
+    upFeeUsd: fillEconomics.upFeeUsd,
+    downFeeUsd: fillEconomics.downFeeUsd,
+    stakeUsd: STAKE_USD,
   };
   if (decisionEvaluator !== undefined) {
     return decisionEvaluator(baseInputs);
@@ -105,4 +129,56 @@ export function evaluateRecordDecision({
     ...baseInputs,
     table: table as ProbabilityTable,
   });
+}
+
+/**
+ * Per-side fill price + fee for the EV / RR gate. For maker mode the
+ * fillPrice is just the resting bid (we sit at the bid; fee = 0).
+ * For taker mode we walk the asks via `buildTakerCounterfactual` to
+ * get the depth-weighted average price plus the venue's estimated
+ * fee at the matched depth.
+ *
+ * Returning all-null when no book is available (the legacy path
+ * before the trader has seen a fresh book) makes the evaluator skip
+ * the EV gate cleanly — better than gating on stale data. The model
+ * gates above the EV check still fire on this same code path.
+ */
+function computeFillEconomics({
+  book,
+  placementMode,
+  stakeUsd,
+}: {
+  readonly book: UpDownBook | null;
+  readonly placementMode: "maker" | "taker" | undefined;
+  readonly stakeUsd: number;
+}): {
+  upFillPrice: number | null;
+  downFillPrice: number | null;
+  upFeeUsd: number;
+  downFeeUsd: number;
+} {
+  if (book === null) {
+    return {
+      upFillPrice: null,
+      downFillPrice: null,
+      upFeeUsd: 0,
+      downFeeUsd: 0,
+    };
+  }
+  if (placementMode !== "taker") {
+    return {
+      upFillPrice: book.up.bestBid,
+      downFillPrice: book.down.bestBid,
+      upFeeUsd: 0,
+      downFeeUsd: 0,
+    };
+  }
+  const upTaker = buildTakerCounterfactual({ book, side: "up", stakeUsd });
+  const downTaker = buildTakerCounterfactual({ book, side: "down", stakeUsd });
+  return {
+    upFillPrice: upTaker?.avgPrice ?? null,
+    downFillPrice: downTaker?.avgPrice ?? null,
+    upFeeUsd: upTaker?.estimatedFeeUsd ?? 0,
+    downFeeUsd: downTaker?.estimatedFeeUsd ?? 0,
+  };
 }

@@ -65,6 +65,7 @@ describe("formatDryRunEvent", () => {
           bid: 0.61,
           ourProbability: 0.72,
           edge: 0.11,
+          economics: null,
         },
         other: {
           side: "down",
@@ -72,6 +73,7 @@ describe("formatDryRunEvent", () => {
           bid: 0.38,
           ourProbability: 0.28,
           edge: -0.1,
+          economics: null,
         },
       },
     };
