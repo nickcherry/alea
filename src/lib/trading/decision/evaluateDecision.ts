@@ -79,6 +79,18 @@ export type DecisionInputsBase = {
    * `STAKE_USD` when not supplied.
    */
   readonly stakeUsd?: number;
+  /**
+   * Override for the dollar-EV gate (defaults to
+   * `MIN_EXPECTED_VALUE_USD`). Calibration / replay sweeps inject
+   * a per-call value here; live trading leaves it unset.
+   */
+  readonly minEvUsd?: number;
+  /**
+   * Override for the reward-to-risk gate (defaults to
+   * `MIN_REWARD_RISK_RATIO`). Calibration / replay sweeps inject
+   * a per-call value here; live trading leaves it unset.
+   */
+  readonly minRewardRiskRatio?: number;
 };
 
 export type DecisionInputs = DecisionInputsBase & {
@@ -329,15 +341,19 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
     });
   }
   // Dollar-EV gate: refuse trades where the venue fee + asymmetric
-  // payoff combine to leave the expected USD return below
-  // `MIN_EXPECTED_VALUE_USD`. This catches the high-fill-price /
-  // low-payoff trades that pass the model gates but pay a tiny
-  // gross win against a full-stake loss. Reads `economics` attached
-  // to the chosen SideEdge upstream — null means the caller didn't
-  // supply a fillPrice (legacy callers), which we treat as "skip
-  // the gate" rather than "skip the trade" for backwards compat.
+  // payoff combine to leave the expected USD return below the
+  // configured floor (default `MIN_EXPECTED_VALUE_USD`). This
+  // catches the high-fill-price / low-payoff trades that pass the
+  // model gates but pay a tiny gross win against a full-stake loss.
+  // Reads `economics` attached to the chosen SideEdge upstream —
+  // null means the caller didn't supply a fillPrice (legacy callers),
+  // which we treat as "skip the gate" rather than "skip the trade"
+  // for backwards compat.
+  const minEvUsd = inputs.minEvUsd ?? MIN_EXPECTED_VALUE_USD;
+  const minRewardRiskRatio =
+    inputs.minRewardRiskRatio ?? MIN_REWARD_RISK_RATIO;
   const econ = winningSideEdge.economics;
-  if (econ !== null && econ.evUsd < MIN_EXPECTED_VALUE_USD) {
+  if (econ !== null && econ.evUsd < minEvUsd) {
     return skipWithSnapshot({
       reason: "thin-ev",
       snapshot,
@@ -346,7 +362,7 @@ export function evaluateDecision(inputs: DecisionInputs): TradeDecision {
       down: downDiag,
     });
   }
-  if (econ !== null && econ.rewardRiskRatio < MIN_REWARD_RISK_RATIO) {
+  if (econ !== null && econ.rewardRiskRatio < minRewardRiskRatio) {
     return skipWithSnapshot({
       reason: "thin-rr",
       snapshot,

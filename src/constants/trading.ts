@@ -84,30 +84,40 @@ export const MIN_EDGE = 0.05;
  * bad-RR trades. This gate enforces a minimum dollar-EV floor so
  * those trades are filtered out automatically.
  *
- * Tunable. $1.00 is a conservative starting point: at a 0.60 hit
- * rate that's roughly the threshold below which one losing trade
- * wipes out 20+ winning trades' worth of EV. Lower it (e.g. $0.50)
- * to take more thin-EV trades, raise it to be stricter.
+ * Calibrated 2026-05-07 against three 35-hour replay sessions
+ * (~760 orders / session) using `scripts/calibrate-ev-rr-gate.py`.
+ * Sweeping `MIN_EV ∈ {0, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4}` ×
+ * `MIN_RR ∈ {0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5}`, the joint
+ * peak total-PnL across all sessions sat at MIN_EV ≈ $0.50.
+ * Going to $1.00 sacrificed ~70 trades / session for a small per-
+ * trade improvement that didn't recover the lost volume. Going to
+ * $0.25 took back the volume but with measurably worse hit rate
+ * (some genuinely break-even trades sneak through).
  */
-export const MIN_EXPECTED_VALUE_USD = 1.0;
+export const MIN_EXPECTED_VALUE_USD = 0.5;
 
 /**
  * Minimum reward-to-risk ratio (`netWinUsd / stake`) for the bot to
  * take a trade. Independent of model confidence, this caps the worst
  * payoff geometry the runner is willing to accept. At a $20 stake:
  *
- *   - 0.20 → at least $4 net win required to risk $20
- *   - 0.50 → at least $10 net win required to risk $20
+ *   - 0.20 → at least $4 net win required to risk $20  (fillPrice ≤ ~0.79)
+ *   - 0.30 → at least $6 net win required to risk $20  (fillPrice ≤ ~0.74)
+ *   - 0.40 → at least $8 net win required to risk $20  (fillPrice ≤ ~0.70)
  *
  * Pairs with `MIN_EXPECTED_VALUE_USD`: EV gate enforces "is this
  * trade +EV given confidence?", RR gate enforces "is the upside
  * worth the downside even when we're confident?". Both must pass.
  *
- * Concretely, MIN_REWARD_RISK_RATIO = 0.20 means the runner refuses
- * any fill price above ~0.83 (gross win < $4.10 on $20 stake before
- * fees), regardless of how confident the model is.
+ * Calibrated 2026-05-07 (same sweep as `MIN_EXPECTED_VALUE_USD`).
+ * At MIN_EV=$0.50, the PnL curve was flat across RR ≤ 0.30 and
+ * jumped sharply at RR=0.40 (the peak). 0.30 captures most of the
+ * benefit without dropping into the territory where one regime
+ * shift could leave the bot frozen — and lines up cleanly with the
+ * existing `RESEARCH_CHALLENGER_MAX_CHOSEN_BEST_ASK = 0.75` execution-
+ * quality cap.
  */
-export const MIN_REWARD_RISK_RATIO = 0.2;
+export const MIN_REWARD_RISK_RATIO = 0.3;
 
 /**
  * Active asset roster for the 2026-05-07 research challenger. DOGE and
