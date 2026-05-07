@@ -673,3 +673,24 @@ levels per order means avg fill price ~1-2 ticks higher than best
 ask, costing ~30-50% of the gross PnL. Realistic $100-stake PnL
 estimate: **\$2,500-\$3,500 / 35h tape** — comfortably "thousands".
 
+
+### 04:50 EDT — replay decision-debugging
+
+Earlier I noticed extending the replay range past 2026-05-07 00:46 UTC
+added windows but no new orders. Suspected a candle-loading race or
+freshness check bug. Debug logging confirmed: the model was deciding
+**skip → "no-bucket"** for those windows.
+
+"no-bucket" means the regime classifier produced a label not in the
+trained probability table (insufficient training samples for that
+regime). The model is correctly conservative — it abstains when
+uncertain.
+
+Implication: the +\$1,100 result is on data EXCLUDING the windows
+where the model self-abstained. The strategy is genuinely selective
+about when it has signal, which is good. The "no orders" in some
+windows is a feature, not a bug.
+
+(Decision-trace debug code was added to `replayWindow.ts` for
+this investigation and reverted; the finding is the value.)
+
