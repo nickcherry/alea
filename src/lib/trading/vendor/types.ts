@@ -294,8 +294,9 @@ export type LifetimePnlScanResult = {
  *
  * Reads (`discoverMarket`, `fetchBook`, `hydrateMarketState`,
  * `scanLifetimePnl`) are unauthenticated where possible; writes
- * (`placeMakerLimitBuy`, `cancelOrder`, `streamUserFills`) take care
- * of their own auth via the factory's bound state.
+ * (`placeMakerLimitBuy`, `placeTakerMarketBuy`, `cancelOrder`,
+ * `streamUserFills`) take care of their own auth via the factory's
+ * bound state.
  */
 export type Vendor = {
   /** Stable identifier — used in log lines and the lifetime-PnL store. */

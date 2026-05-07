@@ -13,6 +13,7 @@ import type { ProbabilityTable } from "@alea/lib/trading/types";
 import type {
   MarketHydration,
   PlacedOrder,
+  PlacedTakerMarketBuy,
   TradableMarket,
   UserStreamCallbacks,
   Vendor,
@@ -174,6 +175,23 @@ function placedOrder(overrides: Partial<PlacedOrder> = {}): PlacedOrder {
   };
 }
 
+function placedTakerOrder(
+  overrides: Partial<PlacedTakerMarketBuy> = {},
+): PlacedTakerMarketBuy {
+  return {
+    orderId: null,
+    side: "up",
+    outcomeRef: "UP",
+    limitPrice: 0.61,
+    sharesIfFilled: 32.78,
+    feeRateBps: 720,
+    orderType: "FAK",
+    expiresAtMs: null,
+    placedAtMs: NOW,
+    ...overrides,
+  };
+}
+
 function emptyHydration(): MarketHydration {
   return {
     openOrder: null,
@@ -228,10 +246,12 @@ async function runPlacement({
   record,
   vendor,
   events,
+  placementMode = "maker",
 }: {
   readonly record: AssetWindowRecord;
   readonly vendor: Vendor;
   readonly events: LiveEvent[];
+  readonly placementMode?: "maker" | "taker";
 }): Promise<void> {
   await placeWithRetry({
     asset: "btc",
@@ -242,6 +262,7 @@ async function runPlacement({
     trackers: trackers(),
     books: books(),
     table,
+    placementMode,
     minEdge: 0.05,
     telegramBotToken: "token",
     telegramChatId: "chat",
@@ -298,7 +319,8 @@ describe("placeWithRetry", () => {
     expect(assetRecord.slot).toEqual({ kind: "empty" });
     expect(events.at(-1)).toMatchObject({
       kind: "warn",
-      message: "BTC   JIT book refresh failed before placement: book unavailable",
+      message:
+        "BTC   JIT book refresh failed before placement: book unavailable",
     });
   });
 
@@ -333,6 +355,52 @@ describe("placeWithRetry", () => {
       orderId: "order-1",
       sharesIfFilled: 33.33,
     });
+    expect(events.map((event) => event.kind)).toContain("order-placed");
+  });
+
+  it("hydrates FAK taker fills immediately after placement", async () => {
+    const assetRecord = record();
+    const events: LiveEvent[] = [];
+    let placeCount = 0;
+    const baseVendor = vendorWith({
+      place: async () => {
+        throw new Error("maker path should not be used");
+      },
+      hydration: {
+        openOrder: null,
+        side: "up",
+        outcomeRef: "UP",
+        sharesFilled: 10,
+        costUsd: 6.2,
+        feesUsd: 0.03,
+        feeRateBpsAvg: 720,
+      },
+    });
+
+    await runPlacement({
+      record: assetRecord,
+      events,
+      placementMode: "taker",
+      vendor: {
+        ...baseVendor,
+        async placeTakerMarketBuy() {
+          placeCount += 1;
+          return placedTakerOrder();
+        },
+      },
+    });
+
+    expect(placeCount).toBe(1);
+    expect(assetRecord.slot).toMatchObject({
+      kind: "active",
+      orderId: null,
+      sharesIfFilled: 10,
+      sharesFilled: 10,
+      costUsd: 6.2,
+      feesUsd: 0.03,
+      feeRateBpsAvg: 720,
+    });
+    expect(events.map((event) => event.kind)).toContain("fill");
     expect(events.map((event) => event.kind)).toContain("order-placed");
   });
 

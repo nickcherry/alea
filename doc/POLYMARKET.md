@@ -69,12 +69,15 @@ The canonical URL set lives in
 - Current live order placement is FAK taker BUY. The adapter caps the order at
   the just-in-time book walk's worst consumed ask, rejects expected fills below
   the venue minimum, signs a market BUY, and posts it as
-  `createAndPostMarketOrder(..., OrderType.FAK)`. The legacy maker path still
-  posts GTD post-only orders and translates known post-only rejection phrases
-  into `PostOnlyRejectionError`.
-- Dry order preparation uses the same Polymarket tick/size/GTD validation as
-  live order placement but stops before signing or posting. This is exposed as
-  `Vendor.prepareMakerLimitBuy` and is safe without wallet credentials.
+  `createAndPostMarketOrder(..., OrderType.FAK)`. Immediately after a
+  successful FAK post, the runner hydrates venue state so an immediate fill
+  is not missed if the user websocket lags. The legacy maker path still posts
+  GTD post-only orders and translates known post-only rejection phrases into
+  `PostOnlyRejectionError`.
+- Legacy maker dry order preparation uses the same Polymarket tick/size/GTD
+  validation as maker live order placement but stops before signing or posting.
+  This is exposed as `Vendor.prepareMakerLimitBuy` and is safe without wallet
+  credentials.
 - The user WebSocket subscription uses `markets` populated with condition IDs,
   not token IDs. Fill frames are normalized into Alea's vendor-agnostic
   `FillEvent` shape. The stream sends `PING` heartbeats, ignores `PONG`, and

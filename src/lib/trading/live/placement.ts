@@ -188,14 +188,34 @@ export async function placeWithRetry({
           });
 
     if (attempt.kind === "ok") {
-      const observed = matchingActiveSlot({
+      const observedBeforeHydration = matchingActiveSlot({
         slot: record.slot,
         market: orderMarket,
         outcomeRef: attempt.placed.outcomeRef,
       });
+      const observed =
+        placementMode === "taker"
+          ? ((await hydratePlacedTakerState({
+              vendor,
+              market: orderMarket,
+              outcomeRef: attempt.placed.outcomeRef,
+              currentSlot: observedBeforeHydration,
+              asset,
+              emit,
+            })) ?? observedBeforeHydration)
+          : observedBeforeHydration;
       const sharesFilled = observed?.sharesFilled ?? 0;
-      const orderFullyFilled =
-        sharesFilled + 1e-6 >= attempt.placed.sharesIfFilled;
+      const useHydratedTakerSize =
+        placementMode === "taker" &&
+        observed !== null &&
+        observed.sharesFilled > 0;
+      const sharesIfFilled = useHydratedTakerSize
+        ? observed.sharesIfFilled
+        : attempt.placed.sharesIfFilled;
+      const limitPrice = useHydratedTakerSize
+        ? observed.limitPrice
+        : attempt.placed.limitPrice;
+      const orderFullyFilled = sharesFilled + 1e-6 >= sharesIfFilled;
       record.slot = {
         kind: "active",
         market: orderMarket,
@@ -205,8 +225,8 @@ export async function placeWithRetry({
           placementMode === "taker" || orderFullyFilled
             ? null
             : (attempt.placed as PlacedOrder).orderId,
-        limitPrice: attempt.placed.limitPrice,
-        sharesIfFilled: attempt.placed.sharesIfFilled,
+        limitPrice,
+        sharesIfFilled,
         sharesFilled,
         costUsd: observed?.costUsd ?? 0,
         feesUsd: observed?.feesUsd ?? 0,
@@ -485,6 +505,47 @@ async function reconcilePlacementState({
       message: `${labelAsset(asset)} placement reconcile failed: ${(error as Error).message}`,
     });
     return false;
+  }
+}
+
+async function hydratePlacedTakerState({
+  vendor,
+  market,
+  outcomeRef,
+  currentSlot,
+  asset,
+  emit,
+}: {
+  readonly vendor: Vendor;
+  readonly market: NonNullable<AssetWindowRecord["market"]>;
+  readonly outcomeRef: string;
+  readonly currentSlot: Extract<
+    AssetWindowRecord["slot"],
+    { kind: "active" }
+  > | null;
+  readonly asset: Asset;
+  readonly emit: (event: LiveEvent) => void;
+}): Promise<Extract<AssetWindowRecord["slot"], { kind: "active" }> | null> {
+  try {
+    const hydration = await vendor.hydrateMarketState({ market });
+    const hydrated = activeSlotFromHydration({ market, hydration });
+    if (hydrated === null || hydrated.outcomeRef !== outcomeRef) {
+      return null;
+    }
+    if (
+      currentSlot === null ||
+      hydrated.sharesFilled > currentSlot.sharesFilled + 1e-6
+    ) {
+      emit({ kind: "fill", atMs: Date.now(), asset, slot: hydrated });
+    }
+    return hydrated;
+  } catch (error) {
+    emit({
+      kind: "warn",
+      atMs: Date.now(),
+      message: `${labelAsset(asset)} post-FAK fill hydration failed: ${(error as Error).message}`,
+    });
+    return null;
   }
 }
 

@@ -14,10 +14,9 @@ const GTD_MIN_VALIDITY_MS = 60_000;
 /**
  * Maker-only limit BUY of a YES outcome token on Polymarket. Posts
  * `postOnly: true`, which makes the venue REJECT the order when it
- * would cross the spread (= would have been filled as taker). This
- * is the only way orders are placed in the live trader; a taker fill
- * on these markets carries up to ~7% in fees that would erase any
- * edge.
+ * would cross the spread (= would have been filled as taker). This is
+ * the legacy maker placement path; the current challenger uses the
+ * separate FAK taker path instead.
  *
  * Order size is computed as `stakeUsd / limitPrice`, rounded down to
  * Polymarket's 2-decimal share quantum so the resulting cost stays

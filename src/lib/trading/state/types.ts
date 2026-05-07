@@ -12,8 +12,8 @@ import type { TradableMarket } from "@alea/lib/trading/vendor/types";
  * window's open:
  *
  *   empty
- *     │  evaluator picks a TAKE side and the runner places one
- *     │  maker limit BUY at the venue
+ *     │  evaluator picks a TAKE side and the runner places one BUY
+ *     │  at the venue (maker limit for legacy paths, FAK taker now)
  *     ▼
  *   active                    ◀── unified "order resting and/or
  *                                filled" state. `orderId` is non-null
@@ -58,7 +58,7 @@ export type AssetSlot =
       readonly costUsd: number;
       /** Exact USDC fees observed so far, normalized at the vendor boundary. */
       readonly feesUsd: number;
-      /** Share-weighted average maker fee rate across observed fills. */
+      /** Share-weighted average fee rate across observed fills. */
       readonly feeRateBpsAvg: number;
     }
   | {

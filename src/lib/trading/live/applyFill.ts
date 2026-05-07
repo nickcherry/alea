@@ -37,20 +37,38 @@ export function applyFill({
   if (record.slot.outcomeRef !== fill.outcomeRef) {
     return;
   }
-  const newShares = record.slot.sharesFilled + fill.size;
+  const remainingShares = Math.max(
+    0,
+    record.slot.sharesIfFilled - record.slot.sharesFilled,
+  );
+  const hasAcceptedSize = record.slot.sharesIfFilled > 0;
+  if (
+    hasAcceptedSize &&
+    record.slot.orderId === null &&
+    remainingShares <= 1e-6
+  ) {
+    return;
+  }
+  const fillSize = hasAcceptedSize
+    ? Math.min(fill.size, remainingShares)
+    : fill.size;
+  if (fillSize <= 0) {
+    return;
+  }
+  const newShares = record.slot.sharesFilled + fillSize;
   if (newShares <= 0) {
     return;
   }
-  const newCost = record.slot.costUsd + fill.size * fill.price;
+  const newCost = record.slot.costUsd + fillSize * fill.price;
   const fillFeeUsd = computePolymarketFeeUsd({
-    size: fill.size,
+    size: fillSize,
     price: fill.price,
     feeRateBps: fill.feeRateBps,
   });
   const newFeesUsd = record.slot.feesUsd + fillFeeUsd;
   const weightedFee =
     (record.slot.feeRateBpsAvg * record.slot.sharesFilled +
-      fill.feeRateBps * fill.size) /
+      fill.feeRateBps * fillSize) /
     newShares;
   // Compare against the venue-accepted `sharesIfFilled` (rounded down
   // to the venue quantum at place time), not a fresh stake/price

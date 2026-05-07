@@ -267,15 +267,15 @@ Public unauthenticated REST. Slug pattern is fixed: `<asset>-updown-5m-<unixSeco
 
 ### Polymarket CLOB REST (book reads + auth ops)
 
-| Endpoint                                      | Usage                                         | Frequency                                       | Median latency  |
-| --------------------------------------------- | --------------------------------------------- | ----------------------------------------------- | --------------- |
-| `GET /book?token_id=...` × 2 in parallel      | Top-of-book for both YES tokens of one market | 5 markets every `BOOK_POLL_INTERVAL_MS` (1.5 s) | **209 ms**      |
-| `GET /open-orders?market=...`                 | Boot-time hydration per market                | 5 markets per window                            | ~150 ms         |
-| `GET /trades?market=...`                      | Boot-time hydration per market                | 5 markets per window                            | ~150 ms         |
-| `POST /order` (auth)                          | Place one maker limit BUY                     | 0–1 per asset per window                        | ~250–500 ms     |
-| `POST /order/cancel` (auth)                   | Cancel a residual order                       | ≤5 per window (one per active slot)             | ~200–400 ms     |
-| `GET /trades` (paginated, auth)               | Lifetime PnL reconciliation                   | One pagination walk per live startup            | ~150 ms × pages |
-| `GET /markets/<conditionId>` (concurrency 10) | Lifetime PnL reconciliation resolution lookup | ≤N unique markets per live startup              | ~200 ms each    |
+| Endpoint                                      | Usage                                                                                    | Frequency                                       | Median latency  |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+| `GET /book?token_id=...` × 2 in parallel      | Top-of-book for both YES tokens of one market                                            | 5 markets every `BOOK_POLL_INTERVAL_MS` (1.5 s) | **209 ms**      |
+| `GET /open-orders?market=...`                 | Boot-time hydration per market                                                           | 5 markets per window                            | ~150 ms         |
+| `GET /trades?market=...`                      | Boot-time hydration per market                                                           | 5 markets per window                            | ~150 ms         |
+| `POST /order` (auth)                          | Place one FAK taker BUY; legacy maker mode uses the same endpoint for GTD post-only BUYs | 0–1 per asset per window                        | ~250–500 ms     |
+| `POST /order/cancel` (auth)                   | Cancel a residual order                                                                  | ≤5 per window (one per active slot)             | ~200–400 ms     |
+| `GET /trades` (paginated, auth)               | Lifetime PnL reconciliation                                                              | One pagination walk per live startup            | ~150 ms × pages |
+| `GET /markets/<conditionId>` (concurrency 10) | Lifetime PnL reconciliation resolution lookup                                            | ≤N unique markets per live startup              | ~200 ms each    |
 
 A full lifetime scan over a fresh wallet is under a second; over a
 several-thousand-trade wallet it can take 30 s – 2 min depending on

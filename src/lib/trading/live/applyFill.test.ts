@@ -135,4 +135,67 @@ describe("applyFill", () => {
       sharesFilled: 5,
     });
   });
+
+  it("caps fills at the venue-accepted share size", () => {
+    const activeRecord = record(
+      activeSlot({
+        sharesIfFilled: 5,
+        sharesFilled: 4,
+        orderId: null,
+        costUsd: 2,
+      }),
+    );
+
+    applyFill({
+      asset: "btc",
+      record: activeRecord,
+      fill: { outcomeRef: "UP", price: 0.4, size: 3, feeRateBps: 20 },
+      emit: () => {},
+    });
+
+    expect(activeRecord.slot).toMatchObject({
+      kind: "active",
+      sharesFilled: 5,
+      costUsd: 2.4,
+    });
+
+    applyFill({
+      asset: "btc",
+      record: activeRecord,
+      fill: { outcomeRef: "UP", price: 0.4, size: 3, feeRateBps: 20 },
+      emit: () => {},
+    });
+
+    expect(activeRecord.slot).toMatchObject({
+      kind: "active",
+      sharesFilled: 5,
+      costUsd: 2.4,
+    });
+  });
+
+  it("still records fills that arrive before the accepted size is known", () => {
+    const activeRecord = record(
+      activeSlot({
+        sharesIfFilled: 0,
+        sharesFilled: 0,
+        costUsd: 0,
+      }),
+    );
+
+    applyFill({
+      asset: "btc",
+      record: activeRecord,
+      fill: { outcomeRef: "UP", price: 0.4, size: 3, feeRateBps: 20 },
+      emit: () => {},
+    });
+
+    expect(activeRecord.slot).toMatchObject({
+      kind: "active",
+      sharesIfFilled: 0,
+      sharesFilled: 3,
+    });
+    if (activeRecord.slot.kind === "active") {
+      expect(activeRecord.slot.costUsd).toBeCloseTo(1.2, 9);
+    }
+  });
 });
