@@ -1,20 +1,17 @@
 import type { TradeRolesByConditionId } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import type { TradingPerformanceMarketRole } from "@alea/lib/trading/performance/types";
-import { computePolymarketFeeUsd } from "@alea/lib/trading/vendor/polymarket/computePolymarketFeeUsd";
 import type { ClobClient } from "@polymarket/clob-client-v2";
 import { z } from "zod";
 
 /**
  * Per-market fill summary derived from the CLOB `/trades` endpoint:
- * which side of the book the wallet was on (maker / taker / mixed) and
- * the total USDC fees it paid across every matched fill on that
- * market.
+ * which side of the book the wallet was on (maker / taker / mixed).
  *
  * `/trades` is best-effort: it silently truncates the older end of
  * the wallet's history, so older markets show up here as `undefined`
- * (and the dashboard renders them as "—"). Lifetime PnL math doesn't
- * touch this map — it lives entirely in the data-api `/activity`
- * ledger that backs `scanPolymarketTradingPerformance`.
+ * (and the dashboard renders them as "—"). Lifetime PnL and per-
+ * market fees both come from /activity instead — see
+ * `buildTradingPerformancePayload`.
  */
 export async function aggregateTradeRolesByMarket({
   client,
@@ -26,38 +23,24 @@ export async function aggregateTradeRolesByMarket({
   const trades = await fetchAllTrades({ client, onProgress });
   const aggByCondition = new Map<
     string,
-    { makerCount: number; takerCount: number; feeUsd: number }
+    { makerCount: number; takerCount: number }
   >();
   for (const trade of trades) {
     if (trade.market.length === 0) {
       continue;
     }
-    const size = Number(trade.size);
-    const price = Number(trade.price);
-    const feeRateBps =
-      trade.trader_side === "MAKER" ? 0 : Number(trade.fee_rate_bps);
-    const feeUsd = computePolymarketFeeUsd({
-      size: Number.isFinite(size) ? size : 0,
-      price: Number.isFinite(price) ? price : 0,
-      feeRateBps: Number.isFinite(feeRateBps) ? feeRateBps : 0,
-    });
     const existing = aggByCondition.get(trade.market) ?? {
       makerCount: 0,
       takerCount: 0,
-      feeUsd: 0,
     };
     if (trade.trader_side === "MAKER") {
       existing.makerCount += 1;
     } else {
       existing.takerCount += 1;
     }
-    existing.feeUsd += feeUsd;
     aggByCondition.set(trade.market, existing);
   }
-  const out = new Map<
-    string,
-    { role: TradingPerformanceMarketRole; feeUsd: number }
-  >();
+  const out = new Map<string, { role: TradingPerformanceMarketRole }>();
   for (const [conditionId, agg] of aggByCondition) {
     const role: TradingPerformanceMarketRole =
       agg.makerCount > 0 && agg.takerCount > 0
@@ -67,7 +50,7 @@ export async function aggregateTradeRolesByMarket({
           : agg.takerCount > 0
             ? "taker"
             : null;
-    out.set(conditionId, { role, feeUsd: agg.feeUsd });
+    out.set(conditionId, { role });
   }
   return out;
 }

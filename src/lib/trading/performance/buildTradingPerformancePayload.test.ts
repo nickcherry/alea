@@ -16,6 +16,8 @@ function buy(
     slug: "btc-updown-5m",
     outcome: "Up",
     usdcSize: 10,
+    size: 0,
+    price: 0,
     timestampMs: 1_777_900_000_000,
     ...overrides,
   };
@@ -32,6 +34,8 @@ function redeem(
     slug: "btc-updown-5m",
     outcome: "Up",
     usdcSize: 25,
+    size: 0,
+    price: 0,
     timestampMs: 1_777_900_000_000,
     ...overrides,
   };
@@ -118,6 +122,8 @@ describe("buildTradingPerformancePayload", () => {
           slug: null,
           outcome: null,
           usdcSize: 5,
+          size: 0,
+          price: 0,
           timestampMs: 0,
         },
       ],

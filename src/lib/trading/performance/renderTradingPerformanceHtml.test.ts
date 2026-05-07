@@ -42,6 +42,7 @@ function payloadFixture(): TradingPerformancePayload {
       totalReturnedUsd: 0,
       currentValueUsd: 0,
       makerRebateUsd: 0,
+      totalFeesUsd: 1.25,
     },
     chart: [
       {

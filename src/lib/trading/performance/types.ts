@@ -16,6 +16,8 @@ export type TradingPerformanceSummary = {
   readonly totalReturnedUsd: number;
   readonly currentValueUsd: number;
   readonly makerRebateUsd: number;
+  /** Sum of every market's fee, derived from /activity cashflow. */
+  readonly totalFeesUsd: number;
 };
 
 export type TradingPerformanceChartPoint = {
@@ -54,8 +56,12 @@ export type TradingPerformanceMarketRow = {
   readonly result: TradingPerformanceMarketResult;
   /** Predominant fill role across this market's CLOB trades. */
   readonly traderRole: TradingPerformanceMarketRole;
-  /** Total CLOB fees paid on this market across all fills. */
-  readonly feeUsd: number | null;
+  /**
+   * Total fees paid on this market, derived from /activity cashflow
+   * (see `deriveFeeUsd` in `buildTradingPerformancePayload`). Always
+   * defined; zero when the market had no fee-bearing fills.
+   */
+  readonly feeUsd: number;
 };
 
 export type TradingPerformancePayload = {

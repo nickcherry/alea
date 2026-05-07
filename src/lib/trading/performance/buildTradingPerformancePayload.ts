@@ -9,13 +9,18 @@ import type {
 } from "@alea/lib/trading/performance/types";
 
 /**
- * Per-market trader role + fees, sourced from CLOB /trades. Optional
- * because the live runner's lifetime-PnL refresh path doesn't fetch
- * /trades — only the dashboard build does.
+ * Per-market trader role, sourced from CLOB /trades. Optional because
+ * the live runner's lifetime-PnL refresh path doesn't fetch /trades
+ * — only the dashboard build does.
+ *
+ * Fees are NOT in this map. /trades reports `fee_rate_bps: "0"` even
+ * for taker orders that were charged the venue's standard ~700bps,
+ * so we derive the true fee from /activity instead (it ships
+ * cashflow ground truth: `usdcSize - size*price` is the fee).
  */
 export type TradeRolesByConditionId = ReadonlyMap<
   string,
-  { readonly role: TradingPerformanceMarketRole; readonly feeUsd: number }
+  { readonly role: TradingPerformanceMarketRole }
 >;
 
 /**
@@ -30,7 +35,12 @@ export type TradingPerformanceInputActivity = {
   readonly title: string | null;
   readonly slug: string | null;
   readonly outcome: string | null;
+  /** USDC that actually moved on this event — fee-inclusive. */
   readonly usdcSize: number;
+  /** Shares moved on this event (TRADE / REDEEM only). */
+  readonly size: number;
+  /** Fill price for TRADE events; 0 for non-trade events. */
+  readonly price: number;
   readonly timestampMs: number;
 };
 
@@ -87,6 +97,7 @@ export function buildTradingPerformancePayload({
       outcome: string | null;
       invested: number;
       returned: number;
+      feeUsd: number;
       latestActivityMs: number;
     }
   >();
@@ -111,6 +122,7 @@ export function buildTradingPerformancePayload({
       outcome: event.outcome,
       invested: 0,
       returned: 0,
+      feeUsd: 0,
       latestActivityMs: 0,
     };
     if (sign < 0) {
@@ -118,6 +130,7 @@ export function buildTradingPerformancePayload({
     } else {
       existing.returned += event.usdcSize;
     }
+    existing.feeUsd += deriveFeeUsd({ event });
     if (event.timestampMs > existing.latestActivityMs) {
       existing.latestActivityMs = event.timestampMs;
     }
@@ -145,6 +158,7 @@ export function buildTradingPerformancePayload({
         outcome: position.outcome,
         invested: 0,
         returned: 0,
+        feeUsd: 0,
         latestActivityMs: 0,
       });
     }
@@ -179,7 +193,7 @@ export function buildTradingPerformancePayload({
       status,
       result: resultFromRow({ pnlUsd, status }),
       traderRole: role?.role ?? null,
-      feeUsd: role?.feeUsd ?? null,
+      feeUsd: m.feeUsd,
     });
   }
 
@@ -193,6 +207,7 @@ export function buildTradingPerformancePayload({
   const totalInvestedUsd = sum(rows.map((r) => r.investedUsd));
   const totalReturnedUsd = sum(rows.map((r) => r.returnedUsd));
   const currentValueUsd = sum(rows.map((r) => r.currentValueUsd));
+  const totalFeesUsd = sum(rows.map((r) => r.feeUsd));
   const lifetimePnlUsd =
     totalReturnedUsd + currentValueUsd - totalInvestedUsd + makerRebateUsd;
 
@@ -219,6 +234,7 @@ export function buildTradingPerformancePayload({
       totalReturnedUsd,
       currentValueUsd,
       makerRebateUsd,
+      totalFeesUsd,
     },
     chart,
     markets: rows,
@@ -255,6 +271,42 @@ function directionForActivity({
     case "MAKER_REBATE":
       return 0; // counted as a separate scalar
   }
+}
+
+/**
+ * Per-event fee in USD, derived from the cashflow gap. Polymarket's
+ * /trades endpoint reports `fee_rate_bps: "0"` even on taker fills
+ * that were charged the venue's standard ~700bps, so we ignore it
+ * and instead infer the fee from `usdcSize − size*price` on the
+ * /activity TRADE record (the only event type that carries a real
+ * fill price). REDEEM / SPLIT / MERGE are zero-fee venue events.
+ *
+ * For BUY: `usdcSize > size*price` → trader paid more than no-fee
+ * cost; the gap is the fee.
+ * For SELL: `usdcSize < size*price` → trader received less than
+ * no-fee proceeds; the gap is the fee.
+ *
+ * `abs()` collapses both directions into a single positive scalar.
+ * Sub-cent gaps (rounding noise) are clamped to zero so a
+ * fee-free venue config doesn't show a $0.001 fee per trade.
+ */
+function deriveFeeUsd({
+  event,
+}: {
+  readonly event: TradingPerformanceInputActivity;
+}): number {
+  if (event.kind !== "TRADE") {
+    return 0;
+  }
+  if (!Number.isFinite(event.size) || !Number.isFinite(event.price)) {
+    return 0;
+  }
+  const noFeeNotional = event.size * event.price;
+  const fee = Math.abs(event.usdcSize - noFeeNotional);
+  if (fee < 0.005) {
+    return 0;
+  }
+  return fee;
 }
 
 function positionStatus({

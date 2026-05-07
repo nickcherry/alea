@@ -102,6 +102,8 @@ type RawActivity = {
   readonly slug?: string;
   readonly outcome?: string;
   readonly usdcSize: number;
+  readonly size?: number;
+  readonly price?: number;
   readonly timestamp: number;
 };
 
@@ -216,6 +218,8 @@ function toInputActivity(
     slug: activity.slug ?? null,
     outcome: activity.outcome ?? null,
     usdcSize: numberOr({ value: activity.usdcSize, fallback: 0 }),
+    size: numberOr({ value: activity.size ?? 0, fallback: 0 }),
+    price: numberOr({ value: activity.price ?? 0, fallback: 0 }),
     timestampMs: activity.timestamp * 1000,
   };
 }
@@ -297,6 +301,8 @@ const activitySchema = z
     slug: z.string().optional(),
     outcome: z.string().optional(),
     usdcSize: z.number(),
+    size: z.number().optional(),
+    price: z.number().optional(),
     timestamp: z.number(),
   })
   .passthrough();

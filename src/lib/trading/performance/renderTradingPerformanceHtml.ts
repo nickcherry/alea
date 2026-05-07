@@ -6,6 +6,16 @@ import {
 } from "@alea/lib/ui/aleaDesignSystem";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
+/**
+ * Cap on the number of rows the Markets table renders. The chart
+ * still draws every market so lifetime performance shape is intact;
+ * the table only shows the recent slice so the page stays fast and
+ * scannable. Markets are pre-sorted newest-first by
+ * `buildTradingPerformancePayload`, so a `.slice(0, N)` grabs the
+ * latest N.
+ */
+const MARKETS_TABLE_LIMIT = 200;
+
 export function renderTradingPerformanceHtml({
   payload,
   assets,
@@ -21,6 +31,7 @@ export function renderTradingPerformanceHtml({
     `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
     `${payload.summary.marketCount.toLocaleString()} markets`,
   ].join('<span class="sep">&middot;</span>');
+  const visibleMarkets = payload.markets.slice(0, MARKETS_TABLE_LIMIT);
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const chartTokensJson = escapeJsonForHtml({
     value: JSON.stringify(aleaChartTokens),
@@ -45,7 +56,7 @@ export function renderTradingPerformanceHtml({
     </header>
     ${renderTopNav({ activeId: "live" })}
     <main class="alea-main">
-      <section class="alea-summary-grid cols-4">
+      <section class="alea-summary-grid cols-5">
         ${renderMetric({
           label: "Lifetime PnL",
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
@@ -55,7 +66,13 @@ export function renderTradingPerformanceHtml({
         ${renderMetric({
           label: "Invested / Returned",
           value: `${formatUnsignedUsd({ value: payload.summary.totalInvestedUsd })} → ${formatUnsignedUsd({ value: payload.summary.totalReturnedUsd })}`,
-          sub: `+ ${formatUnsignedUsd({ value: payload.summary.currentValueUsd })} held · ${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} rebates`,
+          sub: `+ ${formatUnsignedUsd({ value: payload.summary.currentValueUsd })} held`,
+        })}
+        ${renderMetric({
+          label: "Total Fees",
+          value: formatUnsignedUsd({ value: payload.summary.totalFeesUsd }),
+          tone: "negative",
+          sub: `${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} maker rebates earned`,
         })}
         ${renderMetric({
           label: "Win / Loss",
@@ -84,6 +101,7 @@ export function renderTradingPerformanceHtml({
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Markets</h2></div>
+        ${renderTableMeta({ shown: visibleMarkets.length, total: payload.markets.length })}
         <div class="alea-table-wrap">
           <table class="alea-table trading-performance-table">
             <thead>
@@ -97,7 +115,7 @@ export function renderTradingPerformanceHtml({
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>${payload.markets.map(renderMarketRow).join("")}</tbody>
+            <tbody>${visibleMarkets.map(renderMarketRow).join("")}</tbody>
           </table>
         </div>
       </section>
@@ -150,12 +168,25 @@ function renderMarketRow(
         </div>
       </td>
       <td>${renderRolePill({ role: row.traderRole })}</td>
-      <td class="alea-mono">${row.feeUsd === null ? "—" : formatUnsignedUsd({ value: row.feeUsd })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.feeUsd })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.investedUsd })}</td>
       <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
       <td><span class="result-pill ${row.result}">${row.result}</span></td>
     </tr>
   `;
+}
+
+function renderTableMeta({
+  shown,
+  total,
+}: {
+  readonly shown: number;
+  readonly total: number;
+}): string {
+  if (total <= shown) {
+    return "";
+  }
+  return `<p class="markets-table-meta">Showing the ${shown.toLocaleString()} most recent of ${total.toLocaleString()} markets. The chart above includes every market.</p>`;
 }
 
 function renderRolePill({
