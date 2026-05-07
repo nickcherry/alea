@@ -543,3 +543,24 @@ before committing.
 - Live trader still operates as maker; the 60% gain from taker is
   on paper only until placement-mode change is implemented.
 
+
+### 04:00 EDT — extended-data validation
+
+Re-ran replay against the captured tape extended by 2.5h (capture
+keeps running) → 416 windows, 760 orders. Re-applied the same filters:
+
+| Filter | 32h | extended (~35h) |
+|---|---|---|
+| baseline | -\$577 maker, +\$224 taker | -\$619 / +\$199 |
+| edge 0.06 | -\$363 / +\$354 | -\$403 / +\$326 |
+| Asian only + edge 0.06 | +\$558 / +\$519 | +\$518 / +\$490 |
+| good-hours + edge 0.06 | +\$648 / +\$1,100 | +\$608 / +\$1,046 |
+
+Filter PnL drops slightly with the extended data (~\$40-50) but
+remains comfortably positive. The pattern holds across the additional
+2.5h. Most of the new windows are during hours we filter out anyway,
+so the order set is essentially unchanged.
+
+**Final taker pnl on the data-mined hour filter: +\$1,046 / 369
+orders / 74.0% taker win rate / 35h captured tape / \$20 stake.**
+
