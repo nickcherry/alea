@@ -1,18 +1,21 @@
 export type TradingPerformanceSource = {
+  readonly activity: string;
   readonly positions: string;
 };
 
 export type TradingPerformanceSummary = {
   readonly walletAddress: string;
-  readonly positionCount: number;
+  readonly marketCount: number;
   readonly openPositionCount: number;
   readonly redeemablePositionCount: number;
-  readonly winningPositionCount: number;
-  readonly losingPositionCount: number;
-  readonly flatPositionCount: number;
+  readonly winningMarketCount: number;
+  readonly losingMarketCount: number;
+  readonly flatMarketCount: number;
   readonly lifetimePnlUsd: number;
   readonly totalInvestedUsd: number;
+  readonly totalReturnedUsd: number;
   readonly currentValueUsd: number;
+  readonly makerRebateUsd: number;
 };
 
 export type TradingPerformanceChartPoint = {
@@ -20,31 +23,29 @@ export type TradingPerformanceChartPoint = {
   readonly symbol: string;
   readonly title: string;
   readonly orderedAtMs: number;
-  readonly positionPnlUsd: number;
+  readonly marketPnlUsd: number;
   readonly cumulativePnlUsd: number;
 };
 
-export type TradingPerformancePositionStatus = "open" | "redeemable";
-export type TradingPerformancePositionResult = "win" | "loss" | "flat" | "open";
+export type TradingPerformanceMarketStatus = "open" | "redeemable" | "closed";
+export type TradingPerformanceMarketResult = "win" | "loss" | "flat" | "open";
 
-export type TradingPerformancePositionRow = {
+export type TradingPerformanceMarketRow = {
   readonly conditionId: string;
-  readonly tokenId: string;
-  readonly oppositeTokenId: string | null;
   readonly symbol: string;
   readonly title: string;
   readonly slug: string | null;
-  readonly outcome: string;
-  readonly size: number;
-  readonly avgPrice: number;
-  readonly currentPrice: number;
-  readonly initialValueUsd: number;
-  readonly currentValueUsd: number;
-  readonly cashPnlUsd: number;
-  readonly realizedPnlUsd: number;
+  readonly outcome: string | null;
   readonly endDateMs: number | null;
-  readonly status: TradingPerformancePositionStatus;
-  readonly result: TradingPerformancePositionResult;
+  readonly lastActivityAtMs: number;
+  readonly investedUsd: number;
+  readonly returnedUsd: number;
+  readonly currentValueUsd: number;
+  readonly currentSize: number;
+  readonly currentPrice: number;
+  readonly pnlUsd: number;
+  readonly status: TradingPerformanceMarketStatus;
+  readonly result: TradingPerformanceMarketResult;
 };
 
 export type TradingPerformancePayload = {
@@ -54,5 +55,5 @@ export type TradingPerformancePayload = {
   readonly source: TradingPerformanceSource;
   readonly summary: TradingPerformanceSummary;
   readonly chart: readonly TradingPerformanceChartPoint[];
-  readonly positions: readonly TradingPerformancePositionRow[];
+  readonly markets: readonly TradingPerformanceMarketRow[];
 };

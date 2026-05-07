@@ -117,7 +117,7 @@
               tooltip.innerHTML =
                 '<div class="alea-tooltip-head">' + head + '</div>' +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + ' · ' + point.title + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Position PnL</span><span class="value">' + formatUsd(point.positionPnlUsd) + '</span></div>' +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Market PnL</span><span class="value">' + formatUsd(point.marketPnlUsd) + '</span></div>' +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Total PnL</span><span class="value">' + formatUsd(point.cumulativePnlUsd) + '</span></div>';
               const rect = host.getBoundingClientRect();
               tooltip.style.left = Math.min(rect.width - 230, Math.max(8, self.cursor.left + 12)) + "px";

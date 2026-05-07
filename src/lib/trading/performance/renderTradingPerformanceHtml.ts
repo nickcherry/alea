@@ -19,7 +19,7 @@ export function renderTradingPerformanceHtml({
   const subtitle = [
     `wallet ${shortAddress({ value: payload.walletAddress })}`,
     `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
-    `${payload.summary.positionCount.toLocaleString()} positions`,
+    `${payload.summary.marketCount.toLocaleString()} markets`,
   ].join('<span class="sep">&middot;</span>');
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const chartTokensJson = escapeJsonForHtml({
@@ -50,17 +50,17 @@ export function renderTradingPerformanceHtml({
           label: "Lifetime PnL",
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
           tone: toneForNumber({ value: payload.summary.lifetimePnlUsd }),
-          sub: `mark-to-market across ${payload.summary.positionCount.toLocaleString()} positions`,
+          sub: `realized + mark-to-market across ${payload.summary.marketCount.toLocaleString()} markets`,
         })}
         ${renderMetric({
-          label: "Current Value",
-          value: formatUnsignedUsd({ value: payload.summary.currentValueUsd }),
-          sub: `${formatUnsignedUsd({ value: payload.summary.totalInvestedUsd })} invested lifetime`,
+          label: "Invested / Returned",
+          value: `${formatUnsignedUsd({ value: payload.summary.totalInvestedUsd })} → ${formatUnsignedUsd({ value: payload.summary.totalReturnedUsd })}`,
+          sub: `+ ${formatUnsignedUsd({ value: payload.summary.currentValueUsd })} held · ${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} rebates`,
         })}
         ${renderMetric({
           label: "Win / Loss",
-          value: `${payload.summary.winningPositionCount.toLocaleString()} / ${payload.summary.losingPositionCount.toLocaleString()}`,
-          sub: `${payload.summary.openPositionCount.toLocaleString()} open · ${payload.summary.flatPositionCount.toLocaleString()} flat`,
+          value: `${payload.summary.winningMarketCount.toLocaleString()} / ${payload.summary.losingMarketCount.toLocaleString()}`,
+          sub: `${payload.summary.openPositionCount.toLocaleString()} open · ${payload.summary.flatMarketCount.toLocaleString()} flat`,
         })}
         ${renderMetric({
           label: "Open Positions",
@@ -79,11 +79,11 @@ export function renderTradingPerformanceHtml({
           <div id="pnl-empty" class="chart-empty">No positions to chart yet.</div>
           <div id="pnl-tooltip" class="alea-tooltip"></div>
         </div>
-        <p class="source-line">Source: ${escapeHtml({ value: payload.source.positions })}.</p>
+        <p class="source-line">Source: ${escapeHtml({ value: payload.source.activity })}; ${escapeHtml({ value: payload.source.positions })}.</p>
       </section>
 
       <section class="alea-card with-corners">
-        <div class="alea-section-rule"><h2>Positions</h2></div>
+        <div class="alea-section-rule"><h2>Markets</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table trading-performance-table">
             <thead>
@@ -91,16 +91,14 @@ export function renderTradingPerformanceHtml({
                 <th>Symbol</th>
                 <th>Market</th>
                 <th>Outcome</th>
-                <th>Size</th>
-                <th>Avg Price</th>
-                <th>Cur Price</th>
                 <th>Invested</th>
-                <th>Current</th>
+                <th>Returned</th>
+                <th>Held</th>
                 <th>PnL</th>
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>${payload.positions.map(renderPositionRow).join("")}</tbody>
+            <tbody>${payload.markets.map(renderMarketRow).join("")}</tbody>
           </table>
         </div>
       </section>
@@ -134,13 +132,13 @@ function renderMetric({
   `;
 }
 
-function renderPositionRow(
-  row: TradingPerformancePayload["positions"][number],
+function renderMarketRow(
+  row: TradingPerformancePayload["markets"][number],
 ): string {
   const pnlClass =
-    row.cashPnlUsd > 0
+    row.pnlUsd > 0
       ? " alea-num-positive"
-      : row.cashPnlUsd < 0
+      : row.pnlUsd < 0
         ? " alea-num-negative"
         : "";
   return `
@@ -152,13 +150,11 @@ function renderPositionRow(
           <span class="trade-sub">${escapeHtml({ value: row.slug ?? shortId({ value: row.conditionId }) })}</span>
         </div>
       </td>
-      <td>${escapeHtml({ value: row.outcome })}</td>
-      <td class="alea-mono">${formatNumber({ value: row.size, maximumFractionDigits: 2 })}</td>
-      <td class="alea-mono">${formatPrice({ value: row.avgPrice })}</td>
-      <td class="alea-mono">${formatPrice({ value: row.currentPrice })}</td>
-      <td class="alea-mono">${formatUnsignedUsd({ value: row.initialValueUsd })}</td>
-      <td class="alea-mono">${formatUnsignedUsd({ value: row.currentValueUsd })}</td>
-      <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.cashPnlUsd })}</td>
+      <td>${escapeHtml({ value: row.outcome ?? "—" })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.investedUsd })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.returnedUsd })}</td>
+      <td class="alea-mono">${row.currentValueUsd > 0 ? formatUnsignedUsd({ value: row.currentValueUsd }) : "—"}</td>
+      <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
       <td><span class="result-pill ${row.result}">${row.result}</span></td>
     </tr>
   `;
@@ -190,20 +186,6 @@ function formatUnsignedUsd({ value }: { readonly value: number }): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-}
-
-function formatPrice({ value }: { readonly value: number }): string {
-  return value.toFixed(3);
-}
-
-function formatNumber({
-  value,
-  maximumFractionDigits,
-}: {
-  readonly value: number;
-  readonly maximumFractionDigits: number;
-}): string {
-  return value.toLocaleString("en-US", { maximumFractionDigits });
 }
 
 function toneForNumber({

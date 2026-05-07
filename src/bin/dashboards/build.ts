@@ -130,9 +130,11 @@ async function buildTradingDashboard({
   const payload = await scanPolymarketTradingPerformance({
     funderAddress: auth.funderAddress,
     onProgress: (event) => {
-      io.writeStdout(
-        `  ${pc.dim("positions fetched:")} ${event.positionsSoFar}\n`,
-      );
+      const label =
+        event.kind === "activity-page"
+          ? `${pc.dim("activity fetched:")} ${event.activitiesSoFar}`
+          : `${pc.dim("positions fetched:")} ${event.positionsSoFar}`;
+      io.writeStdout(`  ${label}\n`);
     },
   });
 
@@ -142,7 +144,7 @@ async function buildTradingDashboard({
 
   io.writeStdout(
     `  ${pc.green("pnl =")} ${formatUsd({ value: payload.summary.lifetimePnlUsd })}` +
-      `  ${pc.dim("positions=")}${payload.summary.positionCount}` +
+      `  ${pc.dim("markets=")}${payload.summary.marketCount}` +
       `  ${pc.dim("current=")}${formatUsd({ value: payload.summary.currentValueUsd })}\n` +
       `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
   );

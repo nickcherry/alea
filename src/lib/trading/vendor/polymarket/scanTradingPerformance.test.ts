@@ -6,19 +6,28 @@ import {
 import { describe, expect, it } from "bun:test";
 
 function fakeDataApiFetch({
-  pages,
+  activityPages,
+  positionsPages,
 }: {
-  readonly pages: readonly (readonly unknown[])[];
+  readonly activityPages: readonly (readonly unknown[])[];
+  readonly positionsPages: readonly (readonly unknown[])[];
 }): DataApiFetch {
-  let pageIndex = 0;
+  let activityIdx = 0;
+  let positionsIdx = 0;
   return async (url) => {
-    const offsetMatch = /offset=(\d+)/.exec(url);
-    const offset =
-      offsetMatch?.[1] !== undefined ? Number(offsetMatch[1]) : 0;
-    expect(offset).toBe(pageIndex * 500);
-    expect(url).toContain("sizeThreshold=0");
-    const page = pages[pageIndex] ?? [];
-    pageIndex += 1;
+    const isActivity = url.includes("/activity?");
+    const isPositions = url.includes("/positions?");
+    let page: readonly unknown[] = [];
+    if (isActivity) {
+      page = activityPages[activityIdx] ?? [];
+      activityIdx += 1;
+    } else if (isPositions) {
+      expect(url).toContain("sizeThreshold=0");
+      page = positionsPages[positionsIdx] ?? [];
+      positionsIdx += 1;
+    } else {
+      throw new Error(`unexpected URL: ${url}`);
+    }
     return {
       ok: true,
       status: 200,
@@ -28,45 +37,66 @@ function fakeDataApiFetch({
 }
 
 describe("scanPolymarketTradingPerformance", () => {
-  it("fetches paginated /positions and produces a position-based payload", async () => {
+  it("computes lifetime PnL from /activity cashflows + /positions mark-to-market", async () => {
     const progress: TradingPerformanceScanProgress[] = [];
     const payload = await scanPolymarketTradingPerformance({
       funderAddress: "0xfunder",
       generatedAtMs: 1_777_900_600_000,
       dataApiFetch: fakeDataApiFetch({
-        pages: [
+        activityPages: [
           [
+            // Won: paid $10, redeemed for $25 → +$15
             {
-              conditionId: "cond-loss",
-              asset: "ASSET_LOSS",
-              oppositeAsset: "OPPOSITE_LOSS",
-              title: "Bitcoin Up or Down - May 4",
+              type: "TRADE",
+              side: "BUY",
+              conditionId: "win",
+              title: "BTC Up",
               slug: "btc-updown-5m-1",
               outcome: "Up",
-              size: 100,
-              avgPrice: 0.3,
-              curPrice: 0,
-              initialValue: 30,
-              currentValue: 0,
-              cashPnl: -30,
-              realizedPnl: 0,
-              endDate: "2026-05-04",
-              redeemable: true,
+              usdcSize: 10,
+              timestamp: 1_777_900_000,
             },
             {
-              conditionId: "cond-open",
-              asset: "ASSET_OPEN",
-              title: "Ethereum Up or Down - May 7",
+              type: "REDEEM",
+              conditionId: "win",
+              title: "BTC Up",
+              slug: "btc-updown-5m-1",
+              outcome: "Up",
+              usdcSize: 25,
+              timestamp: 1_777_900_500,
+            },
+            // Lost: paid $50, never redeemed (still in /positions)
+            {
+              type: "TRADE",
+              side: "BUY",
+              conditionId: "lose",
+              title: "ETH Up",
               slug: "eth-updown-5m-2",
-              outcome: "Down",
-              size: 50,
-              avgPrice: 0.5,
-              curPrice: 0.6,
-              initialValue: 25,
-              currentValue: 30,
-              cashPnl: 5,
-              endDate: "2026-05-07",
-              redeemable: false,
+              outcome: "Up",
+              usdcSize: 50,
+              timestamp: 1_777_800_000,
+            },
+            // Maker rebate not attributed to any market
+            {
+              type: "MAKER_REBATE",
+              usdcSize: 1.5,
+              timestamp: 1_777_900_700,
+            },
+          ],
+          [],
+        ],
+        positionsPages: [
+          [
+            {
+              conditionId: "lose",
+              title: "ETH Up",
+              slug: "eth-updown-5m-2",
+              outcome: "Up",
+              size: 100,
+              curPrice: 0,
+              currentValue: 0,
+              endDate: "2026-05-01",
+              redeemable: true,
             },
           ],
           [],
@@ -75,65 +105,20 @@ describe("scanPolymarketTradingPerformance", () => {
       onProgress: (event) => progress.push(event),
     });
 
-    expect(payload.summary.positionCount).toBe(2);
-    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-25, 9);
-    expect(payload.summary.totalInvestedUsd).toBeCloseTo(55, 9);
-    expect(payload.summary.currentValueUsd).toBeCloseTo(30, 9);
-    expect(payload.summary.openPositionCount).toBe(1);
+    // 25 - 10 (win) + 0 - 50 (loss) + 1.5 rebate = -33.5
+    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-33.5, 9);
+    expect(payload.summary.totalInvestedUsd).toBeCloseTo(60, 9);
+    expect(payload.summary.totalReturnedUsd).toBeCloseTo(25, 9);
+    expect(payload.summary.currentValueUsd).toBeCloseTo(0, 9);
+    expect(payload.summary.makerRebateUsd).toBeCloseTo(1.5, 9);
+    expect(payload.summary.marketCount).toBe(2);
+    expect(payload.summary.winningMarketCount).toBe(1);
+    expect(payload.summary.losingMarketCount).toBe(1);
     expect(payload.summary.redeemablePositionCount).toBe(1);
-    expect(payload.summary.losingPositionCount).toBe(1);
     expect(payload.walletAddress).toBe("0xfunder");
-    expect(payload.positions.find((p) => p.conditionId === "cond-loss")).toMatchObject({
-      symbol: "BTC",
-      result: "loss",
-      status: "redeemable",
-      cashPnlUsd: -30,
-    });
-    expect(payload.positions.find((p) => p.conditionId === "cond-open")).toMatchObject({
-      symbol: "ETH",
-      result: "open",
-      status: "open",
-    });
-    expect(progress).toEqual([{ kind: "positions-page", positionsSoFar: 2 }]);
-  });
-
-  it("paginates by offset until the page comes back smaller than the page size", async () => {
-    const fullPage = Array.from({ length: 500 }, (_, idx) => ({
-      conditionId: `cond-${idx}`,
-      asset: `tok-${idx}`,
-      title: `M${idx}`,
-      slug: "btc-updown",
-      outcome: "Up",
-      size: 1,
-      avgPrice: 0.5,
-      curPrice: 0,
-      initialValue: 0.5,
-      currentValue: 0,
-      cashPnl: -0.5,
-      redeemable: true,
-    }));
-    const partialPage = [
-      {
-        conditionId: "cond-tail",
-        asset: "tok-tail",
-        title: "Tail",
-        slug: "btc-updown",
-        outcome: "Up",
-        size: 1,
-        avgPrice: 0.5,
-        curPrice: 0,
-        initialValue: 0.5,
-        currentValue: 0,
-        cashPnl: -0.5,
-        redeemable: true,
-      },
-    ];
-    const payload = await scanPolymarketTradingPerformance({
-      funderAddress: "0xfunder",
-      generatedAtMs: 0,
-      dataApiFetch: fakeDataApiFetch({ pages: [fullPage, partialPage] }),
-    });
-    expect(payload.summary.positionCount).toBe(501);
-    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-250.5, 9);
+    expect(progress).toEqual([
+      { kind: "activity-page", activitiesSoFar: 4 },
+      { kind: "positions-page", positionsSoFar: 1 },
+    ]);
   });
 });

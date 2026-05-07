@@ -56,9 +56,11 @@ export const tradingPerformanceCommand = defineCommand({
     const payload = await scanPolymarketTradingPerformance({
       funderAddress: auth.funderAddress,
       onProgress: (event) => {
-        io.writeStdout(
-          `  ${pc.dim("positions fetched:")} ${event.positionsSoFar}\n`,
-        );
+        const label =
+          event.kind === "activity-page"
+            ? `${pc.dim("activity fetched:")} ${event.activitiesSoFar}`
+            : `${pc.dim("positions fetched:")} ${event.positionsSoFar}`;
+        io.writeStdout(`  ${label}\n`);
       },
     });
 
@@ -72,9 +74,10 @@ export const tradingPerformanceCommand = defineCommand({
 
     io.writeStdout(
       `\n${pc.green("lifetime pnl =")} ${formatUsd({ value: payload.summary.lifetimePnlUsd })}\n` +
-        `  ${pc.dim("positions:")} ${payload.summary.positionCount}\n` +
-        `  ${pc.dim("current value:")} ${formatUsd({ value: payload.summary.currentValueUsd, signed: false })}\n` +
+        `  ${pc.dim("markets:")} ${payload.summary.marketCount}\n` +
         `  ${pc.dim("invested:")} ${formatUsd({ value: payload.summary.totalInvestedUsd, signed: false })}\n` +
+        `  ${pc.dim("returned:")} ${formatUsd({ value: payload.summary.totalReturnedUsd, signed: false })}\n` +
+        `  ${pc.dim("currently held:")} ${formatUsd({ value: payload.summary.currentValueUsd, signed: false })}\n` +
         `${pc.green("wrote")} ${pc.dim(jsonPath)}\n` +
         `${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );

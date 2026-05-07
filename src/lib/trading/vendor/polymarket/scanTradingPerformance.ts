@@ -1,5 +1,6 @@
 import {
   buildTradingPerformancePayload,
+  type TradingPerformanceInputActivity,
   type TradingPerformanceInputPosition,
 } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import type { TradingPerformancePayload } from "@alea/lib/trading/performance/types";
@@ -8,10 +9,9 @@ import { z } from "zod";
 const DATA_API_HOST = "https://data-api.polymarket.com";
 const DATA_API_PAGE_SIZE = 500;
 
-export type TradingPerformanceScanProgress = {
-  readonly kind: "positions-page";
-  readonly positionsSoFar: number;
-};
+export type TradingPerformanceScanProgress =
+  | { readonly kind: "activity-page"; readonly activitiesSoFar: number }
+  | { readonly kind: "positions-page"; readonly positionsSoFar: number };
 
 /**
  * Custom hook for tests — defaults to global `fetch`. The signature
@@ -24,16 +24,18 @@ export type DataApiFetch = (url: string) => Promise<{
 }>;
 
 /**
- * Builds the lifetime trading-performance payload for a Polymarket
- * trader. Position records (with realized + unrealized PnL already
- * computed by Polymarket) are pulled from the public
- * `data-api.polymarket.com/positions?user=<funder>` endpoint, which
- * is the same source feeding the Polymarket UI's portfolio view —
- * the canonical lifetime PnL for the wallet.
+ * Builds the lifetime trading-performance payload by combining the
+ * Polymarket activity ledger (cashflow ground truth: BUY / REDEEM /
+ * SELL / MAKER_REBATE / SPLIT / MERGE) with the current `/positions`
+ * snapshot (mark-to-market for unsettled markets). This is the same
+ * data feeding Polymarket's profile UI.
  *
- * `sizeThreshold=0` is required to include redeemable losing
- * positions (currentValue=0, but cashPnl reflects the loss); without
- * it the API hides them and our totals undercount losers.
+ * Why activity, not /trades or just /positions:
+ * - /trades is missing many older fills (silently truncates).
+ * - /positions only contains currently-held + redeemable losers; auto-
+ *   redeemed winners drop out, which biases sums toward losses.
+ * - /activity records every redemption event so we can reconstruct
+ *   realized PnL even for already-redeemed winners.
  */
 export async function scanPolymarketTradingPerformance({
   funderAddress,
@@ -47,40 +49,84 @@ export async function scanPolymarketTradingPerformance({
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
   readonly dataApiFetch?: DataApiFetch;
 }): Promise<TradingPerformancePayload> {
-  const positions = await fetchAllPositions({
-    funderAddress,
-    onProgress,
-    dataApiFetch,
-  });
+  const [activity, positions] = await Promise.all([
+    fetchAllActivity({ funderAddress, onProgress, dataApiFetch }),
+    fetchAllPositions({ funderAddress, onProgress, dataApiFetch }),
+  ]);
   return buildTradingPerformancePayload({
     walletAddress: funderAddress,
     generatedAtMs,
+    activity: activity.map(toInputActivity),
     positions: positions.map(toInputPosition),
   });
 }
 
-/**
- * Position record from `data-api.polymarket.com/positions?user=...`.
- * Only the fields we actually consume are typed — extras pass
- * through harmlessly.
- */
+type RawActivity = {
+  readonly type: string;
+  readonly side?: string;
+  readonly conditionId?: string;
+  readonly title?: string;
+  readonly slug?: string;
+  readonly outcome?: string;
+  readonly usdcSize: number;
+  readonly timestamp: number;
+};
+
 type RawPosition = {
   readonly conditionId: string;
-  readonly asset: string;
-  readonly oppositeAsset?: string;
-  readonly title: string;
+  readonly title?: string;
   readonly slug?: string;
-  readonly outcome: string;
+  readonly outcome?: string;
   readonly size: number;
-  readonly avgPrice: number;
   readonly curPrice: number;
-  readonly initialValue: number;
   readonly currentValue: number;
-  readonly cashPnl: number;
-  readonly realizedPnl?: number;
   readonly endDate?: string;
   readonly redeemable?: boolean;
 };
+
+async function fetchAllActivity({
+  funderAddress,
+  onProgress,
+  dataApiFetch,
+}: {
+  readonly funderAddress: string;
+  readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
+  readonly dataApiFetch: DataApiFetch;
+}): Promise<RawActivity[]> {
+  const accumulator: RawActivity[] = [];
+  let offset = 0;
+  while (true) {
+    const url =
+      `${DATA_API_HOST}/activity?user=${encodeURIComponent(funderAddress)}` +
+      `&limit=${DATA_API_PAGE_SIZE}&offset=${offset}`;
+    const response = await dataApiFetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `data-api /activity returned HTTP ${response.status} for ${funderAddress}`,
+      );
+    }
+    const body: unknown = await response.json();
+    const parsed = activityArraySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new Error(
+        `data-api /activity returned an unexpected shape: ${parsed.error.message}`,
+      );
+    }
+    const page = parsed.data;
+    if (page.length === 0) {
+      return accumulator;
+    }
+    accumulator.push(...page);
+    onProgress?.({
+      kind: "activity-page",
+      activitiesSoFar: accumulator.length,
+    });
+    if (page.length < DATA_API_PAGE_SIZE) {
+      return accumulator;
+    }
+    offset += DATA_API_PAGE_SIZE;
+  }
+}
 
 async function fetchAllPositions({
   funderAddress,
@@ -104,7 +150,7 @@ async function fetchAllPositions({
       );
     }
     const body: unknown = await response.json();
-    const parsed = dataApiPositionsSchema.safeParse(body);
+    const parsed = positionsArraySchema.safeParse(body);
     if (!parsed.success) {
       throw new Error(
         `data-api /positions returned an unexpected shape: ${parsed.error.message}`,
@@ -126,26 +172,69 @@ async function fetchAllPositions({
   }
 }
 
+function toInputActivity(
+  activity: RawActivity,
+): TradingPerformanceInputActivity {
+  return {
+    kind: parseActivityKind({ value: activity.type }),
+    side: parseActivitySide({ value: activity.side }),
+    conditionId: activity.conditionId ?? null,
+    title: activity.title ?? null,
+    slug: activity.slug ?? null,
+    outcome: activity.outcome ?? null,
+    usdcSize: numberOr({ value: activity.usdcSize, fallback: 0 }),
+    timestampMs: activity.timestamp * 1000,
+  };
+}
+
 function toInputPosition(
   position: RawPosition,
 ): TradingPerformanceInputPosition {
   return {
     conditionId: position.conditionId,
-    tokenId: position.asset,
-    oppositeTokenId: position.oppositeAsset ?? null,
-    title: position.title,
+    title: position.title ?? null,
     slug: position.slug ?? null,
-    outcome: position.outcome,
+    outcome: position.outcome ?? null,
     size: numberOr({ value: position.size, fallback: 0 }),
-    avgPrice: numberOr({ value: position.avgPrice, fallback: 0 }),
     currentPrice: numberOr({ value: position.curPrice, fallback: 0 }),
-    initialValueUsd: numberOr({ value: position.initialValue, fallback: 0 }),
     currentValueUsd: numberOr({ value: position.currentValue, fallback: 0 }),
-    cashPnlUsd: numberOr({ value: position.cashPnl, fallback: 0 }),
-    realizedPnlUsd: numberOr({ value: position.realizedPnl ?? 0, fallback: 0 }),
     endDateMs: parseDateMs(position.endDate ?? null),
     redeemable: position.redeemable ?? false,
   };
+}
+
+/**
+ * Maps the API's `type` string into our enum. Unknown types fall
+ * through to TRADE so they don't blow up the pipeline; the build
+ * step's `directionForActivity` ignores TRADEs without a clear side,
+ * so the cashflow stays untouched.
+ */
+function parseActivityKind({
+  value,
+}: {
+  readonly value: string;
+}): TradingPerformanceInputActivity["kind"] {
+  if (
+    value === "TRADE" ||
+    value === "REDEEM" ||
+    value === "MAKER_REBATE" ||
+    value === "SPLIT" ||
+    value === "MERGE"
+  ) {
+    return value;
+  }
+  return "TRADE";
+}
+
+function parseActivitySide({
+  value,
+}: {
+  readonly value: string | undefined;
+}): TradingPerformanceInputActivity["side"] {
+  if (value === "BUY" || value === "SELL") {
+    return value;
+  }
+  return null;
 }
 
 function numberOr({
@@ -166,24 +255,32 @@ function parseDateMs(value: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-const dataApiPositionSchema = z
+const activitySchema = z
+  .object({
+    type: z.string(),
+    side: z.string().optional(),
+    conditionId: z.string().optional(),
+    title: z.string().optional(),
+    slug: z.string().optional(),
+    outcome: z.string().optional(),
+    usdcSize: z.number(),
+    timestamp: z.number(),
+  })
+  .passthrough();
+
+const positionSchema = z
   .object({
     conditionId: z.string(),
-    asset: z.string(),
-    oppositeAsset: z.string().optional(),
-    title: z.string(),
+    title: z.string().optional(),
     slug: z.string().optional(),
-    outcome: z.string(),
+    outcome: z.string().optional(),
     size: z.number(),
-    avgPrice: z.number(),
     curPrice: z.number(),
-    initialValue: z.number(),
     currentValue: z.number(),
-    cashPnl: z.number(),
-    realizedPnl: z.number().optional(),
     endDate: z.string().optional(),
     redeemable: z.boolean().optional(),
   })
   .passthrough();
 
-const dataApiPositionsSchema = z.array(dataApiPositionSchema);
+const activityArraySchema = z.array(activitySchema);
+const positionsArraySchema = z.array(positionSchema);

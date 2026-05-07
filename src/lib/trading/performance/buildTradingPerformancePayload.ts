@@ -1,154 +1,306 @@
 import { assetValues } from "@alea/constants/assets";
 import type {
   TradingPerformanceChartPoint,
+  TradingPerformanceMarketResult,
+  TradingPerformanceMarketRow,
+  TradingPerformanceMarketStatus,
   TradingPerformancePayload,
-  TradingPerformancePositionResult,
-  TradingPerformancePositionRow,
-  TradingPerformancePositionStatus,
 } from "@alea/lib/trading/performance/types";
 
+/**
+ * Activity event from Polymarket's data-api `/activity` endpoint —
+ * one record per fill, redemption, split, or merge. Cashflow direction
+ * is encoded in `kind` (and, for trades, `side`).
+ */
+export type TradingPerformanceInputActivity = {
+  readonly kind: "TRADE" | "REDEEM" | "MAKER_REBATE" | "SPLIT" | "MERGE";
+  readonly side: "BUY" | "SELL" | null;
+  readonly conditionId: string | null;
+  readonly title: string | null;
+  readonly slug: string | null;
+  readonly outcome: string | null;
+  readonly usdcSize: number;
+  readonly timestampMs: number;
+};
+
+/**
+ * Open or redeemable position record from data-api `/positions`.
+ * Used to mark currently-held markets to current price (or report the
+ * still-redeemable losing balance).
+ */
 export type TradingPerformanceInputPosition = {
   readonly conditionId: string;
-  readonly tokenId: string;
-  readonly oppositeTokenId: string | null;
-  readonly title: string;
+  readonly title: string | null;
   readonly slug: string | null;
-  readonly outcome: string;
+  readonly outcome: string | null;
   readonly size: number;
-  readonly avgPrice: number;
   readonly currentPrice: number;
-  readonly initialValueUsd: number;
   readonly currentValueUsd: number;
-  readonly cashPnlUsd: number;
-  readonly realizedPnlUsd: number;
   readonly endDateMs: number | null;
   readonly redeemable: boolean;
 };
 
+/**
+ * Builds the lifetime trading-performance payload by combining
+ * Polymarket activity (the cashflow ledger) with current positions
+ * (mark-to-market for unsettled markets). The headline lifetime PnL
+ * is `returned - invested + currentValue + rebates`, which matches
+ * the change in wallet equity attributable to trading.
+ */
 export function buildTradingPerformancePayload({
   walletAddress,
   generatedAtMs,
+  activity,
   positions,
 }: {
   readonly walletAddress: string;
   readonly generatedAtMs: number;
+  readonly activity: readonly TradingPerformanceInputActivity[];
   readonly positions: readonly TradingPerformanceInputPosition[];
 }): TradingPerformancePayload {
-  const rows = positions
-    .map(buildPositionRow)
-    .sort((a, b) => (b.endDateMs ?? 0) - (a.endDateMs ?? 0) || a.title.localeCompare(b.title));
-  const chart = buildChart({ rows });
+  const positionsByConditionId = new Map(
+    positions.map((position) => [position.conditionId, position] as const),
+  );
 
-  const lifetimePnlUsd = sum(rows.map((row) => row.cashPnlUsd));
-  const totalInvestedUsd = sum(rows.map((row) => row.initialValueUsd));
-  const currentValueUsd = sum(rows.map((row) => row.currentValueUsd));
+  // Group market-scoped activity (TRADE / REDEEM / SPLIT / MERGE) by
+  // conditionId. MAKER_REBATE rolls up into a separate scalar — it's
+  // venue-paid revenue not tied to a single market.
+  const grouped = new Map<
+    string,
+    {
+      conditionId: string;
+      title: string | null;
+      slug: string | null;
+      outcome: string | null;
+      invested: number;
+      returned: number;
+      latestActivityMs: number;
+    }
+  >();
+  let makerRebateUsd = 0;
+
+  for (const event of activity) {
+    if (event.kind === "MAKER_REBATE") {
+      makerRebateUsd += event.usdcSize;
+      continue;
+    }
+    if (event.conditionId === null) {
+      continue;
+    }
+    const sign = directionForActivity({ kind: event.kind, side: event.side });
+    if (sign === 0) {
+      continue;
+    }
+    const existing = grouped.get(event.conditionId) ?? {
+      conditionId: event.conditionId,
+      title: event.title,
+      slug: event.slug,
+      outcome: event.outcome,
+      invested: 0,
+      returned: 0,
+      latestActivityMs: 0,
+    };
+    if (sign < 0) {
+      existing.invested += event.usdcSize;
+    } else {
+      existing.returned += event.usdcSize;
+    }
+    if (event.timestampMs > existing.latestActivityMs) {
+      existing.latestActivityMs = event.timestampMs;
+    }
+    if (existing.title === null && event.title !== null) {
+      existing.title = event.title;
+    }
+    if (existing.slug === null && event.slug !== null) {
+      existing.slug = event.slug;
+    }
+    if (existing.outcome === null && event.outcome !== null) {
+      existing.outcome = event.outcome;
+    }
+    grouped.set(event.conditionId, existing);
+  }
+
+  // Markets we hold currently but have no activity for? Shouldn't
+  // happen in practice (every position came from a BUY), but defend
+  // against the API surfacing one and ensure it appears in the table.
+  for (const position of positions) {
+    if (!grouped.has(position.conditionId)) {
+      grouped.set(position.conditionId, {
+        conditionId: position.conditionId,
+        title: position.title,
+        slug: position.slug,
+        outcome: position.outcome,
+        invested: 0,
+        returned: 0,
+        latestActivityMs: 0,
+      });
+    }
+  }
+
+  const rows: TradingPerformanceMarketRow[] = [];
+  for (const m of grouped.values()) {
+    const position = positionsByConditionId.get(m.conditionId) ?? null;
+    const currentValueUsd = position?.currentValueUsd ?? 0;
+    const currentSize = position?.size ?? 0;
+    const currentPrice = position?.currentPrice ?? 0;
+    const pnlUsd = m.returned + currentValueUsd - m.invested;
+    const status = positionStatus({
+      hasPosition: position !== null,
+      redeemable: position?.redeemable ?? false,
+    });
+    rows.push({
+      conditionId: m.conditionId,
+      symbol: inferSymbol({ slug: m.slug, title: m.title ?? "" }),
+      title: m.title ?? "Unknown Polymarket market",
+      slug: m.slug,
+      outcome: position?.outcome ?? m.outcome,
+      endDateMs: position?.endDateMs ?? null,
+      lastActivityAtMs: m.latestActivityMs,
+      investedUsd: m.invested,
+      returnedUsd: m.returned,
+      currentValueUsd,
+      currentSize,
+      currentPrice,
+      pnlUsd,
+      status,
+      result: resultFromRow({ pnlUsd, status }),
+    });
+  }
+
+  rows.sort(
+    (a, b) =>
+      b.lastActivityAtMs - a.lastActivityAtMs ||
+      a.conditionId.localeCompare(b.conditionId),
+  );
+
+  const chart = buildChart({ rows });
+  const totalInvestedUsd = sum(rows.map((r) => r.investedUsd));
+  const totalReturnedUsd = sum(rows.map((r) => r.returnedUsd));
+  const currentValueUsd = sum(rows.map((r) => r.currentValueUsd));
+  const lifetimePnlUsd =
+    totalReturnedUsd + currentValueUsd - totalInvestedUsd + makerRebateUsd;
 
   return {
     command: "trading:performance",
     generatedAtMs,
     walletAddress,
     source: {
+      activity:
+        "Polymarket data-api /activity?user=<funder> (BUY / REDEEM / SELL / MAKER_REBATE cashflows)",
       positions:
-        "Polymarket data-api /positions?user=<funder> (cashPnl is mark-to-market, includes realized + unrealized)",
+        "Polymarket data-api /positions?user=<funder> (mark-to-market for currently-held positions)",
     },
     summary: {
       walletAddress,
-      positionCount: rows.length,
-      openPositionCount: rows.filter((row) => row.status === "open").length,
-      redeemablePositionCount: rows.filter((row) => row.status === "redeemable").length,
-      winningPositionCount: rows.filter((row) => row.result === "win").length,
-      losingPositionCount: rows.filter((row) => row.result === "loss").length,
-      flatPositionCount: rows.filter((row) => row.result === "flat").length,
+      marketCount: rows.length,
+      openPositionCount: rows.filter((r) => r.status === "open").length,
+      redeemablePositionCount: rows.filter((r) => r.status === "redeemable").length,
+      winningMarketCount: rows.filter((r) => r.result === "win").length,
+      losingMarketCount: rows.filter((r) => r.result === "loss").length,
+      flatMarketCount: rows.filter((r) => r.result === "flat").length,
       lifetimePnlUsd,
       totalInvestedUsd,
+      totalReturnedUsd,
       currentValueUsd,
+      makerRebateUsd,
     },
     chart,
-    positions: rows,
-  };
-}
-
-function buildPositionRow(
-  position: TradingPerformanceInputPosition,
-): TradingPerformancePositionRow {
-  const status: TradingPerformancePositionStatus = position.redeemable
-    ? "redeemable"
-    : "open";
-  return {
-    conditionId: position.conditionId,
-    tokenId: position.tokenId,
-    oppositeTokenId: position.oppositeTokenId,
-    symbol: inferSymbol({ slug: position.slug, title: position.title }),
-    title: position.title,
-    slug: position.slug,
-    outcome: position.outcome,
-    size: position.size,
-    avgPrice: position.avgPrice,
-    currentPrice: position.currentPrice,
-    initialValueUsd: position.initialValueUsd,
-    currentValueUsd: position.currentValueUsd,
-    cashPnlUsd: position.cashPnlUsd,
-    realizedPnlUsd: position.realizedPnlUsd,
-    endDateMs: position.endDateMs,
-    status,
-    result: resultFromPosition({
-      cashPnlUsd: position.cashPnlUsd,
-      status,
-    }),
+    markets: rows,
   };
 }
 
 /**
- * Cumulative-PnL series ordered by settlement date. Open positions
- * fall back to a synthetic late timestamp so they cluster at the
- * right edge of the chart — the operator still sees the running
- * total, but unrealized entries don't pretend to have a real
- * settlement date.
+ * `+1` = USDC into the wallet, `-1` = USDC out, `0` = ignore. SPLIT
+ * burns USDC into a YES+NO token pair (cash out); MERGE collapses a
+ * pair back into USDC (cash in). REDEEM is winnings hitting the
+ * wallet at settlement. TRADE BUY/SELL is the obvious pair.
  */
+function directionForActivity({
+  kind,
+  side,
+}: {
+  readonly kind: TradingPerformanceInputActivity["kind"];
+  readonly side: TradingPerformanceInputActivity["side"];
+}): -1 | 0 | 1 {
+  switch (kind) {
+    case "TRADE":
+      if (side === "BUY") {
+        return -1;
+      }
+      if (side === "SELL") {
+        return 1;
+      }
+      return 0;
+    case "REDEEM":
+    case "MERGE":
+      return 1;
+    case "SPLIT":
+      return -1;
+    case "MAKER_REBATE":
+      return 0; // counted as a separate scalar
+  }
+}
+
+function positionStatus({
+  hasPosition,
+  redeemable,
+}: {
+  readonly hasPosition: boolean;
+  readonly redeemable: boolean;
+}): TradingPerformanceMarketStatus {
+  if (!hasPosition) {
+    return "closed";
+  }
+  return redeemable ? "redeemable" : "open";
+}
+
+function resultFromRow({
+  pnlUsd,
+  status,
+}: {
+  readonly pnlUsd: number;
+  readonly status: TradingPerformanceMarketStatus;
+}): TradingPerformanceMarketResult {
+  if (status === "open") {
+    return "open";
+  }
+  if (pnlUsd > 0.005) {
+    return "win";
+  }
+  if (pnlUsd < -0.005) {
+    return "loss";
+  }
+  return "flat";
+}
+
 function buildChart({
   rows,
 }: {
-  readonly rows: readonly TradingPerformancePositionRow[];
+  readonly rows: readonly TradingPerformanceMarketRow[];
 }): TradingPerformanceChartPoint[] {
+  // Order events by latest market activity so the cumulative line
+  // tracks the user's PnL through time. Open positions whose latest
+  // activity is recent show up at the right edge with their current
+  // mark-to-market.
   const ordered = [...rows].sort(
     (a, b) =>
-      (a.endDateMs ?? Number.MAX_SAFE_INTEGER) -
-        (b.endDateMs ?? Number.MAX_SAFE_INTEGER) ||
+      a.lastActivityAtMs - b.lastActivityAtMs ||
       a.conditionId.localeCompare(b.conditionId),
   );
   let cumulative = 0;
   const points: TradingPerformanceChartPoint[] = [];
   for (const row of ordered) {
-    cumulative += row.cashPnlUsd;
+    cumulative += row.pnlUsd;
     points.push({
       conditionId: row.conditionId,
       symbol: row.symbol,
       title: row.title,
-      orderedAtMs: row.endDateMs ?? 0,
-      positionPnlUsd: row.cashPnlUsd,
+      orderedAtMs: row.lastActivityAtMs,
+      marketPnlUsd: row.pnlUsd,
       cumulativePnlUsd: cumulative,
     });
   }
   return points;
-}
-
-function resultFromPosition({
-  cashPnlUsd,
-  status,
-}: {
-  readonly cashPnlUsd: number;
-  readonly status: TradingPerformancePositionStatus;
-}): TradingPerformancePositionResult {
-  if (status === "open") {
-    return "open";
-  }
-  if (cashPnlUsd > 0) {
-    return "win";
-  }
-  if (cashPnlUsd < 0) {
-    return "loss";
-  }
-  return "flat";
 }
 
 function inferSymbol({
