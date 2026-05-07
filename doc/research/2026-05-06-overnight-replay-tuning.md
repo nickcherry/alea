@@ -432,3 +432,114 @@ stake (median), so it scales to \$50–100 cleanly. DOGE/SOL/XRP/ETH
 have median ratio 0.16–0.56 — more slippage if stake increases.
 Optimal allocation would scale per-asset.
 
+
+### 03:55 EDT — final filter cleanup
+
+The hour 15 in the original "good hours" filter only had 3 orders
+(100% win rate by luck). Removed it. Final filter:
+
+```json
+{
+  "hoursUtc": [0, 1, 2, 3, 4, 5, 6, 8, 11, 19, 20, 22],
+  "minEdge": 0.06
+}
+```
+
+Result on 32h tape: **+$648 maker / +$1,074 taker / 366 orders /
+74.3% taker win**. Effectively unchanged from the 13-hour version.
+
+8-bucket finer stability check (good-hours+edge0.06, hybrid):
+
+| Bucket | Start | n | Maker | Taker | Hybrid (DOGE=maker) | Win |
+|---|---|---:|---:|---:|---:|---:|
+| 0 | 19:03 | 52 | -$53 | +$185 | +$117 | 73% |
+| 1 | 22:46 | 42 | +$211 | +$291 | +$328 | 88% |
+| 2 | 02:28 | 110 | +$281 | +$188 | +$308 | 71% |
+| 3 | 06:11 | 34 | +$54 | +$80 | +$121 | 74% |
+| 4 | 09:54 | 12 | +$57 | +$37 | +$55 | 83% |
+| 5 | 13:37 | 3 | $0 | +$26 | +$26 | 100% |
+| 6 | 17:20 | 71 | -$7 | +$161 | +$149 | 69% |
+| 7 | 21:03 | 45 | +$105 | +$132 | +$147 | 78% |
+
+All 8 finer-grained buckets positive on hybrid. Win rates all
+≥ 69%. Real signal.
+
+## Two recommended filters
+
+### Conservative (structurally motivated)
+
+```json
+{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+```
+
+Hypothesis: US business hours (16-23 UTC) attract more sophisticated
+traders, tightening pricing and intensifying adverse selection. Trade
+only Asian + early Europe hours.
+
+- 252 orders / +\$558 maker / +\$519 taker / 64% maker win
+
+### Aggressive (data-mined)
+
+```json
+{ "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
+```
+
+Hypothesis: skip the specific hours where empirical PnL is bad
+within the data; keep some evening hours where the model still
+performs.
+
+- 366 orders / +\$648 maker / +\$1,074 taker / 74% taker win
+- HYBRID (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +\$1,251
+
+Risk: more overfit-prone than the conservative filter; specific
+hour selection could be a 32h-period artifact. Validate on more days
+before committing.
+
+## What to do next (if pursuing live deployment)
+
+1. **Don't deploy as-is**. Both filters need wider data to confirm
+   they're not 32h artifacts. Keep capture running for 1-2 weeks
+   then re-validate. Especially watch the second-half PnL — if the
+   filter regime that hurt unfiltered baseline (post 8:30 UTC May 6)
+   recurs, the conservative filter might also weaken.
+2. **Build the actual taker placement path** in the live trader.
+   Currently `runLive` and `runDryRun` use `binancePerpLivePriceSource`
+   with maker-only `placeMakerLimitBuy`. A taker variant
+   (`placeTakerLimitBuy` with the actual fee + slippage modelling)
+   should land first as a dry-run-only flag, then live.
+3. **Verify the 720 bps fee assumption against a real Polymarket
+   trade fill stream** (`scanLifetimePnl`) on the funded account.
+   If actual taker fee is meaningfully different, the per-trade math
+   shifts.
+4. **Per-asset stake allocation** — use bigger stakes on BTC (deep
+   book, 75% taker win rate), smaller on DOGE/SOL/XRP/ETH (shallow
+   books, more slippage at higher size).
+5. **Reconsider the live binance-perp tick source**: the time-of-day
+   pattern probably exists regardless of source, but worth re-running
+   on binance-perp once Vision publishes 2026-05-06 daily archive
+   (currently 404).
+
+## Files
+
+- Analyzer: [src/bin/research/sweepReplay.ts](../src/bin/research/sweepReplay.ts)
+  — load JSONL, apply filters/unions, compute canonical/touch/all-fill/taker
+  metrics with fee + slippage sensitivity
+- Replay code change: [src/lib/trading/replay/replayWindow.ts](../src/lib/trading/replay/replayWindow.ts)
+  — added `--cancel-on-adverse-bp` flag
+- Replay JSONL referenced throughout: 32h baseline at
+  `tmp/replay-trading/replay-trading_2026-05-07T02-30-50.760Z.jsonl`
+
+## Caveats summary
+
+- 32h is a SHORT validation window. Real edge needs days-to-weeks
+  of out-of-sample.
+- Filter has 12 specific UTC hours; may be partially a one-day
+  artifact. Conservative filter (Asian only) gives $519 taker,
+  smaller but more defensible.
+- Taker fee assumed 720 bps; verify with live data.
+- Slippage modelled simplistically (avg = bestAsk + 0–1 ticks).
+  Realistic fill simulation requires walking level-2 polymarket
+  books from `market_event` per order.
+- Live trader still operates as maker; the 60% gain from taker is
+  on paper only until placement-mode change is implemented.
+
