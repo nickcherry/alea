@@ -1168,3 +1168,73 @@ The current best conservative non-hour candidate is now:
 
 It is better than the previous all-4 consensus candidate on total PnL,
 1-tick slippage PnL, US-hours PnL, and chronological stability.
+
+### 15:25 EDT (2026-05-07) — execution-quality gates inside consensus
+
+Next pass: keep the all-4 consensus structure, but ask whether a small
+execution-quality cap can improve PnL without adding hour rules or
+asset micro-tuning. Two simple structural gates helped:
+
+1. `chosenBestAsk<=0.75`: avoid paying more than 75c for a 5-minute
+   binary, where one miss costs the whole stake and the upside is small.
+2. `trendConfirmBp>=0`: require the underlying to be at least on the
+   predicted side of the line at entry. For `up`, signed distance must
+   be non-negative; for `down`, signed distance must be non-positive.
+
+Updated challenger:
+
+```json
+{
+  "minEdge": 0.05,
+  "maxChosenSpread": 0.07,
+  "maxChosenBestAsk": 0.75,
+  "minTrendConfirmBp": 0,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+Additional confirmation: all 4 sources must agree on asset/window/side
+and all 4 must pass the filter. No hour gate.
+
+| Execution source |   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL | Win |
+| ---------------- | --: | --------: | --------------------: | ------------: | -----------: | --: |
+| binance/perp     | 303 |     +$877 |                 +$759 |          +$80 |        +$532 | 69% |
+| binance/spot     | 303 |     +$878 |                 +$760 |          +$79 |        +$542 | 69% |
+| coinbase/perp    | 303 |     +$885 |                 +$768 |          +$75 |        +$536 | 69% |
+| coinbase/spot    | 303 |     +$892 |                 +$774 |          +$79 |        +$549 | 69% |
+
+Compared with the prior conservative consensus core (`edge>=0.05`,
+`spread<=0.07`, BTC/ETH/SOL, all-4 agreement):
+
+| Rule |   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL |
+| ---- | --: | --------: | --------------------: | ------------: | -----------: |
+| Core | 316 | +$817 to +$834 | +$697 to +$714 | +$15 to +$28 | +$472 to +$494 |
+| Core + ask<=0.75 | 305 | +$835 to +$850 | +$718 to +$732 | +$55 to +$59 | +$511 to +$528 |
+| Core + trend>=0 | 314 | +$858 to +$876 | +$739 to +$755 | +$36 to +$49 | +$493 to +$514 |
+| Core + both | 303 | +$877 to +$892 | +$759 to +$774 | +$75 to +$80 | +$532 to +$549 |
+
+This is a cleaner PnL improvement than the earlier hour whitelist:
+it cuts only execution-risk tails and requires unanimous source
+agreement. It also improves the US-hours slice materially.
+
+Caveat: this still removes only 13 orders from the 35h tape, so it
+should be treated as the best current challenger rather than a live
+promotion until a longer forward replay has volume.
+
+#### Forward-slice check
+
+Added `src/bin/research/replaySavedProbabilityTables.ts`, which replays
+saved probability-table JSON sidecars without overwriting the committed
+generated probability table. This lets us rerun the four source tables
+against fresh capture without mutating source-of-truth files.
+
+The clean post-generation slice, 2026-05-07 13:05 → 14:35 UTC, replayed
+16 resolved windows for all four tables and produced **zero orders**.
+That is not a PnL validation either way; those windows did not hit the
+current probability buckets.
+
+A slightly earlier overlap sanity check, 2026-05-07 12:50 → 14:35 UTC
+with the coinbase/perp table, produced only 3 orders and lost about
+-$29 taker. This sample is too small and partly overlaps table
+generation time, so I am not tuning from it. It mostly says we need
+more forward captured windows before promoting the new challenger.

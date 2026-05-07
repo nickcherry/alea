@@ -25,6 +25,7 @@ type ReplayOrder = {
   readonly edge: number | null;
   readonly chosenSpread: number | null;
   readonly chosenBestAsk: number | null;
+  readonly signedDistanceBp: number | null;
   readonly limitPrice: number;
   readonly officialOutcome: Side;
 };
@@ -33,6 +34,8 @@ type FilterSpec = {
   readonly label: string;
   readonly minEdge: number;
   readonly maxChosenSpread?: number;
+  readonly maxChosenBestAsk?: number;
+  readonly minTrendConfirmBp?: number;
   readonly excludeAssets?: readonly Asset[];
 };
 
@@ -71,6 +74,28 @@ const FILTERS: readonly FilterSpec[] = [
     label: "consensus-core BTC/ETH/SOL edge05 spread07",
     minEdge: 0.05,
     maxChosenSpread: 0.07,
+    excludeAssets: ["doge", "xrp"],
+  },
+  {
+    label: "consensus-core BTC/ETH/SOL edge05 spread07 ask75",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+    maxChosenBestAsk: 0.75,
+    excludeAssets: ["doge", "xrp"],
+  },
+  {
+    label: "consensus-core BTC/ETH/SOL edge05 spread07 trend0",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+    minTrendConfirmBp: 0,
+    excludeAssets: ["doge", "xrp"],
+  },
+  {
+    label: "consensus-core BTC/ETH/SOL edge05 spread07 ask75 trend0",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+    maxChosenBestAsk: 0.75,
+    minTrendConfirmBp: 0,
     excludeAssets: ["doge", "xrp"],
   },
   {
@@ -235,6 +260,11 @@ function parseOrder({
     typeof entryBookTelemetry === "object" && entryBookTelemetry !== null
       ? (entryBookTelemetry as Record<string, unknown>)
       : null;
+  const entryPriceTelemetry = raw["entryPriceTelemetry"];
+  const priceTelemetry =
+    typeof entryPriceTelemetry === "object" && entryPriceTelemetry !== null
+      ? (entryPriceTelemetry as Record<string, unknown>)
+      : null;
   return {
     source,
     asset,
@@ -246,6 +276,10 @@ function parseOrder({
       book === null ? null : numberOrNull({ value: book["chosenSpread"] }),
     chosenBestAsk:
       book === null ? null : numberOrNull({ value: book["chosenBestAsk"] }),
+    signedDistanceBp:
+      priceTelemetry === null
+        ? null
+        : numberOrNull({ value: priceTelemetry["signedDistanceBp"] }),
     limitPrice,
     officialOutcome,
   };
@@ -358,12 +392,31 @@ function passesFilter({
     return false;
   }
   if (
+    filter.maxChosenBestAsk !== undefined &&
+    (order.chosenBestAsk === null ||
+      order.chosenBestAsk > filter.maxChosenBestAsk)
+  ) {
+    return false;
+  }
+  if (
+    filter.minTrendConfirmBp !== undefined &&
+    (order.signedDistanceBp === null ||
+      trendConfirmBp({ order }) < filter.minTrendConfirmBp)
+  ) {
+    return false;
+  }
+  if (
     filter.excludeAssets !== undefined &&
     filter.excludeAssets.includes(order.asset)
   ) {
     return false;
   }
   return true;
+}
+
+function trendConfirmBp({ order }: { readonly order: ReplayOrder }): number {
+  const signed = order.signedDistanceBp ?? 0;
+  return order.side === "down" ? -signed : signed;
 }
 
 function orderKey({ order }: { readonly order: ReplayOrder }): string {
