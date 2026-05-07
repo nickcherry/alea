@@ -90,10 +90,7 @@ export function renderTradingPerformanceHtml({
               <tr>
                 <th>Symbol</th>
                 <th>Market</th>
-                <th>Outcome</th>
                 <th>Invested</th>
-                <th>Returned</th>
-                <th>Held</th>
                 <th>PnL</th>
                 <th>Status</th>
               </tr>
@@ -150,10 +147,7 @@ function renderMarketRow(
           <span class="trade-sub">${escapeHtml({ value: row.slug ?? shortId({ value: row.conditionId }) })}</span>
         </div>
       </td>
-      <td>${escapeHtml({ value: row.outcome ?? "—" })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.investedUsd })}</td>
-      <td class="alea-mono">${formatUnsignedUsd({ value: row.returnedUsd })}</td>
-      <td class="alea-mono">${row.currentValueUsd > 0 ? formatUnsignedUsd({ value: row.currentValueUsd }) : "—"}</td>
       <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
       <td><span class="result-pill ${row.result}">${row.result}</span></td>
     </tr>

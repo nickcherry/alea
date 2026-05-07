@@ -18,7 +18,7 @@ when the modeled edge clears the market.
 - [Dry Trading](./doc/DRY_TRADING.md) — dry-run fill simulation, JSONL sessions, and report interpretation.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape recorder for Polymarket + Binance + Coinbase + Chainlink reference events across all five assets, to disk and Postgres for offline replay/research.
 - [Replay](./doc/REPLAY.md) — offline replay of the live decision + fill-simulation pipeline against captured market data, for fast threshold/regime iteration.
-- [Dashboards](./doc/DASHBOARDS.md) — design system, shared CSS+JS assets, and authoring contract for the HTML reports in `tmp/`.
+- [Dashboards](./doc/DASHBOARDS.md) — design system and authoring contract for the HTML reports in `tmp/`, plus the deployed pages on the alea Cloudflare Worker and how to build & deploy them.
 
 ### Engineering
 

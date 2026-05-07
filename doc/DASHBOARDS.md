@@ -177,14 +177,56 @@ command re-render an older JSON without re-running the analysis. The
 asset-copy is the only side effect; it lives in the `write*Artifacts`
 wrapper, not in the renderer.
 
-## Deploy
+## Deployed pages
 
-Some dashboards are also pushed to Cloudflare Workers (the training
-dashboard goes to `https://alea.nickcherryjiggz.workers.dev` via
-`bunx wrangler deploy`). The deploy step copies the report HTML to
-`tmp/web/index.html` plus its sibling `.assets/` folder, so the
-relative hrefs still resolve at the worker. See
-[`deployTrainingDashboard.ts`](../src/lib/training/deployTrainingDashboard.ts).
+The alea Cloudflare Worker at `https://alea.nickcherryjiggz.workers.dev`
+serves a single multi-page dashboard. Each page is still a standalone
+static HTML asset following the contract above; the worker just
+arranges them under one host and one shared top nav.
+
+| Route        | Page                  | Source                                                                        |
+| ------------ | --------------------- | ----------------------------------------------------------------------------- |
+| `/`          | Live trading PnL      | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/training/` | Training distributions| [`renderTrainingDistributionsHtml.ts`](../src/lib/training/renderTrainingDistributionsHtml.ts)     |
+
+The shared top nav lives in
+[`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
+each page's HTML so the deployed site feels like one app even though
+every page is a self-contained asset bundle.
+
+## Build & deploy
+
+The deployed site is built in one shot by
+[`dashboards:build`](../src/bin/dashboards/build.ts):
+
+```
+bun alea dashboards:build           # build only — writes tmp/web/
+bun alea dashboards:build --deploy  # build + bunx wrangler deploy
+```
+
+The command lays the on-disk tree out in the routing shape Wrangler
+expects:
+
+```
+tmp/web/
+  index.html              ← live trading PnL (served at /)
+  index.assets/           ← its frozen CSS+JS
+  data.json               ← raw payload for the trading page
+  training/
+    index.html            ← training distributions (served at /training/)
+    index.assets/
+    data.json
+```
+
+Wrangler config lives at [`wrangler.toml`](../wrangler.toml) and
+points its `[assets].directory` at `tmp/web/`. The trading page needs
+Polymarket auth (`POLYMARKET_PRIVATE_KEY` + `POLYMARKET_FUNDER_ADDRESS`);
+when those aren't set the build skips it with a warning so local devs
+without trading creds can still rebuild the training page.
+
+The actual `wrangler deploy` shellout lives in
+[`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
+`dashboards:build --deploy` is the only caller.
 
 ## File-naming convention
 
