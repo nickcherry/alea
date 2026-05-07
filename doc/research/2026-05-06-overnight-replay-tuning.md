@@ -1101,3 +1101,70 @@ path would be:
 3. Re-run both on a longer tape before promoting either to live
    config, and replace the simple 1-tick haircut with true taker depth
    walking.
+
+### 14:55 EDT (2026-05-07) — all-4 consensus supports a lower edge floor
+
+Follow-up: retuned the consensus core itself instead of adding a new
+clock rule. The all-4 source agreement constraint is strong enough
+that the earlier `minEdge>=0.06` floor appears too conservative when
+paired with a tighter spread cap.
+
+Updated conservative candidate:
+
+```json
+{
+  "minEdge": 0.05,
+  "maxChosenSpread": 0.07,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+Additional confirmation: all 4 sources must agree on asset/window/side.
+No hour gate.
+
+| Execution source |   n | Taker PnL | 1.0-tick slippage PnL | Worst quarter | US-hours PnL | Win |
+| ---------------- | --: | --------: | --------------------: | ------------: | -----------: | --: |
+| binance/perp     | 316 |     +$817 |                 +$697 |          +$28 |        +$477 | 68% |
+| binance/spot     | 316 |     +$818 |                 +$698 |          +$27 |        +$487 | 68% |
+| coinbase/perp    | 316 |     +$819 |                 +$699 |          +$15 |        +$472 | 68% |
+| coinbase/spot    | 316 |     +$834 |                 +$714 |          +$28 |        +$494 | 68% |
+
+Compared with the previous all-4 `minEdge>=0.06, spread<=0.08`
+candidate:
+
+| Slice |   n | Taker PnL | 1.0-tick slippage PnL | US-hours PnL | Note |
+| ----- | --: | --------: | --------------------: | -----------: | ---- |
+| Previous rule | 202 | +$586 to +$587 | +$505 to +$506 | +$433 | Baseline all-4 consensus |
+| Updated rule | 316 | +$817 to +$834 | +$697 to +$714 | +$472 to +$494 | More volume, all quarters positive |
+| New-only orders | 127 | +$176 to +$193 | +$134 to +$151 | +$9 to +$31 | Lower-edge but tighter-spread adds |
+| Dropped old-only orders | 13 | -$55 | -$58 | -$30 | Wider-spread tail that the new cap removes |
+
+That is a better anti-overfit story than a blind lower edge floor:
+the gain comes from requiring every source to agree while using a
+stricter execution-spread condition. The added lower-edge trades are
+positive as a group, and the removed wider-spread trades were negative.
+
+#### Asset add-back check
+
+Using the same all-4 `minEdge>=0.05, spread<=0.07` rule:
+
+- Adding all XRP back (`excludeAssets:["doge"]`) weakens the result to
+  roughly +$691 to +$708 and makes the worst quarter about -$74 to -$87.
+- Adding all assets weakens it further to roughly +$600 to +$618 and
+  worst quarter about -$167 to -$179.
+- High-edge XRP/DOGE add-ons are tempting in-sample, but they add only
+  single-digit extra keys. I would keep them on a watchlist, not in the
+  default candidate, until a longer tape proves they are not just a few
+  lucky events.
+
+#### Updated recommendation
+
+The current best conservative non-hour candidate is now:
+
+1. BTC/ETH/SOL only.
+2. Every source agrees on asset/window/side.
+3. Every source passes `edge>=0.05` and `chosenSpread<=0.07`.
+4. Execute as taker, with no UTC-hour allowlist.
+
+It is better than the previous all-4 consensus candidate on total PnL,
+1-tick slippage PnL, US-hours PnL, and chronological stability.

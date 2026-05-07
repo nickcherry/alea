@@ -68,6 +68,23 @@ const DEFAULT_SOURCES = [
 
 const FILTERS: readonly FilterSpec[] = [
   {
+    label: "consensus-core BTC/ETH/SOL edge05 spread07",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+    excludeAssets: ["doge", "xrp"],
+  },
+  {
+    label: "consensus-core no DOGE edge05 spread07",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+    excludeAssets: ["doge"],
+  },
+  {
+    label: "consensus-core all assets edge05 spread07",
+    minEdge: 0.05,
+    maxChosenSpread: 0.07,
+  },
+  {
     label: "tight-spread all assets",
     minEdge: 0.06,
     maxChosenSpread: 0.08,
