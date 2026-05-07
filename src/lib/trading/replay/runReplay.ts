@@ -79,6 +79,13 @@ export type RunReplayParams = {
    * match the live trader.
    */
   readonly tickSource?: ReplayTickSource;
+  /**
+   * Cancel a placed order if the underlying tick mid moves against
+   * our predicted side by ≥ N basis points after placement. 0 = no
+   * cancellation (current behaviour). See `replayWindow.ts` for the
+   * exact rule.
+   */
+  readonly cancelOnAdverseBp?: number;
 };
 
 export type RunReplayResult = {
@@ -127,6 +134,7 @@ export async function runReplay({
   candleSource,
   candleProduct,
   tickSource = defaultTickSourceFromTrainingSeries(),
+  cancelOnAdverseBp = 0,
 }: RunReplayParams): Promise<RunReplayResult> {
   const writer = logWriter ?? (await createReplayJsonlWriter());
   emit({
@@ -349,6 +357,7 @@ export async function runReplay({
       minEdge,
       stakeUsd,
       tickSource,
+      cancelOnAdverseBp,
       emit: (event) => {
         emit(event);
         // Forward to JSONL writer for events that are part of the

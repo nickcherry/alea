@@ -961,7 +961,7 @@ function applyUnion({
   return [...seen];
 }
 
-if (explicitFilter !== null) {
+if (explicitFilter !== null && explicitFilter !== undefined) {
   const parsed = JSON.parse(explicitFilter) as
     | FilterSpec
     | UnionFilter

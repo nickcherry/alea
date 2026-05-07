@@ -110,6 +110,18 @@ export const tradingReplayCommand = defineCommand({
           "Captured BBO stream consumed for in-window line capture and lastTick (default: binance-perp, matching live trading).",
         ),
     }),
+    defineValueOption({
+      key: "cancelOnAdverseBp",
+      long: "--cancel-on-adverse-bp",
+      valueName: "BP",
+      schema: z.coerce
+        .number()
+        .min(0)
+        .default(0)
+        .describe(
+          "Cancel a placed order when the underlying tick mid moves ≥ N bp against our predicted side (default 0 = no cancellation).",
+        ),
+    }),
   ],
   examples: [
     "bun alea trading:replay",
@@ -164,6 +176,9 @@ export const tradingReplayCommand = defineCommand({
             : {}),
           ...(options.tickSource !== undefined
             ? { tickSource: options.tickSource }
+            : {}),
+          ...(options.cancelOnAdverseBp > 0
+            ? { cancelOnAdverseBp: options.cancelOnAdverseBp }
             : {}),
           emit: (event) => {
             // Suppress per-evaluation `decision` and per-fill events

@@ -100,6 +100,18 @@ export type ReplayWindowParams = {
    * against a model trained on a different venue.
    */
   readonly tickSource?: ReplayTickSource;
+  /**
+   * Cancel a placed order if the underlying tick mid moves against
+   * our predicted side by at least N basis points after placement
+   * (vs the captured `state.line`). Default 0 = no cancellation
+   * (current behaviour). Use 5–20 to test adverse-selection escape.
+   * Cancel rule:
+   *   - side=up and mid drops ≥ N bp from line → cancel
+   *   - side=down and mid rises ≥ N bp from line → cancel
+   * Cancellation prevents subsequent trades from filling our order
+   * via `applyTradeToSimulatedOrder`.
+   */
+  readonly cancelOnAdverseBp?: number;
   readonly emit: (event: ReplayRunEvent) => void;
 };
 
@@ -171,6 +183,7 @@ export function replayWindow({
   minEdge,
   stakeUsd = STAKE_USD,
   tickSource = "binance-perp",
+  cancelOnAdverseBp = 0,
   emit,
 }: ReplayWindowParams): ReplayWindowResult {
   const windowEndMs = windowStartMs + FIVE_MINUTES_MS;
@@ -237,6 +250,12 @@ export function replayWindow({
 
     if (event.source === tickSource && event.kind === "bbo") {
       handleTickBbo({ event, states, windowStartMs });
+      if (cancelOnAdverseBp > 0) {
+        const state = states.get(event.asset);
+        if (state !== undefined) {
+          maybeCancelOnAdverse({ state, nowMs: event.tsMs, thresholdBp: cancelOnAdverseBp });
+        }
+      }
       continue;
     }
     if (event.source === "polymarket") {
@@ -304,6 +323,12 @@ type AssetState = {
   marketTradesByOutcome: DryMarketTradeHistory;
   lastDecisionRemaining: number | null;
   order: ReplayOrderEnvelope | null;
+  /**
+   * Wall-clock ms at which the order was cancelled by the
+   * cancel-on-adverse rule. Trades after this point are not allowed
+   * to fill the order. Null while order is still active.
+   */
+  orderCancelledAtMs: number | null;
   skipReason: string | null;
 };
 
@@ -325,8 +350,34 @@ function createAssetState({
     marketTradesByOutcome: new Map(),
     lastDecisionRemaining: null,
     order: null,
+    orderCancelledAtMs: null,
     skipReason: null,
   };
+}
+
+function maybeCancelOnAdverse({
+  state,
+  nowMs,
+  thresholdBp,
+}: {
+  readonly state: AssetState;
+  readonly nowMs: number;
+  readonly thresholdBp: number;
+}): void {
+  const order = state.order;
+  if (order === null || state.orderCancelledAtMs !== null) return;
+  const tick = state.lastTick;
+  if (tick === null) return;
+  const line = order.line;
+  if (line <= 0) return;
+  const movedBp = ((tick.mid - line) / line) * 10_000;
+  // For an "up" side bet, adverse = price drops below line.
+  // For a "down" side bet, adverse = price rises above line.
+  const adverseBp =
+    order.order.side === "up" ? -movedBp : movedBp;
+  if (adverseBp >= thresholdBp) {
+    state.orderCancelledAtMs = nowMs;
+  }
 }
 
 function handleTickBbo({
@@ -429,6 +480,15 @@ function handlePolymarketEvent({
     nowMs: event.tsMs,
   });
   if (state.order !== null) {
+    // Cancel-on-adverse: if the order was already cancelled by an
+    // adverse tick before this trade arrived, the order is "cancelled
+    // first, trade second" — skip the fill.
+    if (
+      state.orderCancelledAtMs !== null &&
+      event.event.atMs >= state.orderCancelledAtMs
+    ) {
+      return;
+    }
     const before = state.order.order.canonicalFilledShares;
     const changed = applyTradeToSimulatedOrder({
       order: state.order.order,
