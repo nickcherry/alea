@@ -81,8 +81,9 @@
           {
             stroke: tokens.axisStroke,
             grid: { stroke: tokens.gridStroke, width: 1 },
-            ticks: { stroke: tokens.axisTickStroke, width: 1 },
+            ticks: { stroke: tokens.axisTickStroke, width: 1, size: 5 },
             font: tokens.axisFont,
+            size: 72,
             values: (_self, vals) => vals.map((value) => formatUsd(value)),
           },
         ],

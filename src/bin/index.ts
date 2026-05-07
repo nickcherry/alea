@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { candlesFillGapsCommand } from "@alea/bin/candles/fillGaps";
 import { candlesSyncCommand } from "@alea/bin/candles/sync";
+import { dashboardsBuildCommand } from "@alea/bin/dashboards/build";
 import { dataCaptureCommand } from "@alea/bin/data/capture";
 import { dataIngestPendingCommand } from "@alea/bin/data/ingestPending";
 import { dbMigrateCommand } from "@alea/bin/db/migrate";
@@ -28,6 +29,7 @@ const cli = createCli({
     dbMigrateCommand,
     candlesSyncCommand,
     candlesFillGapsCommand,
+    dashboardsBuildCommand,
     dataCaptureCommand,
     dataIngestPendingCommand,
     latencyCaptureCommand,

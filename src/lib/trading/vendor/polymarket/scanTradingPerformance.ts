@@ -8,6 +8,8 @@ import type { ClobClient } from "@polymarket/clob-client-v2";
 import { z } from "zod";
 
 const MARKET_LOOKUP_CONCURRENCY = 10;
+const DATA_API_HOST = "https://data-api.polymarket.com";
+const DATA_API_PAGE_SIZE = 500;
 
 export type TradingPerformanceScanProgress =
   | { readonly kind: "trades-page"; readonly tradesSoFar: number }
@@ -17,72 +19,113 @@ export type TradingPerformanceScanProgress =
       readonly total: number;
     };
 
+/**
+ * Custom hook for tests — defaults to global `fetch`. The signature
+ * matches a `RequestInit`-like minimum the implementation cares about.
+ */
+export type DataApiFetch = (url: string) => Promise<{
+  readonly ok: boolean;
+  readonly status: number;
+  json: () => Promise<unknown>;
+}>;
+
+/**
+ * Builds the lifetime trading-performance payload for a Polymarket
+ * trader. Trade history is sourced from the public
+ * `data-api.polymarket.com/trades?user=<funder>` endpoint — the CLOB's
+ * authenticated `/data/trades` endpoint only exposes the recent
+ * (~24h) window for a given API key, which masks all earlier history.
+ * Market resolution data still comes from the authenticated CLOB
+ * client because data-api doesn't expose token-level prices /
+ * winner flags.
+ */
 export async function scanPolymarketTradingPerformance({
   client,
-  walletAddress,
+  funderAddress,
   generatedAtMs = Date.now(),
   onProgress,
+  dataApiFetch = async (url) => fetch(url),
 }: {
   readonly client: ClobClient;
-  readonly walletAddress: string;
+  /** Polymarket proxy/funder address — the trades' on-chain owner. */
+  readonly funderAddress: string;
   readonly generatedAtMs?: number;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
+  readonly dataApiFetch?: DataApiFetch;
 }): Promise<TradingPerformancePayload> {
-  const trades = await fetchAllTrades({ client, onProgress });
+  const trades = await fetchAllTrades({
+    funderAddress,
+    onProgress,
+    dataApiFetch,
+  });
   const conditionIds = uniqueConditionIds({ trades });
   const markets = await fetchAllMarkets({ client, conditionIds, onProgress });
   return buildTradingPerformancePayload({
-    walletAddress,
+    walletAddress: funderAddress,
     generatedAtMs,
-    trades: trades.map(toInputTrade),
+    trades: trades.map((trade, index) => toInputTrade({ trade, index })),
     markets,
   });
 }
 
+/**
+ * Trade record from `data-api.polymarket.com/trades?user=...`. Fields
+ * we don't read are deliberately omitted from the type so refactors
+ * surface anything we'd start depending on.
+ */
 type RawTrade = {
-  readonly id: string;
-  readonly market: string;
-  readonly asset_id: string;
+  readonly proxyWallet: string;
   readonly side: string;
-  readonly size: string;
-  readonly price: string;
-  readonly fee_rate_bps: string;
-  readonly match_time?: string;
-  readonly last_update?: string;
+  readonly asset: string;
+  readonly conditionId: string;
+  readonly size: number;
+  readonly price: number;
+  readonly timestamp: number;
   readonly outcome?: string;
-  readonly transaction_hash?: string;
-  readonly trader_side?: string;
+  readonly transactionHash?: string;
 };
 
 async function fetchAllTrades({
-  client,
+  funderAddress,
   onProgress,
+  dataApiFetch,
 }: {
-  readonly client: ClobClient;
+  readonly funderAddress: string;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
+  readonly dataApiFetch: DataApiFetch;
 }): Promise<RawTrade[]> {
   const accumulator: RawTrade[] = [];
-  let cursor: string | undefined;
+  let offset = 0;
   while (true) {
-    const response: unknown = await client.getTradesPaginated({}, cursor);
-    const parsed = paginatedTradesSchema.safeParse(response);
-    if (!parsed.success) {
+    const url =
+      `${DATA_API_HOST}/trades?user=${encodeURIComponent(funderAddress)}` +
+      `&limit=${DATA_API_PAGE_SIZE}&offset=${offset}`;
+    const response = await dataApiFetch(url);
+    if (!response.ok) {
       throw new Error(
-        `getTradesPaginated returned an unexpected shape: ${parsed.error.message}`,
+        `data-api /trades returned HTTP ${response.status} for ${funderAddress}`,
       );
     }
-    if (parsed.data.data.length > 0) {
-      accumulator.push(...parsed.data.data);
-      onProgress?.({
-        kind: "trades-page",
-        tradesSoFar: accumulator.length,
-      });
+    const body: unknown = await response.json();
+    const parsed = dataApiTradesSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new Error(
+        `data-api /trades returned an unexpected shape: ${parsed.error.message}`,
+      );
     }
-    const next = parsed.data.next_cursor;
-    if (next === undefined || next === "" || next === "LTE=") {
+    const page = parsed.data;
+    if (page.length === 0) {
       return accumulator;
     }
-    cursor = next;
+    accumulator.push(...page);
+    onProgress?.({
+      kind: "trades-page",
+      tradesSoFar: accumulator.length,
+    });
+    if (page.length < DATA_API_PAGE_SIZE) {
+      return accumulator;
+    }
+    offset += DATA_API_PAGE_SIZE;
   }
 }
 
@@ -171,68 +214,43 @@ function uniqueConditionIds({
 }): string[] {
   const set = new Set<string>();
   for (const trade of trades) {
-    if (trade.market.length > 0) {
-      set.add(trade.market);
+    if (trade.conditionId.length > 0) {
+      set.add(trade.conditionId);
     }
   }
   return [...set];
 }
 
-function toInputTrade(trade: RawTrade): TradingPerformanceInputTrade {
-  const size = Number(trade.size);
-  const price = Number(trade.price);
-  const feeRateBps =
-    trade.trader_side === "MAKER" ? 0 : Number(trade.fee_rate_bps);
+function toInputTrade({
+  trade,
+  index,
+}: {
+  readonly trade: RawTrade;
+  readonly index: number;
+}): TradingPerformanceInputTrade {
+  // data-api doesn't return a stable trade id; transactionHash can
+  // repeat across multi-leg fills in a single tx, so we suffix the
+  // record's position to keep ids unique within a payload.
+  const id =
+    trade.transactionHash !== undefined && trade.transactionHash.length > 0
+      ? `${trade.transactionHash}-${index}`
+      : `trade-${index}`;
   return {
-    id: trade.id,
-    conditionId: trade.market,
-    tokenId: trade.asset_id,
+    id,
+    conditionId: trade.conditionId,
+    tokenId: trade.asset,
     side: trade.side === "SELL" ? "SELL" : "BUY",
-    traderSide: parseTraderSide({ value: trade.trader_side }),
-    size: Number.isFinite(size) ? size : 0,
-    price: Number.isFinite(price) ? price : 0,
-    feeRateBps: Number.isFinite(feeRateBps) ? feeRateBps : 0,
-    tradeTimeMs: parseTradeTimeMs({
-      matchTime: trade.match_time,
-      lastUpdate: trade.last_update,
-    }),
+    // data-api doesn't expose maker/taker — leave it unknown rather
+    // than guessing. Fees fall through to 0; the dashboard's "Fees"
+    // card is honest about that.
+    traderSide: "UNKNOWN",
+    size: Number.isFinite(trade.size) ? trade.size : 0,
+    price: Number.isFinite(trade.price) ? trade.price : 0,
+    feeRateBps: 0,
+    tradeTimeMs: trade.timestamp * 1000,
     outcome: trade.outcome ?? null,
-    transactionHash: trade.transaction_hash ?? null,
+    transactionHash: trade.transactionHash ?? null,
   };
-}
-
-function parseTraderSide({
-  value,
-}: {
-  readonly value: string | undefined;
-}): "MAKER" | "TAKER" | "UNKNOWN" {
-  if (value === "MAKER" || value === "TAKER") {
-    return value;
-  }
-  return "UNKNOWN";
-}
-
-function parseTradeTimeMs({
-  matchTime,
-  lastUpdate,
-}: {
-  readonly matchTime?: string;
-  readonly lastUpdate?: string;
-}): number {
-  for (const candidate of [matchTime, lastUpdate]) {
-    if (candidate === undefined || candidate.length === 0) {
-      continue;
-    }
-    const numeric = Number(candidate);
-    if (Number.isFinite(numeric)) {
-      return numeric > 10_000_000_000 ? numeric : numeric * 1000;
-    }
-    const parsed = Date.parse(candidate);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return 0;
 }
 
 function parseDateMs(value: string | null): number | null {
@@ -251,40 +269,21 @@ const numericOrNullSchema = z.preprocess((value) => {
   return Number.isFinite(numeric) ? numeric : null;
 }, z.number().nullable());
 
-const rawTradeSchema = z
+const dataApiTradeSchema = z
   .object({
-    id: z.string(),
-    market: z.string(),
-    asset_id: z.string(),
+    proxyWallet: z.string(),
     side: z.string(),
-    size: z.string(),
-    price: z.string(),
-    fee_rate_bps: z.string(),
-    match_time: z.string().optional(),
-    last_update: z.string().optional(),
+    asset: z.string(),
+    conditionId: z.string(),
+    size: z.number(),
+    price: z.number(),
+    timestamp: z.number(),
     outcome: z.string().optional(),
-    transaction_hash: z.string().optional(),
-    trader_side: z.string().optional(),
+    transactionHash: z.string().optional(),
   })
   .passthrough();
 
-const paginatedTradesSchema = z
-  .object({
-    limit: z.number().optional(),
-    count: z.number().optional(),
-    next_cursor: z.string().optional(),
-    data: z.array(rawTradeSchema).optional(),
-    trades: z.array(rawTradeSchema).optional(),
-  })
-  .passthrough()
-  .refine(
-    (response) => response.data !== undefined || response.trades !== undefined,
-    "expected data or trades array",
-  )
-  .transform((response) => ({
-    ...response,
-    data: response.trades ?? response.data ?? [],
-  }));
+const dataApiTradesSchema = z.array(dataApiTradeSchema);
 
 const marketSchema = z
   .object({

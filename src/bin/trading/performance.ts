@@ -50,12 +50,12 @@ export const tradingPerformanceCommand = defineCommand({
 
     const auth = await getPolymarketAuthState();
     io.writeStdout(
-      `${pc.bold("trading:performance")} ${pc.dim("wallet=")}${auth.walletAddress.slice(0, 10)}...\n\n`,
+      `${pc.bold("trading:performance")} ${pc.dim("funder=")}${auth.funderAddress.slice(0, 10)}...\n\n`,
     );
 
     const payload = await scanPolymarketTradingPerformance({
       client: auth.client,
-      walletAddress: auth.walletAddress,
+      funderAddress: auth.funderAddress,
       onProgress: (event) => {
         if (event.kind === "trades-page") {
           io.writeStdout(

@@ -43,16 +43,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Trading-page table runs denser than the shared default and gives
+   the market column more breathing room since the question text is
+   the longest field by far. */
+.trading-performance-table { font-size: 11.5px; }
+.trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
+.trading-performance-table tbody td { padding: 9px 11px; }
+
 .trade-market {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  min-width: 270px;
-  max-width: 460px;
+  min-width: 380px;
+  max-width: 620px;
 }
 .trade-question {
   color: var(--alea-text);
-  font-size: 12.5px;
+  font-size: 11.5px;
   line-height: 1.35;
   text-transform: none;
   letter-spacing: 0;
@@ -60,7 +67,7 @@
 }
 .trade-sub {
   color: var(--alea-text-subtle);
-  font-size: 10.5px;
+  font-size: 9.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;

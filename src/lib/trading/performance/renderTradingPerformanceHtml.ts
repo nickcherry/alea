@@ -4,6 +4,7 @@ import {
   aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import { renderTopNav } from "@alea/lib/ui/topNav";
 
 export function renderTradingPerformanceHtml({
   payload,
@@ -43,6 +44,7 @@ export function renderTradingPerformanceHtml({
       <h1 class="alea-title">Polymarket Trading Performance</h1>
       <p class="alea-subtitle">${subtitle}</p>
     </header>
+    ${renderTopNav({ activeId: "live" })}
     <main class="alea-main">
       <section class="alea-summary-grid cols-4">
         ${renderMetric({
@@ -84,10 +86,9 @@ export function renderTradingPerformanceHtml({
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Trades</h2></div>
         <div class="alea-table-wrap">
-          <table class="alea-table">
+          <table class="alea-table trading-performance-table">
             <thead>
               <tr>
-                <th>Time</th>
                 <th>Symbol</th>
                 <th>Market</th>
                 <th>Outcome</th>
@@ -150,7 +151,6 @@ function renderTradeRow(
   const notionalClass = row.side === "BUY" ? "alea-num-negative" : "alea-num-positive";
   return `
     <tr>
-      <th class="alea-nowrap">${escapeHtml({ value: formatDateTime({ ms: row.tradeTimeMs }) })}</th>
       <td><span class="symbol-pill">${escapeHtml({ value: row.symbol })}</span></td>
       <td>
         <div class="trade-market">

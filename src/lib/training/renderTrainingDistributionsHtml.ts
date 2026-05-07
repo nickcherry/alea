@@ -20,6 +20,7 @@ import {
   aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import { renderTopNav } from "@alea/lib/ui/topNav";
 
 /**
  * Regime-algo id whose per-regime probability surfaces the live trader
@@ -429,63 +430,6 @@ export function renderTrainingDistributionsHtml({
 </body>
 </html>
 `;
-}
-
-/**
- * Cross-asset summary table at the top of the page. Rows = filters,
- * columns = assets. Each cell is a population calibration % stacked
- * with the sweet-spot bp range, so the operator can scan all
- * (filter, asset) cells without flipping between tabs. The row that
- * powers live trading gets a subtle gold tint and a "LIVE" tag below
- * the filter name.
- *
- * Rendered server-side because it's purely a derived view of the
- * payload — keeps it out of the on-page JS slices and makes the
- * static HTML carry its own first-paint summary.
- */
-/**
- * Top-level page navigation. Renders a horizontal bar of links — the
- * active page is the one matching `activeId`; the rest are placeholder
- * slots for future dashboards (live trading, strategy, etc.) and
- * render disabled with a "soon" tooltip until each gets its own route.
- *
- * Adding a real page: change its entry from `kind: "soon"` to
- * `kind: "ready"` and pass an `href`. Until then, every dashboard's
- * server-render emits the same nav with a different `activeId` so the
- * navigation feels persistent across pages even though each page is a
- * standalone HTML asset.
- */
-type TopNavPage =
-  | { readonly id: string; readonly label: string; readonly kind: "ready"; readonly href: string }
-  | { readonly id: string; readonly label: string; readonly kind: "soon" };
-
-const TOP_NAV_PAGES: readonly TopNavPage[] = [
-  { id: "training", label: "Training", kind: "ready", href: "/" },
-  { id: "dry-runs", label: "Dry runs", kind: "soon" },
-  { id: "live", label: "Live trading", kind: "soon" },
-];
-
-function renderTopNav({
-  activeId,
-}: {
-  readonly activeId: string;
-}): string {
-  const items = TOP_NAV_PAGES.map((page) => {
-    const isActive = page.id === activeId;
-    if (page.kind === "ready") {
-      const cls = isActive ? "alea-topnav-link active" : "alea-topnav-link";
-      const ariaCurrent = isActive ? ' aria-current="page"' : "";
-      return `<a class="${cls}" href="${escapeHtml(page.href)}"${ariaCurrent}>${escapeHtml(page.label)}</a>`;
-    }
-    // Disabled placeholder — anchor with no href + role=link so screen
-    // readers see it but it's not navigable.
-    return (
-      `<span class="alea-topnav-link disabled" title="Coming soon">` +
-        `${escapeHtml(page.label)}<span class="alea-topnav-soon">soon</span>` +
-      `</span>`
-    );
-  }).join("");
-  return `<nav class="alea-topnav" aria-label="Dashboards">${items}</nav>`;
 }
 
 /**

@@ -80,9 +80,10 @@ export function buildTradingPerformancePayload({
     generatedAtMs,
     walletAddress,
     source: {
-      trades: "Polymarket CLOB /data/trades via getTradesPaginated",
+      trades:
+        "Polymarket data-api /trades?user=<funder> (full proxy-wallet history)",
       markets: "Polymarket CLOB /markets/{conditionId} via getMarket",
-      fees: "Polymarket CLOB fee formula: shares * feeRate * price * (1 - price), rounded to five decimals",
+      fees: "data-api does not expose per-trade fees; treated as $0",
     },
     summary: {
       walletAddress,
