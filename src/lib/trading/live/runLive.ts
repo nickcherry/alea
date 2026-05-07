@@ -394,6 +394,7 @@ function openNewWindow({
     wrapUpTimer: null,
     rejectedCount: 0,
     placedAfterRetryCount: 0,
+    fakNoMatchCount: 0,
     settlementRetryCount: 0,
   };
   for (const asset of assets) {

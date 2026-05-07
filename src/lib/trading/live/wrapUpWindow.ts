@@ -148,6 +148,7 @@ export async function wrapUpWindow(
     outcomes,
     stats: {
       rejectedCount: window.rejectedCount,
+      fakNoMatchCount: window.fakNoMatchCount,
       placedAfterRetryCount: window.placedAfterRetryCount,
     },
     totalPnlUsd: lifetimePnl.value,

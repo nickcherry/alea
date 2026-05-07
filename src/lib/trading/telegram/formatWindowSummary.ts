@@ -40,19 +40,24 @@ export type AssetWindowOutcome =
     };
 
 /**
- * Optional cross-the-book / retry instrumentation surfaced at the bottom
+ * Optional placement-friction instrumentation surfaced at the bottom
  * of the summary. Only rendered when at least one count is non-zero
  * — a clean window stays clean.
  *
- *   - `rejectedCount` counts postOnly rejections we observed during the
- *     window (the price moved between book read and post).
+ *   - `rejectedCount` counts postOnly rejections we observed during
+ *     the window (maker price moved between book read and post).
+ *   - `fakNoMatchCount` counts taker FAK rejections where the venue
+ *     had no resting orders at our limit (book too thin or moved
+ *     away between book-walk and post).
  *   - `placedAfterRetryCount` counts orders that *eventually placed
- *     successfully* after one or more cross-book rejections. So
- *     `rejectedCount − placedAfterRetryCount` is roughly "rejections
- *     that ended in giving up because the edge disappeared."
+ *     successfully* after one or more rejections of either kind.
+ *     So `(rejected + fakNoMatch) − placedAfterRetry` is roughly
+ *     "rejections that ended in giving up because the edge
+ *     disappeared."
  */
 export type WindowPlacementStats = {
   readonly rejectedCount: number;
+  readonly fakNoMatchCount: number;
   readonly placedAfterRetryCount: number;
 };
 
@@ -121,13 +126,26 @@ function formatStatsLine({
   if (stats === undefined) {
     return null;
   }
-  if (stats.rejectedCount === 0 && stats.placedAfterRetryCount === 0) {
+  const totalRejections = stats.rejectedCount + stats.fakNoMatchCount;
+  if (totalRejections === 0 && stats.placedAfterRetryCount === 0) {
     return null;
   }
-  if (stats.placedAfterRetryCount === 0) {
-    return `Cross-book rejections: ${stats.rejectedCount}`;
+  const parts: string[] = [];
+  if (stats.rejectedCount > 0) {
+    parts.push(`Cross-book rejections: ${stats.rejectedCount}`);
   }
-  return `Cross-book rejections: ${stats.rejectedCount} (${stats.placedAfterRetryCount} placed after retry)`;
+  if (stats.fakNoMatchCount > 0) {
+    parts.push(`FAK no-match: ${stats.fakNoMatchCount}`);
+  }
+  if (parts.length === 0) {
+    // Edge case: only placedAfterRetryCount is set (shouldn't happen
+    // in practice, but render something sensible).
+    parts.push(`Rejections: 0`);
+  }
+  if (stats.placedAfterRetryCount > 0) {
+    parts.push(`${stats.placedAfterRetryCount} placed after retry`);
+  }
+  return parts.join(" · ");
 }
 
 function formatOutcomeLine({

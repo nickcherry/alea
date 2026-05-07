@@ -93,7 +93,7 @@ describe("formatWindowSummary", () => {
     ];
     const text = formatWindowSummary({
       outcomes,
-      stats: { rejectedCount: 5, placedAfterRetryCount: 2 },
+      stats: { rejectedCount: 5, fakNoMatchCount: 0, placedAfterRetryCount: 2 },
       totalPnlUsd: 44.51,
     });
     expect(text).toBe(
@@ -105,17 +105,26 @@ describe("formatWindowSummary", () => {
         "DOGE: no trade",
         "",
         "Latest Window Pnl: +$44.51",
-        "Cross-book rejections: 5 (2 placed after retry)",
+        "Cross-book rejections: 5 · 2 placed after retry",
         "",
         "Total Pnl: +$44.51",
       ].join("\n"),
     );
   });
 
-  it("omits the parens when no rejection led to a placement", () => {
+  it("renders FAK no-match rejections alongside cross-book ones", () => {
     const text = formatWindowSummary({
       outcomes: allNone,
-      stats: { rejectedCount: 4, placedAfterRetryCount: 0 },
+      stats: { rejectedCount: 0, fakNoMatchCount: 3, placedAfterRetryCount: 1 },
+      totalPnlUsd: 0,
+    });
+    expect(text).toContain("FAK no-match: 3 · 1 placed after retry");
+  });
+
+  it("omits the retry parens when no rejection led to a placement", () => {
+    const text = formatWindowSummary({
+      outcomes: allNone,
+      stats: { rejectedCount: 4, fakNoMatchCount: 0, placedAfterRetryCount: 0 },
       totalPnlUsd: -50,
     });
     expect(text).toContain("Cross-book rejections: 4\n");
@@ -125,7 +134,7 @@ describe("formatWindowSummary", () => {
   it("omits the rejection line entirely when both counters are zero", () => {
     const text = formatWindowSummary({
       outcomes: allNone,
-      stats: { rejectedCount: 0, placedAfterRetryCount: 0 },
+      stats: { rejectedCount: 0, fakNoMatchCount: 0, placedAfterRetryCount: 0 },
       totalPnlUsd: 0,
     });
     expect(text).toBe(

@@ -18,6 +18,7 @@ import { formatOrderPlaced } from "@alea/lib/trading/telegram/formatOrderPlaced"
 import type { ProbabilityTable } from "@alea/lib/trading/types";
 import type { LeadingSide } from "@alea/lib/trading/types";
 import {
+  FakNoMatchRejectionError,
   type PlacedOrder,
   type PlacedTakerMarketBuy,
   PostOnlyRejectionError,
@@ -32,19 +33,25 @@ const PLACE_GIVE_UP_BEFORE_END_MS =
   ORDER_CANCEL_MARGIN_MS + GTD_MIN_VALIDITY_BUFFER_MS;
 
 /**
- * Places one BUY for `record`'s asset. Current live mode is FAK taker;
- * the legacy maker branch keeps the full chunk-2-review error handling
- * policy:
+ * Places one BUY for `record`'s asset. Per-attempt outcomes:
  *
- *   - **postOnly rejection** (price moved between book read and post):
- *     silent on Telegram, increments `window.rejectedCount`. The loop
- *     refreshes the book against the venue, re-evaluates the decision,
- *     and tries again. Stops when the edge drops below `minEdge`, the
- *     slot fills, or we're within the cancel margin of window close.
- *   - **Generic error** (network, signing, venue 5xx): treat it as
- *     ambiguous, reconcile against venue state, and give up unless the
- *     venue already shows an order/fill for this market. This avoids
- *     double-posting after a response-path failure.
+ *   - **postOnly rejection** (maker price moved between book read and
+ *     post): silent on Telegram, increments `window.rejectedCount`.
+ *     The loop refreshes the book against the venue, re-evaluates the
+ *     decision, and tries again.
+ *   - **FAK no-match rejection** (taker found no resting orders at our
+ *     limit): silent on Telegram, increments `window.fakNoMatchCount`.
+ *     Same retry loop as postOnly — refresh book, re-evaluate, retry.
+ *     The venue explicitly tells us nothing was placed/filled so no
+ *     reconcile is needed.
+ *   - **Generic error** (network, signing, venue 5xx): treat as
+ *     ambiguous (POST may have reached venue even if response failed).
+ *     Reconcile against venue state and give up unless the venue
+ *     already shows an order/fill for this market — avoids double-
+ *     posting after a response-path failure.
+ *
+ * Both retry paths stop when the edge drops below `minEdge`, the slot
+ * fills, or we hit the cancel margin of window close.
  *
  * The slot is held in the `active` placeholder state for the entire
  * loop so the tick handler doesn't double-fire placement while we're
@@ -85,6 +92,7 @@ export async function placeWithRetry({
   readonly emit: (event: LiveEvent) => void;
 }): Promise<void> {
   let postOnlyRetries = 0;
+  let fakNoMatchRetries = 0;
 
   while (true) {
     if (signal.aborted) {
@@ -254,7 +262,7 @@ export async function placeWithRetry({
         feesUsd: observed?.feesUsd ?? 0,
         feeRateBpsAvg: observed?.feeRateBpsAvg ?? attempt.placed.feeRateBps,
       };
-      if (postOnlyRetries > 0) {
+      if (postOnlyRetries > 0 || fakNoMatchRetries > 0) {
         window.placedAfterRetryCount += 1;
       }
       emit({
@@ -295,6 +303,31 @@ export async function placeWithRetry({
       });
       // Force a fresh book against the venue so the next pass
       // evaluates against the moved spread, not the stale poll.
+      try {
+        const fresh = await vendor.fetchBook({ market: orderMarket, signal });
+        books.set(orderMarket.vendorRef, fresh);
+        record.market = fresh.market;
+      } catch {
+        // Carry on with whatever the poll has.
+      }
+      await sleep(PLACE_RETRY_DELAY_MS);
+      continue;
+    }
+
+    if (attempt.kind === "fakNoMatch") {
+      // Same handling as postOnly: the venue explicitly told us the
+      // book had nothing at our limit, so nothing was placed and
+      // nothing was filled (no reconcile needed). Refresh the book,
+      // re-evaluate against the moved spread, and try again. The
+      // outer loop's edge/window guards will bail when the edge
+      // decays or we hit the cancel margin.
+      window.fakNoMatchCount += 1;
+      fakNoMatchRetries += 1;
+      emit({
+        kind: "info",
+        atMs: Date.now(),
+        message: `${labelAsset(asset)} FAK no-match (#${fakNoMatchRetries}) at ${decision.bid.toFixed(2)} — ${attempt.errorMessage}`,
+      });
       try {
         const fresh = await vendor.fetchBook({ market: orderMarket, signal });
         books.set(orderMarket.vendorRef, fresh);
@@ -403,6 +436,7 @@ function currentDecision({
 type PlaceAttempt =
   | { readonly kind: "ok"; readonly placed: PlacedOrder | PlacedTakerMarketBuy }
   | { readonly kind: "postOnly"; readonly errorMessage: string }
+  | { readonly kind: "fakNoMatch"; readonly errorMessage: string }
   | { readonly kind: "generic"; readonly errorMessage: string };
 
 async function attemptPlaceMaker({
@@ -465,6 +499,9 @@ async function attemptPlaceTaker({
     return { kind: "ok", placed };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (error instanceof FakNoMatchRejectionError) {
+      return { kind: "fakNoMatch", errorMessage: message };
+    }
     return { kind: "generic", errorMessage: message };
   }
 }

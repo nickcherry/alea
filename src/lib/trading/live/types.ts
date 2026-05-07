@@ -61,10 +61,18 @@ export type WindowRecord = {
   rejectedCount: number;
   /**
    * Orders that eventually placed successfully after one or more
-   * postOnly rejections (i.e. we re-evaluated against the moved book
-   * and decided we still wanted in). Subset of "all orders placed".
+   * postOnly rejections OR FAK-no-match rejections (i.e. we
+   * re-evaluated against the moved book and decided we still
+   * wanted in). Subset of "all orders placed".
    */
   placedAfterRetryCount: number;
+  /**
+   * FAK taker rejections where the venue had no resting orders to
+   * match. Same handling as `rejectedCount` for makers — silent at
+   * the time, retried against a fresh book, surfaced in the per-
+   * window summary as "FAK no-match: N".
+   */
+  fakNoMatchCount: number;
   settlementRetryCount: number;
 };
 

@@ -47,6 +47,7 @@ function windowRecord(): WindowRecord {
     wrapUpTimer: null,
     rejectedCount: 0,
     placedAfterRetryCount: 0,
+    fakNoMatchCount: 0,
     settlementRetryCount: 0,
   };
 }

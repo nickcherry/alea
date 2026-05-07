@@ -1,11 +1,22 @@
 import type { LeadingSide } from "@alea/lib/trading/types";
 import type { PolymarketOrderConstraints } from "@alea/lib/trading/vendor/polymarket/marketConstraints";
-import type {
-  PlacedTakerMarketBuy,
-  TradableMarket,
+import {
+  FakNoMatchRejectionError,
+  type PlacedTakerMarketBuy,
+  type TradableMarket,
 } from "@alea/lib/trading/vendor/types";
 import { type ClobClient, OrderType, Side } from "@polymarket/clob-client-v2";
 import { z } from "zod";
+
+/**
+ * Substring (case-insensitive) used to detect the venue's
+ * "FAK had no match" rejection. Polymarket returns the literal
+ *   "no orders found to match with FAK order"
+ * as `errorMsg`. Match on a stable phrase ("no orders found to
+ * match") so a wording tweak doesn't silently break the
+ * classification.
+ */
+const FAK_NO_MATCH_PHRASE = "no orders found to match";
 
 /**
  * FAK taker BUY of a YES outcome token on Polymarket. `limitPrice` is the
@@ -65,9 +76,14 @@ export async function placePolymarketTakerMarketBuy({
   const responseError =
     nonEmptyString(parsed.data.errorMsg) ?? nonEmptyString(parsed.data.error);
   if (parsed.data.success === false || responseError !== undefined) {
-    throw new Error(
-      `placePolymarketTakerMarketBuy: postOrder rejected: ${responseError ?? "unknown error"}`,
-    );
+    const message = `placePolymarketTakerMarketBuy: postOrder rejected: ${responseError ?? "unknown error"}`;
+    if (
+      responseError !== undefined &&
+      responseError.toLowerCase().includes(FAK_NO_MATCH_PHRASE)
+    ) {
+      throw new FakNoMatchRejectionError(message);
+    }
+    throw new Error(message);
   }
 
   return {

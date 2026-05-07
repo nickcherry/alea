@@ -148,6 +148,27 @@ export class PostOnlyRejectionError extends Error {
   }
 }
 
+/**
+ * Thrown by `placeTakerMarketBuy` when the venue rejects the FAK
+ * order because no resting orders matched at our limit price (the
+ * book was thin or moved away between book-walk and post). The
+ * runner treats this as expected microstructure friction — silent
+ * on Telegram, counted in the per-window summary, re-evaluated
+ * against a fresh book, retried — same handling as
+ * `PostOnlyRejectionError` for makers.
+ *
+ * The vendor implementation is responsible for translating its
+ * native error response into this typed throw. Anything else is
+ * treated as a generic error (assumed-ambiguous, reconciled, no
+ * retry).
+ */
+export class FakNoMatchRejectionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FakNoMatchRejectionError";
+  }
+}
+
 export type FillEvent = {
   readonly vendorRef: string;
   readonly outcomeRef: string;

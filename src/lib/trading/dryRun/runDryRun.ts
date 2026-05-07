@@ -578,6 +578,7 @@ function openDryWindow({
     wrapUpTimer: null,
     rejectedCount: 0,
     placedAfterRetryCount: 0,
+    fakNoMatchCount: 0,
     settlementRetryCount: 0,
   };
   const perAsset = new Map<Asset, DryAssetState>();

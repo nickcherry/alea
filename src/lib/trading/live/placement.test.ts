@@ -10,13 +10,14 @@ import type {
 } from "@alea/lib/trading/live/types";
 import type { AssetSlot } from "@alea/lib/trading/state/types";
 import type { ProbabilityTable } from "@alea/lib/trading/types";
-import type {
-  MarketHydration,
-  PlacedOrder,
-  PlacedTakerMarketBuy,
-  TradableMarket,
-  UserStreamCallbacks,
-  Vendor,
+import {
+  FakNoMatchRejectionError,
+  type MarketHydration,
+  type PlacedOrder,
+  type PlacedTakerMarketBuy,
+  type TradableMarket,
+  type UserStreamCallbacks,
+  type Vendor,
 } from "@alea/lib/trading/vendor/types";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
@@ -104,6 +105,7 @@ function windowRecord(): WindowRecord {
     wrapUpTimer: null,
     rejectedCount: 0,
     placedAfterRetryCount: 0,
+    fakNoMatchCount: 0,
     settlementRetryCount: 0,
   };
 }
@@ -447,6 +449,52 @@ describe("placeWithRetry", () => {
     if (assetRecord.slot.kind === "active") {
       expect(assetRecord.slot.costUsd).toBeCloseTo(2.48, 9);
     }
+  });
+
+  it("retries on FAK no-match, increments fakNoMatchCount, no order-error event", async () => {
+    const assetRecord = record();
+    const events: LiveEvent[] = [];
+    const w = windowRecord();
+    let placeCount = 0;
+    const baseVendor = vendorWith({
+      place: async () => {
+        throw new Error("maker path should not be used");
+      },
+    });
+
+    await placeWithRetry({
+      asset: "btc",
+      vendor: {
+        ...baseVendor,
+        async placeTakerMarketBuy() {
+          placeCount += 1;
+          if (placeCount === 1) {
+            throw new FakNoMatchRejectionError(
+              "placePolymarketTakerMarketBuy: postOrder rejected: no orders found to match with FAK order.",
+            );
+          }
+          return placedTakerOrder();
+        },
+      },
+      record: assetRecord,
+      window: w,
+      lastTick: lastTick(),
+      trackers: trackers(),
+      books: books(),
+      table,
+      placementMode: "taker",
+      minEdge: 0.05,
+      telegramBotToken: "token",
+      telegramChatId: "chat",
+      signal: new AbortController().signal,
+      emit: (event) => events.push(event),
+    });
+
+    expect(placeCount).toBe(2);
+    expect(w.fakNoMatchCount).toBe(1);
+    expect(w.placedAfterRetryCount).toBe(1);
+    expect(events.some((e) => e.kind === "error")).toBe(false);
+    expect(events.some((e) => e.kind === "order-placed")).toBe(true);
   });
 
   it("preserves fills that arrive before the placement response returns", async () => {

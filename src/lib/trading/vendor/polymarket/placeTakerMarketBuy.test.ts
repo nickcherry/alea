@@ -1,5 +1,8 @@
 import { placePolymarketTakerMarketBuy } from "@alea/lib/trading/vendor/polymarket/placeTakerMarketBuy";
-import type { TradableMarket } from "@alea/lib/trading/vendor/types";
+import {
+  FakNoMatchRejectionError,
+  type TradableMarket,
+} from "@alea/lib/trading/vendor/types";
 import {
   type ClobClient,
   type CreateOrderOptions,
@@ -115,5 +118,49 @@ describe("placePolymarketTakerMarketBuy", () => {
         constraints,
       }),
     ).rejects.toThrow("below venue minimum");
+  });
+
+  it("throws a typed FakNoMatchRejectionError when the venue rejects with no match", async () => {
+    const client = {
+      async createAndPostMarketOrder(): Promise<unknown> {
+        return {
+          success: false,
+          errorMsg:
+            "no orders found to match with FAK order. FAK orders are partially filled or killed if no match is found.",
+        };
+      },
+    } as unknown as ClobClient;
+
+    await expect(
+      placePolymarketTakerMarketBuy({
+        client,
+        market,
+        side: "down",
+        limitPrice: 0.45,
+        sharesIfFilled: 40,
+        stakeUsd: 20,
+        constraints,
+      }),
+    ).rejects.toBeInstanceOf(FakNoMatchRejectionError);
+  });
+
+  it("throws a generic Error for non-FAK-no-match venue rejections", async () => {
+    const client = {
+      async createAndPostMarketOrder(): Promise<unknown> {
+        return { success: false, errorMsg: "internal venue error" };
+      },
+    } as unknown as ClobClient;
+
+    const promise = placePolymarketTakerMarketBuy({
+      client,
+      market,
+      side: "down",
+      limitPrice: 0.45,
+      sharesIfFilled: 40,
+      stakeUsd: 20,
+      constraints,
+    });
+    await expect(promise).rejects.toThrow("internal venue error");
+    await expect(promise).rejects.not.toBeInstanceOf(FakNoMatchRejectionError);
   });
 });
