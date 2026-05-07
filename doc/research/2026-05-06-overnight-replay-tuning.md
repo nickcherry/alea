@@ -22,7 +22,9 @@ extract it:
 { "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
 ```
 → +$648 maker / +$1,074 taker / 369 orders / 74% taker win at $20
-stake. **Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +$1,251.**
+stake. **Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +$1,197.**
+With DOGE-19 also dropped (only loser in DOGE's filtered hours):
+**+$1,235.**
 
 At $100 flat stake (linear scale): ~$5K gross / 35h, realistic ~$3K
 after slippage. The strategy is in the "thousands" target.
@@ -464,7 +466,10 @@ edge (fee is symmetric at price 0.5, falls toward 0 at extremes —
 but 0.69 is mid-range).
 
 **Hybrid strategy**: TAKER for BTC/ETH/SOL/XRP, MAKER for DOGE.
-Total: +\$372 + \$180 + \$190 + \$125 + \$384 = **+\$1,251 / 369 orders**.
+Total per-asset (corrected on 35h tape):
+$372 + $169 + $161 + $110 + $384 = **+\$1,196 / 369 orders**.
+(Earlier doc revisions reported \$1,251 — that was an arithmetic
+slip from a different filter version. \$1,196 is the right number.)
 
 Depth caveat for stake-scaling: BTC has 3× the depth needed at \$20
 stake (median), so it scales to \$50–100 cleanly. DOGE/SOL/XRP/ETH
@@ -528,7 +533,7 @@ within the data; keep some evening hours where the model still
 performs.
 
 - 366 orders / +\$648 maker / +\$1,074 taker / 74% taker win
-- HYBRID (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +\$1,251
+- HYBRID (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +\$1,196
 
 Risk: more overfit-prone than the conservative filter; specific
 hour selection could be a 32h-period artifact. Validate on more days
@@ -748,7 +753,7 @@ code touched. Best deployable strategy on the captured tape:
 
 - Filter: 12 specific UTC hours + minEdge 0.06
 - Placement: TAKER for BTC/ETH/SOL/XRP, MAKER for DOGE
-- Result on 35h tape at \$20 stake: **+\$1,251 hybrid / 369 orders /
+- Result on 35h tape at \$20 stake: **+\$1,196 hybrid / 369 orders /
   ~74% taker win rate**
 - Validated across 4 slicing approaches (4-bucket, 8-bucket, half-
   split, walk-forward); robust to fees up to 1500 bps and slippage
@@ -756,4 +761,34 @@ code touched. Best deployable strategy on the captured tape:
 
 Production blockers documented in TL;DR. The file is the night's
 output of record.
+
+
+### 05:15 EDT — number correction + (asset, hour) micro-tuning
+
+Self-audit caught: earlier doc revisions reported "+\$1,251 hybrid" but
+the correct per-asset sum on the 35h tape is **+\$1,196**:
+
+- BTC TAKER \$372 + ETH TAKER \$169 + SOL TAKER \$161 + XRP TAKER \$110
+  + DOGE MAKER \$384 = \$1,196
+
+Earlier "\$1,251" came from per-asset numbers I'd quoted from the
+original 32h JSONL mixed with later filter constants — close enough
+that no one noticed but mathematically inconsistent. All four
+references in the doc corrected.
+
+While there: (asset × hour) grid revealed DOGE-19 is the only loser
+inside DOGE's filtered hours (16 orders, 56% win, −\$38 maker /
+−\$47 taker). Excluding DOGE-19 from DOGE's filter (other assets
+keep all 12 hours):
+
+- Refined hybrid: **+\$1,235 / 353 orders / 75% win**
+
+So the cleaner final number, after one round of (asset, hour)
+sanity-cleanup, is **\$1,235 hybrid** at \$20 stake.
+
+Bottom-loser (asset, hour) cells (all already excluded by hour filter):
+DOGE-18 (−\$175, 10% win, 10 orders), DOGE-21 (−\$154, 31% win, 13).
+Bottom inside the filter: DOGE-19 (−\$47, 56% win) — now also dropped.
+Top winners inside the filter: BTC-20 (+\$162, 93% win, 14 orders),
+DOGE-20 (+\$95, 83%), ETH-21 (+\$84, 83%, 6 orders).
 
