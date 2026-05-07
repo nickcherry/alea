@@ -50,25 +50,25 @@
   letter-spacing: 0.04em;
 }
 
-/* Trading-page table runs denser than the shared default. The shared
-   .alea-table sets width:100%, which pushes the Market cell to
-   absorb all leftover horizontal space and leaves a huge whitespace
-   gap on wide screens. Override to width:auto so the table sizes to
-   its actual content; constrain Market via .trade-market so a long
-   market title wraps instead of stretching the cell.
-   `!important` is the simplest way to win without bumping the
-   specificity of the shared rule. */
-.trading-performance-table { width: auto !important; max-width: 100%; font-size: 11.5px; }
+/* Trading-page table runs denser than the shared default. Inherit
+   the shared .alea-table width:100% so the table fills the card,
+   but pin every non-Market column to its content width via the
+   width:1px + white-space:nowrap trick — that way the leftover
+   horizontal space all lands in the Market cell instead of being
+   distributed across the narrow columns (which used to make Symbol
+   look huge with hundreds of pixels of empty padding). */
+.trading-performance-table { font-size: 11.5px; }
 .trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
 .trading-performance-table tbody td { padding: 9px 11px; }
 .trading-performance-table th:not(.market-col),
-.trading-performance-table td:not(.market-col) { white-space: nowrap; }
+.trading-performance-table td:not(.market-col) { width: 1px; white-space: nowrap; }
+.trading-performance-table th.market-col,
+.trading-performance-table td.market-col { width: auto; }
 
 .trade-market {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-width: 620px;
 }
 .trade-question {
   color: var(--alea-text);
