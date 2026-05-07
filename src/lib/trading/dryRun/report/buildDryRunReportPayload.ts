@@ -549,10 +549,23 @@ function parseTakerCounterfactual({
   if (askPrice === null || sharesIfFilled === null || costUsd === null) {
     return null;
   }
+  const bestAskPrice =
+    numberField({ object, key: "bestAskPrice" }) ?? askPrice;
+  const avgPrice = numberField({ object, key: "avgPrice" }) ?? askPrice;
+  const fillSize =
+    numberField({ object, key: "fillSize" }) ?? sharesIfFilled;
   return {
     askPrice,
+    bestAskPrice,
+    avgPrice,
+    fillSize,
     sharesIfFilled,
     costUsd,
+    stakeUsd: numberField({ object, key: "stakeUsd" }) ?? costUsd,
+    unfilledStakeUsd:
+      numberField({ object, key: "unfilledStakeUsd" }) ?? 0,
+    levelsConsumed:
+      numberField({ object, key: "levelsConsumed" }) ?? 1,
     estimatedFeeRateBps: numberField({
       object,
       key: "estimatedFeeRateBps",

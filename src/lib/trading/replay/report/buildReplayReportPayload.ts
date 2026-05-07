@@ -1,13 +1,5 @@
 import { computeDryPnlUsd } from "@alea/lib/trading/dryRun/metrics";
 import type {
-  ReplayAssetSummary,
-  ReplayReportConfig,
-  ReplayReportOrder,
-  ReplayReportPayload,
-  ReplayReportSummary,
-  ReplayWindowSummary,
-} from "@alea/lib/trading/replay/report/types";
-import type {
   DryEntryBookTelemetry,
   DryEntryPriceLookback,
   DryEntryPriceTelemetry,
@@ -16,6 +8,14 @@ import type {
   DryPreEntryMarketTelemetry,
   DryTakerCounterfactual,
 } from "@alea/lib/trading/dryRun/telemetry";
+import type {
+  ReplayAssetSummary,
+  ReplayReportConfig,
+  ReplayReportOrder,
+  ReplayReportPayload,
+  ReplayReportSummary,
+  ReplayWindowSummary,
+} from "@alea/lib/trading/replay/report/types";
 import type { LeadingSide } from "@alea/lib/trading/types";
 import { type Asset, assetSchema } from "@alea/types/assets";
 
@@ -549,10 +549,23 @@ function parseTakerCounterfactual({
   if (askPrice === null || sharesIfFilled === null || costUsd === null) {
     return null;
   }
+  const bestAskPrice =
+    numberField({ object, key: "bestAskPrice" }) ?? askPrice;
+  const avgPrice = numberField({ object, key: "avgPrice" }) ?? askPrice;
+  const fillSize =
+    numberField({ object, key: "fillSize" }) ?? sharesIfFilled;
   return {
     askPrice,
+    bestAskPrice,
+    avgPrice,
+    fillSize,
     sharesIfFilled,
     costUsd,
+    stakeUsd: numberField({ object, key: "stakeUsd" }) ?? costUsd,
+    unfilledStakeUsd:
+      numberField({ object, key: "unfilledStakeUsd" }) ?? 0,
+    levelsConsumed:
+      numberField({ object, key: "levelsConsumed" }) ?? 1,
     estimatedFeeRateBps: numberField({
       object,
       key: "estimatedFeeRateBps",

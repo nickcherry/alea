@@ -1261,3 +1261,71 @@ Next forward validation step: backfill/sync 5m candles through the
 captured forward tape, then rerun the same saved-table replay. Until
 that is done, the post-generation replay is not evidence for or
 against the current challenger.
+
+### 11:41 EDT (2026-05-07) — fresh Coinbase forward replay + real depth taker scoring
+
+I synced fresh Coinbase 5m candles through the captured forward tape
+and reran the saved-table replay. Binance candle sync is blocked from
+this network by a Binance API `451` restricted-location response, so
+the two Binance source tables still cannot participate in the clean
+forward check from this machine.
+
+Coinbase coverage is now fresh for the 2026-05-07 13:05 → 14:35 UTC
+forward slice:
+
+| Table series | Required last 5m bar | Latest available 5m bar | Status |
+| ------------ | -------------------- | ----------------------- | ------ |
+| coinbase/perp | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC | fresh |
+| coinbase/spot | 2026-05-07 13:00 UTC | 2026-05-07 13:00 UTC | fresh |
+
+Raw single-table replay, before the consensus overlay:
+
+| Source table | Decisions | Orders | Maker canonical | All-fill | Real-depth taker |
+| ------------ | --------: | -----: | --------------: | -------: | ---------------: |
+| coinbase/perp | 424,064 | 12 | -$80 | +$34 | -$11 |
+| coinbase/spot | 433,160 | 10 | -$11 | +$71 | +$34 |
+
+This preserves the same core pattern as the in-sample tape: maker fills
+remain badly adverse-selected, while all-fill/taker lenses carry the
+edge. The perp table is weak on this tiny slice once real depth is used;
+the spot table is still positive.
+
+I also replaced the research taker lens with a true captured-book walk:
+`buildTakerCounterfactual` now consumes the chosen side's ask levels
+until the stake is spent, records depth-weighted average price, fill
+size, levels consumed, and unfilled stake. `sweepReplay` now uses that
+real depth price instead of assuming every taker order fills at best ask.
+
+Applying the current challenger gates to the fresh Coinbase forward
+logs:
+
+```json
+{
+  "minEdge": 0.05,
+  "maxChosenSpread": 0.07,
+  "maxTakerAskPrice": 0.75,
+  "minTrendConfirmBp": 0,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+| Source table | n | Real-depth taker | +1 tick stress | Win |
+| ------------ | -: | ---------------: | -------------: | --: |
+| coinbase/perp | 7 | +$3 | +$1 | 71% |
+| coinbase/spot | 8 | +$13 | +$11 | 75% |
+
+Interpretation: this is encouraging but not enough for promotion. The
+fresh forward slice is too small and all-4 consensus cannot be tested
+until Binance candles are backfilled through a non-blocked path. The
+important result is that the challenger did not immediately fail once
+Coinbase coverage was fixed, but real book depth materially reduces the
+taker edge versus the earlier best-ask-only lens.
+
+Next useful work:
+
+1. Add a non-Binance-API candle backfill path or run the sync from an
+   unrestricted host so all 4 saved source tables can be replayed
+   forward.
+2. Rerun the all-4 consensus overlay on a genuinely fresh forward tape.
+3. Keep real-depth taker PnL as the default research metric; treat the
+   1-tick stress as an additional margin, not the primary fill model.

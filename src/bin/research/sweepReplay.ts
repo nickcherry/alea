@@ -42,6 +42,7 @@ type ReplayOrder = {
   readonly proxyOutcome: LeadingSide | null;
   readonly takerBestAskFillSize: number | null;
   readonly takerBestAskAvgPrice: number | null;
+  readonly takerCostUsd: number | null;
   readonly takerEstFeeUsd: number | null;
   // telemetry-derived features used for filtering
   readonly chosenBestAsk: number | null;
@@ -271,15 +272,29 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
   const takerBestAskFillSize =
     tc !== null && tc !== undefined && typeof tc["fillSize"] === "number"
       ? tc["fillSize"]
-      : null;
+      : tc !== null &&
+          tc !== undefined &&
+          typeof tc["sharesIfFilled"] === "number"
+        ? tc["sharesIfFilled"]
+        : null;
   const takerBestAskAvgPrice =
     tc !== null && tc !== undefined && typeof tc["avgPrice"] === "number"
       ? tc["avgPrice"]
+      : tc !== null && tc !== undefined && typeof tc["askPrice"] === "number"
+        ? tc["askPrice"]
+        : null;
+  const takerCostUsd =
+    tc !== null && tc !== undefined && typeof tc["costUsd"] === "number"
+      ? tc["costUsd"]
       : null;
   const takerEstFeeUsd =
     tc !== null && tc !== undefined && typeof tc["estFeeUsd"] === "number"
       ? tc["estFeeUsd"]
-      : null;
+      : tc !== null &&
+          tc !== undefined &&
+          typeof tc["estimatedFeeUsd"] === "number"
+        ? tc["estimatedFeeUsd"]
+        : null;
   const chosenBestAsk =
     ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestAsk"]) : null;
   const chosenAskSizeAtBestAsk =
@@ -317,6 +332,7 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
         : null,
     takerBestAskFillSize,
     takerBestAskAvgPrice,
+    takerCostUsd,
     takerEstFeeUsd,
     signedDistanceBp:
       ept !== null && ept !== undefined
@@ -742,13 +758,12 @@ function computeTakerLens({
   let wins = 0;
   let pnl = 0;
   for (const o of orders) {
-    const baseAsk = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
-    if (baseAsk <= 0 || baseAsk >= 1) {
-      continue;
-    }
-    const askPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
-    const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
-    if (sharesAtAsk <= 0 || o.officialOutcome === null) {
+    const execution = takerExecution({
+      order: o,
+      stakeUsd,
+      slippageTicks,
+    });
+    if (execution === null || o.officialOutcome === null) {
       continue;
     }
     filled += 1;
@@ -756,9 +771,12 @@ function computeTakerLens({
     if (won) {
       wins += 1;
     }
-    const cost = sharesAtAsk * askPrice;
-    const fee = takerFeeUsd({ shares: sharesAtAsk, price: askPrice, feeBps });
-    pnl += (won ? sharesAtAsk : 0) - cost - fee;
+    const fee = takerFeeUsd({
+      shares: execution.shares,
+      price: execution.avgPrice,
+      feeBps,
+    });
+    pnl += (won ? execution.shares : 0) - execution.costUsd - fee;
   }
   return {
     orderCount: orders.length,
@@ -771,6 +789,57 @@ function computeTakerLens({
     avgEdge: null,
     avgLimit: null,
     avgQueue: null,
+  };
+}
+
+function takerExecution({
+  order,
+  stakeUsd,
+  slippageTicks,
+}: {
+  readonly order: ReplayOrder;
+  readonly stakeUsd: number;
+  readonly slippageTicks: number;
+}): {
+  readonly shares: number;
+  readonly avgPrice: number;
+  readonly costUsd: number;
+} | null {
+  if (
+    order.takerBestAskFillSize !== null &&
+    order.takerBestAskFillSize > 0 &&
+    order.takerBestAskAvgPrice !== null &&
+    order.takerBestAskAvgPrice > 0 &&
+    order.takerBestAskAvgPrice < 1
+  ) {
+    const avgPrice = Math.min(
+      0.99,
+      order.takerBestAskAvgPrice + slippageTicks * 0.01,
+    );
+    const baseCost =
+      order.takerCostUsd ?? order.takerBestAskFillSize * order.takerBestAskAvgPrice;
+    const extraSlippageCost =
+      order.takerBestAskFillSize * Math.max(0, avgPrice - order.takerBestAskAvgPrice);
+    return {
+      shares: order.takerBestAskFillSize,
+      avgPrice,
+      costUsd: baseCost + extraSlippageCost,
+    };
+  }
+
+  const baseAsk = order.chosenBestAsk ?? Math.min(0.99, order.limitPrice + 0.01);
+  if (baseAsk <= 0 || baseAsk >= 1) {
+    return null;
+  }
+  const avgPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
+  const shares = Math.floor((stakeUsd / avgPrice) * 100) / 100;
+  if (shares <= 0) {
+    return null;
+  }
+  return {
+    shares,
+    avgPrice,
+    costUsd: shares * avgPrice,
   };
 }
 
@@ -807,22 +876,24 @@ function computeHybridLens({
       continue;
     }
 
-    const baseAsk = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
-    if (baseAsk <= 0 || baseAsk >= 1) {
-      continue;
-    }
-    const askPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
-    const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
-    if (sharesAtAsk <= 0) {
+    const execution = takerExecution({
+      order: o,
+      stakeUsd,
+      slippageTicks,
+    });
+    if (execution === null) {
       continue;
     }
     filled += 1;
     if (won) {
       wins += 1;
     }
-    const cost = sharesAtAsk * askPrice;
-    const fee = takerFeeUsd({ shares: sharesAtAsk, price: askPrice, feeBps });
-    pnl += (won ? sharesAtAsk : 0) - cost - fee;
+    const fee = takerFeeUsd({
+      shares: execution.shares,
+      price: execution.avgPrice,
+      feeBps,
+    });
+    pnl += (won ? execution.shares : 0) - execution.costUsd - fee;
   }
   return {
     orderCount: orders.length,

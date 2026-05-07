@@ -62,7 +62,10 @@ describe("dry-run telemetry", () => {
       side: "up",
       stakeUsd: 20,
     });
-    expect(taker?.askPrice).toBe(0.42);
+    expect(taker?.bestAskPrice).toBe(0.42);
+    expect(taker?.levelsConsumed).toBe(2);
+    expect(taker?.fillSize).toBeCloseTo(46.97, 9);
+    expect(taker?.askPrice).toBeCloseTo(19.9971 / 46.97, 9);
     expect(taker?.estimatedFeeRateBps).toBe(720);
 
     const marketHistory: DryMarketTradeHistory = new Map();
@@ -209,7 +212,10 @@ function book(): UpDownBook {
       bestBid: 0.4,
       bestAsk: 0.42,
       bidLevels: [{ price: 0.4, size: 12 }],
-      askLevels: [{ price: 0.42, size: 20 }],
+      askLevels: [
+        { price: 0.42, size: 20 },
+        { price: 0.43, size: 30 },
+      ],
     },
     down: {
       bestBid: 0.58,

@@ -91,9 +91,19 @@ export type DryPreEntryMarketLookback = {
 };
 
 export type DryTakerCounterfactual = {
+  /**
+   * Depth-weighted average execution price. Kept as `askPrice` for
+   * report compatibility with older taker-counterfactual consumers.
+   */
   readonly askPrice: number;
+  readonly bestAskPrice: number;
+  readonly avgPrice: number;
+  readonly fillSize: number;
   readonly sharesIfFilled: number;
   readonly costUsd: number;
+  readonly stakeUsd: number;
+  readonly unfilledStakeUsd: number;
+  readonly levelsConsumed: number;
   readonly estimatedFeeRateBps: number | null;
   readonly estimatedFeeUsd: number | null;
 };
@@ -332,30 +342,110 @@ export function buildTakerCounterfactual({
   readonly side: LeadingSide;
   readonly stakeUsd: number;
 }): DryTakerCounterfactual | null {
-  const askPrice = topForSide({ book, side }).bestAsk;
-  if (askPrice === null || askPrice <= 0 || askPrice >= 1) {
+  const top = topForSide({ book, side });
+  const bestAskPrice = top.bestAsk;
+  if (bestAskPrice === null || bestAskPrice <= 0 || bestAskPrice >= 1) {
     return null;
   }
-  const sharesIfFilled =
-    Math.floor((stakeUsd / askPrice) * SHARE_QUANTUM) / SHARE_QUANTUM;
-  if (sharesIfFilled <= 0) {
+  const fill = walkAskBook({
+    askLevels: top.askLevels,
+    fallbackAskPrice: bestAskPrice,
+    stakeUsd,
+  });
+  if (fill === null || fill.shares <= 0 || fill.costUsd <= 0) {
     return null;
   }
+  const avgPrice = fill.costUsd / fill.shares;
   const estimatedFeeRateBps = book.market.constraints?.takerBaseFeeBps ?? null;
   const estimatedFeeUsd =
     estimatedFeeRateBps === null
       ? null
-      : estimatePolymarketFeeUsd({
-          shares: sharesIfFilled,
-          price: askPrice,
-          feeRateBps: estimatedFeeRateBps,
-        });
+      : fill.feeBasis.reduce(
+          (total, level) =>
+            total +
+            estimatePolymarketFeeUsd({
+              shares: level.shares,
+              price: level.price,
+              feeRateBps: estimatedFeeRateBps,
+            }),
+          0,
+        );
   return {
-    askPrice,
-    sharesIfFilled,
-    costUsd: sharesIfFilled * askPrice,
+    askPrice: avgPrice,
+    bestAskPrice,
+    avgPrice,
+    fillSize: fill.shares,
+    sharesIfFilled: fill.shares,
+    costUsd: fill.costUsd,
+    stakeUsd,
+    unfilledStakeUsd: Math.max(0, stakeUsd - fill.costUsd),
+    levelsConsumed: fill.levelsConsumed,
     estimatedFeeRateBps,
     estimatedFeeUsd,
+  };
+}
+
+type TakerBookWalk = {
+  readonly shares: number;
+  readonly costUsd: number;
+  readonly levelsConsumed: number;
+  readonly feeBasis: readonly {
+    readonly shares: number;
+    readonly price: number;
+  }[];
+};
+
+function walkAskBook({
+  askLevels,
+  fallbackAskPrice,
+  stakeUsd,
+}: {
+  readonly askLevels: readonly PriceLevel[] | undefined;
+  readonly fallbackAskPrice: number;
+  readonly stakeUsd: number;
+}): TakerBookWalk | null {
+  const levels =
+    askLevels === undefined || askLevels.length === 0
+      ? [{ price: fallbackAskPrice, size: Number.POSITIVE_INFINITY }]
+      : [...askLevels]
+          .filter(
+            (level) =>
+              level.price > 0 &&
+              level.price < 1 &&
+              Number.isFinite(level.size) &&
+              level.size > 0,
+          )
+          .sort((left, right) => left.price - right.price);
+  let remainingUsd = stakeUsd;
+  let shares = 0;
+  let costUsd = 0;
+  let levelsConsumed = 0;
+  const feeBasis: Array<{ shares: number; price: number }> = [];
+  for (const level of levels) {
+    if (remainingUsd <= 0) {
+      break;
+    }
+    const maxSharesByStake =
+      Math.floor((remainingUsd / level.price) * SHARE_QUANTUM) / SHARE_QUANTUM;
+    const fillShares = Math.min(level.size, maxSharesByStake);
+    if (fillShares <= 0) {
+      continue;
+    }
+    const fillCost = fillShares * level.price;
+    shares += fillShares;
+    costUsd += fillCost;
+    remainingUsd -= fillCost;
+    levelsConsumed += 1;
+    feeBasis.push({ shares: fillShares, price: level.price });
+  }
+  if (shares <= 0 || costUsd <= 0) {
+    return null;
+  }
+  return {
+    shares,
+    costUsd,
+    levelsConsumed,
+    feeBasis,
   };
 }
 
