@@ -18,10 +18,12 @@ const HEARTBEAT_INTERVAL_MS = 8_000;
  * wallet, narrowed to the conditionIds we currently care about.
  *
  * Translates Polymarket's free-form trade frames into the venue-
- * agnostic `FillEvent` shape the runner reads. Order status frames
- * (filled/cancelled) are observed but not surfaced — the runner
- * derives that state from incoming fills + its own placement
- * lifecycle.
+ * agnostic `FillEvent` shape the runner reads. V2 `maker_orders`
+ * frames preserve per-level fill prices; when the top-level frame says
+ * our order was taker, its taker fee rate applies to each maker leg.
+ * Order status frames (filled/cancelled) are observed but not surfaced
+ * — the runner derives that state from incoming fills + its own
+ * placement lifecycle.
  *
  * Reconnect uses the same exponential schedule as the Binance feed.
  * On every reconnect the venue treats the socket as a new session,
@@ -215,11 +217,16 @@ export function parsePolymarketUserFillEvents({
     if (!trade.success) {
       continue;
     }
-    for (const event of mapTradeFrame({ frame: trade.data, tokenIdToSide })) {
-      const eventId =
-        trade.data.id ??
-        `${trade.data.market}:${trade.data.timestamp ?? trade.data.match_time ?? trade.data.matchtime ?? trade.data.last_update ?? "unknown"}`;
-      const key = `${eventId}:${event.outcomeRef}:${event.price}:${event.size}`;
+    const events = mapTradeFrame({ frame: trade.data, tokenIdToSide });
+    const eventId =
+      trade.data.id ??
+      `${trade.data.market}:${trade.data.timestamp ?? trade.data.match_time ?? trade.data.matchtime ?? trade.data.last_update ?? "unknown"}`;
+    const occurrenceCounts = new Map<string, number>();
+    for (const event of events) {
+      const baseKey = `${eventId}:${event.outcomeRef}:${event.price}:${event.size}`;
+      const occurrence = occurrenceCounts.get(baseKey) ?? 0;
+      occurrenceCounts.set(baseKey, occurrence + 1);
+      const key = `${baseKey}:${occurrence}`;
       if (seenFills.has(key)) {
         continue;
       }
@@ -241,6 +248,12 @@ function mapTradeFrame({
     return [];
   }
   const events: FillEvent[] = [];
+  const frameFeeRateBps = feeRateBpsForFrame({ frame });
+  const makerLegFeeRateBps =
+    frame.trader_side?.toUpperCase() === "TAKER" &&
+    Number.isFinite(frameFeeRateBps)
+      ? frameFeeRateBps
+      : 0;
   for (const makerOrder of frame.maker_orders ?? []) {
     const side = tokenIdToSide.get(makerOrder.asset_id) ?? null;
     const price = Number(makerOrder.price);
@@ -259,7 +272,7 @@ function mapTradeFrame({
       side,
       price,
       size,
-      feeRateBps: 0,
+      feeRateBps: makerLegFeeRateBps,
       atMs: parseAtMs({
         matchTime: frame.match_time ?? frame.matchtime,
         lastUpdate: frame.last_update,
@@ -271,11 +284,7 @@ function mapTradeFrame({
   }
   const price = frame.price === undefined ? Number.NaN : Number(frame.price);
   const size = frame.size === undefined ? Number.NaN : Number(frame.size);
-  const feeRateBps =
-    frame.trader_side?.toUpperCase() === "MAKER" ||
-    frame.fee_rate_bps === undefined
-      ? 0
-      : Number(frame.fee_rate_bps);
+  const feeRateBps = feeRateBpsForFrame({ frame });
   if (
     !Number.isFinite(price) ||
     !Number.isFinite(size) ||
@@ -305,6 +314,20 @@ function mapTradeFrame({
       atMs,
     },
   ];
+}
+
+function feeRateBpsForFrame({
+  frame,
+}: {
+  readonly frame: z.infer<typeof tradeFrameSchema>;
+}): number {
+  if (
+    frame.trader_side?.toUpperCase() === "MAKER" ||
+    frame.fee_rate_bps === undefined
+  ) {
+    return 0;
+  }
+  return Number(frame.fee_rate_bps);
 }
 
 function tradeStatusCanFill({

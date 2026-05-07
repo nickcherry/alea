@@ -82,6 +82,8 @@ The canonical URL set lives in
   not token IDs. Fill frames are normalized into Alea's vendor-agnostic
   `FillEvent` shape. The stream sends `PING` heartbeats, ignores `PONG`, and
   handles V2 `maker_orders` frames that omit top-level fill price/size fields.
+  When those maker-order legs belong to our taker fill, Alea keeps the
+  leg-level prices/sizes and applies the top-level taker fee rate to each leg.
 - CLOB trade fees are normalized from the venue's fee curve:
   `shares * (fee_rate_bps / 10000) * price * (1 - price)`, rounded to five
   decimal places. Trades reported as `trader_side=MAKER` are treated as

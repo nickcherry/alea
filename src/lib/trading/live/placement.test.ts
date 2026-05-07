@@ -404,6 +404,51 @@ describe("placeWithRetry", () => {
     expect(events.map((event) => event.kind)).toContain("order-placed");
   });
 
+  it("preserves FAK taker fills that arrive during post-placement hydration", async () => {
+    const assetRecord = record();
+    const events: LiveEvent[] = [];
+    const baseVendor = vendorWith({
+      place: async () => {
+        throw new Error("maker path should not be used");
+      },
+    });
+
+    await runPlacement({
+      record: assetRecord,
+      events,
+      placementMode: "taker",
+      vendor: {
+        ...baseVendor,
+        async placeTakerMarketBuy() {
+          return placedTakerOrder();
+        },
+        async hydrateMarketState() {
+          applyFill({
+            asset: "btc",
+            record: assetRecord,
+            fill: {
+              outcomeRef: "UP",
+              price: 0.62,
+              size: 4,
+              feeRateBps: 720,
+            },
+            emit: (event) => events.push(event),
+          });
+          return emptyHydration();
+        },
+      },
+    });
+
+    expect(assetRecord.slot).toMatchObject({
+      kind: "active",
+      orderId: null,
+      sharesFilled: 4,
+    });
+    if (assetRecord.slot.kind === "active") {
+      expect(assetRecord.slot.costUsd).toBeCloseTo(2.48, 9);
+    }
+  });
+
   it("preserves fills that arrive before the placement response returns", async () => {
     const assetRecord = record();
     const events: LiveEvent[] = [];

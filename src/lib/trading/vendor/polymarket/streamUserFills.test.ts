@@ -38,6 +38,50 @@ describe("parsePolymarketUserFillEvents", () => {
     ).toEqual([]);
   });
 
+  it("keeps taker fees on V2 maker_order fill legs", () => {
+    const seenFills = new Set<string>();
+    const tokenIdToSide = new Map([["UP_TOKEN", "up" as const]]);
+    const raw = JSON.stringify({
+      event_type: "trade",
+      market: "condition",
+      id: "trade-2",
+      status: "MATCHED",
+      match_time: "1777900212",
+      trader_side: "TAKER",
+      fee_rate_bps: "720",
+      maker_orders: [
+        { asset_id: "UP_TOKEN", matched_amount: "1", price: "0.61" },
+        { asset_id: "UP_TOKEN", matched_amount: "1", price: "0.61" },
+      ],
+    });
+
+    expect(
+      parsePolymarketUserFillEvents({ raw, tokenIdToSide, seenFills }),
+    ).toEqual([
+      {
+        vendorRef: "condition",
+        outcomeRef: "UP_TOKEN",
+        side: "up",
+        price: 0.61,
+        size: 1,
+        feeRateBps: 720,
+        atMs: 1_777_900_212_000,
+      },
+      {
+        vendorRef: "condition",
+        outcomeRef: "UP_TOKEN",
+        side: "up",
+        price: 0.61,
+        size: 1,
+        feeRateBps: 720,
+        atMs: 1_777_900_212_000,
+      },
+    ]);
+    expect(
+      parsePolymarketUserFillEvents({ raw, tokenIdToSide, seenFills }),
+    ).toEqual([]);
+  });
+
   it("falls back to legacy top-level trade fields and ignores non-fill statuses", () => {
     const seenFills = new Set<string>();
     const tokenIdToSide = new Map([["UP_TOKEN", "up" as const]]);

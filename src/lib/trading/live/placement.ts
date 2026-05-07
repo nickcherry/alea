@@ -193,26 +193,48 @@ export async function placeWithRetry({
         market: orderMarket,
         outcomeRef: attempt.placed.outcomeRef,
       });
-      const observed =
+      const hydrated =
         placementMode === "taker"
-          ? ((await hydratePlacedTakerState({
+          ? await hydratePlacedTakerState({
               vendor,
               market: orderMarket,
               outcomeRef: attempt.placed.outcomeRef,
-              currentSlot: observedBeforeHydration,
               asset,
               emit,
-            })) ?? observedBeforeHydration)
-          : observedBeforeHydration;
-      const sharesFilled = observed?.sharesFilled ?? 0;
-      const useHydratedTakerSize =
+            })
+          : null;
+      const observedAfterHydration = matchingActiveSlot({
+        slot: record.slot,
+        market: orderMarket,
+        outcomeRef: attempt.placed.outcomeRef,
+      });
+      const observed = mostCompleteActiveSlot([
+        observedAfterHydration,
+        hydrated,
+        observedBeforeHydration,
+      ]);
+      if (
         placementMode === "taker" &&
-        observed !== null &&
-        observed.sharesFilled > 0;
-      const sharesIfFilled = useHydratedTakerSize
-        ? observed.sharesIfFilled
-        : attempt.placed.sharesIfFilled;
-      const limitPrice = useHydratedTakerSize
+        hydrated !== null &&
+        hydrated.sharesFilled >
+          Math.max(
+            observedBeforeHydration?.sharesFilled ?? 0,
+            observedAfterHydration?.sharesFilled ?? 0,
+          ) +
+            1e-6
+      ) {
+        emit({ kind: "fill", atMs: Date.now(), asset, slot: hydrated });
+      }
+      const sharesFilled = observed?.sharesFilled ?? 0;
+      const useObservedTakerFill =
+        placementMode === "taker" && observed !== null && sharesFilled > 0;
+      const sharesIfFilled =
+        placementMode === "taker" &&
+        hydrated !== null &&
+        hydrated.sharesFilled > 0
+          ? Math.max(hydrated.sharesIfFilled, sharesFilled)
+          : attempt.placed.sharesIfFilled;
+      const limitPrice = useObservedTakerFill
         ? observed.limitPrice
         : attempt.placed.limitPrice;
       const orderFullyFilled = sharesFilled + 1e-6 >= sharesIfFilled;
@@ -466,6 +488,34 @@ function matchingActiveSlot({
   return slot;
 }
 
+function mostCompleteActiveSlot(
+  slots: readonly (Extract<
+    AssetWindowRecord["slot"],
+    { kind: "active" }
+  > | null)[],
+): Extract<AssetWindowRecord["slot"], { kind: "active" }> | null {
+  let best: Extract<AssetWindowRecord["slot"], { kind: "active" }> | null =
+    null;
+  for (const slot of slots) {
+    if (slot === null) {
+      continue;
+    }
+    if (best === null || slot.sharesFilled > best.sharesFilled + 1e-6) {
+      best = slot;
+      continue;
+    }
+    if (
+      best !== null &&
+      Math.abs(slot.sharesFilled - best.sharesFilled) <= 1e-6 &&
+      best.feesUsd <= 0 &&
+      slot.feesUsd > 0
+    ) {
+      best = slot;
+    }
+  }
+  return best;
+}
+
 async function reconcilePlacementState({
   vendor,
   record,
@@ -512,17 +562,12 @@ async function hydratePlacedTakerState({
   vendor,
   market,
   outcomeRef,
-  currentSlot,
   asset,
   emit,
 }: {
   readonly vendor: Vendor;
   readonly market: NonNullable<AssetWindowRecord["market"]>;
   readonly outcomeRef: string;
-  readonly currentSlot: Extract<
-    AssetWindowRecord["slot"],
-    { kind: "active" }
-  > | null;
   readonly asset: Asset;
   readonly emit: (event: LiveEvent) => void;
 }): Promise<Extract<AssetWindowRecord["slot"], { kind: "active" }> | null> {
@@ -531,12 +576,6 @@ async function hydratePlacedTakerState({
     const hydrated = activeSlotFromHydration({ market, hydration });
     if (hydrated === null || hydrated.outcomeRef !== outcomeRef) {
       return null;
-    }
-    if (
-      currentSlot === null ||
-      hydrated.sharesFilled > currentSlot.sharesFilled + 1e-6
-    ) {
-      emit({ kind: "fill", atMs: Date.now(), asset, slot: hydrated });
     }
     return hydrated;
   } catch (error) {
