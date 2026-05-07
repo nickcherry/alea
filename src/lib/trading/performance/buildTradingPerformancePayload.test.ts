@@ -1,118 +1,103 @@
 import {
   buildTradingPerformancePayload,
-  type TradingPerformanceInputMarket,
-  type TradingPerformanceInputTrade,
+  type TradingPerformanceInputPosition,
 } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import { describe, expect, it } from "bun:test";
 
-const market: TradingPerformanceInputMarket = {
-  conditionId: "condition-1",
-  question: "Bitcoin Up or Down - May 4, 12:00PM ET",
-  marketSlug: "btc-updown-5m-1777900200",
-  endDateMs: 1_777_900_500_000,
-  closed: true,
-  tokens: [
-    { tokenId: "UP", outcome: "Up", price: 1, winner: true },
-    { tokenId: "DOWN", outcome: "Down", price: 0, winner: false },
-  ],
-};
-
-function trade(
-  overrides: Partial<TradingPerformanceInputTrade>,
-): TradingPerformanceInputTrade {
+function position(
+  overrides: Partial<TradingPerformanceInputPosition> = {},
+): TradingPerformanceInputPosition {
   return {
-    id: "trade-1",
-    conditionId: "condition-1",
-    tokenId: "UP",
-    side: "BUY",
-    traderSide: "TAKER",
-    size: 100,
-    price: 0.3,
-    feeRateBps: 100,
-    tradeTimeMs: 1_777_900_220_000,
+    conditionId: "0xcondition",
+    tokenId: "TOKEN",
+    oppositeTokenId: "OPPOSITE",
+    title: "Bitcoin Up or Down - May 4, 12:00PM ET",
+    slug: "btc-updown-5m-1777900200",
     outcome: "Up",
-    transactionHash: "0xhash",
+    size: 100,
+    avgPrice: 0.3,
+    currentPrice: 0,
+    initialValueUsd: 30,
+    currentValueUsd: 0,
+    cashPnlUsd: -30,
+    realizedPnlUsd: 0,
+    endDateMs: Date.parse("2026-05-04T16:05:00Z"),
+    redeemable: true,
     ...overrides,
   };
 }
 
 describe("buildTradingPerformancePayload", () => {
-  it("builds trade rows, market rows, and cumulative PnL from Polymarket trades", () => {
+  it("aggregates position-level cashPnl into the lifetime summary", () => {
     const payload = buildTradingPerformancePayload({
-      walletAddress: "0xwallet",
+      walletAddress: "0xfunder",
       generatedAtMs: 1_777_900_600_000,
-      markets: [market],
-      trades: [
-        trade({ id: "buy-up" }),
-        trade({
-          id: "sell-down",
-          tokenId: "DOWN",
-          side: "SELL",
-          size: 50,
-          price: 0.4,
-          feeRateBps: 0,
-          outcome: "Down",
-          tradeTimeMs: 1_777_900_230_000,
+      positions: [
+        position({ conditionId: "win", cashPnlUsd: 70, currentValueUsd: 100 }),
+        position({ conditionId: "loss", cashPnlUsd: -30 }),
+        position({
+          conditionId: "open",
+          redeemable: false,
+          cashPnlUsd: 5,
+          currentValueUsd: 35,
+          endDateMs: null,
         }),
       ],
     });
 
-    expect(payload.summary.tradeCount).toBe(2);
-    expect(payload.summary.resolvedTradeCount).toBe(2);
-    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(89.79, 9);
-    expect(payload.summary.resolvedFeesUsd).toBeCloseTo(0.21, 9);
-    expect(payload.trades.find((row) => row.id === "buy-up")).toMatchObject({
-      symbol: "BTC",
-      resolvedPrice: 1,
-      result: "win",
+    expect(payload.summary.positionCount).toBe(3);
+    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(45, 9);
+    expect(payload.summary.totalInvestedUsd).toBeCloseTo(90, 9);
+    expect(payload.summary.currentValueUsd).toBeCloseTo(135, 9);
+    expect(payload.summary.openPositionCount).toBe(1);
+    expect(payload.summary.redeemablePositionCount).toBe(2);
+    expect(payload.summary.winningPositionCount).toBe(1);
+    expect(payload.summary.losingPositionCount).toBe(1);
+    expect(payload.summary.flatPositionCount).toBe(0);
+  });
+
+  it("derives symbol, status, and result on each row and orders the chart by end date", () => {
+    const payload = buildTradingPerformancePayload({
+      walletAddress: "0xfunder",
+      generatedAtMs: 1_777_900_600_000,
+      positions: [
+        position({
+          conditionId: "later",
+          slug: "eth-updown-5m-2",
+          title: "Ethereum Up or Down - May 5",
+          endDateMs: Date.parse("2026-05-05T00:00:00Z"),
+          cashPnlUsd: 10,
+        }),
+        position({
+          conditionId: "earlier",
+          slug: "btc-updown-5m-1",
+          endDateMs: Date.parse("2026-05-03T00:00:00Z"),
+          cashPnlUsd: -5,
+        }),
+      ],
     });
-    expect(payload.trades.find((row) => row.id === "sell-down")).toMatchObject({
-      resolvedPrice: 0,
-      pnlUsd: 20,
-      result: "win",
-    });
-    expect(payload.markets).toHaveLength(1);
-    const marketPnl = payload.markets[0]?.pnlUsd;
-    expect(marketPnl).toBeCloseTo(89.79, 9);
-    if (marketPnl === null || marketPnl === undefined) {
-      throw new Error("expected resolved market pnl");
-    }
-    expect(payload.chart).toEqual([
-      {
-        conditionId: "condition-1",
-        symbol: "BTC",
-        question: "Bitcoin Up or Down - May 4, 12:00PM ET",
-        settledAtMs: 1_777_900_500_000,
-        marketPnlUsd: marketPnl,
-        cumulativePnlUsd: marketPnl,
-      },
+
+    expect(payload.positions.map((row) => row.conditionId)).toEqual([
+      "later",
+      "earlier",
     ]);
+    expect(payload.positions[0]?.symbol).toBe("ETH");
+    expect(payload.positions[0]?.result).toBe("win");
+    expect(payload.positions[1]?.symbol).toBe("BTC");
+    expect(payload.positions[1]?.result).toBe("loss");
+
+    expect(payload.chart.map((p) => p.cumulativePnlUsd)).toEqual([-5, 5]);
   });
 
-  it("leaves unresolved trades out of PnL and chart totals", () => {
+  it("marks open positions with status open regardless of cashPnl sign", () => {
     const payload = buildTradingPerformancePayload({
-      walletAddress: "0xwallet",
-      generatedAtMs: 1_777_900_600_000,
-      markets: [{ ...market, closed: false }],
-      trades: [trade({ id: "open" })],
+      walletAddress: "0xfunder",
+      generatedAtMs: 0,
+      positions: [
+        position({ redeemable: false, cashPnlUsd: 12 }),
+      ],
     });
-
-    expect(payload.summary.lifetimePnlUsd).toBe(0);
-    expect(payload.summary.unresolvedTradeCount).toBe(1);
-    expect(payload.trades[0]?.result).toBe("open");
-    expect(payload.trades[0]?.pnlUsd).toBeNull();
-    expect(payload.chart).toEqual([]);
-  });
-
-  it("zeros maker fees even when the market fee rate is present", () => {
-    const payload = buildTradingPerformancePayload({
-      walletAddress: "0xwallet",
-      generatedAtMs: 1_777_900_600_000,
-      markets: [market],
-      trades: [trade({ traderSide: "MAKER", feeRateBps: 720 })],
-    });
-
-    expect(payload.trades[0]?.feeUsd).toBe(0);
-    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(70, 9);
+    expect(payload.positions[0]?.status).toBe("open");
+    expect(payload.positions[0]?.result).toBe("open");
   });
 });

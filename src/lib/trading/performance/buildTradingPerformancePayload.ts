@@ -1,364 +1,176 @@
 import { assetValues } from "@alea/constants/assets";
 import type {
   TradingPerformanceChartPoint,
-  TradingPerformanceMarketRow,
   TradingPerformancePayload,
-  TradingPerformanceTradeResult,
-  TradingPerformanceTradeRow,
+  TradingPerformancePositionResult,
+  TradingPerformancePositionRow,
+  TradingPerformancePositionStatus,
 } from "@alea/lib/trading/performance/types";
-import { computePolymarketFeeUsd } from "@alea/lib/trading/vendor/polymarket/computePolymarketFeeUsd";
 
-export type TradingPerformanceInputTrade = {
-  readonly id: string;
+export type TradingPerformanceInputPosition = {
   readonly conditionId: string;
   readonly tokenId: string;
-  readonly side: "BUY" | "SELL";
-  readonly traderSide: "MAKER" | "TAKER" | "UNKNOWN";
+  readonly oppositeTokenId: string | null;
+  readonly title: string;
+  readonly slug: string | null;
+  readonly outcome: string;
   readonly size: number;
-  readonly price: number;
-  readonly feeRateBps: number;
-  readonly tradeTimeMs: number;
-  readonly outcome: string | null;
-  readonly transactionHash: string | null;
-};
-
-export type TradingPerformanceInputMarket = {
-  readonly conditionId: string;
-  readonly question: string | null;
-  readonly marketSlug: string | null;
+  readonly avgPrice: number;
+  readonly currentPrice: number;
+  readonly initialValueUsd: number;
+  readonly currentValueUsd: number;
+  readonly cashPnlUsd: number;
+  readonly realizedPnlUsd: number;
   readonly endDateMs: number | null;
-  readonly closed: boolean;
-  readonly tokens: readonly TradingPerformanceInputToken[];
-};
-
-export type TradingPerformanceInputToken = {
-  readonly tokenId: string;
-  readonly outcome: string | null;
-  readonly price: number | null;
-  readonly winner: boolean;
-};
-
-type MarketResolution = {
-  readonly resolved: boolean;
-  readonly winningOutcome: string | null;
-  readonly outcomePriceByTokenId: ReadonlyMap<string, number>;
+  readonly redeemable: boolean;
 };
 
 export function buildTradingPerformancePayload({
   walletAddress,
   generatedAtMs,
-  trades,
-  markets,
+  positions,
 }: {
   readonly walletAddress: string;
   readonly generatedAtMs: number;
-  readonly trades: readonly TradingPerformanceInputTrade[];
-  readonly markets: readonly TradingPerformanceInputMarket[];
+  readonly positions: readonly TradingPerformanceInputPosition[];
 }): TradingPerformancePayload {
-  const marketByConditionId = new Map(
-    markets.map((market) => [market.conditionId, market] as const),
-  );
-  const tradeRows = trades
-    .map((trade) =>
-      buildTradeRow({
-        trade,
-        market: marketByConditionId.get(trade.conditionId) ?? null,
-      }),
-    )
-    .sort((a, b) => b.tradeTimeMs - a.tradeTimeMs || a.id.localeCompare(b.id));
-  const marketRows = buildMarketRows({
-    tradeRows,
-    marketByConditionId,
-  });
-  const chart = buildChart({ marketRows });
-  const resolvedRows = tradeRows.filter((row) => row.pnlUsd !== null);
-  const firstTradeAtMs = minOrNull(tradeRows.map((row) => row.tradeTimeMs));
-  const lastTradeAtMs = maxOrNull(tradeRows.map((row) => row.tradeTimeMs));
+  const rows = positions
+    .map(buildPositionRow)
+    .sort((a, b) => (b.endDateMs ?? 0) - (a.endDateMs ?? 0) || a.title.localeCompare(b.title));
+  const chart = buildChart({ rows });
+
+  const lifetimePnlUsd = sum(rows.map((row) => row.cashPnlUsd));
+  const totalInvestedUsd = sum(rows.map((row) => row.initialValueUsd));
+  const currentValueUsd = sum(rows.map((row) => row.currentValueUsd));
 
   return {
     command: "trading:performance",
     generatedAtMs,
     walletAddress,
     source: {
-      trades:
-        "Polymarket data-api /trades?user=<funder> (full proxy-wallet history)",
-      markets: "Polymarket CLOB /markets/{conditionId} via getMarket",
-      fees: "data-api does not expose per-trade fees; treated as $0",
+      positions:
+        "Polymarket data-api /positions?user=<funder> (cashPnl is mark-to-market, includes realized + unrealized)",
     },
     summary: {
       walletAddress,
-      tradeCount: tradeRows.length,
-      resolvedTradeCount: resolvedRows.length,
-      unresolvedTradeCount: tradeRows.length - resolvedRows.length,
-      resolvedMarketCount: marketRows.filter((row) => row.resolved).length,
-      unresolvedMarketCount: marketRows.filter((row) => !row.resolved).length,
-      winningTradeCount: tradeRows.filter((row) => row.result === "win").length,
-      losingTradeCount: tradeRows.filter((row) => row.result === "loss").length,
-      flatTradeCount: tradeRows.filter((row) => row.result === "flat").length,
-      lifetimePnlUsd: sum(resolvedRows.map((row) => row.pnlUsd ?? 0)),
-      resolvedFeesUsd: sum(resolvedRows.map((row) => row.feeUsd)),
-      totalFeesUsd: sum(tradeRows.map((row) => row.feeUsd)),
-      totalVolumeUsd: sum(tradeRows.map((row) => row.notionalUsd)),
-      firstTradeAtMs,
-      lastTradeAtMs,
+      positionCount: rows.length,
+      openPositionCount: rows.filter((row) => row.status === "open").length,
+      redeemablePositionCount: rows.filter((row) => row.status === "redeemable").length,
+      winningPositionCount: rows.filter((row) => row.result === "win").length,
+      losingPositionCount: rows.filter((row) => row.result === "loss").length,
+      flatPositionCount: rows.filter((row) => row.result === "flat").length,
+      lifetimePnlUsd,
+      totalInvestedUsd,
+      currentValueUsd,
     },
     chart,
-    markets: marketRows,
-    trades: tradeRows,
+    positions: rows,
   };
 }
 
-function buildTradeRow({
-  trade,
-  market,
-}: {
-  readonly trade: TradingPerformanceInputTrade;
-  readonly market: TradingPerformanceInputMarket | null;
-}): TradingPerformanceTradeRow {
-  const resolution =
-    market === null
-      ? unresolvedResolution()
-      : resolveMarketResolution({ market });
-  const token = market?.tokens.find((item) => item.tokenId === trade.tokenId);
-  const question = market?.question ?? "Unknown Polymarket market";
-  const marketSlug = market?.marketSlug ?? null;
-  const outcome = token?.outcome ?? trade.outcome ?? "Unknown";
-  const symbol = inferSymbol({ marketSlug, question, outcome });
-  const notionalUsd = trade.size * trade.price;
-  const feeUsd =
-    trade.traderSide === "MAKER"
-      ? 0
-      : computePolymarketFeeUsd({
-          size: trade.size,
-          price: trade.price,
-          feeRateBps: trade.feeRateBps,
-        });
-  const resolvedPrice = resolution.resolved
-    ? (resolution.outcomePriceByTokenId.get(trade.tokenId) ?? 0)
-    : null;
-  const pnlUsd =
-    resolvedPrice === null
-      ? null
-      : computeTradePnl({
-          side: trade.side,
-          size: trade.size,
-          price: trade.price,
-          resolvedPrice,
-          feeUsd,
-        });
+function buildPositionRow(
+  position: TradingPerformanceInputPosition,
+): TradingPerformancePositionRow {
+  const status: TradingPerformancePositionStatus = position.redeemable
+    ? "redeemable"
+    : "open";
   return {
-    id: trade.id,
-    conditionId: trade.conditionId,
-    tokenId: trade.tokenId,
-    symbol,
-    question,
-    marketSlug,
-    side: trade.side,
-    traderSide: trade.traderSide,
-    outcome,
-    size: trade.size,
-    price: trade.price,
-    notionalUsd,
-    feeRateBps: trade.feeRateBps,
-    feeUsd,
-    tradeTimeMs: trade.tradeTimeMs,
-    resolved: resolution.resolved,
-    resolvedPrice,
-    pnlUsd,
-    result: resultFromPnl({ pnlUsd }),
-    transactionHash: trade.transactionHash,
+    conditionId: position.conditionId,
+    tokenId: position.tokenId,
+    oppositeTokenId: position.oppositeTokenId,
+    symbol: inferSymbol({ slug: position.slug, title: position.title }),
+    title: position.title,
+    slug: position.slug,
+    outcome: position.outcome,
+    size: position.size,
+    avgPrice: position.avgPrice,
+    currentPrice: position.currentPrice,
+    initialValueUsd: position.initialValueUsd,
+    currentValueUsd: position.currentValueUsd,
+    cashPnlUsd: position.cashPnlUsd,
+    realizedPnlUsd: position.realizedPnlUsd,
+    endDateMs: position.endDateMs,
+    status,
+    result: resultFromPosition({
+      cashPnlUsd: position.cashPnlUsd,
+      status,
+    }),
   };
 }
 
-function buildMarketRows({
-  tradeRows,
-  marketByConditionId,
+/**
+ * Cumulative-PnL series ordered by settlement date. Open positions
+ * fall back to a synthetic late timestamp so they cluster at the
+ * right edge of the chart — the operator still sees the running
+ * total, but unrealized entries don't pretend to have a real
+ * settlement date.
+ */
+function buildChart({
+  rows,
 }: {
-  readonly tradeRows: readonly TradingPerformanceTradeRow[];
-  readonly marketByConditionId: ReadonlyMap<
-    string,
-    TradingPerformanceInputMarket
-  >;
-}): TradingPerformanceMarketRow[] {
-  const rowsByMarket = new Map<string, TradingPerformanceTradeRow[]>();
-  for (const row of tradeRows) {
-    const list = rowsByMarket.get(row.conditionId);
-    if (list === undefined) {
-      rowsByMarket.set(row.conditionId, [row]);
-    } else {
-      list.push(row);
-    }
-  }
-  const marketRows: TradingPerformanceMarketRow[] = [];
-  for (const [conditionId, rows] of rowsByMarket) {
-    const market = marketByConditionId.get(conditionId) ?? null;
-    const resolution =
-      market === null
-        ? unresolvedResolution()
-        : resolveMarketResolution({ market });
-    const latestTradeAtMs = maxOrNull(rows.map((row) => row.tradeTimeMs));
-    const endDateMs = market?.endDateMs ?? null;
-    const settledAtMs =
-      resolution.resolved && latestTradeAtMs !== null
-        ? Math.max(endDateMs ?? latestTradeAtMs, latestTradeAtMs)
-        : null;
-    marketRows.push({
-      conditionId,
-      symbol: rows[0]?.symbol ?? "UNKNOWN",
-      question:
-        market?.question ?? rows[0]?.question ?? "Unknown Polymarket market",
-      marketSlug: market?.marketSlug ?? rows[0]?.marketSlug ?? null,
-      endDateMs,
-      settledAtMs,
-      resolved: resolution.resolved,
-      winningOutcome: resolution.winningOutcome,
-      tradeCount: rows.length,
-      volumeUsd: sum(rows.map((row) => row.notionalUsd)),
-      feesUsd: sum(rows.map((row) => row.feeUsd)),
-      pnlUsd: resolution.resolved
-        ? sum(rows.map((row) => row.pnlUsd ?? 0))
-        : null,
-    });
-  }
-  return marketRows.sort(
+  readonly rows: readonly TradingPerformancePositionRow[];
+}): TradingPerformanceChartPoint[] {
+  const ordered = [...rows].sort(
     (a, b) =>
-      (b.settledAtMs ?? 0) - (a.settledAtMs ?? 0) ||
-      b.tradeCount - a.tradeCount ||
+      (a.endDateMs ?? Number.MAX_SAFE_INTEGER) -
+        (b.endDateMs ?? Number.MAX_SAFE_INTEGER) ||
       a.conditionId.localeCompare(b.conditionId),
   );
-}
-
-function buildChart({
-  marketRows,
-}: {
-  readonly marketRows: readonly TradingPerformanceMarketRow[];
-}): TradingPerformanceChartPoint[] {
-  const resolvedRows = marketRows
-    .filter(
-      (
-        row,
-      ): row is TradingPerformanceMarketRow & {
-        readonly pnlUsd: number;
-        readonly settledAtMs: number;
-      } => row.pnlUsd !== null && row.settledAtMs !== null,
-    )
-    .sort(
-      (a, b) =>
-        a.settledAtMs - b.settledAtMs ||
-        a.conditionId.localeCompare(b.conditionId),
-    );
   let cumulative = 0;
   const points: TradingPerformanceChartPoint[] = [];
-  for (const row of resolvedRows) {
-    cumulative += row.pnlUsd;
+  for (const row of ordered) {
+    cumulative += row.cashPnlUsd;
     points.push({
       conditionId: row.conditionId,
       symbol: row.symbol,
-      question: row.question,
-      settledAtMs: row.settledAtMs,
-      marketPnlUsd: row.pnlUsd,
+      title: row.title,
+      orderedAtMs: row.endDateMs ?? 0,
+      positionPnlUsd: row.cashPnlUsd,
       cumulativePnlUsd: cumulative,
     });
   }
   return points;
 }
 
-function resolveMarketResolution({
-  market,
+function resultFromPosition({
+  cashPnlUsd,
+  status,
 }: {
-  readonly market: TradingPerformanceInputMarket;
-}): MarketResolution {
-  const map = new Map<string, number>();
-  let winningOutcome: string | null = null;
-  let sawWinner = false;
-  for (const token of market.tokens) {
-    if (token.price === null) {
-      continue;
-    }
-    map.set(token.tokenId, token.price);
-    if (token.winner || token.price === 1) {
-      sawWinner = true;
-      winningOutcome = token.outcome ?? winningOutcome;
-    }
-  }
-  const binaryResolved =
-    map.size > 0 &&
-    [...map.values()].every((price) => price === 0 || price === 1);
-  if (!market.closed || !sawWinner || !binaryResolved) {
-    return unresolvedResolution();
-  }
-  return {
-    resolved: true,
-    winningOutcome,
-    outcomePriceByTokenId: map,
-  };
-}
-
-function unresolvedResolution(): MarketResolution {
-  return {
-    resolved: false,
-    winningOutcome: null,
-    outcomePriceByTokenId: new Map(),
-  };
-}
-
-function computeTradePnl({
-  side,
-  size,
-  price,
-  resolvedPrice,
-  feeUsd,
-}: {
-  readonly side: "BUY" | "SELL";
-  readonly size: number;
-  readonly price: number;
-  readonly resolvedPrice: number;
-  readonly feeUsd: number;
-}): number {
-  const cashFlow = side === "BUY" ? -size * price : size * price;
-  const shares = side === "BUY" ? size : -size;
-  return cashFlow + shares * resolvedPrice - feeUsd;
-}
-
-function resultFromPnl({
-  pnlUsd,
-}: {
-  readonly pnlUsd: number | null;
-}): TradingPerformanceTradeResult {
-  if (pnlUsd === null) {
+  readonly cashPnlUsd: number;
+  readonly status: TradingPerformancePositionStatus;
+}): TradingPerformancePositionResult {
+  if (status === "open") {
     return "open";
   }
-  if (pnlUsd > 0) {
+  if (cashPnlUsd > 0) {
     return "win";
   }
-  if (pnlUsd < 0) {
+  if (cashPnlUsd < 0) {
     return "loss";
   }
   return "flat";
 }
 
 function inferSymbol({
-  marketSlug,
-  question,
-  outcome,
+  slug,
+  title,
 }: {
-  readonly marketSlug: string | null;
-  readonly question: string;
-  readonly outcome: string;
+  readonly slug: string | null;
+  readonly title: string;
 }): string {
-  const slug = marketSlug?.toLowerCase() ?? "";
+  const lower = (slug ?? "").toLowerCase();
   for (const asset of assetValues) {
     if (
-      slug === asset ||
-      slug.startsWith(`${asset}-`) ||
-      slug.includes(`-${asset}-`) ||
-      slug.includes(`${asset}up`) ||
-      slug.includes(`${asset}-updown`)
+      lower === asset ||
+      lower.startsWith(`${asset}-`) ||
+      lower.includes(`-${asset}-`) ||
+      lower.includes(`${asset}up`) ||
+      lower.includes(`${asset}-updown`)
     ) {
       return asset.toUpperCase();
     }
   }
-  const haystack = `${question} ${outcome}`.toUpperCase();
+  const haystack = title.toUpperCase();
   for (const asset of assetValues) {
     const upper = asset.toUpperCase();
     if (new RegExp(`\\b${upper}\\b`).test(haystack)) {
@@ -366,20 +178,6 @@ function inferSymbol({
     }
   }
   return "POLY";
-}
-
-function minOrNull(values: readonly number[]): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-  return Math.min(...values);
-}
-
-function maxOrNull(values: readonly number[]): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-  return Math.max(...values);
 }
 
 function sum(values: readonly number[]): number {

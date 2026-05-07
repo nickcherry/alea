@@ -3,20 +3,7 @@ import {
   type DataApiFetch,
   type TradingPerformanceScanProgress,
 } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
-import type { ClobClient } from "@polymarket/clob-client-v2";
 import { describe, expect, it } from "bun:test";
-
-function fakeClient({
-  markets,
-}: {
-  readonly markets: ReadonlyMap<string, unknown>;
-}): ClobClient {
-  return {
-    async getMarket(conditionId: string) {
-      return markets.get(conditionId) ?? { tokens: [] };
-    },
-  } as unknown as ClobClient;
-}
 
 function fakeDataApiFetch({
   pages,
@@ -29,6 +16,7 @@ function fakeDataApiFetch({
     const offset =
       offsetMatch?.[1] !== undefined ? Number(offsetMatch[1]) : 0;
     expect(offset).toBe(pageIndex * 500);
+    expect(url).toContain("sizeThreshold=0");
     const page = pages[pageIndex] ?? [];
     pageIndex += 1;
     return {
@@ -40,47 +28,45 @@ function fakeDataApiFetch({
 }
 
 describe("scanPolymarketTradingPerformance", () => {
-  it("fetches paginated data-api trades, resolves markets, and returns dashboard payload data", async () => {
+  it("fetches paginated /positions and produces a position-based payload", async () => {
     const progress: TradingPerformanceScanProgress[] = [];
     const payload = await scanPolymarketTradingPerformance({
       funderAddress: "0xfunder",
       generatedAtMs: 1_777_900_600_000,
-      client: fakeClient({
-        markets: new Map<string, unknown>([
-          [
-            "condition-1",
-            {
-              condition_id: "condition-1",
-              question: "Bitcoin Up or Down - May 4, 12:00PM ET",
-              market_slug: "btc-updown-5m-1777900200",
-              end_date_iso: "2026-05-04T16:05:00.000Z",
-              closed: true,
-              tokens: [
-                { token_id: "UP_TOKEN", outcome: "Up", price: 1, winner: true },
-                {
-                  token_id: "DOWN_TOKEN",
-                  outcome: "Down",
-                  price: 0,
-                  winner: false,
-                },
-              ],
-            },
-          ],
-        ]),
-      }),
       dataApiFetch: fakeDataApiFetch({
         pages: [
           [
             {
-              proxyWallet: "0xfunder",
-              side: "BUY",
-              asset: "UP_TOKEN",
-              conditionId: "condition-1",
-              size: 10,
-              price: 0.4,
-              timestamp: 1_777_900_220,
+              conditionId: "cond-loss",
+              asset: "ASSET_LOSS",
+              oppositeAsset: "OPPOSITE_LOSS",
+              title: "Bitcoin Up or Down - May 4",
+              slug: "btc-updown-5m-1",
               outcome: "Up",
-              transactionHash: "0xhash",
+              size: 100,
+              avgPrice: 0.3,
+              curPrice: 0,
+              initialValue: 30,
+              currentValue: 0,
+              cashPnl: -30,
+              realizedPnl: 0,
+              endDate: "2026-05-04",
+              redeemable: true,
+            },
+            {
+              conditionId: "cond-open",
+              asset: "ASSET_OPEN",
+              title: "Ethereum Up or Down - May 7",
+              slug: "eth-updown-5m-2",
+              outcome: "Down",
+              size: 50,
+              avgPrice: 0.5,
+              curPrice: 0.6,
+              initialValue: 25,
+              currentValue: 30,
+              cashPnl: 5,
+              endDate: "2026-05-07",
+              redeemable: false,
             },
           ],
           [],
@@ -89,60 +75,65 @@ describe("scanPolymarketTradingPerformance", () => {
       onProgress: (event) => progress.push(event),
     });
 
-    expect(payload.summary.tradeCount).toBe(1);
-    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(6, 9);
+    expect(payload.summary.positionCount).toBe(2);
+    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-25, 9);
+    expect(payload.summary.totalInvestedUsd).toBeCloseTo(55, 9);
+    expect(payload.summary.currentValueUsd).toBeCloseTo(30, 9);
+    expect(payload.summary.openPositionCount).toBe(1);
+    expect(payload.summary.redeemablePositionCount).toBe(1);
+    expect(payload.summary.losingPositionCount).toBe(1);
     expect(payload.walletAddress).toBe("0xfunder");
-    expect(payload.trades[0]).toMatchObject({
-      id: "0xhash-0",
+    expect(payload.positions.find((p) => p.conditionId === "cond-loss")).toMatchObject({
       symbol: "BTC",
-      result: "win",
-      traderSide: "UNKNOWN",
-      feeUsd: 0,
-      pnlUsd: 6,
+      result: "loss",
+      status: "redeemable",
+      cashPnlUsd: -30,
     });
-    expect(payload.chart).toHaveLength(1);
-    expect(progress).toEqual([
-      { kind: "trades-page", tradesSoFar: 1 },
-      { kind: "markets-progress", resolved: 1, total: 1 },
-    ]);
+    expect(payload.positions.find((p) => p.conditionId === "cond-open")).toMatchObject({
+      symbol: "ETH",
+      result: "open",
+      status: "open",
+    });
+    expect(progress).toEqual([{ kind: "positions-page", positionsSoFar: 2 }]);
   });
 
   it("paginates by offset until the page comes back smaller than the page size", async () => {
-    const progress: TradingPerformanceScanProgress[] = [];
     const fullPage = Array.from({ length: 500 }, (_, idx) => ({
-      proxyWallet: "0xfunder",
-      side: "BUY",
-      asset: `tok-${idx}`,
       conditionId: `cond-${idx}`,
-      size: 1,
-      price: 0.5,
-      timestamp: 1_700_000_000 + idx,
+      asset: `tok-${idx}`,
+      title: `M${idx}`,
+      slug: "btc-updown",
       outcome: "Up",
-      transactionHash: `0x${idx.toString(16)}`,
+      size: 1,
+      avgPrice: 0.5,
+      curPrice: 0,
+      initialValue: 0.5,
+      currentValue: 0,
+      cashPnl: -0.5,
+      redeemable: true,
     }));
     const partialPage = [
       {
-        proxyWallet: "0xfunder",
-        side: "SELL",
-        asset: "tok-tail",
         conditionId: "cond-tail",
+        asset: "tok-tail",
+        title: "Tail",
+        slug: "btc-updown",
+        outcome: "Up",
         size: 1,
-        price: 0.5,
-        timestamp: 1_700_001_000,
-        outcome: "Down",
+        avgPrice: 0.5,
+        curPrice: 0,
+        initialValue: 0.5,
+        currentValue: 0,
+        cashPnl: -0.5,
+        redeemable: true,
       },
     ];
     const payload = await scanPolymarketTradingPerformance({
       funderAddress: "0xfunder",
-      generatedAtMs: 1_777_900_600_000,
-      client: fakeClient({ markets: new Map() }),
+      generatedAtMs: 0,
       dataApiFetch: fakeDataApiFetch({ pages: [fullPage, partialPage] }),
-      onProgress: (event) => progress.push(event),
     });
-    expect(payload.summary.tradeCount).toBe(501);
-    expect(progress.filter((e) => e.kind === "trades-page")).toEqual([
-      { kind: "trades-page", tradesSoFar: 500 },
-      { kind: "trades-page", tradesSoFar: 501 },
-    ]);
+    expect(payload.summary.positionCount).toBe(501);
+    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-250.5, 9);
   });
 });

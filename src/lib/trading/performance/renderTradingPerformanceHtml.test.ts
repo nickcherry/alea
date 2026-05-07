@@ -3,7 +3,7 @@ import type { TradingPerformancePayload } from "@alea/lib/trading/performance/ty
 import { describe, expect, it } from "bun:test";
 
 describe("renderTradingPerformanceHtml", () => {
-  it("renders the Alea shell, PnL chart host, and trade ledger", () => {
+  it("renders the Alea shell, PnL chart host, and positions table", () => {
     const html = renderTradingPerformanceHtml({
       payload: payloadFixture(),
       assets: { stylesheets: [], scripts: [] },
@@ -14,8 +14,9 @@ describe("renderTradingPerformanceHtml", () => {
     expect(html).toContain('id="pnl-chart"');
     expect(html).toContain("BTC");
     expect(html).toContain("Bitcoin Up or Down");
-    expect(html).toContain("+$69.79");
-    expect(html).toContain("Polymarket CLOB API only");
+    expect(html).toContain("-$30.00");
+    expect(html).toContain("Polymarket data-api");
+    expect(html).toContain("Current Value");
   });
 });
 
@@ -25,75 +26,49 @@ function payloadFixture(): TradingPerformancePayload {
     generatedAtMs: 1_777_900_600_000,
     walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
     source: {
-      trades: "Polymarket CLOB /data/trades via getTradesPaginated",
-      markets: "Polymarket CLOB /markets/{conditionId} via getMarket",
-      fees: "fee formula",
+      positions: "Polymarket data-api /positions?user=<funder>",
     },
     summary: {
       walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-      tradeCount: 1,
-      resolvedTradeCount: 1,
-      unresolvedTradeCount: 0,
-      resolvedMarketCount: 1,
-      unresolvedMarketCount: 0,
-      winningTradeCount: 1,
-      losingTradeCount: 0,
-      flatTradeCount: 0,
-      lifetimePnlUsd: 69.79,
-      resolvedFeesUsd: 0.21,
-      totalFeesUsd: 0.21,
-      totalVolumeUsd: 30,
-      firstTradeAtMs: 1_777_900_220_000,
-      lastTradeAtMs: 1_777_900_220_000,
+      positionCount: 1,
+      openPositionCount: 0,
+      redeemablePositionCount: 1,
+      winningPositionCount: 0,
+      losingPositionCount: 1,
+      flatPositionCount: 0,
+      lifetimePnlUsd: -30,
+      totalInvestedUsd: 30,
+      currentValueUsd: 0,
     },
     chart: [
       {
         conditionId: "condition-1",
         symbol: "BTC",
-        question: "Bitcoin Up or Down",
-        settledAtMs: 1_777_900_500_000,
-        marketPnlUsd: 69.79,
-        cumulativePnlUsd: 69.79,
+        title: "Bitcoin Up or Down",
+        orderedAtMs: 1_777_900_500_000,
+        positionPnlUsd: -30,
+        cumulativePnlUsd: -30,
       },
     ],
-    markets: [
+    positions: [
       {
-        conditionId: "condition-1",
-        symbol: "BTC",
-        question: "Bitcoin Up or Down",
-        marketSlug: "btc-updown-5m-1777900200",
-        endDateMs: 1_777_900_500_000,
-        settledAtMs: 1_777_900_500_000,
-        resolved: true,
-        winningOutcome: "Up",
-        tradeCount: 1,
-        volumeUsd: 30,
-        feesUsd: 0.21,
-        pnlUsd: 69.79,
-      },
-    ],
-    trades: [
-      {
-        id: "trade-1",
         conditionId: "condition-1",
         tokenId: "UP",
+        oppositeTokenId: "DOWN",
         symbol: "BTC",
-        question: "Bitcoin Up or Down",
-        marketSlug: "btc-updown-5m-1777900200",
-        side: "BUY",
-        traderSide: "TAKER",
+        title: "Bitcoin Up or Down",
+        slug: "btc-updown-5m-1777900200",
         outcome: "Up",
         size: 100,
-        price: 0.3,
-        notionalUsd: 30,
-        feeRateBps: 100,
-        feeUsd: 0.21,
-        tradeTimeMs: 1_777_900_220_000,
-        resolved: true,
-        resolvedPrice: 1,
-        pnlUsd: 69.79,
-        result: "win",
-        transactionHash: "0xhash",
+        avgPrice: 0.3,
+        currentPrice: 0,
+        initialValueUsd: 30,
+        currentValueUsd: 0,
+        cashPnlUsd: -30,
+        realizedPnlUsd: 0,
+        endDateMs: 1_777_900_500_000,
+        status: "redeemable",
+        result: "loss",
       },
     ],
   };

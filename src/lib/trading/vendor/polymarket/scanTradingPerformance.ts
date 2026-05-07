@@ -1,23 +1,17 @@
 import {
   buildTradingPerformancePayload,
-  type TradingPerformanceInputMarket,
-  type TradingPerformanceInputTrade,
+  type TradingPerformanceInputPosition,
 } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import type { TradingPerformancePayload } from "@alea/lib/trading/performance/types";
-import type { ClobClient } from "@polymarket/clob-client-v2";
 import { z } from "zod";
 
-const MARKET_LOOKUP_CONCURRENCY = 10;
 const DATA_API_HOST = "https://data-api.polymarket.com";
 const DATA_API_PAGE_SIZE = 500;
 
-export type TradingPerformanceScanProgress =
-  | { readonly kind: "trades-page"; readonly tradesSoFar: number }
-  | {
-      readonly kind: "markets-progress";
-      readonly resolved: number;
-      readonly total: number;
-    };
+export type TradingPerformanceScanProgress = {
+  readonly kind: "positions-page";
+  readonly positionsSoFar: number;
+};
 
 /**
  * Custom hook for tests — defaults to global `fetch`. The signature
@@ -31,61 +25,64 @@ export type DataApiFetch = (url: string) => Promise<{
 
 /**
  * Builds the lifetime trading-performance payload for a Polymarket
- * trader. Trade history is sourced from the public
- * `data-api.polymarket.com/trades?user=<funder>` endpoint — the CLOB's
- * authenticated `/data/trades` endpoint only exposes the recent
- * (~24h) window for a given API key, which masks all earlier history.
- * Market resolution data still comes from the authenticated CLOB
- * client because data-api doesn't expose token-level prices /
- * winner flags.
+ * trader. Position records (with realized + unrealized PnL already
+ * computed by Polymarket) are pulled from the public
+ * `data-api.polymarket.com/positions?user=<funder>` endpoint, which
+ * is the same source feeding the Polymarket UI's portfolio view —
+ * the canonical lifetime PnL for the wallet.
+ *
+ * `sizeThreshold=0` is required to include redeemable losing
+ * positions (currentValue=0, but cashPnl reflects the loss); without
+ * it the API hides them and our totals undercount losers.
  */
 export async function scanPolymarketTradingPerformance({
-  client,
   funderAddress,
   generatedAtMs = Date.now(),
   onProgress,
   dataApiFetch = async (url) => fetch(url),
 }: {
-  readonly client: ClobClient;
   /** Polymarket proxy/funder address — the trades' on-chain owner. */
   readonly funderAddress: string;
   readonly generatedAtMs?: number;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
   readonly dataApiFetch?: DataApiFetch;
 }): Promise<TradingPerformancePayload> {
-  const trades = await fetchAllTrades({
+  const positions = await fetchAllPositions({
     funderAddress,
     onProgress,
     dataApiFetch,
   });
-  const conditionIds = uniqueConditionIds({ trades });
-  const markets = await fetchAllMarkets({ client, conditionIds, onProgress });
   return buildTradingPerformancePayload({
     walletAddress: funderAddress,
     generatedAtMs,
-    trades: trades.map((trade, index) => toInputTrade({ trade, index })),
-    markets,
+    positions: positions.map(toInputPosition),
   });
 }
 
 /**
- * Trade record from `data-api.polymarket.com/trades?user=...`. Fields
- * we don't read are deliberately omitted from the type so refactors
- * surface anything we'd start depending on.
+ * Position record from `data-api.polymarket.com/positions?user=...`.
+ * Only the fields we actually consume are typed — extras pass
+ * through harmlessly.
  */
-type RawTrade = {
-  readonly proxyWallet: string;
-  readonly side: string;
-  readonly asset: string;
+type RawPosition = {
   readonly conditionId: string;
+  readonly asset: string;
+  readonly oppositeAsset?: string;
+  readonly title: string;
+  readonly slug?: string;
+  readonly outcome: string;
   readonly size: number;
-  readonly price: number;
-  readonly timestamp: number;
-  readonly outcome?: string;
-  readonly transactionHash?: string;
+  readonly avgPrice: number;
+  readonly curPrice: number;
+  readonly initialValue: number;
+  readonly currentValue: number;
+  readonly cashPnl: number;
+  readonly realizedPnl?: number;
+  readonly endDate?: string;
+  readonly redeemable?: boolean;
 };
 
-async function fetchAllTrades({
+async function fetchAllPositions({
   funderAddress,
   onProgress,
   dataApiFetch,
@@ -93,24 +90,24 @@ async function fetchAllTrades({
   readonly funderAddress: string;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
   readonly dataApiFetch: DataApiFetch;
-}): Promise<RawTrade[]> {
-  const accumulator: RawTrade[] = [];
+}): Promise<RawPosition[]> {
+  const accumulator: RawPosition[] = [];
   let offset = 0;
   while (true) {
     const url =
-      `${DATA_API_HOST}/trades?user=${encodeURIComponent(funderAddress)}` +
-      `&limit=${DATA_API_PAGE_SIZE}&offset=${offset}`;
+      `${DATA_API_HOST}/positions?user=${encodeURIComponent(funderAddress)}` +
+      `&limit=${DATA_API_PAGE_SIZE}&offset=${offset}&sizeThreshold=0`;
     const response = await dataApiFetch(url);
     if (!response.ok) {
       throw new Error(
-        `data-api /trades returned HTTP ${response.status} for ${funderAddress}`,
+        `data-api /positions returned HTTP ${response.status} for ${funderAddress}`,
       );
     }
     const body: unknown = await response.json();
-    const parsed = dataApiTradesSchema.safeParse(body);
+    const parsed = dataApiPositionsSchema.safeParse(body);
     if (!parsed.success) {
       throw new Error(
-        `data-api /trades returned an unexpected shape: ${parsed.error.message}`,
+        `data-api /positions returned an unexpected shape: ${parsed.error.message}`,
       );
     }
     const page = parsed.data;
@@ -119,8 +116,8 @@ async function fetchAllTrades({
     }
     accumulator.push(...page);
     onProgress?.({
-      kind: "trades-page",
-      tradesSoFar: accumulator.length,
+      kind: "positions-page",
+      positionsSoFar: accumulator.length,
     });
     if (page.length < DATA_API_PAGE_SIZE) {
       return accumulator;
@@ -129,128 +126,36 @@ async function fetchAllTrades({
   }
 }
 
-async function fetchAllMarkets({
-  client,
-  conditionIds,
-  onProgress,
-}: {
-  readonly client: ClobClient;
-  readonly conditionIds: readonly string[];
-  readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
-}): Promise<TradingPerformanceInputMarket[]> {
-  const total = conditionIds.length;
-  const results: TradingPerformanceInputMarket[] = [];
-  let resolvedSoFar = 0;
-  for (let i = 0; i < conditionIds.length; i += MARKET_LOOKUP_CONCURRENCY) {
-    const slice = conditionIds.slice(i, i + MARKET_LOOKUP_CONCURRENCY);
-    const settled = await Promise.allSettled(
-      slice.map((conditionId) => fetchMarket({ client, conditionId })),
-    );
-    for (let index = 0; index < settled.length; index += 1) {
-      const item = settled[index];
-      const conditionId = slice[index];
-      if (item?.status === "fulfilled") {
-        results.push(item.value);
-      } else if (conditionId !== undefined) {
-        results.push(unresolvedMarket({ conditionId }));
-      }
-    }
-    resolvedSoFar = Math.min(total, resolvedSoFar + slice.length);
-    onProgress?.({
-      kind: "markets-progress",
-      resolved: resolvedSoFar,
-      total,
-    });
-  }
-  return results;
-}
-
-async function fetchMarket({
-  client,
-  conditionId,
-}: {
-  readonly client: ClobClient;
-  readonly conditionId: string;
-}): Promise<TradingPerformanceInputMarket> {
-  const response: unknown = await client.getMarket(conditionId);
-  const parsed = marketSchema.safeParse(response);
-  if (!parsed.success) {
-    return unresolvedMarket({ conditionId });
-  }
+function toInputPosition(
+  position: RawPosition,
+): TradingPerformanceInputPosition {
   return {
-    conditionId: parsed.data.condition_id ?? conditionId,
-    question: parsed.data.question ?? null,
-    marketSlug: parsed.data.market_slug ?? parsed.data.slug ?? null,
-    endDateMs: parseDateMs(parsed.data.end_date_iso ?? null),
-    closed: parsed.data.closed ?? false,
-    tokens: parsed.data.tokens.map((token) => ({
-      tokenId: token.token_id,
-      outcome: token.outcome ?? null,
-      price: token.price,
-      winner: token.winner ?? false,
-    })),
+    conditionId: position.conditionId,
+    tokenId: position.asset,
+    oppositeTokenId: position.oppositeAsset ?? null,
+    title: position.title,
+    slug: position.slug ?? null,
+    outcome: position.outcome,
+    size: numberOr({ value: position.size, fallback: 0 }),
+    avgPrice: numberOr({ value: position.avgPrice, fallback: 0 }),
+    currentPrice: numberOr({ value: position.curPrice, fallback: 0 }),
+    initialValueUsd: numberOr({ value: position.initialValue, fallback: 0 }),
+    currentValueUsd: numberOr({ value: position.currentValue, fallback: 0 }),
+    cashPnlUsd: numberOr({ value: position.cashPnl, fallback: 0 }),
+    realizedPnlUsd: numberOr({ value: position.realizedPnl ?? 0, fallback: 0 }),
+    endDateMs: parseDateMs(position.endDate ?? null),
+    redeemable: position.redeemable ?? false,
   };
 }
 
-function unresolvedMarket({
-  conditionId,
+function numberOr({
+  value,
+  fallback,
 }: {
-  readonly conditionId: string;
-}): TradingPerformanceInputMarket {
-  return {
-    conditionId,
-    question: null,
-    marketSlug: null,
-    endDateMs: null,
-    closed: false,
-    tokens: [],
-  };
-}
-
-function uniqueConditionIds({
-  trades,
-}: {
-  readonly trades: readonly RawTrade[];
-}): string[] {
-  const set = new Set<string>();
-  for (const trade of trades) {
-    if (trade.conditionId.length > 0) {
-      set.add(trade.conditionId);
-    }
-  }
-  return [...set];
-}
-
-function toInputTrade({
-  trade,
-  index,
-}: {
-  readonly trade: RawTrade;
-  readonly index: number;
-}): TradingPerformanceInputTrade {
-  // data-api doesn't return a stable trade id; transactionHash can
-  // repeat across multi-leg fills in a single tx, so we suffix the
-  // record's position to keep ids unique within a payload.
-  const id =
-    trade.transactionHash !== undefined && trade.transactionHash.length > 0
-      ? `${trade.transactionHash}-${index}`
-      : `trade-${index}`;
-  return {
-    id,
-    conditionId: trade.conditionId,
-    tokenId: trade.asset,
-    side: trade.side === "SELL" ? "SELL" : "BUY",
-    // data-api doesn't expose maker/taker — leave it unknown rather
-    // than guessing. Fees fall through to 0; the dashboard's "Fees"
-    // card is honest about that.
-    traderSide: "UNKNOWN",
-    size: Number.isFinite(trade.size) ? trade.size : 0,
-    price: Number.isFinite(trade.price) ? trade.price : 0,
-    feeRateBps: 0,
-    tradeTimeMs: trade.timestamp * 1000,
-    outcome: trade.outcome ?? null,
-    transactionHash: trade.transactionHash ?? null,
-  };
+  readonly value: number;
+  readonly fallback: number;
+}): number {
+  return Number.isFinite(value) ? value : fallback;
 }
 
 function parseDateMs(value: string | null): number | null {
@@ -261,49 +166,24 @@ function parseDateMs(value: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-const numericOrNullSchema = z.preprocess((value) => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}, z.number().nullable());
-
-const dataApiTradeSchema = z
+const dataApiPositionSchema = z
   .object({
-    proxyWallet: z.string(),
-    side: z.string(),
-    asset: z.string(),
     conditionId: z.string(),
-    size: z.number(),
-    price: z.number(),
-    timestamp: z.number(),
-    outcome: z.string().optional(),
-    transactionHash: z.string().optional(),
-  })
-  .passthrough();
-
-const dataApiTradesSchema = z.array(dataApiTradeSchema);
-
-const marketSchema = z
-  .object({
-    condition_id: z.string().optional(),
-    question: z.string().optional(),
-    market_slug: z.string().optional(),
+    asset: z.string(),
+    oppositeAsset: z.string().optional(),
+    title: z.string(),
     slug: z.string().optional(),
-    end_date_iso: z.string().nullable().optional(),
-    closed: z.boolean().optional(),
-    tokens: z
-      .array(
-        z
-          .object({
-            token_id: z.string(),
-            outcome: z.string().optional(),
-            price: numericOrNullSchema,
-            winner: z.boolean().optional(),
-          })
-          .passthrough(),
-      )
-      .default([]),
+    outcome: z.string(),
+    size: z.number(),
+    avgPrice: z.number(),
+    curPrice: z.number(),
+    initialValue: z.number(),
+    currentValue: z.number(),
+    cashPnl: z.number(),
+    realizedPnl: z.number().optional(),
+    endDate: z.string().optional(),
+    redeemable: z.boolean().optional(),
   })
   .passthrough();
+
+const dataApiPositionsSchema = z.array(dataApiPositionSchema);

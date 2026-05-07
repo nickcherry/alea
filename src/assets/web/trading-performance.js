@@ -111,10 +111,13 @@
                 tooltip.classList.remove("visible");
                 return;
               }
+              const head = point.orderedAtMs > 0
+                ? new Date(point.orderedAtMs).toLocaleDateString()
+                : 'Open position';
               tooltip.innerHTML =
-                '<div class="alea-tooltip-head">' + new Date(point.settledAtMs).toLocaleString() + '</div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Market PnL</span><span class="value">' + formatUsd(point.marketPnlUsd) + '</span></div>' +
+                '<div class="alea-tooltip-head">' + head + '</div>' +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + ' · ' + point.title + '</span></div>' +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Position PnL</span><span class="value">' + formatUsd(point.positionPnlUsd) + '</span></div>' +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Total PnL</span><span class="value">' + formatUsd(point.cumulativePnlUsd) + '</span></div>';
               const rect = host.getBoundingClientRect();
               tooltip.style.left = Math.min(rect.width - 230, Math.max(8, self.cursor.left + 12)) + "px";

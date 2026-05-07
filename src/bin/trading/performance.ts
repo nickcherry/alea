@@ -19,7 +19,7 @@ export const tradingPerformanceCommand = defineCommand({
   name: "trading:performance",
   summary: "Render a Polymarket trading performance dashboard",
   description:
-    "Fetches the configured wallet's full authenticated Polymarket CLOB trade history via getTradesPaginated, fetches each touched CLOB market via getMarket, computes post-fee resolved PnL, and writes a standalone HTML dashboard plus JSON sidecar to alea/tmp/. Polymarket API responses are the only data source.",
+    "Fetches every position the configured Polymarket funder/proxy holds (open or redeemable) via the public data-api /positions endpoint, builds the lifetime PnL summary from each position's mark-to-market cashPnl, and writes a standalone HTML dashboard plus JSON sidecar to alea/tmp/. Polymarket data-api is the only source.",
   options: [
     defineFlagOption({
       key: "noOpen",
@@ -35,9 +35,9 @@ export const tradingPerformanceCommand = defineCommand({
     "bun alea trading:performance --no-open",
   ],
   output:
-    "Prints fetch progress, the resolved post-fee PnL summary, and the paths of the HTML + JSON artifacts.",
+    "Prints fetch progress, the lifetime PnL summary, and the paths of the HTML + JSON artifacts.",
   sideEffects:
-    "Reads authenticated Polymarket CLOB REST endpoints. Writes one HTML and one JSON file to alea/tmp/. Does not use a database and does not place or cancel orders.",
+    "Reads the public Polymarket data-api /positions endpoint. Writes one HTML and one JSON file to alea/tmp/. Does not use a database and does not place or cancel orders.",
   async run({ io, options }) {
     if (
       env.polymarketPrivateKey === undefined ||
@@ -54,18 +54,11 @@ export const tradingPerformanceCommand = defineCommand({
     );
 
     const payload = await scanPolymarketTradingPerformance({
-      client: auth.client,
       funderAddress: auth.funderAddress,
       onProgress: (event) => {
-        if (event.kind === "trades-page") {
-          io.writeStdout(
-            `  ${pc.dim("trades fetched:")} ${event.tradesSoFar}\n`,
-          );
-        } else {
-          io.writeStdout(
-            `  ${pc.dim("markets fetched:")} ${event.resolved}/${event.total}\n`,
-          );
-        }
+        io.writeStdout(
+          `  ${pc.dim("positions fetched:")} ${event.positionsSoFar}\n`,
+        );
       },
     });
 
@@ -78,10 +71,10 @@ export const tradingPerformanceCommand = defineCommand({
     await writeTradingPerformanceArtifacts({ payload, htmlPath, jsonPath });
 
     io.writeStdout(
-      `\n${pc.green("resolved pnl =")} ${formatUsd({ value: payload.summary.lifetimePnlUsd })}\n` +
-        `  ${pc.dim("trades:")} ${payload.summary.resolvedTradeCount}/${payload.summary.tradeCount} resolved\n` +
-        `  ${pc.dim("markets:")} ${payload.summary.resolvedMarketCount}/${payload.summary.resolvedMarketCount + payload.summary.unresolvedMarketCount} resolved\n` +
-        `  ${pc.dim("fees counted:")} ${formatUsd({ value: payload.summary.resolvedFeesUsd, signed: false })}\n` +
+      `\n${pc.green("lifetime pnl =")} ${formatUsd({ value: payload.summary.lifetimePnlUsd })}\n` +
+        `  ${pc.dim("positions:")} ${payload.summary.positionCount}\n` +
+        `  ${pc.dim("current value:")} ${formatUsd({ value: payload.summary.currentValueUsd, signed: false })}\n` +
+        `  ${pc.dim("invested:")} ${formatUsd({ value: payload.summary.totalInvestedUsd, signed: false })}\n` +
         `${pc.green("wrote")} ${pc.dim(jsonPath)}\n` +
         `${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
