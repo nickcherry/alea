@@ -228,6 +228,26 @@ The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
 `dashboards:build --deploy` is the only caller.
 
+### Auto-rebuild loop
+
+A macOS LaunchAgent re-runs `dashboards:build --deploy` every five
+minutes so the deployed page tracks the live wallet without manual
+pushes. The wrapper script is checked into the repo at
+[`scripts/dashboards-build-cron.sh`](../scripts/dashboards-build-cron.sh);
+the operator-specific plist lives at
+`~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist`
+and isn't tracked. To install or reload:
+
+```
+launchctl unload ~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist 2>/dev/null
+launchctl load   ~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist
+launchctl list | grep alea.dashboards-build      # verify it's loaded
+```
+
+Logs go to `tmp/cron-dashboards-build.log` (with matching `.stdout`
+and `.stderr` files alongside). launchd auto-skips overlapping
+ticks, so a slow build can't double-fire.
+
 ## File-naming convention
 
 `tmp/<command>_<UTC-iso>.html` plus `tmp/<command>_<UTC-iso>.json` plus

@@ -50,25 +50,38 @@
   letter-spacing: 0.04em;
 }
 
-/* Trading-page table runs denser than the shared default. Inherit
-   the shared .alea-table width:100% so the table fills the card,
-   but pin every non-Market column to its content width via the
-   width:1px + white-space:nowrap trick — that way the leftover
-   horizontal space all lands in the Market cell instead of being
-   distributed across the narrow columns (which used to make Symbol
-   look huge with hundreds of pixels of empty padding). */
-.trading-performance-table { font-size: 11.5px; }
+/* Trading-page table runs denser than the shared default. Lay out
+   columns on a fixed grid (`table-layout: fixed`) so the non-Market
+   columns share a single uniform width and the Market column gets
+   roughly twice that — keeps the eye on the question text without
+   making any single narrow column visually dominant. */
+.trading-performance-table {
+  font-size: 11.5px;
+  table-layout: fixed;
+}
 .trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
 .trading-performance-table tbody td { padding: 9px 11px; }
 .trading-performance-table th:not(.market-col),
-.trading-performance-table td:not(.market-col) { width: 1px; white-space: nowrap; }
+.trading-performance-table td:not(.market-col) {
+  width: 12.5%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .trading-performance-table th.market-col,
-.trading-performance-table td.market-col { width: auto; }
+.trading-performance-table td.market-col { width: 25%; }
 
 .trade-market {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+}
+.trade-question,
+.trade-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .trade-question {
   color: var(--alea-text);
