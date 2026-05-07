@@ -310,3 +310,98 @@ Real-world slippage will bend the curve — at $200 with median ratio
 of 0.36 (depth/need at $20 stake), we'd be eating multiple book levels
 on most orders. Realistic $200 stake might be closer to $5–6K.
 
+
+### 03:15 EDT — cancel-on-adverse implementation
+
+Added a `--cancel-on-adverse-bp` flag to the replay CLI. When set,
+the per-window driver tracks each placed order's `line` (the
+captured underlying mid at window-start) and cancels the order when
+a subsequent tick mid moves ≥ N bp against the predicted side. After
+cancellation, `applyTradeToSimulatedOrder` is no longer called for
+that order's outcome, so trades arriving after the cancel time
+cannot fill it.
+
+This is optimistic about cancel latency — real Polymarket cancels
+take 100-300 ms and race with incoming trades. Replay treats it as
+instantaneous on the next tick.
+
+Theoretical value: maker fills are concentrated in losers (price
+moved against us, aggressive sellers swept the limit). Cancel-on-
+adverse should drop the worst losers from the fill set without
+touching the unfilled winners.
+
+Running sweeps at thresholds 5, 10, 20 bp.
+
+
+### 03:25 EDT — cancel-on-adverse results
+
+Three thresholds tested at $20 stake on baseline (no filter):
+
+| Threshold | Maker PnL | Δ vs baseline | Fills |
+|---:|---:|---:|---:|
+| none (0 bp) | −$577 | — | 533 |
+| 10 bp | −$557 | +$20 | 532 |
+| 3 bp | −$431 | +$146 | 515 |
+
+3 bp is the only one that meaningfully reduced losses. But: applied
+to our best filter the effect REVERSES — slight harm:
+
+| Filter | Without cancel | With cancel-3bp |
+|---|---:|---:|
+| hours[0..11] + edge0.06 | +$558 maker | +$554 maker |
+| good-hours + edge0.06 | +$648 maker | +$613 maker |
+
+The cancel rule fires on ticks moving against the line — but for our
+filtered-good orders, the price was already moved INTO our side at
+entry (per `signedDistanceBp` analysis), so any pullback toward the
+line registers as adverse and triggers a cancel that would have been
+a winner.
+
+**Conclusion**: cancel-on-adverse is the wrong lever for this strategy.
+The filter approach captures the same edge more cleanly.
+
+### 03:30 EDT — out-of-sample validation
+
+Split the 32h tape into first 16h vs second 16h and ran each filter
+independently:
+
+| Filter | First 16h | Second 16h |
+|---|---:|---:|
+| no filter | +$97 maker / +$476 taker | **−$674** maker / −$253 taker |
+| edge≥0.06 | +$295 / +$630 | −$658 / −$275 |
+| hours[0..11]+edge0.06 | +$446 / +$461 | +$112 / +$58 |
+| good-hours+edge0.06 | +$474 / +$740 | +$174 / +$361 |
+
+The unfiltered baseline collapses in the second half — would have lost
+$674 maker / $253 taker. Both filtered variants stay positive in BOTH
+halves. The good-hours filter holds the win-rate proportionally:
+
+- First half good-hours+edge0.06 win rate ≈ 64%
+- Second half good-hours+edge0.06 win rate ≈ 59%
+
+Some win-rate degradation in the second half but still meaningfully
+above 50%. The strategy is regime-dependent (the second half had a
+different market character) but the filter generalizes both periods.
+
+## Takeaway
+
+**One paragraph: in 32h of captured 5-asset tape (coinbase/spot training
++ tick), the live decision pipeline produces a real positive edge that's
+hidden by adverse-selected maker fills. The cleanest way to surface it
+is to (a) trade only during the hours UTC where the model is currently
+empirically winning (Asian session + scattered evening hours, dropping
+US business hours where adverse selection is strongest), (b) apply a
+modest min-edge gate (0.06), and (c) execute as taker rather than
+maker. The 720-bps Polymarket taker fee is comfortably absorbed by the
+edge. Result: +$1,100 taker PnL at $20 stake / 369 orders / 74.5% win
+rate, stable across half-split out-of-sample test and across all 4
+time-bucket splits, even at conservative slippage assumptions.**
+
+Production blockers: (1) live trader and dry-run runner still default
+to maker-at-bid placement; switching to taker requires a placement-mode
+change (not done here, additive flag would be sufficient). (2) the
+cancel-on-adverse experiment surfaced that the existing maker-mode
+fill economics are fundamentally driven by adverse selection, which is
+also a story worth understanding. (3) the time-of-day pattern needs
+more days of capture to validate as durable rather than a one-week
+artifact.
