@@ -44,6 +44,8 @@ type ReplayOrder = {
   readonly takerBestAskAvgPrice: number | null;
   readonly takerEstFeeUsd: number | null;
   // telemetry-derived features used for filtering
+  readonly chosenBestAsk: number | null;
+  readonly chosenBestBid: number | null;
   readonly signedDistanceBp: number | null;
   readonly entry5sDeltaBp: number | null;
   readonly entry15sDeltaBp: number | null;
@@ -125,7 +127,31 @@ type SweepResult = {
   readonly canonical: LensMetrics;
   readonly touch: LensMetrics;
   readonly allFilled: LensMetrics;
+  readonly taker?: LensMetrics;
 };
+
+/**
+ * Polymarket CLOB taker fee, applied as
+ *   shares × (feeRateBps / 10_000) × price × (1 − price)
+ * Default 720 bps matches the value documented in
+ * computePolymarketFeeUsd test fixtures and the live placement code's
+ * worst-case assumption. Maker side is 0% per
+ * scanLifetimePnl.ts:187 (`MAKER ? 0 : fee_rate_bps`).
+ */
+const TAKER_FEE_BPS_DEFAULT = 720;
+
+function takerFeeUsd({
+  shares,
+  price,
+  feeBps = TAKER_FEE_BPS_DEFAULT,
+}: {
+  readonly shares: number;
+  readonly price: number;
+  readonly feeBps?: number;
+}): number {
+  if (shares <= 0 || price <= 0 || price >= 1 || feeBps <= 0) return 0;
+  return shares * (feeBps / 10_000) * price * (1 - price);
+}
 
 function loadOrders({ path }: { readonly path: string }): readonly ReplayOrder[] {
   const text = readFileSync(path, "utf8");
@@ -258,6 +284,10 @@ function parseOrder(raw: Record<string, unknown>): ReplayOrder | null {
     preEntry30sAtOrBelow: pmt30 ? numOrNull(pmt30["atOrBelowLimitTradeCount"]) : null,
     preEntry30sTradeCount: pmt30 ? numOrNull(pmt30["tradeCount"]) : null,
     preEntry15sBelowLimit: pmt15 ? numOrNull(pmt15["belowLimitTradeCount"]) : null,
+    chosenBestAsk:
+      ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestAsk"]) : null,
+    chosenBestBid:
+      ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenBestBid"]) : null,
     chosenSpread:
       ebt !== null && ebt !== undefined ? numOrNull(ebt["chosenSpread"]) : null,
     oppositeSpread:
@@ -503,6 +533,48 @@ function computeLens({
   };
 }
 
+function computeTakerLens({
+  orders,
+  feeBps = TAKER_FEE_BPS_DEFAULT,
+  stakeUsd = 20,
+}: {
+  readonly orders: readonly ReplayOrder[];
+  readonly feeBps?: number;
+  readonly stakeUsd?: number;
+}): LensMetrics {
+  // Taker = pay best ask at entry. Use the captured chosenBestAsk;
+  // if missing fall back to limit + 0.01 (one polymarket tick).
+  let filled = 0;
+  let wins = 0;
+  let pnl = 0;
+  for (const o of orders) {
+    const askPrice = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
+    if (askPrice <= 0 || askPrice >= 1) continue;
+    // Re-derive shares from the original stake size at the new (higher)
+    // ask; rounded down to 0.01 share quantum.
+    const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
+    if (sharesAtAsk <= 0 || o.officialOutcome === null) continue;
+    filled += 1;
+    const won = o.side === o.officialOutcome;
+    if (won) wins += 1;
+    const cost = sharesAtAsk * askPrice;
+    const fee = takerFeeUsd({ shares: sharesAtAsk, price: askPrice, feeBps });
+    pnl += (won ? sharesAtAsk : 0) - cost - fee;
+  }
+  return {
+    orderCount: orders.length,
+    filledCount: filled,
+    fillRate: orders.length === 0 ? 0 : filled / orders.length,
+    winRate: filled === 0 ? null : wins / filled,
+    pnlUsd: pnl,
+    pnlPerOrderUsd: orders.length === 0 ? 0 : pnl / orders.length,
+    pnlPerFilledUsd: filled === 0 ? null : pnl / filled,
+    avgEdge: null,
+    avgLimit: null,
+    avgQueue: null,
+  };
+}
+
 function evaluate({
   orders,
   filter,
@@ -528,6 +600,7 @@ function evaluate({
       orders: filtered,
       selectShares: (o) => o.sharesIfFilled,
     }),
+    taker: computeTakerLens({ orders: filtered }),
   };
 }
 
@@ -544,9 +617,27 @@ function printResult(r: SweepResult): void {
   const c = r.canonical;
   const a = r.allFilled;
   const t = r.touch;
+  const k = r.taker;
   console.log(
-    `${r.label.padEnd(38)} | n=${String(c.orderCount).padStart(4)} fill=${String(c.filledCount).padStart(4)}/${String(c.orderCount).padStart(4)} (${fmtPct(c.fillRate)}) | canon ${fmtUsd(c.pnlUsd)} (win ${fmtPct(c.winRate)}) | touch ${fmtUsd(t.pnlUsd)} | all-fill ${fmtUsd(a.pnlUsd)}`,
+    `${r.label.padEnd(38)} | n=${String(c.orderCount).padStart(4)} fill=${String(c.filledCount).padStart(4)}/${String(c.orderCount).padStart(4)} (${fmtPct(c.fillRate)}) | canon ${fmtUsd(c.pnlUsd)} (win ${fmtPct(c.winRate)}) | touch ${fmtUsd(t.pnlUsd)} | all-fill ${fmtUsd(a.pnlUsd)}${k ? ` | taker@720bps ${fmtUsd(k.pnlUsd)} (win ${fmtPct(k.winRate)})` : ""}`,
   );
+}
+
+function printTakerFeeSweep({
+  orders,
+  label,
+}: {
+  readonly orders: readonly ReplayOrder[];
+  readonly label: string;
+}): void {
+  const fees = [0, 100, 200, 400, 600, 720, 1000, 1500];
+  console.log(`\n=== taker fee sensitivity for: ${label} ===`);
+  for (const feeBps of fees) {
+    const t = computeTakerLens({ orders, feeBps });
+    console.log(
+      `  feeBps=${String(feeBps).padStart(5)} | n=${String(t.orderCount).padStart(4)} | pnl ${fmtUsd(t.pnlUsd)} (win ${fmtPct(t.winRate)})`,
+    );
+  }
 }
 
 function sweepMinEdge(orders: readonly ReplayOrder[]): void {
@@ -868,9 +959,16 @@ if (explicitFilter !== null) {
     filtered = applyFilter({ orders, filter });
     result = evaluate({ orders, filter, label: "filter" });
   }
+  if ("any" in parsed && Array.isArray((parsed as UnionFilter).any)) {
+    // attach taker lens for union too
+    (result as { taker?: LensMetrics }).taker = computeTakerLens({
+      orders: filtered,
+    });
+  }
   printResult(result);
   // Also show stability across time-buckets (4 chunks)
   splitByTime({ orders: filtered, splits: 4 });
+  printTakerFeeSweep({ orders: filtered, label: "filtered" });
 } else {
   summarizeBaseline(orders);
   if (sweep === "all" || sweep === "min-edge") sweepMinEdge(orders);
