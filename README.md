@@ -19,6 +19,7 @@ when the modeled edge clears the market.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape recorder for Polymarket + Binance + Coinbase + Chainlink reference events across all five assets, to disk and Postgres for offline replay/research.
 - [Replay](./doc/REPLAY.md) — offline replay of the live decision + fill-simulation pipeline against captured market data, for fast threshold/regime iteration.
 - [Dashboards](./doc/DASHBOARDS.md) — design system and authoring contract for the HTML reports in `tmp/`, plus the deployed pages on the alea Cloudflare Worker and how to build & deploy them.
+- [Production](./doc/PRODUCTION.md) — operator playbook for the live-trading box: connect, sync, start/stop the `alea-prod-live` tmux session, single-process rule.
 
 ### Engineering
 
