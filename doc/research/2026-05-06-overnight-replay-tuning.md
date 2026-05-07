@@ -724,3 +724,36 @@ not just thin ones. Lowering min-samples doesn't help.
 Probability table restored to min-samples=200 default after the
 experiment.
 
+
+### 05:00 EDT — per-asset edge tuning experiment
+
+Tested whether different min-edge thresholds per-asset would beat
+the uniform 0.06. Setup: union filter with one arm per asset, each
+with its own minEdge.
+
+| Per-asset edge config | Taker PnL | Orders |
+|---|---:|---:|
+| Uniform 0.06 (baseline) | **+$1,046** | 369 |
+| BTC/ETH/SOL/XRP 0.06, DOGE 0.05 | +$1,028 | 375 |
+| BTC/ETH/SOL/XRP 0.07, DOGE 0.06 | +$927 | 308 |
+| BTC 0.10, others 0.06 | +$993 | 323 |
+
+Uniform 0.06 wins. The per-asset edge sweet spots are all at 0.06
+within statistical noise. No room to over-engineer.
+
+## Status at session end (~05:00 EDT, 2026-05-07)
+
+13 commits to `main`. Capture process undisturbed. No live trading
+code touched. Best deployable strategy on the captured tape:
+
+- Filter: 12 specific UTC hours + minEdge 0.06
+- Placement: TAKER for BTC/ETH/SOL/XRP, MAKER for DOGE
+- Result on 35h tape at \$20 stake: **+\$1,251 hybrid / 369 orders /
+  ~74% taker win rate**
+- Validated across 4 slicing approaches (4-bucket, 8-bucket, half-
+  split, walk-forward); robust to fees up to 1500 bps and slippage
+  up to 1.0 tick
+
+Production blockers documented in TL;DR. The file is the night's
+output of record.
+
