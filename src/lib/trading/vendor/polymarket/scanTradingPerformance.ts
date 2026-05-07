@@ -1,9 +1,12 @@
 import {
   buildTradingPerformancePayload,
+  type TradeRolesByConditionId,
   type TradingPerformanceInputActivity,
   type TradingPerformanceInputPosition,
 } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import type { TradingPerformancePayload } from "@alea/lib/trading/performance/types";
+import { aggregateTradeRolesByMarket } from "@alea/lib/trading/vendor/polymarket/aggregateTradeRolesByMarket";
+import type { ClobClient } from "@polymarket/clob-client-v2";
 import { z } from "zod";
 
 const DATA_API_HOST = "https://data-api.polymarket.com";
@@ -11,7 +14,8 @@ const DATA_API_PAGE_SIZE = 500;
 
 export type TradingPerformanceScanProgress =
   | { readonly kind: "activity-page"; readonly activitiesSoFar: number }
-  | { readonly kind: "positions-page"; readonly positionsSoFar: number };
+  | { readonly kind: "positions-page"; readonly positionsSoFar: number }
+  | { readonly kind: "trades-page"; readonly tradesSoFar: number };
 
 /**
  * Custom hook for tests — defaults to global `fetch`. The signature
@@ -42,22 +46,51 @@ export async function scanPolymarketTradingPerformance({
   generatedAtMs = Date.now(),
   onProgress,
   dataApiFetch = async (url) => fetch(url),
+  clobClient,
 }: {
   /** Polymarket proxy/funder address — the trades' on-chain owner. */
   readonly funderAddress: string;
   readonly generatedAtMs?: number;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
   readonly dataApiFetch?: DataApiFetch;
+  /**
+   * Optional authenticated CLOB client. When provided, the scan also
+   * fetches `/trades` and enriches each market row with the wallet's
+   * fill role (maker / taker / mixed) and fees paid. The dashboard
+   * builder passes this; the live runner doesn't (it only needs the
+   * lifetime PnL scalar).
+   */
+  readonly clobClient?: ClobClient;
 }): Promise<TradingPerformancePayload> {
-  const [activity, positions] = await Promise.all([
+  const [activity, positions, tradeRolesByConditionId] = await Promise.all([
     fetchAllActivity({ funderAddress, onProgress, dataApiFetch }),
     fetchAllPositions({ funderAddress, onProgress, dataApiFetch }),
+    fetchTradeRoles({ clobClient, onProgress }),
   ]);
   return buildTradingPerformancePayload({
     walletAddress: funderAddress,
     generatedAtMs,
     activity: activity.map(toInputActivity),
     positions: positions.map(toInputPosition),
+    tradeRolesByConditionId,
+  });
+}
+
+async function fetchTradeRoles({
+  clobClient,
+  onProgress,
+}: {
+  readonly clobClient: ClobClient | undefined;
+  readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
+}): Promise<TradeRolesByConditionId | undefined> {
+  if (clobClient === undefined) {
+    return undefined;
+  }
+  return aggregateTradeRolesByMarket({
+    client: clobClient,
+    onProgress: (event) => {
+      onProgress?.({ kind: "trades-page", tradesSoFar: event.tradesSoFar });
+    },
   });
 }
 

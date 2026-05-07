@@ -89,7 +89,9 @@ export function renderTradingPerformanceHtml({
             <thead>
               <tr>
                 <th>Symbol</th>
-                <th>Market</th>
+                <th class="market-col">Market</th>
+                <th>Role</th>
+                <th>Fees</th>
                 <th>Invested</th>
                 <th>PnL</th>
                 <th>Status</th>
@@ -141,17 +143,32 @@ function renderMarketRow(
   return `
     <tr>
       <td><span class="symbol-pill">${escapeHtml({ value: row.symbol })}</span></td>
-      <td>
+      <td class="market-col">
         <div class="trade-market">
           <span class="trade-question">${escapeHtml({ value: row.title })}</span>
           <span class="trade-sub">${escapeHtml({ value: row.slug ?? shortId({ value: row.conditionId }) })}</span>
         </div>
       </td>
+      <td>${renderRolePill({ role: row.traderRole })}</td>
+      <td class="alea-mono">${row.feeUsd === null ? "—" : formatUnsignedUsd({ value: row.feeUsd })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.investedUsd })}</td>
       <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
       <td><span class="result-pill ${row.result}">${row.result}</span></td>
     </tr>
   `;
+}
+
+function renderRolePill({
+  role,
+}: {
+  readonly role: TradingPerformancePayload["markets"][number]["traderRole"];
+}): string {
+  if (role === null) {
+    return '<span class="alea-muted">—</span>';
+  }
+  const label =
+    role === "maker" ? "Maker" : role === "taker" ? "Taker" : "Mixed";
+  return `<span class="role-pill role-${role}">${label}</span>`;
 }
 
 function formatDateTime({ ms }: { readonly ms: number }): string {

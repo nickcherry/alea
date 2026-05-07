@@ -55,11 +55,14 @@ export const tradingPerformanceCommand = defineCommand({
 
     const payload = await scanPolymarketTradingPerformance({
       funderAddress: auth.funderAddress,
+      clobClient: auth.client,
       onProgress: (event) => {
         const label =
           event.kind === "activity-page"
             ? `${pc.dim("activity fetched:")} ${event.activitiesSoFar}`
-            : `${pc.dim("positions fetched:")} ${event.positionsSoFar}`;
+            : event.kind === "positions-page"
+              ? `${pc.dim("positions fetched:")} ${event.positionsSoFar}`
+              : `${pc.dim("trades fetched:")} ${event.tradesSoFar}`;
         io.writeStdout(`  ${label}\n`);
       },
     });

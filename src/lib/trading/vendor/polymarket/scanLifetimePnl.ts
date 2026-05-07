@@ -36,8 +36,17 @@ export async function scanPolymarketLifetimePnl({
 }): Promise<LifetimePnlScanResult> {
   const payload = await scanPolymarketTradingPerformance({
     funderAddress,
-    onProgress,
     dataApiFetch,
+    // We don't pass clobClient, so the dashboard scan won't emit
+    // trades-page events — but the union type still needs us to
+    // forward only the variants the live runner cares about.
+    onProgress: onProgress
+      ? (event) => {
+          if (event.kind === "activity-page" || event.kind === "positions-page") {
+            onProgress(event);
+          }
+        }
+      : undefined,
   });
   return {
     lifetimePnlUsd: payload.summary.lifetimePnlUsd,

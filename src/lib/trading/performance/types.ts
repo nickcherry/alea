@@ -29,6 +29,12 @@ export type TradingPerformanceChartPoint = {
 
 export type TradingPerformanceMarketStatus = "open" | "redeemable" | "closed";
 export type TradingPerformanceMarketResult = "win" | "loss" | "flat" | "open";
+/**
+ * Trader role on a given market, summarised across every CLOB fill.
+ * `null` when /trades returned no fills for the market — typically
+ * because /trades has truncated the older end of the wallet's history.
+ */
+export type TradingPerformanceMarketRole = "maker" | "taker" | "mixed" | null;
 
 export type TradingPerformanceMarketRow = {
   readonly conditionId: string;
@@ -46,6 +52,10 @@ export type TradingPerformanceMarketRow = {
   readonly pnlUsd: number;
   readonly status: TradingPerformanceMarketStatus;
   readonly result: TradingPerformanceMarketResult;
+  /** Predominant fill role across this market's CLOB trades. */
+  readonly traderRole: TradingPerformanceMarketRole;
+  /** Total CLOB fees paid on this market across all fills. */
+  readonly feeUsd: number | null;
 };
 
 export type TradingPerformancePayload = {

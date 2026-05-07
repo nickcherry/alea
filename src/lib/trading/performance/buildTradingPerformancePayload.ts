@@ -2,10 +2,21 @@ import { assetValues } from "@alea/constants/assets";
 import type {
   TradingPerformanceChartPoint,
   TradingPerformanceMarketResult,
+  TradingPerformanceMarketRole,
   TradingPerformanceMarketRow,
   TradingPerformanceMarketStatus,
   TradingPerformancePayload,
 } from "@alea/lib/trading/performance/types";
+
+/**
+ * Per-market trader role + fees, sourced from CLOB /trades. Optional
+ * because the live runner's lifetime-PnL refresh path doesn't fetch
+ * /trades — only the dashboard build does.
+ */
+export type TradeRolesByConditionId = ReadonlyMap<
+  string,
+  { readonly role: TradingPerformanceMarketRole; readonly feeUsd: number }
+>;
 
 /**
  * Activity event from Polymarket's data-api `/activity` endpoint —
@@ -52,11 +63,13 @@ export function buildTradingPerformancePayload({
   generatedAtMs,
   activity,
   positions,
+  tradeRolesByConditionId,
 }: {
   readonly walletAddress: string;
   readonly generatedAtMs: number;
   readonly activity: readonly TradingPerformanceInputActivity[];
   readonly positions: readonly TradingPerformanceInputPosition[];
+  readonly tradeRolesByConditionId?: TradeRolesByConditionId;
 }): TradingPerformancePayload {
   const positionsByConditionId = new Map(
     positions.map((position) => [position.conditionId, position] as const),
@@ -148,6 +161,7 @@ export function buildTradingPerformancePayload({
       hasPosition: position !== null,
       redeemable: position?.redeemable ?? false,
     });
+    const role = tradeRolesByConditionId?.get(m.conditionId);
     rows.push({
       conditionId: m.conditionId,
       symbol: inferSymbol({ slug: m.slug, title: m.title ?? "" }),
@@ -164,6 +178,8 @@ export function buildTradingPerformancePayload({
       pnlUsd,
       status,
       result: resultFromRow({ pnlUsd, status }),
+      traderRole: role?.role ?? null,
+      feeUsd: role?.feeUsd ?? null,
     });
   }
 

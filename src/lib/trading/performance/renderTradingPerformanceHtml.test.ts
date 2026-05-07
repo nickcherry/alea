@@ -70,6 +70,8 @@ function payloadFixture(): TradingPerformancePayload {
         pnlUsd: -25,
         status: "redeemable",
         result: "loss",
+        traderRole: "taker",
+        feeUsd: 1.25,
       },
     ],
   };
