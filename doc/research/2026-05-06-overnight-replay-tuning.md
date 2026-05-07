@@ -592,3 +592,45 @@ That's 4 different ways of slicing the data and the filter holds
 in every slice. As statistical evidence on a 32h sample goes, this
 is about as good as it gets without more days of data.
 
+
+### 04:20 EDT — stake-scaling experiments
+
+Edge-bucket per-order taker PnL on the best filter:
+
+| edge bucket | n | win | pnl/order |
+|---|---:|---:|---:|
+| [0.06, 0.08) | 122 | 79% | **+$3.52** |
+| [0.08, 0.10) | 81 | 74% | +$1.88 |
+| [0.10, 0.12) | 56 | 70% | +$1.59 |
+| [0.12, 0.15) | 60 | 68% | +$0.89 |
+| [0.15, 0.20) | 30 | 77% | +$7.62 |
+| [0.20, 1.00) | 20 | 70% | +$4.68 |
+
+NOT monotonically increasing in edge. The lowest-edge bucket
+(0.06-0.08) is the biggest contributor by both per-order and total
+volume. The dip at [0.12, 0.15] is suspicious — needs more data to
+say whether it's a real anomaly or sample noise.
+
+Stake-scaling strategies (taker, best filter):
+
+| Strategy | Total PnL |
+|---|---:|
+| Flat $20 | +$1,046 |
+| Flat $50 | +$2,614 |
+| Flat $100 | +$5,228 |
+| Edge-proportional ($20 + 200×(edge−0.06)) | +$1,554 |
+| Edge-proportional ($20 + 500×(edge−0.06)) | +$2,317 |
+| Kelly 0.5× cap'd $100 | +$1,350 |
+| Kelly 0.25× cap'd $100 | +$1,050 |
+
+**Flat stake beats edge-scaled stake** in our data because the
+highest per-order PnL is in the LOWEST edge bucket (0.06-0.08). Any
+strategy that puts more stake on higher-edge orders ends up
+amplifying the worst-performing buckets.
+
+Caveat: linear stake-scaling ignores slippage. At $100 stake, the
+depth/need ratio drops from 0.36 to 0.07 (median). Eating 3-5 book
+levels per order means avg fill price ~1-2 ticks higher than best
+ask, costing ~30-50% of the gross PnL. Realistic $100-stake PnL
+estimate: **\$2,500-\$3,500 / 35h tape** — comfortably "thousands".
+
