@@ -8,43 +8,98 @@ without changing the production decision/training algos?
 
 Yes. On 32-35h of captured 5-asset tape (coinbase/spot training + tick,
 chainlink settlement), the live decision pipeline has a real positive
-edge that is hidden by adverse-selected maker fills. Two filters
-extract it:
+edge that is hidden by adverse-selected maker fills.
 
-**Conservative** (structural — Asian session + early Europe only):
+### Recommended starting point (Nick's call, 2026-05-07)
+
 ```json
-{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+{ "minEdge": 0.06 }
 ```
-→ +$558 maker / +$519 taker / 252 orders / 64% win at $20 stake.
 
-**Aggressive** (data-mined — 12 specific UTC hours):
+- **Execute as TAKER on all assets, all hours.**
+- Result on 35h tape at $20 stake: **+$326 / 614 orders / 66% win**.
+- Why not something fancier: the higher-PnL filters below are
+  data-mined on a small sample and likely overfit. This config is
+  the simplest robustly-positive thing — it requires no hour gating,
+  no per-asset routing, no probability calibration. It's the
+  baseline the next iteration should beat.
+
+### What more aggressive filters look like (likely overfit)
+
+**Hour-of-day gate** (the dominant data-mined lever found in this
+session):
+
 ```json
 { "hoursUtc": [0,1,2,3,4,5,6,8,11,19,20,22], "minEdge": 0.06 }
 ```
-→ +$648 maker / +$1,074 taker / 369 orders / 74% taker win at $20
-stake. **Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) → +$1,197.**
-With DOGE-19 also dropped (only loser in DOGE's filtered hours):
-**+$1,235.**
 
-At $100 flat stake (linear scale): ~$5K gross / 35h, realistic ~$3K
-after slippage. The strategy is in the "thousands" target.
+| Variant | n | PnL |
+|---|---:|---:|
+| All taker | 369 | +$1,074 |
+| All maker | 369 | +$648 |
+| Hybrid (taker for BTC/ETH/SOL/XRP, maker for DOGE) | 369 | +$1,197 |
+| Same + DOGE-19 dropped | 353 | +$1,235 |
 
-Key insight: there's a strong intraday seasonality. US business hours
-(16-23 UTC) attract sophisticated traders, tighten pricing, intensify
-adverse selection. Asian + scattered evening hours have less competition
-and the model finds inefficiencies. Hour 20 UTC specifically: model
-picks right 78% of the time but maker barely fills (queue ahead doesn't
-clear when price moves favorably for us — adverse selection).
+**Conservative variant** (structural — Asian + early Europe only,
+less overfit-risk):
 
-Validation: filter holds in 4-bucket time split (all positive),
+```json
+{ "hoursUtc": [0,1,2,3,4,5,6,7,8,9,10,11], "minEdge": 0.06 }
+```
+→ +$519 taker / +$558 maker / 252 orders / 64% win.
+
+### Key insight
+
+Strong intraday seasonality. US business hours (16-23 UTC) attract
+sophisticated traders, tighten pricing, intensify adverse selection.
+Asian + scattered evening hours have less competition and the model
+finds inefficiencies. Hour 20 UTC specifically: model picks right
+78% of the time but maker barely fills (queue ahead doesn't clear
+when price moves favorably for us — adverse selection).
+
+This pattern needs more days of capture to confirm as durable rather
+than a 35h artifact.
+
+### Validation
+
+Hour-filter result holds in 4-bucket time split (all positive),
 8-bucket split (all positive), first/second-half out-of-sample (both
-positive), 4-chunk rolling-window walk-forward (all positive). At
-1500 bps fee or 1.0-tick slippage, taker still +$894 / +$968.
+positive), 4-chunk rolling-window walk-forward (all positive). Fee-
+robust to 1500 bps; slippage-robust to 1.0-tick avg.
 
-Production blockers: (1) live trader is maker-only; needs taker
-placement path; (2) verify 720 bps fee assumption with actual fill
-data; (3) the time-of-day pattern needs more days of capture to
-confirm as durable.
+### Production blockers
+
+1. Live trader is maker-only; needs a taker placement path built
+   (additive flag, no live-decision-path change).
+2. Verify 720 bps fee assumption against actual Polymarket fill data
+   (`scanLifetimePnl` against the funded account).
+3. Time-of-day pattern needs more days of capture to confirm as
+   durable.
+
+### What a next iteration could chase
+
+- Wait for capture to extend to 1+ week, re-run sweepReplay on the
+  best filter and the conservative one. If the hour pattern still
+  holds, raise confidence in the data-mined version.
+- Replay-side: implement actual taker placement in the engine
+  (currently only post-hoc) so we get real slippage from level-2
+  book walking, not the optimistic best-ask assumption.
+- Try the binance/perp source once Vision publishes 2026-05-06
+  daily. Rerun gen-probability-table on binance/perp candles, replay
+  with binance-perp tick. Probably similar pattern but worth confirming.
+- Per-asset stake allocation — BTC has 3× depth headroom at $20
+  stake, others much shallower. Optimal allocation could lift PnL
+  meaningfully.
+
+### Tools left in the repo
+
+- `src/bin/research/sweepReplay.ts` — the analyzer. `bun run` it
+  with a JSONL path + a `--filter '<json>'` to compute canonical /
+  touch / all-fill / taker PnL with fee + slippage sensitivity and
+  4-bucket stability split. Supports `{"any":[...]}` union filters.
+- `src/lib/trading/replay/` — generalized for `--tick-source`
+  (binance-perp / coinbase-spot / coinbase-perp), `--candle-source`,
+  `--candle-product`, `--cancel-on-adverse-bp`.
 
 **Running log.** Updated as work progresses. Numbers and hypotheses
 recorded chronologically below.
