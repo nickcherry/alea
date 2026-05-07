@@ -148,7 +148,6 @@ function renderTradeRow(
         : row.pnlUsd < 0
           ? " alea-num-negative"
           : "";
-  const notionalClass = row.side === "BUY" ? "alea-num-negative" : "alea-num-positive";
   return `
     <tr>
       <td><span class="symbol-pill">${escapeHtml({ value: row.symbol })}</span></td>
@@ -163,7 +162,7 @@ function renderTradeRow(
       <td class="alea-mono">${formatPrice({ value: row.price })}</td>
       <td class="alea-mono">${row.resolvedPrice === null ? "--" : formatPrice({ value: row.resolvedPrice })}</td>
       <td class="alea-mono">${formatNumber({ value: row.size, maximumFractionDigits: 4 })}</td>
-      <td class="alea-mono ${notionalClass}">${row.side === "BUY" ? "-" : "+"}${formatUnsignedUsd({ value: row.notionalUsd })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.notionalUsd })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.feeUsd })}</td>
       <td class="alea-mono${pnlClass}">${row.pnlUsd === null ? "--" : formatSignedUsd({ value: row.pnlUsd })}</td>
       <td><span class="result-pill ${row.result}">${row.result}</span></td>

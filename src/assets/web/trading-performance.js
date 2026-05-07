@@ -20,11 +20,12 @@
   const tooltip = document.getElementById("pnl-tooltip");
   let plot = null;
 
-  function formatUsd(value) {
+  function formatUsd(value, opts) {
+    const fractionDigits = opts && opts.fractionDigits != null ? opts.fractionDigits : 2;
     const sign = value > 0 ? "+" : value < 0 ? "-" : "";
     return sign + "$" + Math.abs(value).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
     });
   }
 
@@ -33,11 +34,15 @@
     if (points.length === 0) {
       return null;
     }
-    const xs = points.map((point) => point.settledAtMs / 1000);
-    const ys = points.map((point) => point.cumulativePnlUsd);
-    if (points.length === 1) {
-      xs.unshift(xs[0] - 1);
-      ys.unshift(0);
+    // Even spacing along x: ignore the settlement clock so flat
+    // gaps where no markets settled don't dominate the plot. Each
+    // event gets the next integer index, starting at 0 (a synthetic
+    // "before any trades" zero baseline).
+    const xs = [0];
+    const ys = [0];
+    for (let i = 0; i < points.length; i += 1) {
+      xs.push(i + 1);
+      ys.push(points[i].cumulativePnlUsd);
     }
     return { points, xs, ys };
   }
@@ -61,7 +66,8 @@
         width,
         height,
         cursor: { drag: { x: true, y: false } },
-        scales: { x: { time: true } },
+        // x-axis is event index, not time — uPlot's default linear
+        // scale is exactly what we want here.
         series: [
           {},
           {
@@ -77,6 +83,9 @@
             grid: { stroke: tokens.gridStroke, width: 1 },
             ticks: { stroke: tokens.axisTickStroke, width: 1 },
             font: tokens.axisFont,
+            // Hide x-axis labels: the index has no meaning to the
+            // operator; the curve's shape is the signal.
+            values: () => [],
           },
           {
             stroke: tokens.axisStroke,
@@ -84,19 +93,20 @@
             ticks: { stroke: tokens.axisTickStroke, width: 1, size: 5 },
             font: tokens.axisFont,
             size: 72,
-            values: (_self, vals) => vals.map((value) => formatUsd(value)),
+            values: (_self, vals) => vals.map((value) => formatUsd(value, { fractionDigits: 0 })),
           },
         ],
         hooks: {
           setCursor: [
             (self) => {
               const index = self.cursor.idx;
-              if (index == null) {
+              // Index 0 is the synthetic baseline (no trade); only
+              // hover-points 1..N correspond to real events.
+              if (index == null || index < 1) {
                 tooltip.classList.remove("visible");
                 return;
               }
-              const syntheticOffset = series.xs.length - series.points.length;
-              const point = series.points[index - syntheticOffset];
+              const point = series.points[index - 1];
               if (!point) {
                 tooltip.classList.remove("visible");
                 return;
