@@ -56,17 +56,12 @@ export function renderTradingPerformanceHtml({
     </header>
     ${renderTopNav({ activeId: "live" })}
     <main class="alea-main">
-      <section class="alea-summary-grid cols-5">
+      <section class="alea-summary-grid cols-4">
         ${renderMetric({
           label: "Lifetime PnL",
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
           tone: toneForNumber({ value: payload.summary.lifetimePnlUsd }),
           sub: `realized + mark-to-market across ${payload.summary.marketCount.toLocaleString()} markets`,
-        })}
-        ${renderMetric({
-          label: "Invested / Returned",
-          value: `${formatUnsignedUsd({ value: payload.summary.totalInvestedUsd })} → ${formatUnsignedUsd({ value: payload.summary.totalReturnedUsd })}`,
-          sub: `+ ${formatUnsignedUsd({ value: payload.summary.currentValueUsd })} held`,
         })}
         ${renderMetric({
           label: "Total Fees",

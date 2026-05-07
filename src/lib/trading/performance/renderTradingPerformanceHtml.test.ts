@@ -16,7 +16,7 @@ describe("renderTradingPerformanceHtml", () => {
     expect(html).toContain("Bitcoin Up or Down");
     expect(html).toContain("-$25.00");
     expect(html).toContain("Polymarket data-api");
-    expect(html).toContain("Invested / Returned");
+    expect(html).toContain("Total Fees");
   });
 });
 
