@@ -28,6 +28,9 @@ type ReplayOrder = {
   readonly signedDistanceBp: number | null;
   readonly limitPrice: number;
   readonly officialOutcome: Side;
+  readonly takerFillSize: number | null;
+  readonly takerAvgPrice: number | null;
+  readonly takerCostUsd: number | null;
 };
 
 type FilterSpec = {
@@ -265,6 +268,11 @@ function parseOrder({
     typeof entryPriceTelemetry === "object" && entryPriceTelemetry !== null
       ? (entryPriceTelemetry as Record<string, unknown>)
       : null;
+  const takerCounterfactual = raw["takerCounterfactual"];
+  const taker =
+    typeof takerCounterfactual === "object" && takerCounterfactual !== null
+      ? (takerCounterfactual as Record<string, unknown>)
+      : null;
   return {
     source,
     asset,
@@ -282,6 +290,18 @@ function parseOrder({
         : numberOrNull({ value: priceTelemetry["signedDistanceBp"] }),
     limitPrice,
     officialOutcome,
+    takerFillSize:
+      taker === null
+        ? null
+        : (numberOrNull({ value: taker["fillSize"] }) ??
+          numberOrNull({ value: taker["sharesIfFilled"] })),
+    takerAvgPrice:
+      taker === null
+        ? null
+        : (numberOrNull({ value: taker["avgPrice"] }) ??
+          numberOrNull({ value: taker["askPrice"] })),
+    takerCostUsd:
+      taker === null ? null : numberOrNull({ value: taker["costUsd"] }),
   };
 }
 
@@ -462,6 +482,22 @@ function takerPnl({
   readonly order: ReplayOrder;
   readonly slippageTicks: number;
 }): number {
+  if (
+    order.takerFillSize !== null &&
+    order.takerFillSize > 0 &&
+    order.takerAvgPrice !== null &&
+    order.takerAvgPrice > 0 &&
+    order.takerAvgPrice < 1
+  ) {
+    const price = Math.min(0.99, order.takerAvgPrice + slippageTicks * 0.01);
+    const cost =
+      (order.takerCostUsd ?? order.takerFillSize * order.takerAvgPrice) +
+      order.takerFillSize * Math.max(0, price - order.takerAvgPrice);
+    const gross = order.side === order.officialOutcome ? order.takerFillSize : 0;
+    const fee =
+      order.takerFillSize * (TAKER_FEE_BPS / 10_000) * price * (1 - price);
+    return gross - cost - fee;
+  }
   const baseAsk =
     order.chosenBestAsk ?? Math.min(0.99, order.limitPrice + 0.01);
   if (baseAsk <= 0 || baseAsk >= 1) {

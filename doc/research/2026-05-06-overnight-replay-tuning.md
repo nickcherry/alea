@@ -1329,3 +1329,54 @@ Next useful work:
 2. Rerun the all-4 consensus overlay on a genuinely fresh forward tape.
 3. Keep real-depth taker PnL as the default research metric; treat the
    1-tick stress as an additional margin, not the primary fill model.
+
+### 11:49 EDT (2026-05-07) — all-4 forward overlay after Binance geofence fix
+
+After the VPN/geofence issue was fixed, Binance 5m candle sync also
+succeeded through the forward tape:
+
+```bash
+bun alea candles:sync --timeframe 5m --days 2 --assets btc,eth,sol,xrp,doge --sources binance --products spot,perp
+```
+
+I reran all four saved source tables on the same 2026-05-07 13:05 →
+14:35 UTC forward slice. All four now show fresh candle coverage and
+emit decisions/orders:
+
+| Source table | Orders | Maker canonical | All-fill |
+| ------------ | -----: | --------------: | -------: |
+| binance/perp | 12 | -$80 | +$34 |
+| binance/spot | 13 | -$46 | +$60 |
+| coinbase/perp | 12 | -$80 | +$34 |
+| coinbase/spot | 10 | -$11 | +$71 |
+
+I also updated `compareReplayConsensus.ts` so its taker PnL uses the
+same real-depth `takerCounterfactual` as `sweepReplay`, instead of
+reverting to best-ask scoring.
+
+Fresh all-4 overlay for the current challenger:
+
+```json
+{
+  "minEdge": 0.05,
+  "maxChosenSpread": 0.07,
+  "maxChosenBestAsk": 0.75,
+  "minTrendConfirmBp": 0,
+  "excludeAssets": ["doge", "xrp"]
+}
+```
+
+| Execution source | Agreeing sources | n | Real-depth taker | +1 tick stress | Win | Worst quarter |
+| ---------------- | ---------------: | -: | ---------------: | -------------: | --: | ------------: |
+| binance/perp | 4 | 5 | +$17 | +$15 | 80% | -$13 |
+| binance/spot | 4 | 5 | +$17 | +$15 | 80% | -$13 |
+| coinbase/perp | 4 | 5 | +$17 | +$15 | 80% | -$13 |
+| coinbase/spot | 4 | 5 | +$16 | +$15 | 80% | -$13 |
+
+This is the first clean forward check where the all-4 consensus rule
+could actually run. It is directionally good: positive across every
+execution source, still positive with an extra 1-tick stress, and no
+hour filter involved. It is still only **five trades**, so this should
+not be treated as live-promotion evidence by itself. The right next
+step is to collect/backfill more forward tape and keep this exact
+real-depth all-4 overlay as the holdout check.
