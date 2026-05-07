@@ -11,6 +11,7 @@ import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
+import { tradingCalibrateEvRrGateCommand } from "@alea/bin/trading/calibrateEvRrGate";
 import { tradingDryRunCommand } from "@alea/bin/trading/dryRun";
 import { tradingDryRunReportCommand } from "@alea/bin/trading/dryRunReport";
 import { tradingGenProbabilityTableCommand } from "@alea/bin/trading/genProbabilityTable";
@@ -47,6 +48,7 @@ const cli = createCli({
     tradingPerformanceCommand,
     tradingReplayCommand,
     tradingReplayReportCommand,
+    tradingCalibrateEvRrGateCommand,
   ],
 });
 

@@ -1,7 +1,7 @@
 # EV / reward-risk gate calibration
 
 **Date:** 2026-05-07
-**Tool:** [`scripts/calibrate-ev-rr-gate.py`](../../scripts/calibrate-ev-rr-gate.py)
+**Tool:** `bun alea trading:calibrate-ev-rr-gate` ([source](../../src/bin/trading/calibrateEvRrGate.ts))
 **Replay sessions:** 3 sessions covering the same 35-hour window
 (`1777998600000 → 1778124300000` ms — ~2026-05-05 19:30 UTC through
 2026-05-07 06:25 UTC), 760–766 orders per session.
@@ -119,13 +119,17 @@ to 0.40 is a future option once we have more replay coverage.
 ## How to re-run
 
 ```
-# Sweep against the largest replay session under tmp/replay-trading/
-python3 scripts/calibrate-ev-rr-gate.py
+# Sweep against the newest replay session under tmp/replay-trading/
+bun alea trading:calibrate-ev-rr-gate
 
 # Sweep against a specific session
-python3 scripts/calibrate-ev-rr-gate.py tmp/replay-trading/<session>.jsonl
+bun alea trading:calibrate-ev-rr-gate --session tmp/replay-trading/<session>.jsonl
+
+# Tighter / wider grid
+bun alea trading:calibrate-ev-rr-gate --ev-grid 0,0.5,1 --rr-grid 0.2,0.3,0.4
 ```
 
-The script is read-only and prints heatmaps + summary stats. No
-postgres / network. To regenerate the underlying replay sessions
-themselves, run `bun alea trading:replay --from <ISO> --to <ISO>`.
+The command is read-only — opens one JSONL file, prints heatmaps
+and summary stats. No postgres, no network. To regenerate the
+underlying replay session itself,
+`bun alea trading:replay --from <ISO> --to <ISO>` first.

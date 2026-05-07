@@ -85,7 +85,7 @@ export const MIN_EDGE = 0.05;
  * those trades are filtered out automatically.
  *
  * Calibrated 2026-05-07 against three 35-hour replay sessions
- * (~760 orders / session) using `scripts/calibrate-ev-rr-gate.py`.
+ * (~760 orders / session) using `bun alea trading:calibrate-ev-rr-gate`.
  * Sweeping `MIN_EV ∈ {0, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4}` ×
  * `MIN_RR ∈ {0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5}`, the joint
  * peak total-PnL across all sessions sat at MIN_EV ≈ $0.50.
