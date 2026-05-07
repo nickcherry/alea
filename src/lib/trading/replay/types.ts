@@ -29,7 +29,21 @@ export type ReplayEvent =
   | ReplayPolymarketTradeEvent
   | ReplayPolymarketResolvedEvent
   | ReplayBinancePerpBboEvent
+  | ReplayCoinbaseSpotBboEvent
+  | ReplayCoinbasePerpBboEvent
   | ReplayChainlinkRefPriceEvent;
+
+/**
+ * Discriminator for which captured BBO stream the per-window driver
+ * should consume as the live-tick source. Live trading currently uses
+ * `binance-perp`; replay accepts the others so we can run head-to-head
+ * comparisons against alternative training sources (e.g. retrain on
+ * coinbase-spot + replay against the same).
+ */
+export type ReplayTickSource =
+  | "binance-perp"
+  | "coinbase-spot"
+  | "coinbase-perp";
 
 export type ReplayBaseFields = {
   readonly id: string;
@@ -65,6 +79,26 @@ export type ReplayPolymarketResolvedEvent = ReplayBaseFields & {
 
 export type ReplayBinancePerpBboEvent = ReplayBaseFields & {
   readonly source: "binance-perp";
+  readonly kind: "bbo";
+  readonly asset: Asset;
+  readonly bid: number;
+  readonly ask: number;
+  readonly mid: number;
+  readonly tsExchangeMs: number | null;
+};
+
+export type ReplayCoinbaseSpotBboEvent = ReplayBaseFields & {
+  readonly source: "coinbase-spot";
+  readonly kind: "bbo";
+  readonly asset: Asset;
+  readonly bid: number;
+  readonly ask: number;
+  readonly mid: number;
+  readonly tsExchangeMs: number | null;
+};
+
+export type ReplayCoinbasePerpBboEvent = ReplayBaseFields & {
+  readonly source: "coinbase-perp";
   readonly kind: "bbo";
   readonly asset: Asset;
   readonly bid: number;

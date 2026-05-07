@@ -1,3 +1,4 @@
+import { trainingCandleSeries } from "@alea/constants/training";
 import { STAKE_USD } from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
@@ -34,6 +35,7 @@ import type {
   ReplayChainlinkRefPriceEvent,
   ReplayEvent,
   ReplayRunEvent,
+  ReplayTickSource,
 } from "@alea/lib/trading/replay/types";
 import { loadTrainingCandles } from "@alea/lib/training/loadTrainingCandles";
 import type { ProbabilityTable } from "@alea/lib/trading/types";
@@ -62,6 +64,21 @@ export type RunReplayParams = {
   readonly logWriter?: ReplayJsonlWriter;
   readonly emit: (event: ReplayRunEvent) => void;
   readonly signal: AbortSignal;
+  /**
+   * Override the (source, product) used to bootstrap the regime
+   * trackers. Defaults to the canonical training series in
+   * `trainingCandleSeries`. Mostly useful when running head-to-head
+   * comparisons against a probability table trained on a different
+   * venue/product.
+   */
+  readonly candleSource?: "binance" | "coinbase";
+  readonly candleProduct?: "spot" | "perp";
+  /**
+   * Which captured BBO stream the per-window driver consumes as its
+   * `lastTick` / line-capture source. Defaults to `binance-perp` to
+   * match the live trader.
+   */
+  readonly tickSource?: ReplayTickSource;
 };
 
 export type RunReplayResult = {
@@ -107,6 +124,9 @@ export async function runReplay({
   logWriter,
   emit,
   signal,
+  candleSource,
+  candleProduct,
+  tickSource = defaultTickSourceFromTrainingSeries(),
 }: RunReplayParams): Promise<RunReplayResult> {
   const writer = logWriter ?? (await createReplayJsonlWriter());
   emit({
@@ -120,7 +140,7 @@ export async function runReplay({
     atMs: Date.now(),
     config: {
       vendor: "polymarket-replay",
-      priceSource: "binance-perp-replay",
+      priceSource: `${tickSource}-replay`,
       assets,
       minEdge,
       stakeUsd,
@@ -144,6 +164,12 @@ export async function runReplay({
     fromMs: fromMs - PRELUDE_MS,
     toMs: toMs + MANIFEST_RESOLUTION_TAIL_MS,
     assets,
+    sources: ["polymarket"],
+    // Manifest only needs `resolved` events (for up/down assignment +
+    // windowStart anchoring) plus `best-bid-ask` to discover the two
+    // tokenIds per market. Skipping `book` (~9.5 GB of L2 depth in
+    // payloads) and `trade` (~1.5M extra rows) drops manifest cost ~6×.
+    kinds: ["resolved", "best-bid-ask"],
   });
   const manifest = await buildReplayMarketManifest({
     events: manifestLoad.events,
@@ -176,6 +202,7 @@ export async function runReplay({
     fromMs: fromMs - FIVE_MINUTES_MS,
     toMs: toMs + FIVE_MINUTES_MS,
     assets,
+    sources: ["polymarket-chainlink"],
   });
   const chainlinkEvents: ReplayChainlinkRefPriceEvent[] = [];
   for await (const event of chainlinkLoad.events) {
@@ -201,7 +228,12 @@ export async function runReplay({
   });
   const candlesByAsset = new Map<Asset, readonly ClosedFiveMinuteBar[]>();
   for (const asset of assets) {
-    const candles = await loadTrainingCandles({ db, asset });
+    const candles = await loadTrainingCandles({
+      db,
+      asset,
+      ...(candleSource !== undefined ? { source: candleSource } : {}),
+      ...(candleProduct !== undefined ? { product: candleProduct } : {}),
+    });
     candlesByAsset.set(
       asset,
       candles.map((candle) => ({
@@ -274,19 +306,19 @@ export async function runReplay({
       trackers.set(asset, tracker);
     }
 
-    // Pull events for this window.
+    // Pull events for this window. We only need polymarket book/
+    // trade/bba events plus the configured tick source's BBO; skip
+    // every other captured venue to keep the per-window query narrow.
     const eventsLoad = loadMarketEvents({
       db,
       fromMs: windowStartMs - PRELUDE_MS,
       toMs: windowEndMs + POSTLUDE_MS,
       assets,
+      sources: ["polymarket", tickSource],
     });
     const events: ReplayEvent[] = [];
     for await (const event of eventsLoad.events) {
-      if (
-        event.source === "binance-perp" ||
-        event.source === "polymarket"
-      ) {
+      if (event.source === tickSource || event.source === "polymarket") {
         events.push(event);
       }
     }
@@ -316,6 +348,7 @@ export async function runReplay({
       table,
       minEdge,
       stakeUsd,
+      tickSource,
       emit: (event) => {
         emit(event);
         // Forward to JSONL writer for events that are part of the
@@ -585,6 +618,27 @@ function serializeWindowChainlink({
     };
   }
   return out;
+}
+
+/**
+ * Default tick source for replay: derived from
+ * `trainingCandleSeries` so the in-window BBO stream stays consistent
+ * with whatever venue the active probability table was trained on.
+ * Falls through to binance-perp if the training series doesn't map to
+ * a captured BBO source we have wired up.
+ */
+function defaultTickSourceFromTrainingSeries(): ReplayTickSource {
+  const { source, product } = trainingCandleSeries;
+  if (source === "binance" && product === "perp") {
+    return "binance-perp";
+  }
+  if (source === "coinbase" && product === "spot") {
+    return "coinbase-spot";
+  }
+  if (source === "coinbase" && product === "perp") {
+    return "coinbase-perp";
+  }
+  return "binance-perp";
 }
 
 /**

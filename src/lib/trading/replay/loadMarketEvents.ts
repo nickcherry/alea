@@ -34,6 +34,25 @@ export type LoadMarketEventsParams = {
   readonly fromMs: number;
   readonly toMs: number;
   readonly assets?: readonly Asset[];
+  /**
+   * Restrict the scan to a subset of event sources. Defaults to every
+   * source `KIND_BY_SOURCE` knows about. Callers that only need
+   * polymarket events (manifest pass) or only chainlink reference
+   * prices should pass this — without it, the cursor scans every
+   * captured row across all venues, which makes a multi-day replay's
+   * cold start dominated by ~5× more I/O than necessary.
+   */
+  readonly sources?: readonly string[];
+  /**
+   * Restrict the scan to a subset of event kinds within the chosen
+   * sources. Defaults to every kind in `KIND_BY_SOURCE` for the
+   * selected sources. The manifest pass should pass
+   * `["resolved", "best-bid-ask"]` (skips polymarket `book` and
+   * `trade` events whose payloads dominate manifest cost — the L2
+   * depth in `book` payloads alone runs ~3 KB/row, ~9.5 GB across the
+   * polymarket range).
+   */
+  readonly kinds?: readonly string[];
   readonly batchSize?: number;
 };
 
@@ -42,6 +61,8 @@ const DEFAULT_BATCH_SIZE = 5_000;
 const KIND_BY_SOURCE: Record<string, readonly string[]> = {
   polymarket: ["book", "best-bid-ask", "trade", "resolved"],
   "binance-perp": ["bbo"],
+  "coinbase-spot": ["bbo"],
+  "coinbase-perp": ["bbo"],
   "polymarket-chainlink": ["reference-price"],
 };
 
@@ -66,6 +87,8 @@ export function loadMarketEvents({
   fromMs,
   toMs,
   assets,
+  sources: sourceFilter,
+  kinds: kindFilter,
   batchSize = DEFAULT_BATCH_SIZE,
 }: LoadMarketEventsParams): LoadMarketEventsResult {
   const stats: ReplayLoadStats = {
@@ -76,10 +99,24 @@ export function loadMarketEvents({
   };
 
   const events = (async function* (): AsyncGenerator<ReplayEvent> {
-    const sources = Object.keys(KIND_BY_SOURCE);
-    const allowedKinds = sources.flatMap(
+    const knownSources = Object.keys(KIND_BY_SOURCE);
+    const sources =
+      sourceFilter === undefined
+        ? knownSources
+        : sourceFilter.filter((src) => src in KIND_BY_SOURCE);
+    if (sources.length === 0) {
+      return;
+    }
+    const sourceKinds = sources.flatMap(
       (source) => KIND_BY_SOURCE[source] ?? [],
     );
+    const allowedKinds =
+      kindFilter === undefined
+        ? sourceKinds
+        : sourceKinds.filter((kind) => kindFilter.includes(kind));
+    if (allowedKinds.length === 0) {
+      return;
+    }
 
     let cursorTsMs: number = fromMs;
     let cursorId: string = "";
@@ -229,20 +266,25 @@ export function loadMarketEvents({
         }
       }
 
-      if (row.source === "binance-perp" && row.kind === "bbo") {
+      if (
+        (row.source === "binance-perp" ||
+          row.source === "coinbase-spot" ||
+          row.source === "coinbase-perp") &&
+        row.kind === "bbo"
+      ) {
         if (base.asset === null) {
-          bumpDropped(stats, "binance-perp/bbo:no-asset");
+          bumpDropped(stats, `${row.source}/bbo:no-asset`);
           return null;
         }
-        const parsedBbo = parseBinanceBboPayload({ payload });
+        const parsedBbo = parseBboPayload({ payload });
         if (parsedBbo === null) {
-          bumpDropped(stats, "binance-perp/bbo:malformed");
+          bumpDropped(stats, `${row.source}/bbo:malformed`);
           return null;
         }
         return {
           ...base,
           asset: base.asset,
-          source: "binance-perp",
+          source: row.source,
           kind: "bbo",
           ...parsedBbo,
         };
@@ -389,7 +431,7 @@ function parsePolymarketResolvedPayload({
   };
 }
 
-function parseBinanceBboPayload({
+function parseBboPayload({
   payload,
 }: {
   readonly payload: object;

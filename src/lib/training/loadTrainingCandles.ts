@@ -1,6 +1,7 @@
 import { trainingCandleSeries } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { Asset } from "@alea/types/assets";
+import type { CandleSeries } from "@alea/types/candleSeries";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 
 /**
@@ -20,10 +21,14 @@ export async function loadTrainingCandles({
   db,
   asset,
   timeframe = trainingCandleSeries.timeframe,
+  source = trainingCandleSeries.source,
+  product = trainingCandleSeries.product,
 }: {
   readonly db: DatabaseClient;
   readonly asset: Asset;
   readonly timeframe?: CandleTimeframe;
+  readonly source?: CandleSeries["source"];
+  readonly product?: CandleSeries["product"];
 }): Promise<Candle[]> {
   const rows = await db
     .selectFrom("candles")
@@ -39,8 +44,8 @@ export async function loadTrainingCandles({
       "close",
       "volume",
     ])
-    .where("source", "=", trainingCandleSeries.source)
-    .where("product", "=", trainingCandleSeries.product)
+    .where("source", "=", source)
+    .where("product", "=", product)
     .where("timeframe", "=", timeframe)
     .where("asset", "=", asset)
     .orderBy("timestamp", "asc")

@@ -47,6 +47,7 @@ import type {
   ReplayChainlinkRefPriceEvent,
   ReplayEvent,
   ReplayRunEvent,
+  ReplayTickSource,
 } from "@alea/lib/trading/replay/types";
 import type { LeadingSide, ProbabilityTable } from "@alea/lib/trading/types";
 import type {
@@ -92,6 +93,13 @@ export type ReplayWindowParams = {
   readonly table: ProbabilityTable;
   readonly minEdge: number;
   readonly stakeUsd?: number;
+  /**
+   * Which captured BBO stream the per-window driver consumes as its
+   * `lastTick` / line-capture source. Defaults to `binance-perp` to
+   * match the live trader; override when replaying head-to-head
+   * against a model trained on a different venue.
+   */
+  readonly tickSource?: ReplayTickSource;
   readonly emit: (event: ReplayRunEvent) => void;
 };
 
@@ -162,6 +170,7 @@ export function replayWindow({
   table,
   minEdge,
   stakeUsd = STAKE_USD,
+  tickSource = "binance-perp",
   emit,
 }: ReplayWindowParams): ReplayWindowResult {
   const windowEndMs = windowStartMs + FIVE_MINUTES_MS;
@@ -226,8 +235,8 @@ export function replayWindow({
       nextBoundaryIdx += 1;
     }
 
-    if (event.source === "binance-perp" && event.kind === "bbo") {
-      handleBinanceBbo({ event, states, windowStartMs });
+    if (event.source === tickSource && event.kind === "bbo") {
+      handleTickBbo({ event, states, windowStartMs });
       continue;
     }
     if (event.source === "polymarket") {
@@ -320,12 +329,15 @@ function createAssetState({
   };
 }
 
-function handleBinanceBbo({
+function handleTickBbo({
   event,
   states,
   windowStartMs,
 }: {
-  readonly event: Extract<ReplayEvent, { source: "binance-perp"; kind: "bbo" }>;
+  readonly event: Extract<
+    ReplayEvent,
+    { source: "binance-perp" | "coinbase-spot" | "coinbase-perp"; kind: "bbo" }
+  >;
   readonly states: Map<Asset, AssetState>;
   readonly windowStartMs: number;
 }): void {

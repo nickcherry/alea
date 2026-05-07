@@ -77,6 +77,39 @@ export const tradingReplayCommand = defineCommand({
           `Minimum edge over Polymarket bid to take a trade (default ${MIN_EDGE.toFixed(3)}).`,
         ),
     }),
+    defineValueOption({
+      key: "candleSource",
+      long: "--candle-source",
+      valueName: "SOURCE",
+      schema: z
+        .enum(["binance", "coinbase"])
+        .optional()
+        .describe(
+          "Override the candle source used to bootstrap regime trackers (default: binance, matching the trained probability table).",
+        ),
+    }),
+    defineValueOption({
+      key: "candleProduct",
+      long: "--candle-product",
+      valueName: "PRODUCT",
+      schema: z
+        .enum(["spot", "perp"])
+        .optional()
+        .describe(
+          "Override the candle product used to bootstrap regime trackers (default: perp).",
+        ),
+    }),
+    defineValueOption({
+      key: "tickSource",
+      long: "--tick-source",
+      valueName: "SOURCE",
+      schema: z
+        .enum(["binance-perp", "coinbase-spot", "coinbase-perp"])
+        .optional()
+        .describe(
+          "Captured BBO stream consumed for in-window line capture and lastTick (default: binance-perp, matching live trading).",
+        ),
+    }),
   ],
   examples: [
     "bun alea trading:replay",
@@ -123,7 +156,26 @@ export const tradingReplayCommand = defineCommand({
           table: probabilityTable,
           minEdge: options.minEdge,
           signal: controller.signal,
+          ...(options.candleSource !== undefined
+            ? { candleSource: options.candleSource }
+            : {}),
+          ...(options.candleProduct !== undefined
+            ? { candleProduct: options.candleProduct }
+            : {}),
+          ...(options.tickSource !== undefined
+            ? { tickSource: options.tickSource }
+            : {}),
           emit: (event) => {
+            // Suppress per-evaluation `decision` and per-fill events
+            // from the console — they fire thousands of times per
+            // window and dominate runtime through stdout overhead.
+            // The full ledger is in the JSONL output for the report.
+            if (
+              event.kind === "decision" ||
+              event.kind === "virtual-fill"
+            ) {
+              return;
+            }
             io.writeStdout(`${formatReplayEvent({ event })}\n`);
           },
         });
