@@ -694,3 +694,33 @@ windows is a feature, not a bug.
 (Decision-trace debug code was added to `replayWindow.ts` for
 this investigation and reverted; the finding is the value.)
 
+
+### 04:55 EDT — min-samples regen experiment
+
+Wondered if regenerating the probability table with `--min-samples 100`
+(vs the default 200) would unlock more "no-bucket" windows (more
+buckets pass the threshold → more regimes covered).
+
+Bucket counts grew significantly:
+
+| Asset | Min-200 buckets | Min-100 buckets | Δ |
+|---|---:|---:|---:|
+| BTC | 250 | 308 | +58 |
+| ETH | 321 | 409 | +88 |
+| SOL | 358 | 443 | +85 |
+| XRP | 367 | 481 | +114 |
+| DOGE | 390 | 476 | +86 |
+
+Re-ran replay on the same 35h range. Result: **identical** to
+min-200 — same 760 orders, same −\$619 canonical, same +\$1,046
+taker on the best filter.
+
+The additional buckets aren't being hit by any window in our 35h
+replay range. The "no-bucket" skips earlier are for genuinely novel
+regime label tuples not present in either table — they're regime
+combinations the trainer didn't see at all in the 2-year history,
+not just thin ones. Lowering min-samples doesn't help.
+
+Probability table restored to min-samples=200 default after the
+experiment.
+
