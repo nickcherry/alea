@@ -553,21 +553,30 @@ function computeTakerLens({
   orders,
   feeBps = TAKER_FEE_BPS_DEFAULT,
   stakeUsd = 20,
+  slippageTicks = 0,
 }: {
   readonly orders: readonly ReplayOrder[];
   readonly feeBps?: number;
   readonly stakeUsd?: number;
+  /**
+   * Simple level-2 slippage model: assume the avg fill price is
+   * `bestAsk + slippageTicks * 0.01`. Use 0 for "fills entirely at
+   * best ask" (optimistic), 0.5 for "half at best, half at next tick",
+   * 1.0 for "all of need eats through to next level".
+   *
+   * Given the median best-ask depth at $20 stake is only 36% of need,
+   * 0.5 is a reasonable conservative default.
+   */
+  readonly slippageTicks?: number;
 }): LensMetrics {
-  // Taker = pay best ask at entry. Use the captured chosenBestAsk;
-  // if missing fall back to limit + 0.01 (one polymarket tick).
+  // Taker = pay best ask + slippage at entry.
   let filled = 0;
   let wins = 0;
   let pnl = 0;
   for (const o of orders) {
-    const askPrice = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
-    if (askPrice <= 0 || askPrice >= 1) continue;
-    // Re-derive shares from the original stake size at the new (higher)
-    // ask; rounded down to 0.01 share quantum.
+    const baseAsk = o.chosenBestAsk ?? Math.min(0.99, o.limitPrice + 0.01);
+    if (baseAsk <= 0 || baseAsk >= 1) continue;
+    const askPrice = Math.min(0.99, baseAsk + slippageTicks * 0.01);
     const sharesAtAsk = Math.floor((stakeUsd / askPrice) * 100) / 100;
     if (sharesAtAsk <= 0 || o.officialOutcome === null) continue;
     filled += 1;
@@ -652,6 +661,13 @@ function printTakerFeeSweep({
     const t = computeTakerLens({ orders, feeBps });
     console.log(
       `  feeBps=${String(feeBps).padStart(5)} | n=${String(t.orderCount).padStart(4)} | pnl ${fmtUsd(t.pnlUsd)} (win ${fmtPct(t.winRate)})`,
+    );
+  }
+  console.log(`\n=== taker slippage sensitivity (720 bps fee) ===`);
+  for (const slippageTicks of [0, 0.25, 0.5, 0.75, 1.0]) {
+    const t = computeTakerLens({ orders, slippageTicks });
+    console.log(
+      `  slippage=${slippageTicks.toFixed(2)}tk | n=${String(t.orderCount).padStart(4)} | pnl ${fmtUsd(t.pnlUsd)} (win ${fmtPct(t.winRate)})`,
     );
   }
 }
