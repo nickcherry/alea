@@ -405,3 +405,30 @@ fill economics are fundamentally driven by adverse selection, which is
 also a story worth understanding. (3) the time-of-day pattern needs
 more days of capture to validate as durable rather than a one-week
 artifact.
+
+### 03:45 EDT — per-asset breakdown + hybrid maker/taker
+
+Per-asset PnL at \$20 stake on the best filter (good-hours+edge0.06):
+
+| Asset | n | Maker PnL | Taker PnL | Best | Win | Depth ratio (p50) |
+|---|---:|---:|---:|---|---:|---:|
+| BTC | 80 | +\$135 | +\$372 | TAKER | 75% | 3.06 |
+| ETH | 56 | +\$27 | +\$180 | TAKER | 71% | 0.56 |
+| SOL | 64 | +\$39 | +\$190 | TAKER | 72% | 0.16 |
+| XRP | 58 | +\$63 | +\$125 | TAKER | 74% | 0.18 |
+| DOGE | 111 | **+\$384** | +\$233 | MAKER | 78% | 0.19 |
+
+DOGE is the only asset where maker beats taker. Plausible reason:
+DOGE has the highest avg limit price (\$0.69) so the taker fee
+`shares × 720bps × price × (1 − price)` is high relative to the
+edge (fee is symmetric at price 0.5, falls toward 0 at extremes —
+but 0.69 is mid-range).
+
+**Hybrid strategy**: TAKER for BTC/ETH/SOL/XRP, MAKER for DOGE.
+Total: +\$372 + \$180 + \$190 + \$125 + \$384 = **+\$1,251 / 369 orders**.
+
+Depth caveat for stake-scaling: BTC has 3× the depth needed at \$20
+stake (median), so it scales to \$50–100 cleanly. DOGE/SOL/XRP/ETH
+have median ratio 0.16–0.56 — more slippage if stake increases.
+Optimal allocation would scale per-asset.
+
