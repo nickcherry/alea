@@ -5,8 +5,9 @@ import type { Candle, CandleTimeframe } from "@alea/types/candles";
 
 /**
  * Binance USDT-margined perpetual klines published as zip archives on
- * Binance Vision. We use this in place of the live `fapi.binance.com` REST
- * endpoint because that host is geo-blocked from the US (HTTP 451).
+ * Binance Vision. We prefer Vision over the live `fapi.binance.com`
+ * REST endpoint because that host is geo-blocked from the US (HTTP
+ * 451) by default.
  *
  * Vision publishes two granularities: a monthly zip for each fully-completed
  * UTC month, and a daily zip for each fully-completed UTC day. For an
@@ -16,13 +17,17 @@ import type { Candle, CandleTimeframe } from "@alea/types/candles";
  *   - the monthly archive if that day's month has fully closed,
  *   - the daily archive if the day is in the current month but already
  *     completed,
- *   - no archive if the day is today (Vision hasn't published it yet).
+ *   - the live fapi REST endpoint as a fallback if Vision returns 404
+ *     (typically the most recent 1-2 days while Vision is republishing).
+ *     This requires the operator to be in a non-geo-blocked region or
+ *     using a VPN.
  *
  * Files are downloaded at most once per process via an in-memory cache so a
  * page-driven sync (which steps day-by-day) doesn't re-download the same
  * monthly archive 30 times.
  */
 const baseUrl = "https://data.binance.vision/data/futures/um";
+const fapiBaseUrl = "https://fapi.binance.com";
 
 /**
  * Up to ~120 distinct archives could be touched across a full 5-asset sync,
@@ -63,19 +68,26 @@ export async function fetchBinancePerpCandles({
   const dayStarts = enumerateDayStarts({ startMs, endMs });
   const archiveSpecs = new Map<string, ArchiveSpec>();
 
+  // Pre-collected fapi-only fetches for today (Vision never has the
+  // current UTC day; we go straight to fapi).
+  const fapiOnlyDays: number[] = [];
   for (const dayStart of dayStarts) {
     if (dayStart >= todayUtc) {
+      fapiOnlyDays.push(dayStart);
       continue;
     }
     const spec = chooseArchive({ dayStart, todayUtc, symbol, interval });
     archiveSpecs.set(spec.url, spec);
   }
 
-  const perFile = await Promise.all(
-    [...archiveSpecs.values()].map((spec) =>
+  const perFile = await Promise.all([
+    ...[...archiveSpecs.values()].map((spec) =>
       loadArchive({ spec, asset, timeframe }),
     ),
-  );
+    ...fapiOnlyDays.map((dayStartMs) =>
+      fetchFapiDay({ dayStartMs, symbol, interval, asset, timeframe }),
+    ),
+  ]);
   const combined: Candle[] = [];
   for (const candles of perFile) {
     for (const candle of candles) {
@@ -92,6 +104,13 @@ export async function fetchBinancePerpCandles({
 type ArchiveSpec = {
   readonly url: string;
   readonly granularity: "monthly" | "daily";
+  /**
+   * For daily archives, the UTC day-start ms. Used to drive the fapi
+   * fallback when Vision returns 404 for the most recent day.
+   */
+  readonly dayStartMs?: number;
+  readonly symbol?: string;
+  readonly interval?: "1m" | "5m";
 };
 
 function chooseArchive({
@@ -118,6 +137,9 @@ function chooseArchive({
   return {
     url: `${baseUrl}/daily/klines/${symbol}/${interval}/${symbol}-${interval}-${date}.zip`,
     granularity: "daily",
+    dayStartMs: dayStart,
+    symbol,
+    interval,
   };
 }
 
@@ -161,6 +183,25 @@ async function downloadAndParse({
     headers: { "User-Agent": "alea/1.0" },
   });
   if (!response.ok) {
+    // Vision daily archives lag by ~24 hours after UTC midnight.
+    // For the most recent day(s), fall back to the live fapi REST
+    // endpoint. Requires the operator to be in a non-geo-blocked
+    // region (or VPN'd in).
+    if (
+      response.status === 404 &&
+      spec.granularity === "daily" &&
+      spec.dayStartMs !== undefined &&
+      spec.symbol !== undefined &&
+      spec.interval !== undefined
+    ) {
+      return fetchFapiDay({
+        dayStartMs: spec.dayStartMs,
+        symbol: spec.symbol,
+        interval: spec.interval,
+        asset,
+        timeframe,
+      });
+    }
     const body = await response.text();
     throw new BinancePerpFetchError({
       message: `Binance Vision ${spec.granularity} ${spec.url} failed: ${response.status} ${body}`,
@@ -170,6 +211,65 @@ async function downloadAndParse({
   const zipBytes = Buffer.from(await response.arrayBuffer());
   const csv = await unzipFirstMember(zipBytes);
   return parseKlinesCsv({ csv, asset, timeframe });
+}
+
+/**
+ * Fetch one UTC day's klines from the live fapi REST endpoint when
+ * Vision hasn't yet published the daily archive. fapi caps responses
+ * at 1500 klines per call; one UTC day is 288 klines at 5m and 1440
+ * at 1m, both within the cap.
+ */
+async function fetchFapiDay({
+  dayStartMs,
+  symbol,
+  interval,
+  asset,
+  timeframe,
+}: {
+  readonly dayStartMs: number;
+  readonly symbol: string;
+  readonly interval: "1m" | "5m";
+  readonly asset: Asset;
+  readonly timeframe: CandleTimeframe;
+}): Promise<readonly Candle[]> {
+  const dayEndMs = dayStartMs + oneDayMs - 1;
+  const url = `${fapiBaseUrl}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${dayStartMs}&endTime=${dayEndMs}&limit=1500`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "alea/1.0" },
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new BinancePerpFetchError({
+      message: `Binance fapi ${url} failed: ${response.status} ${body}`,
+      status: response.status,
+    });
+  }
+  const raw = (await response.json()) as unknown;
+  if (!Array.isArray(raw)) {
+    throw new BinancePerpFetchError({
+      message: `Binance fapi ${url} returned non-array body`,
+      status: response.status,
+    });
+  }
+  const candles: Candle[] = [];
+  for (const row of raw) {
+    if (!Array.isArray(row) || row.length < 6) continue;
+    const openTimeMs = Number(row[0]);
+    if (!Number.isFinite(openTimeMs)) continue;
+    candles.push({
+      source: "binance",
+      asset,
+      product: "perp",
+      timeframe,
+      timestamp: new Date(openTimeMs),
+      open: Number(row[1]),
+      high: Number(row[2]),
+      low: Number(row[3]),
+      close: Number(row[4]),
+      volume: Number(row[5]),
+    });
+  }
+  return candles;
 }
 
 /**

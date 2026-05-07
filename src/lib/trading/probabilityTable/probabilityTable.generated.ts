@@ -11,7 +11,7 @@ import type { ProbabilityTable } from "@alea/lib/trading/types";
 export const probabilityTable: ProbabilityTable = {
   "command": "trading:gen-probability-table",
   "schemaVersion": 1,
-  "generatedAtMs": 1778116814011,
+  "generatedAtMs": 1778158996460,
   "series": {
     "source": "coinbase",
     "product": "spot",
@@ -20,18 +20,18 @@ export const probabilityTable: ProbabilityTable = {
   "minBucketSamples": 200,
   "trainingRangeMs": {
     "firstWindowMs": 1714917600000,
-    "lastWindowMs": 1778116740000
+    "lastWindowMs": 1778158080000
   },
   "assets": [
     {
       "asset": "btc",
-      "windowCount": 210529,
+      "windowCount": 210666,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.03352507255532492,
-          "avgLeadPp": 6.084537979394394,
+          "windowShare": 0.03350327057997019,
+          "avgLeadPp": 6.086958018215317,
           "surface": {
             "byRemaining": {
               "1": [
@@ -178,70 +178,70 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5976611298205948,
-          "avgLeadPp": 1.9277768713437715,
+          "windowShare": 0.5976617014610806,
+          "avgLeadPp": 1.9287532656608142,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 13173,
-                  "probability": 0.8050557959462536
+                  "samples": 13185,
+                  "probability": 0.8049298445202882
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11732,
-                  "probability": 0.8578247528128197
+                  "samples": 11741,
+                  "probability": 0.8577633932373733
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10303,
-                  "probability": 0.896923226244783
+                  "samples": 10310,
+                  "probability": 0.8969932104752667
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8981,
-                  "probability": 0.9180492150094645
+                  "samples": 8989,
+                  "probability": 0.9180109022138169
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7660,
-                  "probability": 0.9396866840731071
+                  "samples": 7661,
+                  "probability": 0.9396945568463647
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6672,
-                  "probability": 0.954136690647482
+                  "samples": 6679,
+                  "probability": 0.954184758197335
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5605,
-                  "probability": 0.9666369313113292
+                  "samples": 5606,
+                  "probability": 0.9666428826257581
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4612,
-                  "probability": 0.9694275802254987
+                  "samples": 4619,
+                  "probability": 0.9692574150248972
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 3943,
-                  "probability": 0.9774283540451433
+                  "samples": 3946,
+                  "probability": 0.9774455144450076
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3330,
-                  "probability": 0.9813813813813814
+                  "samples": 3332,
+                  "probability": 0.9813925570228091
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2899,
-                  "probability": 0.9855122456019317
+                  "samples": 2901,
+                  "probability": 0.9855222337125129
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2359,
-                  "probability": 0.9851632047477745
+                  "samples": 2362,
+                  "probability": 0.985182049110923
                 },
                 {
                   "distanceBp": 14,
@@ -250,8 +250,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1668,
-                  "probability": 0.9886091127098321
+                  "samples": 1669,
+                  "probability": 0.9886159376872379
                 },
                 {
                   "distanceBp": 16,
@@ -260,8 +260,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1191,
-                  "probability": 0.9916036943744753
+                  "samples": 1193,
+                  "probability": 0.991617770326907
                 },
                 {
                   "distanceBp": 18,
@@ -275,8 +275,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 830,
-                  "probability": 0.9939759036144579
+                  "samples": 831,
+                  "probability": 0.9939831528279182
                 },
                 {
                   "distanceBp": 21,
@@ -290,8 +290,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 496,
-                  "probability": 0.9959677419354839
+                  "samples": 497,
+                  "probability": 0.9959758551307847
                 },
                 {
                   "distanceBp": 24,
@@ -332,68 +332,68 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 14240,
-                  "probability": 0.7300561797752809
+                  "samples": 14249,
+                  "probability": 0.7298757807565444
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 12476,
-                  "probability": 0.7826226354600834
+                  "samples": 12485,
+                  "probability": 0.7826191429715659
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10822,
-                  "probability": 0.8160229162816485
+                  "samples": 10829,
+                  "probability": 0.8160494967217656
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9135,
-                  "probability": 0.8471811713191023
+                  "samples": 9139,
+                  "probability": 0.8471386366123208
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7751,
-                  "probability": 0.8775641852664172
+                  "samples": 7758,
+                  "probability": 0.8776746584171178
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6375,
-                  "probability": 0.8956862745098039
+                  "samples": 6379,
+                  "probability": 0.8957516852171187
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5256,
-                  "probability": 0.9117199391171994
+                  "samples": 5263,
+                  "probability": 0.9118373551206537
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4234,
-                  "probability": 0.9253660840812471
+                  "samples": 4235,
+                  "probability": 0.925383707201889
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 3421,
-                  "probability": 0.932475884244373
+                  "samples": 3425,
+                  "probability": 0.9325547445255474
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2895,
-                  "probability": 0.9450777202072539
+                  "samples": 2896,
+                  "probability": 0.9450966850828729
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2345,
-                  "probability": 0.9462686567164179
+                  "samples": 2348,
+                  "probability": 0.9463373083475298
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2035,
-                  "probability": 0.9508599508599509
+                  "samples": 2038,
+                  "probability": 0.9509322865554465
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1673,
-                  "probability": 0.9569635385534967
+                  "samples": 1674,
+                  "probability": 0.956989247311828
                 },
                 {
                   "distanceBp": 15,
@@ -459,33 +459,33 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 15881,
-                  "probability": 0.6755242113217051
+                  "samples": 15889,
+                  "probability": 0.675498772735855
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 13500,
-                  "probability": 0.7231851851851852
+                  "samples": 13517,
+                  "probability": 0.7231634238366501
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10958,
-                  "probability": 0.7649206059499909
+                  "samples": 10968,
+                  "probability": 0.7650437636761488
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9025,
-                  "probability": 0.7871468144044321
+                  "samples": 9034,
+                  "probability": 0.7873588665043171
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7239,
-                  "probability": 0.811299903301561
+                  "samples": 7246,
+                  "probability": 0.8113441898978747
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5801,
-                  "probability": 0.8343389070849854
+                  "samples": 5807,
+                  "probability": 0.834510074048562
                 },
                 {
                   "distanceBp": 8,
@@ -494,23 +494,23 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3655,
-                  "probability": 0.8604651162790697
+                  "samples": 3658,
+                  "probability": 0.8605795516675779
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 2880,
-                  "probability": 0.8815972222222223
+                  "samples": 2881,
+                  "probability": 0.8816383200277681
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2267,
-                  "probability": 0.8928098808998677
+                  "samples": 2268,
+                  "probability": 0.8928571428571429
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1834,
-                  "probability": 0.8991275899672846
+                  "samples": 1835,
+                  "probability": 0.8991825613079019
                 },
                 {
                   "distanceBp": 13,
@@ -571,33 +571,33 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 18270,
-                  "probability": 0.6386425834701697
+                  "samples": 18284,
+                  "probability": 0.638536425289871
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 14249,
-                  "probability": 0.6768896062881605
+                  "samples": 14263,
+                  "probability": 0.677136647269158
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10573,
-                  "probability": 0.7015038305116807
+                  "samples": 10578,
+                  "probability": 0.70145585176782
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 7744,
-                  "probability": 0.7317923553719008
+                  "samples": 7750,
+                  "probability": 0.732
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 5529,
-                  "probability": 0.7549285585096762
+                  "samples": 5537,
+                  "probability": 0.7547408343868521
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 3998,
-                  "probability": 0.7728864432216108
+                  "samples": 4003,
+                  "probability": 0.7731701224081938
                 },
                 {
                   "distanceBp": 8,
@@ -611,8 +611,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1641,
-                  "probability": 0.8147471054235222
+                  "samples": 1642,
+                  "probability": 0.8148599269183922
                 },
                 {
                   "distanceBp": 11,
@@ -656,55 +656,55 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.24134917279804682,
-          "avgLeadPp": 2.5236861947313836,
+          "windowShare": 0.2413251307757303,
+          "avgLeadPp": 2.5217182929290014,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 5521,
-                  "probability": 0.8051077703314616
+                  "samples": 5526,
+                  "probability": 0.8049221860296779
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4880,
-                  "probability": 0.8696721311475409
+                  "samples": 4884,
+                  "probability": 0.8695741195741196
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4237,
-                  "probability": 0.9041774840689167
+                  "samples": 4239,
+                  "probability": 0.9042226940316113
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3696,
-                  "probability": 0.9264069264069265
+                  "samples": 3698,
+                  "probability": 0.92644672796106
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3044,
-                  "probability": 0.9434954007884363
+                  "samples": 3045,
+                  "probability": 0.9435139573070608
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2658,
-                  "probability": 0.9574868322046651
+                  "samples": 2659,
+                  "probability": 0.9575028206092516
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2161,
-                  "probability": 0.967144840351689
+                  "samples": 2162,
+                  "probability": 0.9671600370027752
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1758,
-                  "probability": 0.9670079635949943
+                  "samples": 1760,
+                  "probability": 0.9670454545454545
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1574,
-                  "probability": 0.974587039390089
+                  "samples": 1575,
+                  "probability": 0.9746031746031746
                 },
                 {
                   "distanceBp": 11,
@@ -713,8 +713,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1174,
-                  "probability": 0.9838160136286201
+                  "samples": 1176,
+                  "probability": 0.983843537414966
                 },
                 {
                   "distanceBp": 13,
@@ -738,8 +738,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 469,
-                  "probability": 0.9936034115138592
+                  "samples": 470,
+                  "probability": 0.9936170212765958
                 },
                 {
                   "distanceBp": 18,
@@ -765,18 +765,18 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 5969,
-                  "probability": 0.7319484000670129
+                  "samples": 5973,
+                  "probability": 0.7317930688096433
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5153,
-                  "probability": 0.7952648942363671
+                  "samples": 5156,
+                  "probability": 0.7949961210240496
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4473,
-                  "probability": 0.8247261345852895
+                  "samples": 4476,
+                  "probability": 0.8246201966041108
                 },
                 {
                   "distanceBp": 5,
@@ -785,18 +785,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3079,
-                  "probability": 0.8791815524520948
+                  "samples": 3082,
+                  "probability": 0.8792991563919533
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2498,
-                  "probability": 0.9059247397918335
+                  "samples": 2499,
+                  "probability": 0.9059623849539816
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2034,
-                  "probability": 0.9223205506391348
+                  "samples": 2037,
+                  "probability": 0.9224349533627885
                 },
                 {
                   "distanceBp": 9,
@@ -805,8 +805,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1320,
-                  "probability": 0.943939393939394
+                  "samples": 1322,
+                  "probability": 0.9440242057488654
                 },
                 {
                   "distanceBp": 11,
@@ -815,8 +815,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 909,
-                  "probability": 0.9405940594059405
+                  "samples": 910,
+                  "probability": 0.9406593406593406
                 },
                 {
                   "distanceBp": 13,
@@ -857,33 +857,33 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 6608,
-                  "probability": 0.6825060532687651
+                  "samples": 6609,
+                  "probability": 0.682402784082312
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5529,
-                  "probability": 0.7277988786398987
+                  "samples": 5536,
+                  "probability": 0.7276011560693642
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4407,
-                  "probability": 0.7703653278874518
+                  "samples": 4412,
+                  "probability": 0.7703989120580236
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3581,
-                  "probability": 0.7913990505445406
+                  "samples": 3586,
+                  "probability": 0.7916899051868377
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2880,
-                  "probability": 0.8225694444444445
+                  "samples": 2881,
+                  "probability": 0.8226310308920514
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2250,
-                  "probability": 0.8448888888888889
+                  "samples": 2251,
+                  "probability": 0.8449577965348734
                 },
                 {
                   "distanceBp": 8,
@@ -892,13 +892,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1373,
-                  "probability": 0.8747268754552076
+                  "samples": 1375,
+                  "probability": 0.8749090909090909
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1079,
-                  "probability": 0.8962001853568119
+                  "samples": 1080,
+                  "probability": 0.8962962962962963
                 },
                 {
                   "distanceBp": 11,
@@ -944,33 +944,33 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 7485,
-                  "probability": 0.6480961923847696
+                  "samples": 7489,
+                  "probability": 0.6478835625584191
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5675,
-                  "probability": 0.6761233480176212
+                  "samples": 5680,
+                  "probability": 0.6764084507042254
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4230,
-                  "probability": 0.7113475177304964
+                  "samples": 4232,
+                  "probability": 0.7112476370510397
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2961,
-                  "probability": 0.7480580884836204
+                  "samples": 2963,
+                  "probability": 0.7482281471481607
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2060,
-                  "probability": 0.7742718446601942
+                  "samples": 2061,
+                  "probability": 0.7743813682678311
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1517,
-                  "probability": 0.7719182597231378
+                  "samples": 1519,
+                  "probability": 0.7722185648452929
                 },
                 {
                   "distanceBp": 8,
@@ -1009,30 +1009,30 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.25991193612281444,
-          "avgLeadPp": 2.2836492581959384,
+          "windowShare": 0.25991854404602543,
+          "avgLeadPp": 2.281014784572878,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3919,
-                  "probability": 0.8091349834141363
+                  "samples": 3923,
+                  "probability": 0.8090746877389753
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3632,
-                  "probability": 0.852147577092511
+                  "samples": 3634,
+                  "probability": 0.8519537699504678
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3166,
-                  "probability": 0.8935565382185723
+                  "samples": 3170,
+                  "probability": 0.8936908517350157
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2768,
-                  "probability": 0.9132947976878613
+                  "samples": 2770,
+                  "probability": 0.9129963898916967
                 },
                 {
                   "distanceBp": 6,
@@ -1041,8 +1041,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2149,
-                  "probability": 0.9520707305723592
+                  "samples": 2152,
+                  "probability": 0.9521375464684015
                 },
                 {
                   "distanceBp": 8,
@@ -1051,18 +1051,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1505,
-                  "probability": 0.9760797342192691
+                  "samples": 1509,
+                  "probability": 0.975480450629556
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1241,
-                  "probability": 0.9790491539081386
+                  "samples": 1242,
+                  "probability": 0.9790660225442834
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1095,
-                  "probability": 0.9817351598173516
+                  "samples": 1096,
+                  "probability": 0.9817518248175182
                 },
                 {
                   "distanceBp": 12,
@@ -1071,8 +1071,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 731,
-                  "probability": 0.9917920656634747
+                  "samples": 734,
+                  "probability": 0.9918256130790191
                 },
                 {
                   "distanceBp": 14,
@@ -1118,48 +1118,48 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 4255,
-                  "probability": 0.7377203290246769
+                  "samples": 4257,
+                  "probability": 0.7376086445853888
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3803,
-                  "probability": 0.7817512490139363
+                  "samples": 3807,
+                  "probability": 0.7819805621224061
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3325,
-                  "probability": 0.8150375939849624
+                  "samples": 3326,
+                  "probability": 0.8150932050511125
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2884,
-                  "probability": 0.8408460471567267
+                  "samples": 2887,
+                  "probability": 0.8406650502251473
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2413,
-                  "probability": 0.8856195607128057
+                  "samples": 2416,
+                  "probability": 0.8857615894039735
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2057,
-                  "probability": 0.8925619834710744
+                  "samples": 2059,
+                  "probability": 0.8926663428848955
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1653,
-                  "probability": 0.9195402298850575
+                  "samples": 1655,
+                  "probability": 0.9196374622356496
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1391,
-                  "probability": 0.9266714593817398
+                  "samples": 1392,
+                  "probability": 0.9267241379310345
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1080,
-                  "probability": 0.9314814814814815
+                  "samples": 1081,
+                  "probability": 0.9315448658649399
                 },
                 {
                   "distanceBp": 11,
@@ -1168,8 +1168,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 730,
-                  "probability": 0.9561643835616438
+                  "samples": 731,
+                  "probability": 0.9562243502051984
                 },
                 {
                   "distanceBp": 13,
@@ -1178,8 +1178,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 541,
-                  "probability": 0.9630314232902033
+                  "samples": 542,
+                  "probability": 0.9630996309963099
                 },
                 {
                   "distanceBp": 15,
@@ -1210,33 +1210,33 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 4729,
-                  "probability": 0.6834425882850497
+                  "samples": 4733,
+                  "probability": 0.6832875554616522
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4085,
-                  "probability": 0.7297429620563035
+                  "samples": 4091,
+                  "probability": 0.7296504522121731
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3388,
-                  "probability": 0.7744982290436836
+                  "samples": 3391,
+                  "probability": 0.7746977292833972
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2809,
-                  "probability": 0.7985048059807761
+                  "samples": 2811,
+                  "probability": 0.7986481679117752
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2293,
-                  "probability": 0.8046227649367641
+                  "samples": 2297,
+                  "probability": 0.8045276447540269
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1890,
-                  "probability": 0.8306878306878307
+                  "samples": 1892,
+                  "probability": 0.8308668076109936
                 },
                 {
                   "distanceBp": 8,
@@ -1245,8 +1245,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1194,
-                  "probability": 0.8576214405360134
+                  "samples": 1195,
+                  "probability": 0.8577405857740585
                 },
                 {
                   "distanceBp": 10,
@@ -1287,33 +1287,33 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5442,
-                  "probability": 0.647372289599412
+                  "samples": 5447,
+                  "probability": 0.6473288048467046
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4230,
-                  "probability": 0.6869976359338061
+                  "samples": 4234,
+                  "probability": 0.6870571563533302
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3146,
-                  "probability": 0.7082008900190718
+                  "samples": 3148,
+                  "probability": 0.7080686149936467
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2416,
-                  "probability": 0.7442052980132451
+                  "samples": 2417,
+                  "probability": 0.7443111294993794
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1784,
-                  "probability": 0.7628923766816144
+                  "samples": 1790,
+                  "probability": 0.7620111731843575
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1232,
-                  "probability": 0.7702922077922078
+                  "samples": 1234,
+                  "probability": 0.7706645056726094
                 },
                 {
                   "distanceBp": 8,
@@ -1327,8 +1327,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 520,
-                  "probability": 0.8346153846153846
+                  "samples": 521,
+                  "probability": 0.8349328214971209
                 },
                 {
                   "distanceBp": 11,
@@ -1353,13 +1353,13 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "eth",
-      "windowCount": 210522,
+      "windowCount": 210659,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.022035701731885505,
-          "avgLeadPp": 6.863291250829715,
+          "windowShare": 0.02202137103090777,
+          "avgLeadPp": 6.870761732745454,
           "surface": {
             "byRemaining": {
               "1": [
@@ -1496,75 +1496,75 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5988970273890615,
-          "avgLeadPp": 1.8029006013105275,
+          "windowShare": 0.5989347713603501,
+          "avgLeadPp": 1.8027361907267465,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 9472,
-                  "probability": 0.7377533783783784
+                  "samples": 9478,
+                  "probability": 0.7376028698037561
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 9237,
-                  "probability": 0.7956046335390278
+                  "samples": 9250,
+                  "probability": 0.7955675675675675
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 8464,
-                  "probability": 0.8380198487712666
+                  "samples": 8473,
+                  "probability": 0.838073881742004
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8106,
-                  "probability": 0.8772514187021959
+                  "samples": 8112,
+                  "probability": 0.8772189349112426
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7273,
-                  "probability": 0.9049910628351436
+                  "samples": 7277,
+                  "probability": 0.9050432870688471
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6676,
-                  "probability": 0.9281006590772918
+                  "samples": 6679,
+                  "probability": 0.9281329540350352
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 6061,
-                  "probability": 0.9430786998845075
+                  "samples": 6062,
+                  "probability": 0.94308808973936
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5435,
-                  "probability": 0.9492180312787488
+                  "samples": 5438,
+                  "probability": 0.9492460463405664
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4819,
-                  "probability": 0.9584976136127827
+                  "samples": 4827,
+                  "probability": 0.9585663973482494
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4255,
-                  "probability": 0.9647473560517039
+                  "samples": 4259,
+                  "probability": 0.9647804648978634
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3905,
-                  "probability": 0.9736235595390526
+                  "samples": 3907,
+                  "probability": 0.9736370616841566
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3388,
-                  "probability": 0.9701889020070839
+                  "samples": 3390,
+                  "probability": 0.9702064896755163
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2965,
-                  "probability": 0.9801011804384485
+                  "samples": 2966,
+                  "probability": 0.9801078894133514
                 },
                 {
                   "distanceBp": 15,
@@ -1573,18 +1573,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2366,
-                  "probability": 0.9860524091293322
+                  "samples": 2368,
+                  "probability": 0.9860641891891891
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2116,
-                  "probability": 0.9877126654064272
+                  "samples": 2117,
+                  "probability": 0.9877184695323571
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1890,
-                  "probability": 0.9867724867724867
+                  "samples": 1893,
+                  "probability": 0.9867934495509773
                 },
                 {
                   "distanceBp": 19,
@@ -1593,13 +1593,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1478,
-                  "probability": 0.986468200270636
+                  "samples": 1479,
+                  "probability": 0.9864773495605138
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1329,
-                  "probability": 0.9947328818660647
+                  "samples": 1331,
+                  "probability": 0.994740796393689
                 },
                 {
                   "distanceBp": 22,
@@ -1648,8 +1648,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 31,
-                  "samples": 423,
-                  "probability": 0.9952718676122931
+                  "samples": 424,
+                  "probability": 0.9952830188679245
                 },
                 {
                   "distanceBp": 32,
@@ -1695,68 +1695,68 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 10562,
-                  "probability": 0.6624692293126302
+                  "samples": 10570,
+                  "probability": 0.6622516556291391
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 9992,
-                  "probability": 0.7174739791833467
+                  "samples": 10002,
+                  "probability": 0.7172565486902619
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 9431,
-                  "probability": 0.7585621885271976
+                  "samples": 9439,
+                  "probability": 0.7584489882402797
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8426,
-                  "probability": 0.7944457631141705
+                  "samples": 8432,
+                  "probability": 0.7943548387096774
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7673,
-                  "probability": 0.8172813762543986
+                  "samples": 7678,
+                  "probability": 0.8172701224277156
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6859,
-                  "probability": 0.8493949555328765
+                  "samples": 6867,
+                  "probability": 0.8495704092034367
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 6017,
-                  "probability": 0.8655476150905766
+                  "samples": 6020,
+                  "probability": 0.8656146179401993
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5372,
-                  "probability": 0.8957557706626954
+                  "samples": 5375,
+                  "probability": 0.8958139534883721
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4826,
-                  "probability": 0.8903854123497721
+                  "samples": 4831,
+                  "probability": 0.8904988615193542
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4164,
-                  "probability": 0.9053794428434198
+                  "samples": 4166,
+                  "probability": 0.9054248679788767
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3464,
-                  "probability": 0.9183025404157044
+                  "samples": 3466,
+                  "probability": 0.9183496826312753
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3101,
-                  "probability": 0.9222831344727507
+                  "samples": 3107,
+                  "probability": 0.9224332153202446
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2679,
-                  "probability": 0.9316909294512878
+                  "samples": 2680,
+                  "probability": 0.9317164179104478
                 },
                 {
                   "distanceBp": 15,
@@ -1770,8 +1770,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1795,
-                  "probability": 0.9481894150417828
+                  "samples": 1796,
+                  "probability": 0.9482182628062361
                 },
                 {
                   "distanceBp": 18,
@@ -1795,8 +1795,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 903,
-                  "probability": 0.973421926910299
+                  "samples": 904,
+                  "probability": 0.9734513274336283
                 },
                 {
                   "distanceBp": 23,
@@ -1867,48 +1867,48 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 12306,
-                  "probability": 0.6188850967007964
+                  "samples": 12317,
+                  "probability": 0.6188195177397093
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11475,
-                  "probability": 0.6665795206971677
+                  "samples": 11486,
+                  "probability": 0.6663764582970573
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10175,
-                  "probability": 0.710958230958231
+                  "samples": 10189,
+                  "probability": 0.7106683678476788
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9021,
-                  "probability": 0.7340649595388538
+                  "samples": 9027,
+                  "probability": 0.734130940511798
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7921,
-                  "probability": 0.7648024239363717
+                  "samples": 7929,
+                  "probability": 0.7650397275822929
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6854,
-                  "probability": 0.7793988911584476
+                  "samples": 6859,
+                  "probability": 0.7794139087330515
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5937,
-                  "probability": 0.7970355398349335
+                  "samples": 5941,
+                  "probability": 0.7971721932334623
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4956,
-                  "probability": 0.8171912832929782
+                  "samples": 4957,
+                  "probability": 0.8170264272745612
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4253,
-                  "probability": 0.8412885022337174
+                  "samples": 4255,
+                  "probability": 0.8413631022326674
                 },
                 {
                   "distanceBp": 11,
@@ -1917,8 +1917,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2981,
-                  "probability": 0.850050318685005
+                  "samples": 2983,
+                  "probability": 0.8501508548441167
                 },
                 {
                   "distanceBp": 13,
@@ -1927,8 +1927,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2214,
-                  "probability": 0.8947606142728094
+                  "samples": 2215,
+                  "probability": 0.8948081264108352
                 },
                 {
                   "distanceBp": 15,
@@ -1937,8 +1937,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1561,
-                  "probability": 0.8885329916720052
+                  "samples": 1562,
+                  "probability": 0.8886043533930857
                 },
                 {
                   "distanceBp": 17,
@@ -1957,8 +1957,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 841,
-                  "probability": 0.9108204518430439
+                  "samples": 843,
+                  "probability": 0.9110320284697508
                 },
                 {
                   "distanceBp": 21,
@@ -2019,38 +2019,38 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 15847,
-                  "probability": 0.6042784123177889
+                  "samples": 15864,
+                  "probability": 0.6041351487644983
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 13602,
-                  "probability": 0.6252756947507719
+                  "samples": 13615,
+                  "probability": 0.6253396988615497
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 11316,
-                  "probability": 0.6640155531990103
+                  "samples": 11321,
+                  "probability": 0.6641639431145658
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9510,
-                  "probability": 0.6903259726603576
+                  "samples": 9514,
+                  "probability": 0.6902459533319318
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7532,
-                  "probability": 0.7118959107806692
+                  "samples": 7539,
+                  "probability": 0.7120307733121104
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5892,
-                  "probability": 0.7163951120162932
+                  "samples": 5896,
+                  "probability": 0.7165875169606513
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 4620,
-                  "probability": 0.7512987012987012
+                  "samples": 4621,
+                  "probability": 0.7513525210993292
                 },
                 {
                   "distanceBp": 9,
@@ -2064,13 +2064,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 2292,
-                  "probability": 0.787521815008726
+                  "samples": 2294,
+                  "probability": 0.7877070619006102
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1853,
-                  "probability": 0.7900701565029682
+                  "samples": 1854,
+                  "probability": 0.7901833872707659
                 },
                 {
                   "distanceBp": 13,
@@ -2134,40 +2134,40 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.2487198487568995,
-          "avgLeadPp": 2.3400563171012636,
+          "windowShare": 0.2487669646205479,
+          "avgLeadPp": 2.3350872577072654,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 4171,
-                  "probability": 0.7461040517861424
+                  "samples": 4176,
+                  "probability": 0.7459291187739464
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3937,
-                  "probability": 0.8046736093472187
+                  "samples": 3942,
+                  "probability": 0.80441400304414
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3622,
-                  "probability": 0.841800110436223
+                  "samples": 3628,
+                  "probability": 0.8417861080485116
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3529,
-                  "probability": 0.8807027486540097
+                  "samples": 3531,
+                  "probability": 0.8807703200226564
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3071,
-                  "probability": 0.9111038749592967
+                  "samples": 3072,
+                  "probability": 0.9111328125
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2811,
-                  "probability": 0.9299181785841337
+                  "samples": 2812,
+                  "probability": 0.9299431009957326
                 },
                 {
                   "distanceBp": 8,
@@ -2176,18 +2176,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2208,
-                  "probability": 0.9528985507246377
+                  "samples": 2209,
+                  "probability": 0.9529198732458126
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1924,
-                  "probability": 0.9573804573804574
+                  "samples": 1928,
+                  "probability": 0.9574688796680498
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1677,
-                  "probability": 0.9672033392963626
+                  "samples": 1679,
+                  "probability": 0.9672424061941632
                 },
                 {
                   "distanceBp": 12,
@@ -2196,8 +2196,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1368,
-                  "probability": 0.9722222222222222
+                  "samples": 1370,
+                  "probability": 0.9722627737226277
                 },
                 {
                   "distanceBp": 14,
@@ -2211,13 +2211,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 898,
-                  "probability": 0.9844097995545658
+                  "samples": 899,
+                  "probability": 0.9844271412680756
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 795,
-                  "probability": 0.9861635220125786
+                  "samples": 796,
+                  "probability": 0.9861809045226131
                 },
                 {
                   "distanceBp": 18,
@@ -2231,12 +2231,12 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 568,
-                  "probability": 0.9859154929577465
+                  "samples": 569,
+                  "probability": 0.9859402460456942
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 519,
+                  "samples": 520,
                   "probability": 1
                 },
                 {
@@ -2278,33 +2278,33 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 4518,
-                  "probability": 0.6673306772908366
+                  "samples": 4524,
+                  "probability": 0.6668877099911583
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4263,
-                  "probability": 0.72366877785597
+                  "samples": 4266,
+                  "probability": 0.723159868729489
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4018,
-                  "probability": 0.7625684420109508
+                  "samples": 4021,
+                  "probability": 0.762496891320567
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3608,
-                  "probability": 0.8068181818181818
+                  "samples": 3610,
+                  "probability": 0.8069252077562327
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3234,
-                  "probability": 0.8200371057513914
+                  "samples": 3238,
+                  "probability": 0.8199505867819642
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2866,
-                  "probability": 0.8569434752267969
+                  "samples": 2872,
+                  "probability": 0.8572423398328691
                 },
                 {
                   "distanceBp": 8,
@@ -2313,18 +2313,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2200,
-                  "probability": 0.8986363636363637
+                  "samples": 2201,
+                  "probability": 0.898682417083144
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1962,
-                  "probability": 0.8863404689092762
+                  "samples": 1964,
+                  "probability": 0.8864562118126272
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1670,
-                  "probability": 0.9035928143712575
+                  "samples": 1671,
+                  "probability": 0.9036505086774387
                 },
                 {
                   "distanceBp": 12,
@@ -2333,8 +2333,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1235,
-                  "probability": 0.9352226720647774
+                  "samples": 1238,
+                  "probability": 0.9353796445880452
                 },
                 {
                   "distanceBp": 14,
@@ -2353,8 +2353,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 729,
-                  "probability": 0.9423868312757202
+                  "samples": 730,
+                  "probability": 0.9424657534246575
                 },
                 {
                   "distanceBp": 18,
@@ -2378,8 +2378,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 344,
-                  "probability": 0.9680232558139535
+                  "samples": 345,
+                  "probability": 0.9681159420289855
                 },
                 {
                   "distanceBp": 23,
@@ -2405,28 +2405,28 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 5292,
-                  "probability": 0.6273620559334845
+                  "samples": 5298,
+                  "probability": 0.6274065685164213
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4853,
-                  "probability": 0.6707191427982692
+                  "samples": 4860,
+                  "probability": 0.670164609053498
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4226,
-                  "probability": 0.7181732134406058
+                  "samples": 4232,
+                  "probability": 0.7176275992438563
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3775,
-                  "probability": 0.7422516556291391
+                  "samples": 3779,
+                  "probability": 0.7422598571050543
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3232,
-                  "probability": 0.7694925742574258
+                  "samples": 3236,
+                  "probability": 0.7697775030902348
                 },
                 {
                   "distanceBp": 7,
@@ -2435,18 +2435,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2411,
-                  "probability": 0.817917876399834
+                  "samples": 2413,
+                  "probability": 0.8180687940323249
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1988,
-                  "probability": 0.8174044265593562
+                  "samples": 1989,
+                  "probability": 0.8169934640522876
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1712,
-                  "probability": 0.8411214953271028
+                  "samples": 1713,
+                  "probability": 0.8412142440163456
                 },
                 {
                   "distanceBp": 11,
@@ -2455,8 +2455,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1216,
-                  "probability": 0.8421052631578947
+                  "samples": 1217,
+                  "probability": 0.8422350041084634
                 },
                 {
                   "distanceBp": 13,
@@ -2495,8 +2495,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 330,
-                  "probability": 0.9242424242424242
+                  "samples": 332,
+                  "probability": 0.9246987951807228
                 },
                 {
                   "distanceBp": 21,
@@ -2512,38 +2512,38 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 6793,
-                  "probability": 0.6147504784336817
+                  "samples": 6803,
+                  "probability": 0.614581802146112
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5707,
-                  "probability": 0.6365866479761696
+                  "samples": 5713,
+                  "probability": 0.636443199719937
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4685,
-                  "probability": 0.6749199573105656
+                  "samples": 4688,
+                  "probability": 0.6751279863481229
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3834,
-                  "probability": 0.6940532081377152
+                  "samples": 3835,
+                  "probability": 0.6938722294654498
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 3086,
-                  "probability": 0.7141931302657162
+                  "samples": 3091,
+                  "probability": 0.7143319314137819
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2383,
-                  "probability": 0.7184221569450273
+                  "samples": 2384,
+                  "probability": 0.7185402684563759
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1833,
-                  "probability": 0.7463175122749591
+                  "samples": 1834,
+                  "probability": 0.7464558342420938
                 },
                 {
                   "distanceBp": 9,
@@ -2597,40 +2597,40 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.25718927238008377,
-          "avgLeadPp": 2.1465650251133024,
+          "windowShare": 0.2572023981885417,
+          "avgLeadPp": 2.152020632729989,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 2788,
-                  "probability": 0.7356527977044476
+                  "samples": 2789,
+                  "probability": 0.7353890283255647
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2747,
-                  "probability": 0.78704040771751
+                  "samples": 2751,
+                  "probability": 0.7869865503453289
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2505,
-                  "probability": 0.8355289421157684
+                  "samples": 2508,
+                  "probability": 0.835725677830941
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2395,
-                  "probability": 0.8784968684759916
+                  "samples": 2398,
+                  "probability": 0.878231859883236
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2137,
-                  "probability": 0.9007955077211044
+                  "samples": 2139,
+                  "probability": 0.9008882655446471
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2056,
-                  "probability": 0.9289883268482491
+                  "samples": 2057,
+                  "probability": 0.929022848808945
                 },
                 {
                   "distanceBp": 8,
@@ -2639,18 +2639,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1711,
-                  "probability": 0.9473991817650497
+                  "samples": 1713,
+                  "probability": 0.9474605954465849
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1492,
-                  "probability": 0.975201072386059
+                  "samples": 1495,
+                  "probability": 0.9752508361204013
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1383,
-                  "probability": 0.9645697758496024
+                  "samples": 1385,
+                  "probability": 0.9646209386281589
                 },
                 {
                   "distanceBp": 12,
@@ -2664,8 +2664,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 977,
-                  "probability": 0.9805527123848515
+                  "samples": 978,
+                  "probability": 0.9805725971370143
                 },
                 {
                   "distanceBp": 15,
@@ -2674,8 +2674,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 741,
-                  "probability": 0.99055330634278
+                  "samples": 742,
+                  "probability": 0.9905660377358491
                 },
                 {
                   "distanceBp": 17,
@@ -2684,8 +2684,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 592,
-                  "probability": 0.9881756756756757
+                  "samples": 593,
+                  "probability": 0.9881956155143339
                 },
                 {
                   "distanceBp": 19,
@@ -2736,38 +2736,38 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3124,
-                  "probability": 0.6776568501920615
+                  "samples": 3125,
+                  "probability": 0.67776
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3021,
-                  "probability": 0.7159880834160874
+                  "samples": 3022,
+                  "probability": 0.7160820648577101
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2862,
-                  "probability": 0.7536687631027253
+                  "samples": 2866,
+                  "probability": 0.7533147243545011
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2557,
-                  "probability": 0.7876417676965194
+                  "samples": 2558,
+                  "probability": 0.7877247849882721
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2307,
-                  "probability": 0.8205461638491548
+                  "samples": 2308,
+                  "probability": 0.8206239168110918
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2102,
-                  "probability": 0.8549000951474786
+                  "samples": 2104,
+                  "probability": 0.8550380228136882
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1895,
-                  "probability": 0.8733509234828496
+                  "samples": 1897,
+                  "probability": 0.8734844491302056
                 },
                 {
                   "distanceBp": 9,
@@ -2776,13 +2776,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1541,
-                  "probability": 0.8955223880597015
+                  "samples": 1542,
+                  "probability": 0.8955901426718548
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1306,
-                  "probability": 0.9058192955589587
+                  "samples": 1307,
+                  "probability": 0.9058913542463657
                 },
                 {
                   "distanceBp": 12,
@@ -2791,13 +2791,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 968,
-                  "probability": 0.9235537190082644
+                  "samples": 970,
+                  "probability": 0.9237113402061856
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 841,
-                  "probability": 0.9369797859690844
+                  "samples": 842,
+                  "probability": 0.9370546318289786
                 },
                 {
                   "distanceBp": 15,
@@ -2853,38 +2853,38 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 3594,
-                  "probability": 0.6243739565943238
+                  "samples": 3596,
+                  "probability": 0.6243047830923248
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3439,
-                  "probability": 0.6728700203547543
+                  "samples": 3440,
+                  "probability": 0.6729651162790697
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3083,
-                  "probability": 0.7158611741809925
+                  "samples": 3087,
+                  "probability": 0.7159054097829608
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2726,
-                  "probability": 0.7252384446074835
+                  "samples": 2727,
+                  "probability": 0.7253392005867253
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2475,
-                  "probability": 0.7608080808080808
+                  "samples": 2477,
+                  "probability": 0.7610012111425111
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2104,
-                  "probability": 0.7832699619771863
+                  "samples": 2107,
+                  "probability": 0.783578547698149
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1830,
-                  "probability": 0.8
+                  "samples": 1831,
+                  "probability": 0.8001092299290006
                 },
                 {
                   "distanceBp": 9,
@@ -2893,8 +2893,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1344,
-                  "probability": 0.8519345238095238
+                  "samples": 1345,
+                  "probability": 0.8520446096654275
                 },
                 {
                   "distanceBp": 11,
@@ -2903,8 +2903,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 910,
-                  "probability": 0.8637362637362638
+                  "samples": 911,
+                  "probability": 0.8638858397365532
                 },
                 {
                   "distanceBp": 13,
@@ -2913,8 +2913,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 677,
-                  "probability": 0.8921713441654358
+                  "samples": 678,
+                  "probability": 0.8923303834808259
                 },
                 {
                   "distanceBp": 15,
@@ -2955,13 +2955,13 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 4551,
-                  "probability": 0.6104152933421226
+                  "samples": 4553,
+                  "probability": 0.6103667911267296
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3955,
-                  "probability": 0.6265486725663717
+                  "samples": 3958,
+                  "probability": 0.6268317331985851
                 },
                 {
                   "distanceBp": 4,
@@ -2970,18 +2970,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2906,
-                  "probability": 0.7040605643496215
+                  "samples": 2909,
+                  "probability": 0.7040220006875215
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2232,
-                  "probability": 0.7226702508960573
+                  "samples": 2234,
+                  "probability": 0.7229185317815577
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1773,
-                  "probability": 0.7320924985899605
+                  "samples": 1775,
+                  "probability": 0.7323943661971831
                 },
                 {
                   "distanceBp": 8,
@@ -3000,13 +3000,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 715,
-                  "probability": 0.779020979020979
+                  "samples": 717,
+                  "probability": 0.7796373779637378
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 549,
-                  "probability": 0.819672131147541
+                  "samples": 550,
+                  "probability": 0.82
                 },
                 {
                   "distanceBp": 13,
@@ -3036,100 +3036,100 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "sol",
-      "windowCount": 210506,
+      "windowCount": 210643,
       "leadingTables": [
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5954557114761575,
-          "avgLeadPp": 1.5896592359530932,
+          "windowShare": 0.5954387280849589,
+          "avgLeadPp": 1.5915435574096106,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 8135,
-                  "probability": 0.689121081745544
+                  "samples": 8143,
+                  "probability": 0.6891808915633059
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7266,
-                  "probability": 0.7484172859895403
+                  "samples": 7273,
+                  "probability": 0.7482469407397223
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6922,
-                  "probability": 0.791967639410575
+                  "samples": 6927,
+                  "probability": 0.7919734372744334
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 6437,
-                  "probability": 0.8303557557868573
+                  "samples": 6439,
+                  "probability": 0.8304084485168505
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6083,
-                  "probability": 0.8617458490876212
+                  "samples": 6089,
+                  "probability": 0.8617178518640171
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5839,
-                  "probability": 0.8888508306216818
+                  "samples": 5845,
+                  "probability": 0.8887938408896493
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5468,
-                  "probability": 0.9116678858814923
+                  "samples": 5471,
+                  "probability": 0.9117163224273441
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5153,
-                  "probability": 0.9237337473316515
+                  "samples": 5156,
+                  "probability": 0.9237781225756401
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4872,
-                  "probability": 0.9277504105090312
+                  "samples": 4874,
+                  "probability": 0.9277800574476815
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4450,
-                  "probability": 0.9404494382022472
+                  "samples": 4451,
+                  "probability": 0.940462817344417
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4024,
-                  "probability": 0.9527833001988072
+                  "samples": 4026,
+                  "probability": 0.9528067560854446
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3831,
-                  "probability": 0.9571913338553902
+                  "samples": 3834,
+                  "probability": 0.9572248304642671
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3531,
-                  "probability": 0.9626168224299065
+                  "samples": 3535,
+                  "probability": 0.9626591230551627
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3224,
-                  "probability": 0.9764267990074442
+                  "samples": 3226,
+                  "probability": 0.9764414135151891
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2941,
-                  "probability": 0.9748384903094186
+                  "samples": 2942,
+                  "probability": 0.9748470428280082
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2798,
-                  "probability": 0.9746247319513939
+                  "samples": 2799,
+                  "probability": 0.9746337977849232
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2514,
-                  "probability": 0.986873508353222
+                  "samples": 2515,
+                  "probability": 0.9868787276341948
                 },
                 {
                   "distanceBp": 19,
@@ -3138,33 +3138,33 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2091,
-                  "probability": 0.9818268770923003
+                  "samples": 2093,
+                  "probability": 0.9818442427138079
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1949,
-                  "probability": 0.9794766546947152
+                  "samples": 1950,
+                  "probability": 0.9794871794871794
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1728,
-                  "probability": 0.9861111111111112
+                  "samples": 1729,
+                  "probability": 0.9861191440138809
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1616,
-                  "probability": 0.9882425742574258
+                  "samples": 1617,
+                  "probability": 0.9882498453927026
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 1425,
-                  "probability": 0.9859649122807017
+                  "samples": 1426,
+                  "probability": 0.9859747545582047
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1329,
-                  "probability": 0.9917231000752446
+                  "samples": 1330,
+                  "probability": 0.9917293233082707
                 },
                 {
                   "distanceBp": 26,
@@ -3183,13 +3183,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 29,
-                  "samples": 890,
-                  "probability": 0.9932584269662922
+                  "samples": 891,
+                  "probability": 0.9932659932659933
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 803,
-                  "probability": 0.9900373599003736
+                  "samples": 804,
+                  "probability": 0.9900497512437811
                 },
                 {
                   "distanceBp": 31,
@@ -3198,13 +3198,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 717,
-                  "probability": 0.9944211994421199
+                  "samples": 718,
+                  "probability": 0.9944289693593314
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 608,
-                  "probability": 0.9967105263157895
+                  "samples": 609,
+                  "probability": 0.9967159277504105
                 },
                 {
                   "distanceBp": 34,
@@ -3275,93 +3275,93 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 8987,
-                  "probability": 0.6259040836764215
+                  "samples": 8993,
+                  "probability": 0.6260424774824864
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8151,
-                  "probability": 0.682615629984051
+                  "samples": 8158,
+                  "probability": 0.6826428046089728
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 7803,
-                  "probability": 0.7071639113161604
+                  "samples": 7811,
+                  "probability": 0.7070797593137882
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 6966,
-                  "probability": 0.7497846683893196
+                  "samples": 6970,
+                  "probability": 0.7499282639885222
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6465,
-                  "probability": 0.7781902552204176
+                  "samples": 6474,
+                  "probability": 0.7781896818041396
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6257,
-                  "probability": 0.805657663416973
+                  "samples": 6261,
+                  "probability": 0.8054623862002875
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5840,
-                  "probability": 0.8273972602739726
+                  "samples": 5842,
+                  "probability": 0.8272851763094831
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5335,
-                  "probability": 0.8376757263355201
+                  "samples": 5338,
+                  "probability": 0.8377669539153241
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4923,
-                  "probability": 0.8612634572415194
+                  "samples": 4929,
+                  "probability": 0.8614323392168797
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4373,
-                  "probability": 0.877887034072719
+                  "samples": 4376,
+                  "probability": 0.8779707495429616
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 4100,
-                  "probability": 0.8924390243902439
+                  "samples": 4104,
+                  "probability": 0.8925438596491229
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3782,
-                  "probability": 0.8958223162347964
+                  "samples": 3784,
+                  "probability": 0.895877378435518
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3314,
-                  "probability": 0.9091732045866023
+                  "samples": 3315,
+                  "probability": 0.9092006033182504
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3087,
-                  "probability": 0.9099449303530937
+                  "samples": 3089,
+                  "probability": 0.9100032372936225
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2739,
-                  "probability": 0.9131069733479372
+                  "samples": 2741,
+                  "probability": 0.9131703757752645
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2512,
-                  "probability": 0.929140127388535
+                  "samples": 2513,
+                  "probability": 0.9291683247115002
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2274,
-                  "probability": 0.9371152154793315
+                  "samples": 2275,
+                  "probability": 0.9371428571428572
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2031,
-                  "probability": 0.9399310684391925
+                  "samples": 2033,
+                  "probability": 0.9399901623216921
                 },
                 {
                   "distanceBp": 20,
@@ -3370,13 +3370,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 1608,
-                  "probability": 0.9458955223880597
+                  "samples": 1609,
+                  "probability": 0.9459291485394655
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1502,
-                  "probability": 0.9587217043941412
+                  "samples": 1503,
+                  "probability": 0.9587491683300067
                 },
                 {
                   "distanceBp": 23,
@@ -3400,8 +3400,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 839,
-                  "probability": 0.9678188319427891
+                  "samples": 840,
+                  "probability": 0.9678571428571429
                 },
                 {
                   "distanceBp": 28,
@@ -3482,68 +3482,68 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 10445,
-                  "probability": 0.6025849688846338
+                  "samples": 10454,
+                  "probability": 0.6026401377463172
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 9366,
-                  "probability": 0.6360239162929746
+                  "samples": 9373,
+                  "probability": 0.6356556065293929
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 8848,
-                  "probability": 0.6672694394213382
+                  "samples": 8854,
+                  "probability": 0.6674949175513892
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 7747,
-                  "probability": 0.6892990835161998
+                  "samples": 7756,
+                  "probability": 0.6892728210417741
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7079,
-                  "probability": 0.71874558553468
+                  "samples": 7085,
+                  "probability": 0.718983768525053
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6718,
-                  "probability": 0.7427805894611491
+                  "samples": 6726,
+                  "probability": 0.7427891763306571
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 6167,
-                  "probability": 0.7643911139938382
+                  "samples": 6169,
+                  "probability": 0.7644674987842438
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5343,
-                  "probability": 0.7754070746771476
+                  "samples": 5346,
+                  "probability": 0.7755331088664422
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4975,
-                  "probability": 0.8012060301507538
+                  "samples": 4979,
+                  "probability": 0.8009640490058244
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4464,
-                  "probability": 0.817652329749104
+                  "samples": 4466,
+                  "probability": 0.8177339901477833
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3915,
-                  "probability": 0.8268199233716476
+                  "samples": 3917,
+                  "probability": 0.8269083482256829
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3470,
-                  "probability": 0.8268011527377521
+                  "samples": 3471,
+                  "probability": 0.8268510515701527
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3020,
-                  "probability": 0.8433774834437087
+                  "samples": 3022,
+                  "probability": 0.8434811383189941
                 },
                 {
                   "distanceBp": 15,
@@ -3552,13 +3552,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2280,
-                  "probability": 0.8535087719298246
+                  "samples": 2281,
+                  "probability": 0.8535729943007453
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2142,
-                  "probability": 0.8800186741363212
+                  "samples": 2143,
+                  "probability": 0.8800746616892208
                 },
                 {
                   "distanceBp": 18,
@@ -3572,8 +3572,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1433,
-                  "probability": 0.8960223307745987
+                  "samples": 1435,
+                  "probability": 0.8961672473867596
                 },
                 {
                   "distanceBp": 21,
@@ -3592,8 +3592,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 865,
-                  "probability": 0.9086705202312139
+                  "samples": 866,
+                  "probability": 0.9087759815242494
                 },
                 {
                   "distanceBp": 25,
@@ -3659,63 +3659,63 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 14186,
-                  "probability": 0.5833920766953334
+                  "samples": 14201,
+                  "probability": 0.5831279487360045
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11815,
-                  "probability": 0.611426153195091
+                  "samples": 11826,
+                  "probability": 0.6113647894469812
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10601,
-                  "probability": 0.6376756909725497
+                  "samples": 10609,
+                  "probability": 0.6377603921198982
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9058,
-                  "probability": 0.6594170898653124
+                  "samples": 9063,
+                  "probability": 0.6596049873110449
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7787,
-                  "probability": 0.6745858482085527
+                  "samples": 7791,
+                  "probability": 0.6747529200359389
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6725,
-                  "probability": 0.699182156133829
+                  "samples": 6730,
+                  "probability": 0.6992570579494799
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5650,
-                  "probability": 0.7224778761061947
+                  "samples": 5651,
+                  "probability": 0.7225269863740931
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4751,
-                  "probability": 0.7219532729951589
+                  "samples": 4753,
+                  "probability": 0.7220702714075321
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4133,
-                  "probability": 0.73118799903218
+                  "samples": 4136,
+                  "probability": 0.7313829787234043
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3492,
-                  "probability": 0.7597365406643757
+                  "samples": 3494,
+                  "probability": 0.7598740698340012
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 2872,
-                  "probability": 0.7534818941504178
+                  "samples": 2874,
+                  "probability": 0.7533054975643703
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2375,
-                  "probability": 0.7612631578947369
+                  "samples": 2376,
+                  "probability": 0.7613636363636364
                 },
                 {
                   "distanceBp": 14,
@@ -3739,8 +3739,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 973,
-                  "probability": 0.8242548818088387
+                  "samples": 974,
+                  "probability": 0.824435318275154
                 },
                 {
                   "distanceBp": 19,
@@ -3789,55 +3789,55 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.22543775474333272,
-          "avgLeadPp": 2.0341475974251826,
+          "windowShare": 0.22546203766562384,
+          "avgLeadPp": 2.0384599391875096,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3245,
-                  "probability": 0.70231124807396
+                  "samples": 3248,
+                  "probability": 0.7022783251231527
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2840,
-                  "probability": 0.7609154929577465
+                  "samples": 2845,
+                  "probability": 0.7606326889279438
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2673,
-                  "probability": 0.7875046763935653
+                  "samples": 2674,
+                  "probability": 0.787584143605086
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2539,
-                  "probability": 0.8404883812524616
+                  "samples": 2540,
+                  "probability": 0.8405511811023622
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2423,
-                  "probability": 0.8666941807676434
+                  "samples": 2427,
+                  "probability": 0.8669138854552946
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2212,
-                  "probability": 0.8919529837251357
+                  "samples": 2213,
+                  "probability": 0.8920018075011297
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2042,
-                  "probability": 0.9275220372184133
+                  "samples": 2045,
+                  "probability": 0.9276283618581908
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1922,
-                  "probability": 0.9240374609781478
+                  "samples": 1923,
+                  "probability": 0.9240769630785232
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1836,
-                  "probability": 0.9357298474945533
+                  "samples": 1837,
+                  "probability": 0.9357648339684268
                 },
                 {
                   "distanceBp": 11,
@@ -3851,33 +3851,33 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1483,
-                  "probability": 0.9649359406608227
+                  "samples": 1484,
+                  "probability": 0.9649595687331537
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1323,
-                  "probability": 0.9674981103552532
+                  "samples": 1325,
+                  "probability": 0.9675471698113207
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1212,
-                  "probability": 0.971947194719472
+                  "samples": 1214,
+                  "probability": 0.9719934102141681
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1101,
-                  "probability": 0.9745685740236149
+                  "samples": 1102,
+                  "probability": 0.9745916515426497
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 1008,
-                  "probability": 0.9781746031746031
+                  "samples": 1009,
+                  "probability": 0.9781962338949455
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 931,
-                  "probability": 0.9881847475832438
+                  "samples": 932,
+                  "probability": 0.9881974248927039
                 },
                 {
                   "distanceBp": 19,
@@ -3886,8 +3886,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 783,
-                  "probability": 0.9846743295019157
+                  "samples": 784,
+                  "probability": 0.9846938775510204
                 },
                 {
                   "distanceBp": 21,
@@ -3896,8 +3896,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 629,
-                  "probability": 0.9920508744038156
+                  "samples": 630,
+                  "probability": 0.9920634920634921
                 },
                 {
                   "distanceBp": 23,
@@ -3946,13 +3946,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 248,
-                  "probability": 0.9879032258064516
+                  "samples": 249,
+                  "probability": 0.9879518072289156
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 221,
-                  "probability": 0.995475113122172
+                  "samples": 222,
+                  "probability": 0.9954954954954955
                 },
                 {
                   "distanceBp": 34,
@@ -3963,38 +3963,38 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3491,
-                  "probability": 0.6253222572328846
+                  "samples": 3493,
+                  "probability": 0.6255367878614372
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3214,
-                  "probability": 0.6826384567517113
+                  "samples": 3215,
+                  "probability": 0.6827371695178849
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3027,
-                  "probability": 0.7198546415592997
+                  "samples": 3031,
+                  "probability": 0.719894424282415
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2720,
-                  "probability": 0.7691176470588236
+                  "samples": 2723,
+                  "probability": 0.7693720161586486
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2494,
-                  "probability": 0.7838813151563753
+                  "samples": 2500,
+                  "probability": 0.784
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2404,
-                  "probability": 0.8111480865224625
+                  "samples": 2406,
+                  "probability": 0.8108894430590191
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2239,
-                  "probability": 0.833407771326485
+                  "samples": 2240,
+                  "probability": 0.8334821428571428
                 },
                 {
                   "distanceBp": 9,
@@ -4003,23 +4003,23 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1851,
-                  "probability": 0.8725013506212858
+                  "samples": 1854,
+                  "probability": 0.8727076591154261
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1665,
-                  "probability": 0.8852852852852853
+                  "samples": 1666,
+                  "probability": 0.8853541416566627
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1510,
-                  "probability": 0.8993377483443709
+                  "samples": 1512,
+                  "probability": 0.8994708994708994
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1393,
-                  "probability": 0.9023689877961235
+                  "samples": 1394,
+                  "probability": 0.9024390243902439
                 },
                 {
                   "distanceBp": 14,
@@ -4028,13 +4028,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1155,
-                  "probability": 0.9238095238095239
+                  "samples": 1157,
+                  "probability": 0.9239412273120138
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1007,
-                  "probability": 0.9126117179741807
+                  "samples": 1009,
+                  "probability": 0.9127849355797819
                 },
                 {
                   "distanceBp": 17,
@@ -4048,8 +4048,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 767,
-                  "probability": 0.940026075619296
+                  "samples": 768,
+                  "probability": 0.9401041666666666
                 },
                 {
                   "distanceBp": 20,
@@ -4115,63 +4115,63 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 4130,
-                  "probability": 0.6058111380145278
+                  "samples": 4135,
+                  "probability": 0.6060459492140265
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3808,
-                  "probability": 0.6349789915966386
+                  "samples": 3812,
+                  "probability": 0.6345750262329486
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3408,
-                  "probability": 0.670481220657277
+                  "samples": 3412,
+                  "probability": 0.6708675263774913
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2869,
-                  "probability": 0.6981526664342976
+                  "samples": 2870,
+                  "probability": 0.6982578397212543
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2680,
-                  "probability": 0.7347014925373134
+                  "samples": 2681,
+                  "probability": 0.7348004475941813
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2580,
-                  "probability": 0.7569767441860465
+                  "samples": 2586,
+                  "probability": 0.757153905645785
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2432,
-                  "probability": 0.7705592105263158
+                  "samples": 2434,
+                  "probability": 0.770747740345111
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1965,
-                  "probability": 0.7908396946564885
+                  "samples": 1966,
+                  "probability": 0.7909460834181078
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1828,
-                  "probability": 0.8025164113785558
+                  "samples": 1830,
+                  "probability": 0.8016393442622951
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1655,
-                  "probability": 0.8181268882175227
+                  "samples": 1656,
+                  "probability": 0.8182367149758454
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1410,
-                  "probability": 0.826950354609929
+                  "samples": 1411,
+                  "probability": 0.8270729978738484
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1243,
-                  "probability": 0.826226870474658
+                  "samples": 1244,
+                  "probability": 0.8263665594855305
                 },
                 {
                   "distanceBp": 14,
@@ -4205,8 +4205,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 504,
-                  "probability": 0.8869047619047619
+                  "samples": 505,
+                  "probability": 0.8871287128712871
                 },
                 {
                   "distanceBp": 21,
@@ -4225,8 +4225,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 309,
-                  "probability": 0.9061488673139159
+                  "samples": 310,
+                  "probability": 0.9064516129032258
                 },
                 {
                   "distanceBp": 25,
@@ -4242,38 +4242,38 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5530,
-                  "probability": 0.5721518987341773
+                  "samples": 5536,
+                  "probability": 0.571893063583815
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4564,
-                  "probability": 0.6115249780893953
+                  "samples": 4570,
+                  "probability": 0.611378555798687
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4006,
-                  "probability": 0.6435346979530704
+                  "samples": 4009,
+                  "probability": 0.6438014467448241
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3493,
-                  "probability": 0.6535929000858861
+                  "samples": 3494,
+                  "probability": 0.6536920435031482
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2863,
-                  "probability": 0.6695773663988823
+                  "samples": 2865,
+                  "probability": 0.6698080279232111
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2486,
-                  "probability": 0.7023330651649236
+                  "samples": 2488,
+                  "probability": 0.702572347266881
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2072,
-                  "probability": 0.736003861003861
+                  "samples": 2073,
+                  "probability": 0.7361312108055957
                 },
                 {
                   "distanceBp": 9,
@@ -4282,8 +4282,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1505,
-                  "probability": 0.7308970099667774
+                  "samples": 1506,
+                  "probability": 0.7310756972111554
                 },
                 {
                   "distanceBp": 11,
@@ -4292,13 +4292,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1023,
-                  "probability": 0.772238514173998
+                  "samples": 1025,
+                  "probability": 0.7717073170731708
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 886,
-                  "probability": 0.781038374717833
+                  "samples": 887,
+                  "probability": 0.7812852311161218
                 },
                 {
                   "distanceBp": 14,
@@ -4342,20 +4342,20 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.2668047466580525,
-          "avgLeadPp": 2.1459616558257393,
+          "windowShare": 0.2667831354471784,
+          "avgLeadPp": 2.1476001091609658,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 2484,
-                  "probability": 0.6896135265700483
+                  "samples": 2487,
+                  "probability": 0.6895858464012867
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2237,
-                  "probability": 0.7496647295485025
+                  "samples": 2239,
+                  "probability": 0.7494417150513623
                 },
                 {
                   "distanceBp": 4,
@@ -4369,13 +4369,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1817,
-                  "probability": 0.8536048431480462
+                  "samples": 1819,
+                  "probability": 0.8532160527762507
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1869,
-                  "probability": 0.889780631353665
+                  "samples": 1872,
+                  "probability": 0.8899572649572649
                 },
                 {
                   "distanceBp": 8,
@@ -4384,8 +4384,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1651,
-                  "probability": 0.9248940036341611
+                  "samples": 1653,
+                  "probability": 0.9249848759830611
                 },
                 {
                   "distanceBp": 10,
@@ -4394,23 +4394,23 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1397,
-                  "probability": 0.9377236936292055
+                  "samples": 1398,
+                  "probability": 0.9377682403433476
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1328,
-                  "probability": 0.9533132530120482
+                  "samples": 1329,
+                  "probability": 0.9533483822422875
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1234,
-                  "probability": 0.9529983792544571
+                  "samples": 1235,
+                  "probability": 0.9530364372469635
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1165,
-                  "probability": 0.9648068669527897
+                  "samples": 1167,
+                  "probability": 0.9648671808054842
                 },
                 {
                   "distanceBp": 15,
@@ -4439,13 +4439,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 672,
-                  "probability": 0.9806547619047619
+                  "samples": 673,
+                  "probability": 0.9806835066864784
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 614,
-                  "probability": 0.9755700325732899
+                  "samples": 615,
+                  "probability": 0.975609756097561
                 },
                 {
                   "distanceBp": 22,
@@ -4454,13 +4454,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 530,
-                  "probability": 0.9924528301886792
+                  "samples": 531,
+                  "probability": 0.992467043314501
                 },
                 {
                   "distanceBp": 24,
-                  "samples": 459,
-                  "probability": 0.9912854030501089
+                  "samples": 460,
+                  "probability": 0.991304347826087
                 },
                 {
                   "distanceBp": 25,
@@ -4489,8 +4489,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 233,
-                  "probability": 0.9871244635193133
+                  "samples": 234,
+                  "probability": 0.9871794871794872
                 },
                 {
                   "distanceBp": 31,
@@ -4511,28 +4511,28 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 2792,
-                  "probability": 0.6318051575931232
+                  "samples": 2794,
+                  "probability": 0.6317108088761632
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2478,
-                  "probability": 0.6791767554479419
+                  "samples": 2481,
+                  "probability": 0.679161628375655
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2428,
-                  "probability": 0.7166392092257001
+                  "samples": 2431,
+                  "probability": 0.7165775401069518
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2153,
-                  "probability": 0.7454714352066883
+                  "samples": 2154,
+                  "probability": 0.7455896007428041
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2043,
-                  "probability": 0.7924620655898189
+                  "samples": 2045,
+                  "probability": 0.7921760391198044
                 },
                 {
                   "distanceBp": 7,
@@ -4541,28 +4541,28 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1884,
-                  "probability": 0.8290870488322718
+                  "samples": 1885,
+                  "probability": 0.8286472148541114
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1750,
-                  "probability": 0.844
+                  "samples": 1753,
+                  "probability": 0.8442669709070165
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1611,
-                  "probability": 0.8684047175667288
+                  "samples": 1613,
+                  "probability": 0.8685678859268444
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1418,
-                  "probability": 0.8843441466854725
+                  "samples": 1420,
+                  "probability": 0.8845070422535212
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1348,
-                  "probability": 0.8946587537091988
+                  "samples": 1350,
+                  "probability": 0.8948148148148148
                 },
                 {
                   "distanceBp": 13,
@@ -4571,8 +4571,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1122,
-                  "probability": 0.910873440285205
+                  "samples": 1123,
+                  "probability": 0.9109528049866429
                 },
                 {
                   "distanceBp": 15,
@@ -4596,8 +4596,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 600,
-                  "probability": 0.9533333333333334
+                  "samples": 601,
+                  "probability": 0.9534109816971714
                 },
                 {
                   "distanceBp": 20,
@@ -4611,8 +4611,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 491,
-                  "probability": 0.9633401221995926
+                  "samples": 492,
+                  "probability": 0.9634146341463414
                 },
                 {
                   "distanceBp": 23,
@@ -4636,8 +4636,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 27,
-                  "samples": 307,
-                  "probability": 0.9837133550488599
+                  "samples": 308,
+                  "probability": 0.9837662337662337
                 },
                 {
                   "distanceBp": 28,
@@ -4663,28 +4663,28 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2862,
-                  "probability": 0.6464011180992313
+                  "samples": 2864,
+                  "probability": 0.645949720670391
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2743,
-                  "probability": 0.6802770689026614
+                  "samples": 2745,
+                  "probability": 0.6805100182149363
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2481,
-                  "probability": 0.6904474002418379
+                  "samples": 2486,
+                  "probability": 0.6902654867256637
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2165,
-                  "probability": 0.7233256351039261
+                  "samples": 2169,
+                  "probability": 0.7238358690640848
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2090,
-                  "probability": 0.745933014354067
+                  "samples": 2091,
+                  "probability": 0.7460545193687231
                 },
                 {
                   "distanceBp": 8,
@@ -4693,23 +4693,23 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1714,
-                  "probability": 0.7847141190198367
+                  "samples": 1716,
+                  "probability": 0.784965034965035
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1582,
-                  "probability": 0.8053097345132744
+                  "samples": 1583,
+                  "probability": 0.8054327226784587
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1458,
-                  "probability": 0.8257887517146777
+                  "samples": 1459,
+                  "probability": 0.8259081562714188
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1277,
-                  "probability": 0.8324197337509789
+                  "samples": 1278,
+                  "probability": 0.8325508607198748
                 },
                 {
                   "distanceBp": 13,
@@ -4718,8 +4718,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 948,
-                  "probability": 0.8364978902953587
+                  "samples": 949,
+                  "probability": 0.8366701791359326
                 },
                 {
                   "distanceBp": 15,
@@ -4785,33 +4785,33 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 4262,
-                  "probability": 0.6051149694978883
+                  "samples": 4267,
+                  "probability": 0.6048746191703773
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3633,
-                  "probability": 0.6289567850261492
+                  "samples": 3634,
+                  "probability": 0.6290588882773803
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3305,
-                  "probability": 0.6511346444780636
+                  "samples": 3309,
+                  "probability": 0.6512541553339377
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2784,
-                  "probability": 0.6616379310344828
+                  "samples": 2786,
+                  "probability": 0.6618808327351041
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2439,
-                  "probability": 0.6920869208692086
+                  "samples": 2440,
+                  "probability": 0.6922131147540984
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2088,
-                  "probability": 0.710727969348659
+                  "samples": 2090,
+                  "probability": 0.7105263157894737
                 },
                 {
                   "distanceBp": 8,
@@ -4820,18 +4820,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1546,
-                  "probability": 0.7238033635187581
+                  "samples": 1548,
+                  "probability": 0.7241602067183462
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1246,
-                  "probability": 0.7504012841091493
+                  "samples": 1247,
+                  "probability": 0.7506014434643143
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1087,
-                  "probability": 0.7700091996320148
+                  "samples": 1088,
+                  "probability": 0.7702205882352942
                 },
                 {
                   "distanceBp": 12,
@@ -4886,13 +4886,13 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "xrp",
-      "windowCount": 210438,
+      "windowCount": 210575,
       "leadingTables": [
         {
           "algoId": "vol_only_3",
           "regime": "low_vol",
-          "windowShare": 0.012683070548094926,
-          "avgLeadPp": 4.075832942653989,
+          "windowShare": 0.012674818948118248,
+          "avgLeadPp": 4.0583405305573805,
           "surface": {
             "byRemaining": {
               "1": [
@@ -4969,75 +4969,75 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5986703922295403,
-          "avgLeadPp": 1.3967060080665792,
+          "windowShare": 0.5987557877240888,
+          "avgLeadPp": 1.3952312909768376,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 7697,
-                  "probability": 0.708327919968819
+                  "samples": 7710,
+                  "probability": 0.708171206225681
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 9111,
-                  "probability": 0.7837778509494018
+                  "samples": 9121,
+                  "probability": 0.7839052735445675
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6600,
-                  "probability": 0.828939393939394
+                  "samples": 6610,
+                  "probability": 0.8288956127080181
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8095,
-                  "probability": 0.8611488573193329
+                  "samples": 8100,
+                  "probability": 0.8612345679012345
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6155,
-                  "probability": 0.8849715678310317
+                  "samples": 6161,
+                  "probability": 0.8847589677000487
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6227,
-                  "probability": 0.9116749638670306
+                  "samples": 6232,
+                  "probability": 0.9117458279845956
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5234,
-                  "probability": 0.9136415743217424
+                  "samples": 5237,
+                  "probability": 0.9136910444911208
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5302,
-                  "probability": 0.9336099585062241
+                  "samples": 5307,
+                  "probability": 0.9336725080082909
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4420,
-                  "probability": 0.9343891402714932
+                  "samples": 4423,
+                  "probability": 0.9344336423242143
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4346,
-                  "probability": 0.9456971928209849
+                  "samples": 4348,
+                  "probability": 0.9457221711131555
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3477,
-                  "probability": 0.9554213402358355
+                  "samples": 3481,
+                  "probability": 0.9554725653547831
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3517,
-                  "probability": 0.9564970145009951
+                  "samples": 3520,
+                  "probability": 0.9565340909090909
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3021,
-                  "probability": 0.9635882158225753
+                  "samples": 3026,
+                  "probability": 0.9636483807005949
                 },
                 {
                   "distanceBp": 15,
@@ -5046,28 +5046,28 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2570,
-                  "probability": 0.9642023346303502
+                  "samples": 2571,
+                  "probability": 0.9642162582652665
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2213,
-                  "probability": 0.9783099864437416
+                  "samples": 2214,
+                  "probability": 0.978319783197832
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2101,
-                  "probability": 0.9738219895287958
+                  "samples": 2102,
+                  "probability": 0.9738344433872502
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1845,
-                  "probability": 0.975609756097561
+                  "samples": 1846,
+                  "probability": 0.9756229685807151
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1739,
-                  "probability": 0.9787234042553191
+                  "samples": 1740,
+                  "probability": 0.978735632183908
                 },
                 {
                   "distanceBp": 21,
@@ -5081,8 +5081,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 1324,
-                  "probability": 0.9856495468277946
+                  "samples": 1325,
+                  "probability": 0.9856603773584905
                 },
                 {
                   "distanceBp": 24,
@@ -5136,8 +5136,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 34,
-                  "samples": 514,
-                  "probability": 0.9883268482490273
+                  "samples": 515,
+                  "probability": 0.9883495145631068
                 },
                 {
                   "distanceBp": 35,
@@ -5203,63 +5203,63 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 8633,
-                  "probability": 0.663500521255647
+                  "samples": 8644,
+                  "probability": 0.6633503007866728
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 10005,
-                  "probability": 0.7085457271364318
+                  "samples": 10017,
+                  "probability": 0.7084955575521613
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 7244,
-                  "probability": 0.7395085588072888
+                  "samples": 7256,
+                  "probability": 0.7396637265711136
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8562,
-                  "probability": 0.7834618079887876
+                  "samples": 8567,
+                  "probability": 0.7835881872300688
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6478,
-                  "probability": 0.7959246681074406
+                  "samples": 6482,
+                  "probability": 0.7957420549213206
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6378,
-                  "probability": 0.8322358105989338
+                  "samples": 6389,
+                  "probability": 0.8323681327281265
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5526,
-                  "probability": 0.8512486427795874
+                  "samples": 5528,
+                  "probability": 0.8513024602026049
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5199,
-                  "probability": 0.8590113483362185
+                  "samples": 5207,
+                  "probability": 0.8592279623583637
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4277,
-                  "probability": 0.8887070376432079
+                  "samples": 4280,
+                  "probability": 0.888785046728972
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4220,
-                  "probability": 0.8810426540284361
+                  "samples": 4223,
+                  "probability": 0.8806535638171916
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3364,
-                  "probability": 0.8950653983353151
+                  "samples": 3368,
+                  "probability": 0.8951900237529691
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3257,
-                  "probability": 0.8996008596868283
+                  "samples": 3258,
+                  "probability": 0.8996316758747698
                 },
                 {
                   "distanceBp": 14,
@@ -5278,8 +5278,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2036,
-                  "probability": 0.918467583497053
+                  "samples": 2037,
+                  "probability": 0.9185076092292587
                 },
                 {
                   "distanceBp": 18,
@@ -5353,8 +5353,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 493,
-                  "probability": 0.9553752535496958
+                  "samples": 494,
+                  "probability": 0.9554655870445344
                 },
                 {
                   "distanceBp": 33,
@@ -5410,58 +5410,58 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 10108,
-                  "probability": 0.6302928373565493
+                  "samples": 10127,
+                  "probability": 0.6304927421743853
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11350,
-                  "probability": 0.6684581497797357
+                  "samples": 11359,
+                  "probability": 0.6684567303459812
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 8028,
-                  "probability": 0.6879671150971599
+                  "samples": 8044,
+                  "probability": 0.6877175534559921
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9071,
-                  "probability": 0.7184433910263477
+                  "samples": 9082,
+                  "probability": 0.7187844087205462
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6745,
-                  "probability": 0.7386212008895479
+                  "samples": 6749,
+                  "probability": 0.7384797747814491
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6512,
-                  "probability": 0.7682739557739557
+                  "samples": 6517,
+                  "probability": 0.7681448519257327
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5460,
-                  "probability": 0.7919413919413919
+                  "samples": 5463,
+                  "probability": 0.7920556470803588
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4936,
-                  "probability": 0.7994327390599676
+                  "samples": 4939,
+                  "probability": 0.799352095565904
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4116,
-                  "probability": 0.8158406219630709
+                  "samples": 4117,
+                  "probability": 0.8158853534126791
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3897,
-                  "probability": 0.8270464459840903
+                  "samples": 3899,
+                  "probability": 0.8271351628622724
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3026,
-                  "probability": 0.8331130204890945
+                  "samples": 3028,
+                  "probability": 0.833223249669749
                 },
                 {
                   "distanceBp": 13,
@@ -5495,8 +5495,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1339,
-                  "probability": 0.8775205377147125
+                  "samples": 1340,
+                  "probability": 0.8776119402985074
                 },
                 {
                   "distanceBp": 20,
@@ -5550,8 +5550,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 384,
-                  "probability": 0.9244791666666666
+                  "samples": 385,
+                  "probability": 0.9246753246753247
                 },
                 {
                   "distanceBp": 31,
@@ -5587,43 +5587,43 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 13043,
-                  "probability": 0.5957218431342483
+                  "samples": 13064,
+                  "probability": 0.5959124311083894
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 13464,
-                  "probability": 0.6289364230540702
+                  "samples": 13471,
+                  "probability": 0.6289065399747606
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 9115,
-                  "probability": 0.6609983543609435
+                  "samples": 9124,
+                  "probability": 0.6608943445857081
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 9386,
-                  "probability": 0.6870871510760708
+                  "samples": 9389,
+                  "probability": 0.6871871338800725
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6890,
-                  "probability": 0.6986937590711175
+                  "samples": 6897,
+                  "probability": 0.6988545744526605
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5911,
-                  "probability": 0.7093554390120115
+                  "samples": 5917,
+                  "probability": 0.7093121514280886
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 4816,
-                  "probability": 0.7207225913621262
+                  "samples": 4817,
+                  "probability": 0.7207805688187668
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 3986,
-                  "probability": 0.7320622177621676
+                  "samples": 3987,
+                  "probability": 0.7321294206170053
                 },
                 {
                   "distanceBp": 10,
@@ -5642,8 +5642,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1991,
-                  "probability": 0.7744851833249623
+                  "samples": 1992,
+                  "probability": 0.7745983935742972
                 },
                 {
                   "distanceBp": 14,
@@ -5737,55 +5737,55 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.24901871335025044,
-          "avgLeadPp": 1.7317789033843183,
+          "windowShare": 0.24898492223673274,
+          "avgLeadPp": 1.7313844107860819,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 3162,
-                  "probability": 0.7084123972169513
+                  "samples": 3165,
+                  "probability": 0.7083728278041074
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3975,
-                  "probability": 0.7924528301886793
+                  "samples": 3979,
+                  "probability": 0.7926614727318422
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2714,
-                  "probability": 0.8212969786293294
+                  "samples": 2717,
+                  "probability": 0.8211262421788738
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3439,
-                  "probability": 0.8676940971212562
+                  "samples": 3440,
+                  "probability": 0.8677325581395349
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2535,
-                  "probability": 0.886785009861933
+                  "samples": 2536,
+                  "probability": 0.8868296529968455
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2710,
-                  "probability": 0.9125461254612546
+                  "samples": 2711,
+                  "probability": 0.9125783843600147
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2220,
-                  "probability": 0.9112612612612613
+                  "samples": 2221,
+                  "probability": 0.9113012156686178
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2260,
-                  "probability": 0.9336283185840708
+                  "samples": 2261,
+                  "probability": 0.9336576735957541
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1832,
-                  "probability": 0.9339519650655022
+                  "samples": 1833,
+                  "probability": 0.9339879978177851
                 },
                 {
                   "distanceBp": 11,
@@ -5804,8 +5804,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1218,
-                  "probability": 0.9638752052545156
+                  "samples": 1221,
+                  "probability": 0.963963963963964
                 },
                 {
                   "distanceBp": 15,
@@ -5824,13 +5824,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 816,
-                  "probability": 0.9779411764705882
+                  "samples": 817,
+                  "probability": 0.97796817625459
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 726,
-                  "probability": 0.9738292011019284
+                  "samples": 727,
+                  "probability": 0.9738651994497937
                 },
                 {
                   "distanceBp": 20,
@@ -5849,8 +5849,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 23,
-                  "samples": 519,
-                  "probability": 0.9922928709055877
+                  "samples": 520,
+                  "probability": 0.9923076923076923
                 },
                 {
                   "distanceBp": 24,
@@ -5911,53 +5911,53 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3521,
-                  "probability": 0.6773643851178642
+                  "samples": 3523,
+                  "probability": 0.6772636957138802
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4374,
-                  "probability": 0.7210791037951532
+                  "samples": 4377,
+                  "probability": 0.7210418094585332
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2976,
-                  "probability": 0.7459677419354839
+                  "samples": 2980,
+                  "probability": 0.7463087248322148
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3749,
-                  "probability": 0.7948786343024806
+                  "samples": 3751,
+                  "probability": 0.7949880031991469
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2682,
-                  "probability": 0.7979120059656972
+                  "samples": 2683,
+                  "probability": 0.7979873276183377
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2685,
-                  "probability": 0.8271880819366852
+                  "samples": 2688,
+                  "probability": 0.8273809523809523
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2306,
-                  "probability": 0.8512575888985255
+                  "samples": 2307,
+                  "probability": 0.8513220632856524
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2142,
-                  "probability": 0.8613445378151261
+                  "samples": 2144,
+                  "probability": 0.8614738805970149
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1749,
-                  "probability": 0.8896512292738707
+                  "samples": 1751,
+                  "probability": 0.8897772701313535
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1660,
-                  "probability": 0.8801204819277109
+                  "samples": 1661,
+                  "probability": 0.8795906080674293
                 },
                 {
                   "distanceBp": 12,
@@ -6063,28 +6063,28 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 4166,
-                  "probability": 0.6334613538166106
+                  "samples": 4172,
+                  "probability": 0.6339884947267498
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4965,
-                  "probability": 0.6773413897280967
+                  "samples": 4967,
+                  "probability": 0.6772699818804108
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3330,
-                  "probability": 0.6915915915915916
+                  "samples": 3336,
+                  "probability": 0.6918465227817746
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3911,
-                  "probability": 0.7299923293275377
+                  "samples": 3915,
+                  "probability": 0.7302681992337164
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2736,
-                  "probability": 0.7386695906432749
+                  "samples": 2738,
+                  "probability": 0.7384952520087655
                 },
                 {
                   "distanceBp": 7,
@@ -6098,8 +6098,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2030,
-                  "probability": 0.7975369458128079
+                  "samples": 2031,
+                  "probability": 0.7971442639094042
                 },
                 {
                   "distanceBp": 10,
@@ -6113,8 +6113,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1202,
-                  "probability": 0.8311148086522463
+                  "samples": 1203,
+                  "probability": 0.8312551953449709
                 },
                 {
                   "distanceBp": 13,
@@ -6200,33 +6200,33 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 5357,
-                  "probability": 0.6040694418517827
+                  "samples": 5364,
+                  "probability": 0.6040268456375839
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 5815,
-                  "probability": 0.6261392949269131
+                  "samples": 5818,
+                  "probability": 0.6261601925060158
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3654,
-                  "probability": 0.6713191023535852
+                  "samples": 3655,
+                  "probability": 0.6711354309165527
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3989,
-                  "probability": 0.6876410127851592
+                  "samples": 3990,
+                  "probability": 0.6877192982456141
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2735,
-                  "probability": 0.6917733089579524
+                  "samples": 2736,
+                  "probability": 0.6918859649122807
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2461,
-                  "probability": 0.7054043071921983
+                  "samples": 2462,
+                  "probability": 0.7055239642567018
                 },
                 {
                   "distanceBp": 8,
@@ -6305,75 +6305,75 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.2551630408956557,
-          "avgLeadPp": 1.7584213145935044,
+          "windowShare": 0.255281966045352,
+          "avgLeadPp": 1.7611163331636777,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 2314,
-                  "probability": 0.709161624891962
+                  "samples": 2319,
+                  "probability": 0.7084950409659336
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2643,
-                  "probability": 0.7832009080590239
+                  "samples": 2647,
+                  "probability": 0.7835285228560634
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 1968,
-                  "probability": 0.8358739837398373
+                  "samples": 1973,
+                  "probability": 0.8357830714647745
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2426,
-                  "probability": 0.8602638087386645
+                  "samples": 2428,
+                  "probability": 0.8603789126853377
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1891,
-                  "probability": 0.8836594394500265
+                  "samples": 1895,
+                  "probability": 0.883377308707124
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1845,
-                  "probability": 0.9208672086720867
+                  "samples": 1848,
+                  "probability": 0.920995670995671
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1578,
-                  "probability": 0.9188846641318125
+                  "samples": 1580,
+                  "probability": 0.9189873417721519
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1631,
-                  "probability": 0.9393010423053342
+                  "samples": 1633,
+                  "probability": 0.9393753827311696
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1325,
-                  "probability": 0.9381132075471698
+                  "samples": 1327,
+                  "probability": 0.9382064807837227
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1349,
-                  "probability": 0.9458858413639734
+                  "samples": 1350,
+                  "probability": 0.945925925925926
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1054,
-                  "probability": 0.961100569259962
+                  "samples": 1056,
+                  "probability": 0.9611742424242424
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1096,
-                  "probability": 0.9635036496350365
+                  "samples": 1099,
+                  "probability": 0.9636032757051866
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 963,
-                  "probability": 0.9626168224299065
+                  "samples": 965,
+                  "probability": 0.9626943005181348
                 },
                 {
                   "distanceBp": 15,
@@ -6382,8 +6382,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 788,
-                  "probability": 0.9682741116751269
+                  "samples": 789,
+                  "probability": 0.9683143219264893
                 },
                 {
                   "distanceBp": 17,
@@ -6402,8 +6402,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 512,
-                  "probability": 0.974609375
+                  "samples": 513,
+                  "probability": 0.9746588693957114
                 },
                 {
                   "distanceBp": 21,
@@ -6454,63 +6454,63 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 2556,
-                  "probability": 0.6525821596244131
+                  "samples": 2561,
+                  "probability": 0.6524795001952363
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2853,
-                  "probability": 0.7055730809674028
+                  "samples": 2858,
+                  "probability": 0.7057382785164451
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2172,
-                  "probability": 0.7352670349907919
+                  "samples": 2178,
+                  "probability": 0.7355371900826446
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2452,
-                  "probability": 0.7871125611745514
+                  "samples": 2455,
+                  "probability": 0.7873727087576374
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1948,
-                  "probability": 0.803388090349076
+                  "samples": 1950,
+                  "probability": 0.803076923076923
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1939,
-                  "probability": 0.8401237751418257
+                  "samples": 1944,
+                  "probability": 0.8400205761316872
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1682,
-                  "probability": 0.8519619500594531
+                  "samples": 1683,
+                  "probability": 0.8520499108734403
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1613,
-                  "probability": 0.8586484810911346
+                  "samples": 1615,
+                  "probability": 0.8588235294117647
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1296,
-                  "probability": 0.9020061728395061
+                  "samples": 1297,
+                  "probability": 0.9020817270624518
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1337,
-                  "probability": 0.8982797307404637
+                  "samples": 1338,
+                  "probability": 0.898355754857997
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1049,
-                  "probability": 0.8722592945662536
+                  "samples": 1051,
+                  "probability": 0.8725023786869648
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1007,
-                  "probability": 0.9046673286991063
+                  "samples": 1008,
+                  "probability": 0.9047619047619048
                 },
                 {
                   "distanceBp": 14,
@@ -6529,8 +6529,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 623,
-                  "probability": 0.9390048154093098
+                  "samples": 624,
+                  "probability": 0.9391025641025641
                 },
                 {
                   "distanceBp": 18,
@@ -6586,23 +6586,23 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 2996,
-                  "probability": 0.6285046728971962
+                  "samples": 3003,
+                  "probability": 0.6287046287046287
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3265,
-                  "probability": 0.6728943338437978
+                  "samples": 3271,
+                  "probability": 0.6728829104249465
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2413,
-                  "probability": 0.6862826357231662
+                  "samples": 2417,
+                  "probability": 0.6859743483657427
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2679,
-                  "probability": 0.7125793206420306
+                  "samples": 2685,
+                  "probability": 0.7132216014897579
                 },
                 {
                   "distanceBp": 6,
@@ -6611,18 +6611,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1935,
-                  "probability": 0.7808785529715763
+                  "samples": 1936,
+                  "probability": 0.7804752066115702
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1655,
-                  "probability": 0.795166163141994
+                  "samples": 1658,
+                  "probability": 0.7955367913148371
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1492,
-                  "probability": 0.8183646112600537
+                  "samples": 1493,
+                  "probability": 0.8184862692565305
                 },
                 {
                   "distanceBp": 10,
@@ -6631,13 +6631,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1201,
-                  "probability": 0.8226477935054122
+                  "samples": 1203,
+                  "probability": 0.8229426433915212
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 931,
-                  "probability": 0.8302900107411385
+                  "samples": 932,
+                  "probability": 0.8304721030042919
                 },
                 {
                   "distanceBp": 13,
@@ -6671,8 +6671,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 422,
-                  "probability": 0.8957345971563981
+                  "samples": 423,
+                  "probability": 0.8959810874704491
                 },
                 {
                   "distanceBp": 20,
@@ -6703,43 +6703,43 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 3902,
-                  "probability": 0.5996924654023578
+                  "samples": 3908,
+                  "probability": 0.6003070624360286
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3812,
-                  "probability": 0.642707240293809
+                  "samples": 3816,
+                  "probability": 0.6425576519916143
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2807,
-                  "probability": 0.6537228357677235
+                  "samples": 2813,
+                  "probability": 0.6537504443654462
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2735,
-                  "probability": 0.6983546617915904
+                  "samples": 2737,
+                  "probability": 0.6985750822067958
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2080,
-                  "probability": 0.7139423076923077
+                  "samples": 2082,
+                  "probability": 0.7142170989433237
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1765,
-                  "probability": 0.715014164305949
+                  "samples": 1770,
+                  "probability": 0.7146892655367232
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1482,
-                  "probability": 0.7125506072874493
+                  "samples": 1483,
+                  "probability": 0.7127444369521241
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1204,
-                  "probability": 0.7450166112956811
+                  "samples": 1205,
+                  "probability": 0.7452282157676349
                 },
                 {
                   "distanceBp": 10,
@@ -6758,8 +6758,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 609,
-                  "probability": 0.8013136288998358
+                  "samples": 610,
+                  "probability": 0.8016393442622951
                 },
                 {
                   "distanceBp": 14,
@@ -6799,90 +6799,90 @@ export const probabilityTable: ProbabilityTable = {
     },
     {
       "asset": "doge",
-      "windowCount": 207293,
+      "windowCount": 207427,
       "leadingTables": [
         {
           "algoId": "vol_quartiles_4",
           "regime": "vol_q2",
-          "windowShare": 0.5940432141944012,
-          "avgLeadPp": 1.6272153179571744,
+          "windowShare": 0.5941415534139721,
+          "avgLeadPp": 1.6258222134890183,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 6792,
-                  "probability": 0.6706419316843345
+                  "samples": 6797,
+                  "probability": 0.6705899661615419
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 6554,
-                  "probability": 0.7291730241074154
+                  "samples": 6560,
+                  "probability": 0.7291158536585366
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 6620,
-                  "probability": 0.7848942598187311
+                  "samples": 6629,
+                  "probability": 0.7847337456629959
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 6006,
-                  "probability": 0.8125208125208125
+                  "samples": 6012,
+                  "probability": 0.8125415834996673
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 5744,
-                  "probability": 0.8377437325905293
+                  "samples": 5750,
+                  "probability": 0.8377391304347827
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 5704,
-                  "probability": 0.8678120617110799
+                  "samples": 5711,
+                  "probability": 0.8679740850989319
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5319,
-                  "probability": 0.8915209625869525
+                  "samples": 5327,
+                  "probability": 0.8916838746010888
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4890,
-                  "probability": 0.9220858895705522
+                  "samples": 4893,
+                  "probability": 0.9221336603310852
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4562,
-                  "probability": 0.9256904866286716
+                  "samples": 4563,
+                  "probability": 0.925706771860618
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4303,
-                  "probability": 0.938182663258192
+                  "samples": 4305,
+                  "probability": 0.9382113821138212
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3969,
-                  "probability": 0.9370118417737465
+                  "samples": 3973,
+                  "probability": 0.9370752579914422
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3662,
-                  "probability": 0.9524849808847624
+                  "samples": 3663,
+                  "probability": 0.9524979524979525
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3389,
-                  "probability": 0.962820891118324
+                  "samples": 3390,
+                  "probability": 0.9628318584070796
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3168,
-                  "probability": 0.9633838383838383
+                  "samples": 3171,
+                  "probability": 0.9634184799747714
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2894,
-                  "probability": 0.9678645473393227
+                  "samples": 2897,
+                  "probability": 0.9678978253365551
                 },
                 {
                   "distanceBp": 17,
@@ -6891,28 +6891,28 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2496,
-                  "probability": 0.9747596153846154
+                  "samples": 2499,
+                  "probability": 0.9747899159663865
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2300,
-                  "probability": 0.9778260869565217
+                  "samples": 2302,
+                  "probability": 0.977845351867941
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 2205,
-                  "probability": 0.98140589569161
+                  "samples": 2206,
+                  "probability": 0.9814143245693563
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 2009,
-                  "probability": 0.9830761572921851
+                  "samples": 2011,
+                  "probability": 0.9830929885629041
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1861,
-                  "probability": 0.9860290166577109
+                  "samples": 1863,
+                  "probability": 0.9860440150295223
                 },
                 {
                   "distanceBp": 23,
@@ -6926,8 +6926,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 1321,
-                  "probability": 0.987887963663891
+                  "samples": 1322,
+                  "probability": 0.9878971255673222
                 },
                 {
                   "distanceBp": 26,
@@ -6951,8 +6951,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 956,
-                  "probability": 0.9895397489539749
+                  "samples": 957,
+                  "probability": 0.9895506792058516
                 },
                 {
                   "distanceBp": 31,
@@ -6966,8 +6966,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 719,
-                  "probability": 0.9930458970792768
+                  "samples": 721,
+                  "probability": 0.9930651872399445
                 },
                 {
                   "distanceBp": 34,
@@ -6976,8 +6976,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 35,
-                  "samples": 614,
-                  "probability": 0.988599348534202
+                  "samples": 615,
+                  "probability": 0.9886178861788618
                 },
                 {
                   "distanceBp": 36,
@@ -7046,7 +7046,7 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 49,
-                  "samples": 217,
+                  "samples": 218,
                   "probability": 1
                 },
                 {
@@ -7058,53 +7058,53 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 7610,
-                  "probability": 0.6250985545335085
+                  "samples": 7614,
+                  "probability": 0.625164171263462
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 7490,
-                  "probability": 0.6590120160213618
+                  "samples": 7496,
+                  "probability": 0.6590181430096052
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 7233,
-                  "probability": 0.6977740909719342
+                  "samples": 7238,
+                  "probability": 0.6977065487703785
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 6639,
-                  "probability": 0.7300798312998945
+                  "samples": 6643,
+                  "probability": 0.730091825982237
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6189,
-                  "probability": 0.7636128615285184
+                  "samples": 6194,
+                  "probability": 0.7638036809815951
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6025,
-                  "probability": 0.8004979253112033
+                  "samples": 6034,
+                  "probability": 0.800298309579052
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5689,
-                  "probability": 0.8177184039374231
+                  "samples": 5697,
+                  "probability": 0.8176233105143058
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5117,
-                  "probability": 0.8340824701973812
+                  "samples": 5123,
+                  "probability": 0.833886394690611
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4683,
-                  "probability": 0.8518043988896007
+                  "samples": 4686,
+                  "probability": 0.8516858728126334
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4312,
-                  "probability": 0.8601576994434137
+                  "samples": 4318,
+                  "probability": 0.8603520148216767
                 },
                 {
                   "distanceBp": 12,
@@ -7113,43 +7113,43 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3623,
-                  "probability": 0.8893182445487166
+                  "samples": 3629,
+                  "probability": 0.8895012400110223
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3268,
-                  "probability": 0.8993268053855569
+                  "samples": 3269,
+                  "probability": 0.8993576017130621
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 3111,
-                  "probability": 0.9080681452909033
+                  "samples": 3114,
+                  "probability": 0.9081567116249197
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2826,
-                  "probability": 0.9104741684359519
+                  "samples": 2829,
+                  "probability": 0.9105691056910569
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 2559,
-                  "probability": 0.9101211410707307
+                  "samples": 2562,
+                  "probability": 0.9102263856362217
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 2308,
-                  "probability": 0.9311091854419411
+                  "samples": 2309,
+                  "probability": 0.9311390212213079
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 2107,
-                  "probability": 0.9378262933080209
+                  "samples": 2109,
+                  "probability": 0.9378852536747273
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1970,
-                  "probability": 0.9360406091370559
+                  "samples": 1971,
+                  "probability": 0.9360730593607306
                 },
                 {
                   "distanceBp": 21,
@@ -7158,8 +7158,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 1616,
-                  "probability": 0.943069306930693
+                  "samples": 1617,
+                  "probability": 0.943104514533086
                 },
                 {
                   "distanceBp": 23,
@@ -7178,8 +7178,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 1125,
-                  "probability": 0.96
+                  "samples": 1127,
+                  "probability": 0.9591836734693877
                 },
                 {
                   "distanceBp": 27,
@@ -7188,8 +7188,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 855,
-                  "probability": 0.9415204678362573
+                  "samples": 856,
+                  "probability": 0.9415887850467289
                 },
                 {
                   "distanceBp": 29,
@@ -7280,78 +7280,78 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 9180,
-                  "probability": 0.5913943355119826
+                  "samples": 9188,
+                  "probability": 0.5914235959947758
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 8768,
-                  "probability": 0.6360629562043796
+                  "samples": 8776,
+                  "probability": 0.6361668185961714
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 8230,
-                  "probability": 0.670352369380316
+                  "samples": 8242,
+                  "probability": 0.6704683329289007
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 7398,
-                  "probability": 0.6931603135982698
+                  "samples": 7405,
+                  "probability": 0.6931802835921674
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 6881,
-                  "probability": 0.713413748001744
+                  "samples": 6887,
+                  "probability": 0.7135182227384929
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6368,
-                  "probability": 0.7320979899497487
+                  "samples": 6370,
+                  "probability": 0.7318681318681318
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5813,
-                  "probability": 0.7529674866678135
+                  "samples": 5823,
+                  "probability": 0.7527047913446677
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 5203,
-                  "probability": 0.7676340572746493
+                  "samples": 5212,
+                  "probability": 0.7676515732924022
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4738,
-                  "probability": 0.7927395525538202
+                  "samples": 4739,
+                  "probability": 0.7927832876134205
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 4252,
-                  "probability": 0.8057384760112888
+                  "samples": 4255,
+                  "probability": 0.8056404230317273
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 3823,
-                  "probability": 0.8260528380852733
+                  "samples": 3825,
+                  "probability": 0.8261437908496732
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 3495,
-                  "probability": 0.8271816881258941
+                  "samples": 3497,
+                  "probability": 0.8272805261652846
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 3033,
-                  "probability": 0.8371249587866798
+                  "samples": 3035,
+                  "probability": 0.8369028006589786
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 2729,
-                  "probability": 0.8512275558812752
+                  "samples": 2730,
+                  "probability": 0.8512820512820513
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 2390,
-                  "probability": 0.8451882845188284
+                  "samples": 2391,
+                  "probability": 0.8452530322040988
                 },
                 {
                   "distanceBp": 17,
@@ -7360,18 +7360,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 1970,
-                  "probability": 0.867005076142132
+                  "samples": 1971,
+                  "probability": 0.8670725520040589
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 1703,
-                  "probability": 0.8725778038755138
+                  "samples": 1704,
+                  "probability": 0.8720657276995305
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 1586,
-                  "probability": 0.8631778058007566
+                  "samples": 1587,
+                  "probability": 0.8632640201638311
                 },
                 {
                   "distanceBp": 21,
@@ -7410,8 +7410,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 670,
-                  "probability": 0.9059701492537313
+                  "samples": 671,
+                  "probability": 0.9061102831594635
                 },
                 {
                   "distanceBp": 29,
@@ -7430,8 +7430,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 32,
-                  "samples": 404,
-                  "probability": 0.9183168316831684
+                  "samples": 405,
+                  "probability": 0.9185185185185185
                 },
                 {
                   "distanceBp": 33,
@@ -7472,53 +7472,53 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 12387,
-                  "probability": 0.5742310486800678
+                  "samples": 12396,
+                  "probability": 0.574298160696999
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 11240,
-                  "probability": 0.6100533807829182
+                  "samples": 11249,
+                  "probability": 0.609920881856165
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 10179,
-                  "probability": 0.631594459180666
+                  "samples": 10187,
+                  "probability": 0.6314911161283989
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 8748,
-                  "probability": 0.6522633744855967
+                  "samples": 8759,
+                  "probability": 0.6522434067815961
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 7595,
-                  "probability": 0.6784726793943384
+                  "samples": 7605,
+                  "probability": 0.6786324786324787
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 6500,
-                  "probability": 0.6912307692307692
+                  "samples": 6502,
+                  "probability": 0.6911719470932021
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 5623,
-                  "probability": 0.712253245598435
+                  "samples": 5629,
+                  "probability": 0.7125599573636525
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 4730,
-                  "probability": 0.7260042283298097
+                  "samples": 4734,
+                  "probability": 0.7262357414448669
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 4052,
-                  "probability": 0.7287759131293189
+                  "samples": 4054,
+                  "probability": 0.7289097187962507
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 3500,
-                  "probability": 0.7408571428571429
+                  "samples": 3501,
+                  "probability": 0.7406455298486146
                 },
                 {
                   "distanceBp": 12,
@@ -7527,13 +7527,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 2485,
-                  "probability": 0.7613682092555332
+                  "samples": 2488,
+                  "probability": 0.7612540192926045
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 2203,
-                  "probability": 0.7571493418066273
+                  "samples": 2205,
+                  "probability": 0.7569160997732426
                 },
                 {
                   "distanceBp": 15,
@@ -7542,8 +7542,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1529,
-                  "probability": 0.7867887508175277
+                  "samples": 1530,
+                  "probability": 0.7862745098039216
                 },
                 {
                   "distanceBp": 17,
@@ -7627,55 +7627,55 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "no_trend_low_vol",
-          "windowShare": 0.23252594154168255,
-          "avgLeadPp": 1.8616843456631682,
+          "windowShare": 0.23256374531762983,
+          "avgLeadPp": 1.863421730458832,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 2746,
-                  "probability": 0.6755280407865987
+                  "samples": 2749,
+                  "probability": 0.6758821389596217
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2618,
-                  "probability": 0.7207792207792207
+                  "samples": 2619,
+                  "probability": 0.7208858342878961
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2636,
-                  "probability": 0.7928679817905918
+                  "samples": 2639,
+                  "probability": 0.7931034482758621
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2438,
-                  "probability": 0.8215750615258408
+                  "samples": 2441,
+                  "probability": 0.8217943465792708
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2257,
-                  "probability": 0.82233052724856
+                  "samples": 2258,
+                  "probability": 0.8224092116917626
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2306,
-                  "probability": 0.8655680832610582
+                  "samples": 2308,
+                  "probability": 0.865684575389948
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2148,
-                  "probability": 0.888733705772812
+                  "samples": 2153,
+                  "probability": 0.8889921040408733
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1921,
-                  "probability": 0.91827173347215
+                  "samples": 1922,
+                  "probability": 0.9183142559833507
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1766,
-                  "probability": 0.9269535673839184
+                  "samples": 1767,
+                  "probability": 0.9269949066213922
                 },
                 {
                   "distanceBp": 11,
@@ -7684,8 +7684,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1513,
-                  "probability": 0.9471249173826835
+                  "samples": 1516,
+                  "probability": 0.9472295514511874
                 },
                 {
                   "distanceBp": 13,
@@ -7694,8 +7694,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1326,
-                  "probability": 0.9638009049773756
+                  "samples": 1327,
+                  "probability": 0.9638281838733986
                 },
                 {
                   "distanceBp": 15,
@@ -7704,8 +7704,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1152,
-                  "probability": 0.9626736111111112
+                  "samples": 1154,
+                  "probability": 0.962738301559792
                 },
                 {
                   "distanceBp": 17,
@@ -7714,18 +7714,18 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 936,
-                  "probability": 0.9829059829059829
+                  "samples": 937,
+                  "probability": 0.9829242262540021
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 860,
-                  "probability": 0.9825581395348837
+                  "samples": 861,
+                  "probability": 0.9825783972125436
                 },
                 {
                   "distanceBp": 20,
-                  "samples": 808,
-                  "probability": 0.9814356435643564
+                  "samples": 809,
+                  "probability": 0.9814585908529048
                 },
                 {
                   "distanceBp": 21,
@@ -7774,8 +7774,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 30,
-                  "samples": 367,
-                  "probability": 0.9918256130790191
+                  "samples": 368,
+                  "probability": 0.9918478260869565
                 },
                 {
                   "distanceBp": 31,
@@ -7816,53 +7816,53 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 3000,
-                  "probability": 0.6263333333333333
+                  "samples": 3001,
+                  "probability": 0.6264578473842053
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3009,
-                  "probability": 0.6590229312063809
+                  "samples": 3010,
+                  "probability": 0.6591362126245848
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2914,
-                  "probability": 0.7158544955387783
+                  "samples": 2917,
+                  "probability": 0.7154610901611245
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2624,
-                  "probability": 0.7248475609756098
+                  "samples": 2626,
+                  "probability": 0.7246763137852247
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2485,
-                  "probability": 0.7653923541247485
+                  "samples": 2488,
+                  "probability": 0.7656752411575563
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2408,
-                  "probability": 0.8056478405315615
+                  "samples": 2412,
+                  "probability": 0.8055555555555556
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2261,
-                  "probability": 0.8310482087571871
+                  "samples": 2262,
+                  "probability": 0.8311229000884174
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1969,
-                  "probability": 0.8293550025393601
+                  "samples": 1972,
+                  "probability": 0.829107505070994
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1856,
-                  "probability": 0.8410560344827587
+                  "samples": 1858,
+                  "probability": 0.841227125941873
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1709,
-                  "probability": 0.8589818607372732
+                  "samples": 1713,
+                  "probability": 0.8593111500291886
                 },
                 {
                   "distanceBp": 12,
@@ -7871,8 +7871,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1377,
-                  "probability": 0.9026870007262164
+                  "samples": 1381,
+                  "probability": 0.9029688631426502
                 },
                 {
                   "distanceBp": 14,
@@ -7881,13 +7881,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1231,
-                  "probability": 0.8960194963444355
+                  "samples": 1232,
+                  "probability": 0.8961038961038961
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 1091,
-                  "probability": 0.9120073327222732
+                  "samples": 1092,
+                  "probability": 0.9120879120879121
                 },
                 {
                   "distanceBp": 17,
@@ -7936,8 +7936,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 26,
-                  "samples": 425,
-                  "probability": 0.9576470588235294
+                  "samples": 426,
+                  "probability": 0.9577464788732394
                 },
                 {
                   "distanceBp": 27,
@@ -7978,28 +7978,28 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 3672,
-                  "probability": 0.5866013071895425
+                  "samples": 3676,
+                  "probability": 0.5867791077257889
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3492,
-                  "probability": 0.6440435280641467
+                  "samples": 3495,
+                  "probability": 0.6440629470672389
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3225,
-                  "probability": 0.6815503875968992
+                  "samples": 3230,
+                  "probability": 0.6817337461300309
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2941,
-                  "probability": 0.6960217613056784
+                  "samples": 2945,
+                  "probability": 0.6964346349745331
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2685,
-                  "probability": 0.719925512104283
+                  "samples": 2686,
+                  "probability": 0.720029784065525
                 },
                 {
                   "distanceBp": 7,
@@ -8008,43 +8008,43 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2346,
-                  "probability": 0.7595907928388747
+                  "samples": 2350,
+                  "probability": 0.7595744680851064
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 2046,
-                  "probability": 0.7634408602150538
+                  "samples": 2048,
+                  "probability": 0.76318359375
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1833,
-                  "probability": 0.7970540098199672
+                  "samples": 1834,
+                  "probability": 0.797164667393675
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1655,
-                  "probability": 0.802416918429003
+                  "samples": 1656,
+                  "probability": 0.8019323671497585
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1487,
-                  "probability": 0.8312037659717552
+                  "samples": 1488,
+                  "probability": 0.8313172043010753
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1370,
-                  "probability": 0.8394160583941606
+                  "samples": 1371,
+                  "probability": 0.8395331874544129
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1241,
-                  "probability": 0.8485092667203867
+                  "samples": 1243,
+                  "probability": 0.8479485116653258
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 1031,
-                  "probability": 0.8622696411251213
+                  "samples": 1032,
+                  "probability": 0.8624031007751938
                 },
                 {
                   "distanceBp": 16,
@@ -8108,8 +8108,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 28,
-                  "samples": 256,
-                  "probability": 0.92578125
+                  "samples": 257,
+                  "probability": 0.9260700389105059
                 },
                 {
                   "distanceBp": 29,
@@ -8120,43 +8120,43 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 4978,
-                  "probability": 0.5713137806347931
+                  "samples": 4981,
+                  "probability": 0.5713712106002811
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 4508,
-                  "probability": 0.6282165039929015
+                  "samples": 4511,
+                  "probability": 0.6280203945909998
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 4029,
-                  "probability": 0.6232315711094565
+                  "samples": 4033,
+                  "probability": 0.6231093478799901
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 3477,
-                  "probability": 0.6468219729651998
+                  "samples": 3483,
+                  "probability": 0.6465690496698249
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2893,
-                  "probability": 0.6774974075354303
+                  "samples": 2896,
+                  "probability": 0.6774861878453039
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 2543,
-                  "probability": 0.7034998033818325
+                  "samples": 2544,
+                  "probability": 0.7036163522012578
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 2181,
-                  "probability": 0.723062815222375
+                  "samples": 2183,
+                  "probability": 0.723316536875859
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1758,
-                  "probability": 0.7309442548350398
+                  "samples": 1761,
+                  "probability": 0.7314026121521863
                 },
                 {
                   "distanceBp": 10,
@@ -8190,8 +8190,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 553,
-                  "probability": 0.8083182640144665
+                  "samples": 554,
+                  "probability": 0.8068592057761733
                 },
                 {
                   "distanceBp": 17,
@@ -8230,50 +8230,50 @@ export const probabilityTable: ProbabilityTable = {
         {
           "algoId": "trend_x_vol_6",
           "regime": "against_trend_low_vol",
-          "windowShare": 0.26489075849160365,
-          "avgLeadPp": 2.1301924408650383,
+          "windowShare": 0.26493175912489697,
+          "avgLeadPp": 2.128832037636696,
           "surface": {
             "byRemaining": {
               "1": [
                 {
                   "distanceBp": 2,
-                  "samples": 2054,
-                  "probability": 0.6742940603700097
+                  "samples": 2055,
+                  "probability": 0.6739659367396593
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 1986,
-                  "probability": 0.74269889224572
+                  "samples": 1988,
+                  "probability": 0.7429577464788732
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2048,
-                  "probability": 0.78076171875
+                  "samples": 2050,
+                  "probability": 0.7804878048780488
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 1860,
-                  "probability": 0.8145161290322581
+                  "samples": 1862,
+                  "probability": 0.8141783029001074
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1764,
-                  "probability": 0.8537414965986394
+                  "samples": 1767,
+                  "probability": 0.853423882286361
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1740,
-                  "probability": 0.8816091954022989
+                  "samples": 1743,
+                  "probability": 0.8818129661503156
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1666,
-                  "probability": 0.8913565426170468
+                  "samples": 1668,
+                  "probability": 0.8914868105515588
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1554,
-                  "probability": 0.924066924066924
+                  "samples": 1556,
+                  "probability": 0.9241645244215938
                 },
                 {
                   "distanceBp": 10,
@@ -8282,8 +8282,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1381,
-                  "probability": 0.9268645908761767
+                  "samples": 1382,
+                  "probability": 0.926917510853835
                 },
                 {
                   "distanceBp": 12,
@@ -8292,8 +8292,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1174,
-                  "probability": 0.9497444633730835
+                  "samples": 1175,
+                  "probability": 0.9497872340425532
                 },
                 {
                   "distanceBp": 14,
@@ -8302,8 +8302,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 983,
-                  "probability": 0.9664292980671414
+                  "samples": 985,
+                  "probability": 0.966497461928934
                 },
                 {
                   "distanceBp": 16,
@@ -8317,8 +8317,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 821,
-                  "probability": 0.9707673568818515
+                  "samples": 823,
+                  "probability": 0.9708383961117861
                 },
                 {
                   "distanceBp": 19,
@@ -8332,13 +8332,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 21,
-                  "samples": 650,
-                  "probability": 0.98
+                  "samples": 651,
+                  "probability": 0.9800307219662059
                 },
                 {
                   "distanceBp": 22,
-                  "samples": 607,
-                  "probability": 0.9818780889621087
+                  "samples": 609,
+                  "probability": 0.9819376026272578
                 },
                 {
                   "distanceBp": 23,
@@ -8352,8 +8352,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 25,
-                  "samples": 404,
-                  "probability": 0.9851485148514851
+                  "samples": 405,
+                  "probability": 0.9851851851851852
                 },
                 {
                   "distanceBp": 26,
@@ -8392,8 +8392,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 33,
-                  "samples": 228,
-                  "probability": 0.9912280701754386
+                  "samples": 229,
+                  "probability": 0.9912663755458515
                 },
                 {
                   "distanceBp": 34,
@@ -8409,13 +8409,13 @@ export const probabilityTable: ProbabilityTable = {
               "2": [
                 {
                   "distanceBp": 2,
-                  "samples": 2322,
-                  "probability": 0.6283376399655469
+                  "samples": 2323,
+                  "probability": 0.6284976323719328
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2286,
-                  "probability": 0.6666666666666666
+                  "samples": 2290,
+                  "probability": 0.6663755458515284
                 },
                 {
                   "distanceBp": 4,
@@ -8424,33 +8424,33 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2087,
-                  "probability": 0.7264015333013896
+                  "samples": 2088,
+                  "probability": 0.7265325670498084
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 1879,
-                  "probability": 0.7791378392762107
+                  "samples": 1880,
+                  "probability": 0.7792553191489362
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1859,
-                  "probability": 0.7972027972027972
+                  "samples": 1861,
+                  "probability": 0.7974207415368082
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1772,
-                  "probability": 0.8239277652370203
+                  "samples": 1776,
+                  "probability": 0.8243243243243243
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1678,
-                  "probability": 0.8379022646007152
+                  "samples": 1680,
+                  "probability": 0.8380952380952381
                 },
                 {
                   "distanceBp": 10,
-                  "samples": 1507,
-                  "probability": 0.8573324485733245
+                  "samples": 1508,
+                  "probability": 0.8567639257294429
                 },
                 {
                   "distanceBp": 11,
@@ -8464,38 +8464,38 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 1169,
-                  "probability": 0.8828058169375534
+                  "samples": 1170,
+                  "probability": 0.8829059829059829
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 1061,
-                  "probability": 0.8925541941564562
+                  "samples": 1062,
+                  "probability": 0.8926553672316384
                 },
                 {
                   "distanceBp": 15,
-                  "samples": 992,
-                  "probability": 0.9153225806451613
+                  "samples": 993,
+                  "probability": 0.9154078549848943
                 },
                 {
                   "distanceBp": 16,
-                  "samples": 918,
-                  "probability": 0.9074074074074074
+                  "samples": 919,
+                  "probability": 0.9075081610446137
                 },
                 {
                   "distanceBp": 17,
-                  "samples": 838,
-                  "probability": 0.9033412887828163
+                  "samples": 839,
+                  "probability": 0.9034564958283671
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 704,
-                  "probability": 0.9460227272727273
+                  "samples": 705,
+                  "probability": 0.9460992907801419
                 },
                 {
                   "distanceBp": 19,
-                  "samples": 673,
-                  "probability": 0.9361069836552749
+                  "samples": 674,
+                  "probability": 0.9362017804154302
                 },
                 {
                   "distanceBp": 20,
@@ -8561,43 +8561,43 @@ export const probabilityTable: ProbabilityTable = {
               "3": [
                 {
                   "distanceBp": 2,
-                  "samples": 2775,
-                  "probability": 0.601081081081081
+                  "samples": 2778,
+                  "probability": 0.6011519078473722
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 2647,
-                  "probability": 0.6365697015489233
+                  "samples": 2649,
+                  "probability": 0.6368440921102303
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 2563,
-                  "probability": 0.6699180647678502
+                  "samples": 2566,
+                  "probability": 0.6699142634450507
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2313,
-                  "probability": 0.6964980544747081
+                  "samples": 2314,
+                  "probability": 0.6961970613656007
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2159,
-                  "probability": 0.7197776748494673
+                  "samples": 2161,
+                  "probability": 0.7200370198981952
                 },
                 {
                   "distanceBp": 7,
-                  "samples": 1962,
-                  "probability": 0.7283384301732926
+                  "samples": 1963,
+                  "probability": 0.7279673968415691
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1822,
-                  "probability": 0.7639956092206367
+                  "samples": 1825,
+                  "probability": 0.7632876712328767
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1623,
-                  "probability": 0.773875539125077
+                  "samples": 1628,
+                  "probability": 0.773955773955774
                 },
                 {
                   "distanceBp": 10,
@@ -8606,13 +8606,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1316,
-                  "probability": 0.8206686930091185
+                  "samples": 1317,
+                  "probability": 0.8208048595292331
                 },
                 {
                   "distanceBp": 12,
-                  "samples": 1177,
-                  "probability": 0.8411214953271028
+                  "samples": 1178,
+                  "probability": 0.8412563667232598
                 },
                 {
                   "distanceBp": 13,
@@ -8641,8 +8641,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 18,
-                  "samples": 588,
-                  "probability": 0.8775510204081632
+                  "samples": 589,
+                  "probability": 0.8777589134125636
                 },
                 {
                   "distanceBp": 19,
@@ -8698,28 +8698,28 @@ export const probabilityTable: ProbabilityTable = {
               "4": [
                 {
                   "distanceBp": 2,
-                  "samples": 3761,
-                  "probability": 0.5886732252060622
+                  "samples": 3764,
+                  "probability": 0.5887353878852285
                 },
                 {
                   "distanceBp": 3,
-                  "samples": 3426,
-                  "probability": 0.6059544658493871
+                  "samples": 3430,
+                  "probability": 0.605539358600583
                 },
                 {
                   "distanceBp": 4,
-                  "samples": 3180,
-                  "probability": 0.6449685534591195
+                  "samples": 3181,
+                  "probability": 0.6450801634706067
                 },
                 {
                   "distanceBp": 5,
-                  "samples": 2664,
-                  "probability": 0.6681681681681682
+                  "samples": 2666,
+                  "probability": 0.668417104276069
                 },
                 {
                   "distanceBp": 6,
-                  "samples": 2416,
-                  "probability": 0.6966059602649006
+                  "samples": 2422,
+                  "probability": 0.6969446738232865
                 },
                 {
                   "distanceBp": 7,
@@ -8728,13 +8728,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 8,
-                  "samples": 1746,
-                  "probability": 0.7004581901489118
+                  "samples": 1749,
+                  "probability": 0.7009719839908519
                 },
                 {
                   "distanceBp": 9,
-                  "samples": 1525,
-                  "probability": 0.7304918032786886
+                  "samples": 1526,
+                  "probability": 0.7306684141546527
                 },
                 {
                   "distanceBp": 10,
@@ -8743,8 +8743,8 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 11,
-                  "samples": 1080,
-                  "probability": 0.7731481481481481
+                  "samples": 1081,
+                  "probability": 0.7724329324699353
                 },
                 {
                   "distanceBp": 12,
@@ -8753,13 +8753,13 @@ export const probabilityTable: ProbabilityTable = {
                 },
                 {
                   "distanceBp": 13,
-                  "samples": 778,
-                  "probability": 0.7583547557840618
+                  "samples": 779,
+                  "probability": 0.7586649550706034
                 },
                 {
                   "distanceBp": 14,
-                  "samples": 698,
-                  "probability": 0.7535816618911175
+                  "samples": 700,
+                  "probability": 0.7528571428571429
                 },
                 {
                   "distanceBp": 15,

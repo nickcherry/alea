@@ -847,3 +847,84 @@ Bottom inside the filter: DOGE-19 (−\$47, 56% win) — now also dropped.
 Top winners inside the filter: BTC-20 (+\$162, 93% win, 14 orders),
 DOGE-20 (+\$95, 83%), ETH-21 (+\$84, 83%, 6 orders).
 
+
+### 12:55 EDT (2026-05-07) — apples-to-apples source comparison
+
+Patched `fetchBinancePerpCandles.ts` with a fapi REST fallback so we
+can sync binance/perp candles up to current (Vision lags ~24h).
+Synced all 4 source/product combinations (binance perp, binance spot,
+coinbase perp, coinbase spot) to current.
+
+Ran 4 separate replays on the same 35h tape (16:30 May 5 → 03:25 May
+7 UTC). Each replay used a probability table trained on the
+respective source, but with `--tick-source coinbase-spot` held
+constant so the in-window decision pipeline saw identical price
+ticks across all 4 — isolating the training-source effect (option
+(c) per Nick).
+
+Results (taker PnL @ \$20 stake, all 5 assets):
+
+| Training source | No filter | minEdge≥0.06 | Hour filter + minEdge≥0.06 |
+|---|---:|---:|---:|
+| binance/perp | +$274 | +$307 | +$972 |
+| binance/spot | +$352 | +$419 | **+$1,026** |
+| coinbase/perp | +$491 | +$460 | +$987 |
+| coinbase/spot | +$144 | +$284 | +$1,021 |
+
+| Training source | Win rate (no filter) | Win (minEdge:0.06) | Win (aggressive) |
+|---|---:|---:|---:|
+| binance/perp | 65.6% | 65.5% | 73.6% |
+| binance/spot | 66.1% | 66.2% | 74.2% |
+| coinbase/perp | 66.1% | 65.7% | 73.7% |
+| coinbase/spot | 65.4% | 65.7% | 73.8% |
+
+#### Takeaways
+
+1. **Source choice matters at the simpler filters.** At `minEdge≥0.06`
+   (recommended baseline), the spread is +\$284 (coinbase/spot) to
+   +\$460 (coinbase/perp) — a 60% range. coinbase/perp leads at
+   +\$460. The current default coinbase/spot is the WORST of the four.
+
+2. **Source choice barely matters at the aggressive hour filter.**
+   All four converge to +\$972-\$1,026, a 5% spread. The hour filter
+   is doing 90% of the work; source is second-order.
+
+3. **Win rates are remarkably similar across sources** — within
+   0.5pp at every filter level. The differences in PnL come from
+   *which orders* fire, not from picking better sides.
+
+4. **coinbase/spot is the weakest source for our strategy** at the
+   simpler filters. binance/spot is a quiet sleeper performer
+   (consistently strong despite no captured WS data).
+
+5. **No source is strictly dominant.** At baseline, coinbase/perp
+   wins. At minEdge:0.06, coinbase/perp wins. At aggressive, it's
+   binance/spot. Differences are within statistical noise on 35h.
+
+#### Implication for the recommended baseline
+
+The Nick-blessed "all-taker, all-hours, edge>=0.06" config benefits
+materially from switching training source coinbase/spot →
+coinbase/perp: **+\$284 → +\$460** (a 62% improvement on the same
+tape). If we trust this signal (35h sample caveat), the next default
+should be coinbase/perp, not coinbase/spot. The fact that the
+underlying model's edge is similar across sources means the
+*training data* matters less than how the *resulting probability
+table* maps to current market conditions.
+
+(Caveat: we're holding the in-window WS tick at coinbase-spot for
+all 4 experiments. Truly switching to coinbase/perp end-to-end would
+also use coinbase-perp WS for ticks, which I haven't tested. The
+captured coinbase-perp WS volume is similar so I'd expect similar
+results, but it's an open experiment.)
+
+#### Patch landed
+
+[`src/lib/candles/sources/binance/fetchBinancePerpCandles.ts`](../src/lib/candles/sources/binance/fetchBinancePerpCandles.ts)
+now falls back to `fapi.binance.com/fapi/v1/klines` when Vision
+returns 404 for a daily archive (and unconditionally for today,
+which Vision never has). Requires the operator to be in a
+non-geo-blocked region. With this in place, `bun alea candles:sync
+--sources binance --products perp` covers the full historical-to-
+current range without manual intervention.
+
