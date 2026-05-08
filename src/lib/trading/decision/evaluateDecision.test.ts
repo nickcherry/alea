@@ -229,20 +229,20 @@ describe("evaluateDecision", () => {
     }
   });
 
-  it("returns thin-rr when the fill price is high enough that the win pays a tiny fraction of the stake", () => {
+  it("returns thin-rr when EV passes but the fill price gives a tiny payoff vs stake", () => {
     // distanceBp=10 → only vol_only_3 has data: P(up)=0.92, P(down)=0.08.
-    // Up-side bid 0.85, taker fillPrice 0.86 → shares ≈ 23.26, gross
-    // win ≈ $23.26, fee 700bps ≈ $0.28, net win ≈ $2.98 → RR ≈ 0.149.
-    // EV = 0.92 * 2.98 - 0.08 * 20 = 1.14 → above $1 EV floor BUT
-    // RR 0.149 < MIN_REWARD_RISK_RATIO (0.20) → thin-rr.
+    // Up-side fillPrice 0.78 → shares ≈ 25.64, gross win ≈ $25.64,
+    // fee 700bps ≈ $0.24, net win ≈ $5.40 → RR ≈ 0.27.
+    // EV = 0.92 * 5.40 - 0.08 * 20 = 3.37 → clears MIN_EV ($3) BUT
+    // RR 0.27 < MIN_REWARD_RISK_RATIO (0.30) → thin-rr fires.
     const decision = evaluateDecision({
       ...baseInputs,
       currentPrice: 100.1, // distanceBp = 10
-      upBestBid: 0.85,
+      upBestBid: 0.78,
       downBestBid: 0.05,
-      upFillPrice: 0.86,
+      upFillPrice: 0.78,
       downFillPrice: 0.05,
-      upFeeUsd: 0.28,
+      upFeeUsd: 0.24,
       downFeeUsd: 0,
       stakeUsd: 20,
     });

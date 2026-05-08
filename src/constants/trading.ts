@@ -87,13 +87,18 @@ export const MIN_EDGE = 0.05;
  * Re-calibrated 2026-05-08 after a regime shift made the model's
  * raw baseline turn slightly negative (−$40 across the 24h ending
  * 2026-05-08T01:00 UTC). The May 5-7 optimum was MIN_EV=$0.50; the
- * May 7-8 optimum moved to MIN_EV=$0.75 (peak +$361 across 61
- * trades vs +$352 across 72 trades at $0.50). The $0.75 cell was
- * also competitive on the older window (+$568 vs the $0.50 peak of
- * +$641), so it's the more regime-robust choice. See
- * `bun alea trading:calibrate-ev-rr-gate` to re-run.
+ * May 7-8 optimum moved to MIN_EV=$0.75. Then we re-trained the
+ * probability tables with current candles, re-ran the sweep, and
+ * intentionally tightened beyond the PnL peak: the operator wanted
+ * higher win rate over higher absolute PnL after a multi-hour
+ * losing streak. The win-rate curve is flat at ~70% from MIN_EV
+ * $0.75–$2.00, then jumps to 75% at $3.00 and 76.5% at $4.00.
+ * Picked $3.00 — gives up ~22% of total PnL relative to the $0.75
+ * peak in exchange for +5pp win rate and ~1 trade / asset / hour
+ * instead of ~3. See `bun alea trading:calibrate-ev-rr-gate` to
+ * re-run.
  */
-export const MIN_EXPECTED_VALUE_USD = 0.75;
+export const MIN_EXPECTED_VALUE_USD = 3.0;
 
 /**
  * Minimum reward-to-risk ratio (`netWinUsd / stake`) for the bot to
