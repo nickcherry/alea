@@ -233,8 +233,12 @@ describe("evaluateDecision", () => {
     // distanceBp=10 → only vol_only_3 has data: P(up)=0.92, P(down)=0.08.
     // Up-side fillPrice 0.78 → shares ≈ 25.64, gross win ≈ $25.64,
     // fee 700bps ≈ $0.24, net win ≈ $5.40 → RR ≈ 0.27.
-    // EV = 0.92 * 5.40 - 0.08 * 20 = 3.37 → clears MIN_EV ($3) BUT
-    // RR 0.27 < MIN_REWARD_RISK_RATIO (0.30) → thin-rr fires.
+    // EV = 0.92 * 5.40 - 0.08 * 20 = 3.37 → clears the override-low
+    // EV floor here, but RR 0.27 < the 0.30 RR floor → thin-rr.
+    //
+    // Uses explicit `minEvUsd` / `minRewardRiskRatio` overrides so the
+    // test exercises the gate LOGIC and isn't coupled to the current
+    // production constants (which the operator tunes regularly).
     const decision = evaluateDecision({
       ...baseInputs,
       currentPrice: 100.1, // distanceBp = 10
@@ -245,6 +249,8 @@ describe("evaluateDecision", () => {
       upFeeUsd: 0.24,
       downFeeUsd: 0,
       stakeUsd: 20,
+      minEvUsd: 1.0,
+      minRewardRiskRatio: 0.3,
     });
     expect(decision.kind).toBe("skip");
     if (decision.kind === "skip") {
