@@ -10,11 +10,15 @@ import {
 import { computeRegimeClassifierInput } from "@alea/lib/livePrices/regimeContext";
 import type { RegimeTrackers } from "@alea/lib/livePrices/regimeTrackers";
 import type { LivePriceTick } from "@alea/lib/livePrices/types";
-import { evaluateDecision } from "@alea/lib/trading/decision/evaluateDecision";
+import {
+  evaluateDecision,
+  type TradeDecisionEvaluator,
+} from "@alea/lib/trading/decision/evaluateDecision";
 import type { TradeDecision } from "@alea/lib/trading/decision/types";
 import {
   applyTradeToSimulatedOrder,
   createSimulatedDryOrder,
+  markSimulatedOrderFilled,
   type SimulatedDryOrder,
 } from "@alea/lib/trading/dryRun/fillSimulation";
 import {
@@ -91,6 +95,24 @@ export type ReplayWindowParams = {
    */
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly table: ProbabilityTable;
+  /**
+   * Optional decision evaluator override. Defaults to a single-table
+   * `evaluateDecision` against `table`. Pass
+   * `researchChallengerStrategy.decisionEvaluator` here to backtest
+   * the production consensus + execution-quality strategy. The
+   * evaluator must satisfy `TradeDecisionEvaluator` —
+   * `DecisionInputsBase → TradeDecision`.
+   */
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
+  /**
+   * Placement model. `"taker"` mirrors live trading: walk the asks
+   * via `buildTakerCounterfactual`, instant-fill at the depth-
+   * weighted price, no resting-order queue simulation.
+   * `"maker"` keeps the legacy queue-aware maker simulator that
+   * runs prepared limit orders against the captured trade tape.
+   * Default: `"taker"` (matches production).
+   */
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly stakeUsd?: number;
   /**
@@ -180,6 +202,8 @@ export function replayWindow({
   chainlinkByAsset,
   trackers,
   table,
+  decisionEvaluator,
+  placementMode = "taker",
   minEdge,
   stakeUsd = STAKE_USD,
   tickSource = "binance-perp",
@@ -224,6 +248,8 @@ export function replayWindow({
         nowMs,
         trackers,
         table,
+        decisionEvaluator,
+        placementMode,
         minEdge,
         stakeUsd,
         emit,
@@ -265,6 +291,8 @@ export function replayWindow({
         tokenToAsset,
         trackers,
         table,
+        decisionEvaluator,
+        placementMode,
         minEdge,
         stakeUsd,
         emit,
@@ -423,6 +451,8 @@ function handlePolymarketEvent({
   tokenToAsset,
   trackers,
   table,
+  decisionEvaluator,
+  placementMode,
   minEdge,
   stakeUsd,
   emit,
@@ -432,6 +462,8 @@ function handlePolymarketEvent({
   readonly tokenToAsset: ReadonlyMap<string, Asset>;
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator: TradeDecisionEvaluator | undefined;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly stakeUsd: number;
   readonly emit: (event: ReplayRunEvent) => void;
@@ -458,6 +490,8 @@ function handlePolymarketEvent({
         nowMs: event.tsMs,
         trackers,
         table,
+        decisionEvaluator,
+        placementMode,
         minEdge,
         stakeUsd,
         emit,
@@ -550,6 +584,8 @@ function tryDecide({
   nowMs,
   trackers,
   table,
+  decisionEvaluator,
+  placementMode,
   minEdge,
   stakeUsd,
   emit,
@@ -559,6 +595,8 @@ function tryDecide({
   readonly nowMs: number;
   readonly trackers: ReadonlyMap<Asset, RegimeTrackers>;
   readonly table: ProbabilityTable;
+  readonly decisionEvaluator: TradeDecisionEvaluator | undefined;
+  readonly placementMode: "maker" | "taker";
   readonly minEdge: number;
   readonly stakeUsd: number;
   readonly emit: (event: ReplayRunEvent) => void;
@@ -600,30 +638,64 @@ function tryDecide({
     book.fetchedAtMs >= market.windowStartMs &&
     nowMs - book.fetchedAtMs <= MAX_BOOK_AGE_MS;
 
-  // Replay simulates a maker-mode placement (`prepareMakerLimitBuy`
-  // semantics below), so the EV / RR gate uses bid as the fill price
-  // and fee = 0. If the analyzer ever adds a taker-mode replay path,
-  // walk the asks here to derive `upFillPrice` / `downFillPrice` /
-  // fee inputs from `buildTakerCounterfactual`.
-  const decision = evaluateDecision({
+  // Per-side fill price + fee for the EV gate. Mirrors the live
+  // runner's `evaluateRecordDecision`: maker → bid + zero fee; taker
+  // → walked-up avg price + estimated fee from
+  // `buildTakerCounterfactual`. Without this the EV gate fires on
+  // bid-priced economics even when the actual fill would be at the
+  // ask, undercounting fees and over-counting payoff for takers.
+  let upFillPrice: number | null = null;
+  let downFillPrice: number | null = null;
+  let upFeeUsd = 0;
+  let downFeeUsd = 0;
+  let upTakerCounterfactual: DryTakerCounterfactual | null = null;
+  let downTakerCounterfactual: DryTakerCounterfactual | null = null;
+  if (useBook && book !== null) {
+    if (placementMode === "taker") {
+      upTakerCounterfactual = buildTakerCounterfactual({
+        book,
+        side: "up",
+        stakeUsd,
+      });
+      downTakerCounterfactual = buildTakerCounterfactual({
+        book,
+        side: "down",
+        stakeUsd,
+      });
+      upFillPrice = upTakerCounterfactual?.avgPrice ?? null;
+      downFillPrice = downTakerCounterfactual?.avgPrice ?? null;
+      upFeeUsd = upTakerCounterfactual?.estimatedFeeUsd ?? 0;
+      downFeeUsd = downTakerCounterfactual?.estimatedFeeUsd ?? 0;
+    } else {
+      upFillPrice = book.up.bestBid;
+      downFillPrice = book.down.bestBid;
+    }
+  }
+
+  const baseInputs = {
     asset,
     windowStartMs: market.windowStartMs,
     nowMs,
     line: state.line,
     currentPrice: tick.mid,
     regimeInput,
-    upBestBid: useBook ? book.up.bestBid : null,
-    downBestBid: useBook ? book.down.bestBid : null,
-    upFillPrice: useBook ? book.up.bestBid : null,
-    downFillPrice: useBook ? book.down.bestBid : null,
-    upFeeUsd: 0,
-    downFeeUsd: 0,
+    upBestBid: useBook && book !== null ? book.up.bestBid : null,
+    downBestBid: useBook && book !== null ? book.down.bestBid : null,
+    upBestAsk: useBook && book !== null ? book.up.bestAsk : null,
+    downBestAsk: useBook && book !== null ? book.down.bestAsk : null,
+    upFillPrice,
+    downFillPrice,
+    upFeeUsd,
+    downFeeUsd,
     stakeUsd,
     upTokenId: market.upRef,
     downTokenId: market.downRef,
-    table,
     minEdge,
-  });
+  };
+  const decision: TradeDecision =
+    decisionEvaluator !== undefined
+      ? decisionEvaluator(baseInputs)
+      : evaluateDecision({ ...baseInputs, table });
 
   emit({ kind: "decision", atMs: nowMs, decision });
 
@@ -638,57 +710,90 @@ function tryDecide({
     state.skipReason = "too-late-in-window";
     return;
   }
-  if (decision.chosen.bid === null) {
-    return;
-  }
   if (book === null) {
     return;
   }
 
-  // Mirror prepareMakerLimitBuy: tick price down, compute share
-  // count at SHARE_QUANTUM granularity, enforce min order size and
-  // GTD validity buffer.
-  const tickedPrice =
-    Math.floor(decision.chosen.bid / POLYMARKET_TICK_SIZE) *
-    POLYMARKET_TICK_SIZE;
-  if (tickedPrice <= 0 || tickedPrice >= 1) {
-    state.skipReason = "ticked-price-out-of-range";
-    return;
-  }
+  const expiresAtMs = market.windowEndMs - ORDER_CANCEL_MARGIN_MS;
   if (nowMs + GTD_MIN_VALIDITY_MS >= market.windowEndMs - ORDER_CANCEL_MARGIN_MS) {
     state.skipReason = "below-gtd-validity";
     return;
   }
-  const rawShares = stakeUsd / tickedPrice;
-  const sharesIfFilled = Math.floor(rawShares * SHARE_QUANTUM) / SHARE_QUANTUM;
-  if (sharesIfFilled <= 0 || sharesIfFilled < POLYMARKET_MIN_ORDER_SIZE) {
-    state.skipReason = `shares-below-min (${sharesIfFilled})`;
-    return;
-  }
-  const expiresAtMs = market.windowEndMs - ORDER_CANCEL_MARGIN_MS;
-  const queueAheadShares = queueAheadAtLimit({
-    book,
-    side: decision.chosen.side,
-    limitPrice: tickedPrice,
-  });
-  if (
-    queueAheadShares !== null &&
-    queueAheadShares < MIN_QUEUE_AHEAD_SHARES
-  ) {
-    state.skipReason = `shallow-queue (${queueAheadShares.toFixed(2)} < ${MIN_QUEUE_AHEAD_SHARES})`;
-    return;
+
+  // Build the prepared order. Maker mode mirrors `prepareMakerLimitBuy`
+  // (tick down, queue gate). Taker mode mirrors live FAK execution:
+  // walk the asks, fill instantly at the depth-weighted avg price, no
+  // queue check (FAK fills or kills atomically against resting asks).
+  let prepared: PreparedMakerLimitOrder;
+  let queueAheadShares: number | null;
+  let takerCounterfactualUsed: DryTakerCounterfactual | null = null;
+  if (placementMode === "taker") {
+    const counterfactual =
+      decision.chosen.side === "up"
+        ? upTakerCounterfactual
+        : downTakerCounterfactual;
+    if (counterfactual === null) {
+      state.skipReason = "taker-book-walk-failed";
+      return;
+    }
+    if (counterfactual.sharesIfFilled < POLYMARKET_MIN_ORDER_SIZE) {
+      state.skipReason = `taker-shares-below-min (${counterfactual.sharesIfFilled})`;
+      return;
+    }
+    takerCounterfactualUsed = counterfactual;
+    prepared = {
+      side: decision.chosen.side,
+      outcomeRef: decision.chosen.tokenId,
+      limitPrice: counterfactual.worstPrice,
+      sharesIfFilled: counterfactual.sharesIfFilled,
+      feeRateBps: counterfactual.estimatedFeeRateBps ?? 0,
+      orderType: "FAK",
+      expiresAtMs: null,
+      preparedAtMs: nowMs,
+    };
+    queueAheadShares = null;
+  } else {
+    if (decision.chosen.bid === null) {
+      return;
+    }
+    const tickedPrice =
+      Math.floor(decision.chosen.bid / POLYMARKET_TICK_SIZE) *
+      POLYMARKET_TICK_SIZE;
+    if (tickedPrice <= 0 || tickedPrice >= 1) {
+      state.skipReason = "ticked-price-out-of-range";
+      return;
+    }
+    const rawShares = stakeUsd / tickedPrice;
+    const sharesIfFilled =
+      Math.floor(rawShares * SHARE_QUANTUM) / SHARE_QUANTUM;
+    if (sharesIfFilled <= 0 || sharesIfFilled < POLYMARKET_MIN_ORDER_SIZE) {
+      state.skipReason = `shares-below-min (${sharesIfFilled})`;
+      return;
+    }
+    queueAheadShares = queueAheadAtLimit({
+      book,
+      side: decision.chosen.side,
+      limitPrice: tickedPrice,
+    });
+    if (
+      queueAheadShares !== null &&
+      queueAheadShares < MIN_QUEUE_AHEAD_SHARES
+    ) {
+      state.skipReason = `shallow-queue (${queueAheadShares.toFixed(2)} < ${MIN_QUEUE_AHEAD_SHARES})`;
+      return;
+    }
+    prepared = {
+      side: decision.chosen.side,
+      outcomeRef: decision.chosen.tokenId,
+      limitPrice: tickedPrice,
+      sharesIfFilled,
+      feeRateBps: 0,
+      orderType: "GTD",
+      expiresAtMs,
+      preparedAtMs: nowMs,
+    };
   }
 
-  const prepared: PreparedMakerLimitOrder = {
-    side: decision.chosen.side,
-    outcomeRef: decision.chosen.tokenId,
-    limitPrice: tickedPrice,
-    sharesIfFilled,
-    feeRateBps: 0,
-    orderType: "GTD",
-    expiresAtMs,
-    preparedAtMs: nowMs,
-  };
   const orderId = `replay-${market.vendorRef}-${prepared.outcomeRef}-${nowMs}`;
   const order = createSimulatedDryOrder({
     id: orderId,
@@ -704,6 +809,19 @@ function tryDecide({
     expiresAtMs,
     queueAheadShares,
   });
+
+  // Taker FAK fills atomically against the asks at the moment of
+  // placement. Mark it filled now so the wall-clock window walk
+  // doesn't try to fill it again from the captured trade tape.
+  if (placementMode === "taker" && takerCounterfactualUsed !== null) {
+    markSimulatedOrderFilled({
+      order,
+      shares: takerCounterfactualUsed.sharesIfFilled,
+      costUsd: takerCounterfactualUsed.costUsd,
+      feesUsd: takerCounterfactualUsed.estimatedFeeUsd ?? 0,
+      atMs: nowMs,
+    });
+  }
 
   const top = topForSide({ book, side: prepared.side });
   const outcomeTrades =

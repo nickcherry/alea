@@ -84,7 +84,14 @@ export type PreparedMakerLimitOrder = {
   readonly limitPrice: number;
   readonly sharesIfFilled: number;
   readonly feeRateBps: number;
-  readonly orderType: "GTC" | "GTD";
+  /**
+   * `"GTC"` / `"GTD"` are maker resting-order types. `"FAK"` is a
+   * taker fill-and-kill — the replay simulator reuses this type for
+   * its taker envelope so downstream report code doesn't need a
+   * separate shape; live taker placement still goes through
+   * `PlacedTakerMarketBuy`.
+   */
+  readonly orderType: "GTC" | "GTD" | "FAK";
   readonly expiresAtMs: number | null;
   readonly preparedAtMs: number;
 };
@@ -96,7 +103,7 @@ export type PlacedOrder = {
   readonly limitPrice: number;
   readonly sharesIfFilled: number;
   readonly feeRateBps: number;
-  readonly orderType: "GTC" | "GTD";
+  readonly orderType: "GTC" | "GTD" | "FAK";
   readonly expiresAtMs: number | null;
   readonly placedAtMs: number;
 };

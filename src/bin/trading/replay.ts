@@ -6,9 +6,10 @@ import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import { formatUsd } from "@alea/lib/trading/format";
+import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
 import { formatReplayEvent } from "@alea/lib/trading/replay/formatReplayEvent";
 import { runReplay } from "@alea/lib/trading/replay/runReplay";
-import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
+import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
@@ -122,6 +123,28 @@ export const tradingReplayCommand = defineCommand({
           "Cancel a placed order when the underlying tick mid moves ≥ N bp against our predicted side (default 0 = no cancellation).",
         ),
     }),
+    defineValueOption({
+      key: "strategy",
+      long: "--strategy",
+      valueName: "STRATEGY",
+      schema: z
+        .enum(["consensus", "single-table"])
+        .default("consensus")
+        .describe(
+          "Decision strategy. `consensus` (default) runs the production research-challenger strategy: 4-table consensus + execution-quality gates. `single-table` runs the legacy bare evaluator against `probabilityTable.generated.ts` for diagnostic comparisons.",
+        ),
+    }),
+    defineValueOption({
+      key: "placementMode",
+      long: "--placement-mode",
+      valueName: "MODE",
+      schema: z
+        .enum(["taker", "maker"])
+        .default("taker")
+        .describe(
+          "Placement model. `taker` (default) mirrors live FAK execution: walk asks, instant-fill at depth-weighted price. `maker` keeps the legacy queue-aware limit-order simulator.",
+        ),
+    }),
   ],
   examples: [
     "bun alea trading:replay",
@@ -147,7 +170,7 @@ export const tradingReplayCommand = defineCommand({
         explicitTo: options.to,
       });
       io.writeStdout(
-        `${pc.bold("trading:replay")}  ${pc.dim("from=")}${new Date(range.fromMs).toISOString()}  ${pc.dim("to=")}${new Date(range.toMs).toISOString()}  ${pc.dim("assets=")}${options.assets.join(",")}\n`,
+        `${pc.bold("trading:replay")}  ${pc.dim("from=")}${new Date(range.fromMs).toISOString()}  ${pc.dim("to=")}${new Date(range.toMs).toISOString()}  ${pc.dim("assets=")}${options.assets.join(",")}  ${pc.dim("strategy=")}${options.strategy}  ${pc.dim("placement=")}${options.placementMode}\n`,
       );
 
       const controller = new AbortController();
@@ -167,6 +190,10 @@ export const tradingReplayCommand = defineCommand({
           toMs: range.toMs,
           table: probabilityTable,
           minEdge: options.minEdge,
+          placementMode: options.placementMode,
+          ...(options.strategy === "consensus"
+            ? { decisionEvaluator: researchChallengerStrategy.decisionEvaluator }
+            : {}),
           signal: controller.signal,
           ...(options.candleSource !== undefined
             ? { candleSource: options.candleSource }

@@ -1,6 +1,7 @@
 import { STAKE_USD } from "@alea/constants/trading";
 import { trainingCandleSeries } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import type { TradeDecisionEvaluator } from "@alea/lib/trading/decision/evaluateDecision";
 import {
   currentWindowStartMs,
   FIVE_MINUTES_MS,
@@ -59,6 +60,20 @@ export type RunReplayParams = {
   readonly fromMs: number;
   readonly toMs: number;
   readonly table: ProbabilityTable;
+  /**
+   * Optional override for the decision evaluator. Defaults to a
+   * single-table `evaluateDecision` against `table`. Pass
+   * `researchChallengerStrategy.decisionEvaluator` to backtest the
+   * production consensus + execution-quality strategy.
+   */
+  readonly decisionEvaluator?: TradeDecisionEvaluator;
+  /**
+   * Placement model. `"taker"` mirrors live trading (FAK-style
+   * book-walk fills). `"maker"` keeps the legacy queue-aware
+   * limit-order simulator. Defaults to `"taker"` to match
+   * production.
+   */
+  readonly placementMode?: "maker" | "taker";
   readonly minEdge: number;
   readonly stakeUsd?: number;
   readonly logWriter?: ReplayJsonlWriter;
@@ -126,6 +141,8 @@ export async function runReplay({
   fromMs,
   toMs,
   table,
+  decisionEvaluator,
+  placementMode = "taker",
   minEdge,
   stakeUsd = STAKE_USD,
   logWriter,
@@ -360,6 +377,8 @@ export async function runReplay({
       chainlinkByAsset: chainlinkSliceByAsset,
       trackers,
       table,
+      decisionEvaluator,
+      placementMode,
       minEdge,
       stakeUsd,
       tickSource,
