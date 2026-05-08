@@ -133,3 +133,37 @@ The command is read-only — opens one JSONL file, prints heatmaps
 and summary stats. No postgres, no network. To regenerate the
 underlying replay session itself,
 `bun alea trading:replay --from <ISO> --to <ISO>` first.
+
+## Addendum: 2026-05-08 re-calibration
+
+After running prod for ~1 day on the original `MIN_EV=$0.50,
+MIN_RR=0.30` defaults, lifetime PnL kept bleeding (−$501 lifetime).
+Pulled fresh data covering the **24 hours ending 2026-05-08T01:00
+UTC** and re-ran the sweep. Two findings:
+
+1. **The model's raw baseline went negative** in the new window:
+   234 orders, 65.0% win rate, **−$40 PnL** before any EV/RR gate.
+   The May 5-7 baseline had been +$210. Either market-maker
+   behaviour shifted (wider spreads → higher fillPrice avg) or the
+   probability table itself has decayed.
+2. **The optimum point moved.** May 5-7 was MIN_EV=$0.50; May 7-8
+   is MIN_EV=$0.75:
+
+   ```
+   May 7-8 sweep (24h, 234 orders, 65% baseline win-rate, −$40 baseline PnL)
+     EV≥$0.50 RR≥0.30 (old default):  72 trades, +$352, $4.89 / trade
+     EV≥$0.75 RR≥0.20 (new optimum):  61 trades, +$361, $5.92 / trade  ← peak
+     EV≥$1.00 RR≥0.20:                51 trades, +$298, $5.85 / trade
+     EV≥$2.00 RR≥0.20:                28 trades, +$240, $8.56 / trade
+   ```
+
+The $0.75 cell was also competitive on the original May 5-7 window
+(+$568 vs the $0.50 peak of +$641), so it's the more regime-robust
+choice. Bumped `MIN_EXPECTED_VALUE_USD` from `0.50` → `0.75`. Kept
+`MIN_REWARD_RISK_RATIO` at `0.30` (the new data shows RR=0.20 and
+RR=0.30 produce identical results, so the safety-margin choice is
+free).
+
+Worth re-running this sweep periodically as the regime evolves —
+a $0.10 shift in the optimum is meaningful when avg per-trade PnL
+is $5.

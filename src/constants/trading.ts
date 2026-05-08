@@ -84,17 +84,16 @@ export const MIN_EDGE = 0.05;
  * bad-RR trades. This gate enforces a minimum dollar-EV floor so
  * those trades are filtered out automatically.
  *
- * Calibrated 2026-05-07 against three 35-hour replay sessions
- * (~760 orders / session) using `bun alea trading:calibrate-ev-rr-gate`.
- * Sweeping `MIN_EV ∈ {0, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4}` ×
- * `MIN_RR ∈ {0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5}`, the joint
- * peak total-PnL across all sessions sat at MIN_EV ≈ $0.50.
- * Going to $1.00 sacrificed ~70 trades / session for a small per-
- * trade improvement that didn't recover the lost volume. Going to
- * $0.25 took back the volume but with measurably worse hit rate
- * (some genuinely break-even trades sneak through).
+ * Re-calibrated 2026-05-08 after a regime shift made the model's
+ * raw baseline turn slightly negative (−$40 across the 24h ending
+ * 2026-05-08T01:00 UTC). The May 5-7 optimum was MIN_EV=$0.50; the
+ * May 7-8 optimum moved to MIN_EV=$0.75 (peak +$361 across 61
+ * trades vs +$352 across 72 trades at $0.50). The $0.75 cell was
+ * also competitive on the older window (+$568 vs the $0.50 peak of
+ * +$641), so it's the more regime-robust choice. See
+ * `bun alea trading:calibrate-ev-rr-gate` to re-run.
  */
-export const MIN_EXPECTED_VALUE_USD = 0.5;
+export const MIN_EXPECTED_VALUE_USD = 0.75;
 
 /**
  * Minimum reward-to-risk ratio (`netWinUsd / stake`) for the bot to
