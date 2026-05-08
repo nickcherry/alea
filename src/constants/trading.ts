@@ -170,8 +170,17 @@ export const RESEARCH_CHALLENGER_MIN_TREND_CONFIRM_BP = 0;
  *
  * Note: This is in addition to MIN_EDGE. A trade must clear BOTH
  * thresholds.
+ *
+ * 2026-05-08: bumped from 0.55 → 0.75 after observing the model
+ * fire P=0.86 trades that lost. The bot's calibration is suspect
+ * across the entire P range right now (regime shift + possible
+ * structural mismatch between training-time chainlink labels and
+ * runtime venue settlement). 0.75 prunes the lower-confidence tail
+ * — the "0.6 buckets that turn out to be 50/50" failure mode — and
+ * intentionally chokes trade volume so we lose less while we
+ * investigate. NOT a calibrated value; a holding pattern.
  */
-export const MIN_MODEL_PROBABILITY = 0.55;
+export const MIN_MODEL_PROBABILITY = 0.75;
 
 /**
  * Minimum queue depth (in shares resting at our chosen-side limit
