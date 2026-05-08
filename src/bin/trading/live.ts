@@ -6,6 +6,7 @@ import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { runLive } from "@alea/lib/trading/live/runLive";
 import type { LiveEvent } from "@alea/lib/trading/live/types";
+import { coinbaseSpotStrategy } from "@alea/lib/trading/strategy/coinbaseSpot";
 import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import { assetSchema } from "@alea/types/assets";
@@ -43,10 +44,21 @@ export const tradingLiveCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(
-          z.array(assetSchema).default([...researchChallengerStrategy.assets]),
+          z.array(assetSchema).default([...coinbaseSpotStrategy.assets]),
         )
         .describe(
-          "Comma-separated asset list (default: research challenger roster).",
+          "Comma-separated asset list (default: coinbase-spot strategy roster — BTC/ETH/SOL).",
+        ),
+    }),
+    defineValueOption({
+      key: "strategy",
+      long: "--strategy",
+      valueName: "STRATEGY",
+      schema: z
+        .enum(["coinbase-spot", "consensus"])
+        .default("coinbase-spot")
+        .describe(
+          "Decision strategy. `coinbase-spot` (default) uses the single coinbase/spot probability table + execution-quality gates. `consensus` uses the legacy 4-source research-challenger consensus (binance perp/spot + coinbase perp/spot).",
         ),
     }),
     defineValueOption({
@@ -82,10 +94,17 @@ export const tradingLiveCommand = defineCommand({
   sideEffects:
     "Posts FAK taker BUY orders on Polymarket for 4-source consensus signals. Sends Telegram messages on every order placement and once per window summary. Reads from fapi.binance.com (REST + WS) and Polymarket (gamma-api, CLOB REST + WS).",
   async run({ io, options }) {
-    const primaryTable = researchChallengerStrategy.tables[0]?.table;
+    const strategy =
+      options.strategy === "consensus"
+        ? researchChallengerStrategy
+        : coinbaseSpotStrategy;
+    const primaryTable =
+      strategy === researchChallengerStrategy
+        ? researchChallengerStrategy.tables[0]?.table
+        : coinbaseSpotStrategy.table;
     if (primaryTable === undefined || primaryTable.assets.length === 0) {
       throw new CliUsageError(
-        "research challenger probability tables are empty — regenerate the committed table artifact first.",
+        "probability table is empty — regenerate the committed table artifact first.",
       );
     }
     if (!options.commit) {
@@ -119,7 +138,7 @@ export const tradingLiveCommand = defineCommand({
     process.once("SIGTERM", onSigint);
 
     io.writeStdout(
-      `${pc.bold("trading:live")} ${pc.dim("(commit)")} starting; stake=$${STAKE_USD} minEdge=${options.minEdge.toFixed(3)} assets=${options.assets.join(",")}\n`,
+      `${pc.bold("trading:live")} ${pc.dim("(commit)")} starting; strategy=${strategy.label} stake=$${STAKE_USD} minEdge=${options.minEdge.toFixed(3)} assets=${options.assets.join(",")}\n`,
     );
 
     try {
@@ -128,9 +147,9 @@ export const tradingLiveCommand = defineCommand({
         vendor,
         assets: options.assets,
         table: primaryTable,
-        decisionEvaluator: researchChallengerStrategy.decisionEvaluator,
-        strategyLabel: researchChallengerStrategy.label,
-        placementMode: researchChallengerStrategy.placementMode,
+        decisionEvaluator: strategy.decisionEvaluator,
+        strategyLabel: strategy.label,
+        placementMode: strategy.placementMode,
         minEdge: options.minEdge,
         telegramBotToken,
         telegramChatId,

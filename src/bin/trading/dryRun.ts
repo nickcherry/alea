@@ -5,6 +5,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { formatDryRunEvent } from "@alea/lib/trading/dryRun/formatDryRunEvent";
 import { runDryRun } from "@alea/lib/trading/dryRun/runDryRun";
+import { coinbaseSpotStrategy } from "@alea/lib/trading/strategy/coinbaseSpot";
 import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import { assetSchema } from "@alea/types/assets";
@@ -33,10 +34,10 @@ export const tradingDryRunCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(
-          z.array(assetSchema).default([...researchChallengerStrategy.assets]),
+          z.array(assetSchema).default([...coinbaseSpotStrategy.assets]),
         )
         .describe(
-          "Comma-separated asset list (default: research challenger roster).",
+          "Comma-separated asset list (default: coinbase-spot strategy roster — BTC/ETH/SOL).",
         ),
     }),
     defineValueOption({
@@ -51,6 +52,17 @@ export const tradingDryRunCommand = defineCommand({
           `Minimum edge over Polymarket bid to mark as TAKE in the log (default ${MIN_EDGE.toFixed(3)}).`,
         ),
     }),
+    defineValueOption({
+      key: "strategy",
+      long: "--strategy",
+      valueName: "STRATEGY",
+      schema: z
+        .enum(["coinbase-spot", "consensus"])
+        .default("coinbase-spot")
+        .describe(
+          "Decision strategy. `coinbase-spot` (default) uses the single coinbase/spot table + execution-quality gates. `consensus` uses the legacy 4-source research challenger.",
+        ),
+    }),
   ],
   examples: [
     "bun alea trading:dry-run",
@@ -62,10 +74,17 @@ export const tradingDryRunCommand = defineCommand({
   sideEffects:
     "Opens live price and Polymarket public market-data WebSockets; calls price-source REST at boot and settlement; polls Polymarket gamma-api/CLOB read endpoints; sends Telegram messages using TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID; appends JSONL files under alea/tmp/dry-trading/. No orders are placed, cancelled, signed, or authenticated.",
   async run({ io, options }) {
-    const primaryTable = researchChallengerStrategy.tables[0]?.table;
+    const strategy =
+      options.strategy === "consensus"
+        ? researchChallengerStrategy
+        : coinbaseSpotStrategy;
+    const primaryTable =
+      strategy === researchChallengerStrategy
+        ? researchChallengerStrategy.tables[0]?.table
+        : coinbaseSpotStrategy.table;
     if (primaryTable === undefined || primaryTable.assets.length === 0) {
       throw new CliUsageError(
-        "research challenger probability tables are empty — regenerate the committed table artifact first.",
+        "probability table is empty — regenerate the committed table artifact first.",
       );
     }
     const telegramBotToken = env.telegramBotToken;
@@ -91,9 +110,9 @@ export const tradingDryRunCommand = defineCommand({
         vendor,
         assets: options.assets,
         table: primaryTable,
-        decisionEvaluator: researchChallengerStrategy.decisionEvaluator,
-        strategyLabel: researchChallengerStrategy.label,
-        placementMode: researchChallengerStrategy.placementMode,
+        decisionEvaluator: strategy.decisionEvaluator,
+        strategyLabel: strategy.label,
+        placementMode: strategy.placementMode,
         minEdge: options.minEdge,
         telegramBotToken,
         telegramChatId,

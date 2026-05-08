@@ -3,7 +3,7 @@ import {
   STAKE_USD,
   WINDOW_SUMMARY_DELAY_MS,
 } from "@alea/constants/trading";
-import { binancePerpLivePriceSource } from "@alea/lib/livePrices/binancePerp/source";
+import { coinbaseSpotLivePriceSource } from "@alea/lib/livePrices/coinbaseSpot/source";
 import {
   createTrackerHydrationState,
   ensureTrackersReadyForWindow,
@@ -108,7 +108,7 @@ export async function runLive({
   strategyLabel = "single-table maker",
   placementMode = "maker",
   minEdge,
-  priceSource = binancePerpLivePriceSource,
+  priceSource = coinbaseSpotLivePriceSource,
   telegramBotToken,
   telegramChatId,
   emit,

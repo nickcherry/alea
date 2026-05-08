@@ -9,6 +9,7 @@ import { formatUsd } from "@alea/lib/trading/format";
 import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
 import { formatReplayEvent } from "@alea/lib/trading/replay/formatReplayEvent";
 import { runReplay } from "@alea/lib/trading/replay/runReplay";
+import { coinbaseSpotStrategy } from "@alea/lib/trading/strategy/coinbaseSpot";
 import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -128,10 +129,10 @@ export const tradingReplayCommand = defineCommand({
       long: "--strategy",
       valueName: "STRATEGY",
       schema: z
-        .enum(["consensus", "single-table"])
-        .default("consensus")
+        .enum(["coinbase-spot", "consensus", "single-table"])
+        .default("coinbase-spot")
         .describe(
-          "Decision strategy. `consensus` (default) runs the production research-challenger strategy: 4-table consensus + execution-quality gates. `single-table` runs the legacy bare evaluator against `probabilityTable.generated.ts` for diagnostic comparisons.",
+          "Decision strategy. `coinbase-spot` (default) runs the production single-source coinbase/spot strategy + execution-quality gates. `consensus` runs the legacy 4-source research-challenger consensus. `single-table` runs the bare `evaluateDecision` against `probabilityTable.generated.ts` with no execution-quality gates (diagnostic only).",
         ),
     }),
     defineValueOption({
@@ -193,7 +194,9 @@ export const tradingReplayCommand = defineCommand({
           placementMode: options.placementMode,
           ...(options.strategy === "consensus"
             ? { decisionEvaluator: researchChallengerStrategy.decisionEvaluator }
-            : {}),
+            : options.strategy === "coinbase-spot"
+              ? { decisionEvaluator: coinbaseSpotStrategy.decisionEvaluator }
+              : {}),
           signal: controller.signal,
           ...(options.candleSource !== undefined
             ? { candleSource: options.candleSource }
