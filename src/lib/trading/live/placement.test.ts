@@ -460,6 +460,18 @@ describe("placeWithRetry", () => {
       place: async () => {
         throw new Error("maker path should not be used");
       },
+      // 2nd attempt's hydration shows real fills so the new
+      // "FAK accepted with 0 fills" silent-kill branch doesn't
+      // fire and we land on the normal `order-placed` path.
+      hydration: {
+        openOrder: null,
+        side: "up",
+        outcomeRef: "UP",
+        sharesFilled: 10,
+        costUsd: 6.2,
+        feesUsd: 0.03,
+        feeRateBpsAvg: 720,
+      },
     });
 
     await placeWithRetry({
@@ -495,6 +507,69 @@ describe("placeWithRetry", () => {
     expect(w.placedAfterRetryCount).toBe(1);
     expect(events.some((e) => e.kind === "error")).toBe(false);
     expect(events.some((e) => e.kind === "order-placed")).toBe(true);
+  });
+
+  it("treats a successful FAK POST with 0 fills as a silent FAK no-match (no Telegram, retry)", async () => {
+    const assetRecord = record();
+    const events: LiveEvent[] = [];
+    const w = windowRecord();
+    let placeCount = 0;
+    let hydrateCount = 0;
+    const baseVendor = vendorWith({
+      place: async () => {
+        throw new Error("maker path should not be used");
+      },
+    });
+
+    await placeWithRetry({
+      asset: "btc",
+      vendor: {
+        ...baseVendor,
+        async placeTakerMarketBuy() {
+          placeCount += 1;
+          return placedTakerOrder();
+        },
+        // 1st post-placement hydrate: 0 fills → silent kill.
+        // 2nd: real fills → normal `order-placed` path → loop ends.
+        async hydrateMarketState() {
+          hydrateCount += 1;
+          if (hydrateCount === 1) {
+            return emptyHydration();
+          }
+          return {
+            openOrder: null,
+            side: "up",
+            outcomeRef: "UP",
+            sharesFilled: 10,
+            costUsd: 6.2,
+            feesUsd: 0.03,
+            feeRateBpsAvg: 720,
+          };
+        },
+      },
+      record: assetRecord,
+      window: w,
+      lastTick: lastTick(),
+      trackers: trackers(),
+      books: books(),
+      table,
+      placementMode: "taker",
+      minEdge: 0.05,
+      telegramBotToken: "token",
+      telegramChatId: "chat",
+      signal: new AbortController().signal,
+      emit: (event) => events.push(event),
+    });
+
+    expect(placeCount).toBe(2);
+    expect(w.fakNoMatchCount).toBe(1);
+    expect(w.placedAfterRetryCount).toBe(1);
+    // The kill-and-retry attempt does not Telegram. The successful
+    // 2nd attempt does (one order-placed event total).
+    expect(
+      events.filter((e) => e.kind === "order-placed").length,
+    ).toBe(1);
+    expect(events.some((e) => e.kind === "error")).toBe(false);
   });
 
   it("preserves fills that arrive before the placement response returns", async () => {
