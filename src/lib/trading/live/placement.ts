@@ -39,17 +39,11 @@ const PLACE_GIVE_UP_BEFORE_END_MS =
  *     post): silent on Telegram, increments `window.rejectedCount`.
  *     The loop refreshes the book against the venue, re-evaluates the
  *     decision, and tries again.
- *   - **FAK no-match rejection** (taker, venue surfaces the explicit
- *     "no orders found to match" error): silent on Telegram,
- *     increments `window.fakNoMatchCount`. Same retry loop as postOnly
- *     — refresh book, re-evaluate, retry. No reconcile needed.
- *   - **FAK accepted with 0 fills** (taker, venue accepted the POST
- *     but the matching engine matched zero shares): same handling as
- *     the explicit no-match error. We detect this by hydrating the
- *     venue state immediately after a successful POST and seeing
- *     `sharesFilled === 0`. Without this branch we'd Telegram a
- *     misleading "Placed order" message followed by "didn't fill" at
- *     window-close.
+ *   - **FAK no-match rejection** (taker found no resting orders at our
+ *     limit): silent on Telegram, increments `window.fakNoMatchCount`.
+ *     Same retry loop as postOnly — refresh book, re-evaluate, retry.
+ *     The venue explicitly tells us nothing was placed/filled so no
+ *     reconcile is needed.
  *   - **Generic error** (network, signing, venue 5xx): treat as
  *     ambiguous (POST may have reached venue even if response failed).
  *     Reconcile against venue state and give up unless the venue
@@ -241,35 +235,6 @@ export async function placeWithRetry({
         emit({ kind: "fill", atMs: Date.now(), asset, slot: hydrated });
       }
       const sharesFilled = observed?.sharesFilled ?? 0;
-
-      // Silent FAK no-match: the venue accepted the POST (no error)
-      // but the matching engine matched zero shares. Semantically
-      // identical to the explicit `FakNoMatchRejectionError` path —
-      // FAK orders fill or kill, so no future fills will arrive
-      // for this attempt. Treat it the same way: silent on
-      // Telegram, count in `fakNoMatchCount`, refresh book, retry.
-      // Without this branch we'd Telegram a misleading "Placed
-      // order" message followed by "didn't fill" at window-close.
-      if (placementMode === "taker" && sharesFilled === 0) {
-        window.fakNoMatchCount += 1;
-        fakNoMatchRetries += 1;
-        emit({
-          kind: "info",
-          atMs: Date.now(),
-          message: `${labelAsset(asset)} FAK accepted with 0 fills (#${fakNoMatchRetries}) at ${decision.bid.toFixed(2)} — silent kill`,
-        });
-        record.slot = { kind: "empty" };
-        try {
-          const fresh = await vendor.fetchBook({ market: orderMarket, signal });
-          books.set(orderMarket.vendorRef, fresh);
-          record.market = fresh.market;
-        } catch {
-          // Carry on with the polled book.
-        }
-        await sleep(PLACE_RETRY_DELAY_MS);
-        continue;
-      }
-
       const useObservedTakerFill =
         placementMode === "taker" && observed !== null && sharesFilled > 0;
       const sharesIfFilled =
