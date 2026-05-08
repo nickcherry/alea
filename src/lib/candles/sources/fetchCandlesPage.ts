@@ -2,6 +2,7 @@ import { fetchBinanceCandles } from "@alea/lib/candles/sources/binance/fetchBina
 import { fetchBinancePerpCandles } from "@alea/lib/candles/sources/binance/fetchBinancePerpCandles";
 import { fetchCoinbaseCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbaseCandles";
 import { fetchCoinbasePerpCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbasePerpCandles";
+import { fetchCoinDeskCandles } from "@alea/lib/candles/sources/coindesk/fetchCoinDeskCandles";
 import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
@@ -86,6 +87,18 @@ async function fetchCandlesPageOnce({
           });
         case "perp":
           return fetchBinancePerpCandles({ asset, timeframe, start, end });
+      }
+      break;
+    case "coindesk":
+      // CoinDesk only exposes the CADLI spot index — there's no
+      // perp variant. The sync command iterates `(source × product)`
+      // pairs; treat coindesk/perp as a no-op rather than erroring
+      // so callers don't have to special-case it.
+      switch (product) {
+        case "spot":
+          return fetchCoinDeskCandles({ asset, timeframe, start, end });
+        case "perp":
+          return [];
       }
       break;
   }

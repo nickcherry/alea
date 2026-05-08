@@ -82,6 +82,7 @@ const sources = [
   "binance/spot",
   "coinbase/perp",
   "coinbase/spot",
+  "coindesk/spot",
 ] as const;
 const total: Record<string, number> = {};
 const disagree: Record<string, number> = {};

@@ -86,7 +86,7 @@ export type RunReplayParams = {
    * comparisons against a probability table trained on a different
    * venue/product.
    */
-  readonly candleSource?: "binance" | "coinbase";
+  readonly candleSource?: "binance" | "coinbase" | "coindesk";
   readonly candleProduct?: "spot" | "perp";
   /**
    * Which captured BBO stream the per-window driver consumes as its
