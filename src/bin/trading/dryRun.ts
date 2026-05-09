@@ -5,7 +5,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { formatDryRunEvent } from "@alea/lib/trading/dryRun/formatDryRunEvent";
 import { runDryRun } from "@alea/lib/trading/dryRun/runDryRun";
-import { coinbaseSpotStrategy } from "@alea/lib/trading/strategy/coinbaseSpot";
+import { singleSourceTakerStrategy } from "@alea/lib/trading/strategy/singleSourceTaker";
 import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
 import { assetSchema } from "@alea/types/assets";
@@ -34,10 +34,10 @@ export const tradingDryRunCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(
-          z.array(assetSchema).default([...coinbaseSpotStrategy.assets]),
+          z.array(assetSchema).default([...singleSourceTakerStrategy.assets]),
         )
         .describe(
-          "Comma-separated asset list (default: coinbase-spot strategy roster — BTC/ETH/SOL).",
+          "Comma-separated asset list (default: single-source strategy roster — BTC/ETH/SOL).",
         ),
     }),
     defineValueOption({
@@ -57,10 +57,10 @@ export const tradingDryRunCommand = defineCommand({
       long: "--strategy",
       valueName: "STRATEGY",
       schema: z
-        .enum(["coinbase-spot", "consensus"])
-        .default("coinbase-spot")
+        .enum(["single-source", "consensus"])
+        .default("single-source")
         .describe(
-          "Decision strategy. `coinbase-spot` (default) uses the single coinbase/spot table + execution-quality gates. `consensus` uses the legacy 4-source research challenger.",
+          "Decision strategy. `single-source` (default) uses the single probability table named in `trainingCandleSeries` (currently pyth/spot 5m) + execution-quality gates. `consensus` uses the legacy 4-source research challenger.",
         ),
     }),
   ],
@@ -77,11 +77,11 @@ export const tradingDryRunCommand = defineCommand({
     const strategy =
       options.strategy === "consensus"
         ? researchChallengerStrategy
-        : coinbaseSpotStrategy;
+        : singleSourceTakerStrategy;
     const primaryTable =
       strategy === researchChallengerStrategy
         ? researchChallengerStrategy.tables[0]?.table
-        : coinbaseSpotStrategy.table;
+        : singleSourceTakerStrategy.table;
     if (primaryTable === undefined || primaryTable.assets.length === 0) {
       throw new CliUsageError(
         "probability table is empty — regenerate the committed table artifact first.",

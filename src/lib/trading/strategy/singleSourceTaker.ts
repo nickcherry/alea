@@ -14,11 +14,11 @@ import { probabilityTable } from "@alea/lib/trading/probabilityTable/probability
 import type { LeadingSide, ProbabilityTable } from "@alea/lib/trading/types";
 import type { Asset } from "@alea/types/assets";
 
-export const COINBASE_SPOT_STRATEGY_ID =
-  "coinbase-spot-2026-05-08-single-table-taker";
+export const SINGLE_SOURCE_TAKER_STRATEGY_ID =
+  "pyth-spot-2026-05-08-single-table-taker";
 
-export type CoinbaseSpotStrategy = {
-  readonly id: typeof COINBASE_SPOT_STRATEGY_ID;
+export type SingleSourceTakerStrategy = {
+  readonly id: typeof SINGLE_SOURCE_TAKER_STRATEGY_ID;
   readonly label: string;
   readonly placementMode: "taker";
   readonly assets: readonly Asset[];
@@ -29,31 +29,36 @@ export type CoinbaseSpotStrategy = {
 /**
  * Single-source replacement for `researchChallengerStrategy`. Reads
  * one probability table — the canonical `probabilityTable.generated.ts`,
- * which is trained on coinbase-spot 5m candles — and applies the same
- * execution-quality gates the consensus strategy did
- * (bestAsk ≤ 0.75, spread ≤ 0.07, same-side trend confirmation,
+ * which is trained on the source named in `trainingCandleSeries` —
+ * and applies the same execution-quality gates the consensus strategy
+ * did (bestAsk ≤ 0.75, spread ≤ 0.07, same-side trend confirmation,
  * asset filter), without requiring four-source agreement.
  *
- * Built 2026-05-08 after measurement showed the binance/perp data
- * feed disagreed with Chainlink ~16% of the time across a 70h
- * captured window vs ~3.3% for coinbase/spot. The consensus design
- * needed binance/perp to be a useful diversifier; with that source
- * structurally noisy as a Chainlink proxy, the consensus was filtering
- * on bad signal. coinbase/spot alone is ~5x more accurate as a venue
- * proxy and matches what `trainingCandleSeries` already uses for
- * label generation, so going single-source aligns the live tracker,
- * the training labels, and the strategy on one feed.
+ * Source history:
+ * - 2026-05-08 v1: built on coinbase/spot, after measurement showed
+ *   binance/perp disagreed with Chainlink ~16% of the time across a
+ *   70h captured window vs ~3.3% for coinbase/spot. The consensus
+ *   design needed binance/perp to be a useful diversifier; with that
+ *   source structurally noisy as a Chainlink proxy, the consensus was
+ *   filtering on bad signal.
+ * - 2026-05-08 v2: switched to pyth/spot. Pyth Network's multi-publisher
+ *   median (Coinbase, Cboe, Wintermute, Virtu, etc) is architecturally
+ *   the closest free analog of Chainlink Data Streams' reporter model,
+ *   and across the same 70h window it disagreed with Chainlink only
+ *   1.89% of the time — strictly better than coinbase/spot (3.31%) on
+ *   every asset, and dramatically better on the long tail (DOGE 12×,
+ *   XRP 19×). See scripts/source_vs_chainlink.ts.
  */
-export const coinbaseSpotStrategy: CoinbaseSpotStrategy = {
-  id: COINBASE_SPOT_STRATEGY_ID,
-  label: "single coinbase/spot taker",
+export const singleSourceTakerStrategy: SingleSourceTakerStrategy = {
+  id: SINGLE_SOURCE_TAKER_STRATEGY_ID,
+  label: "single pyth/spot taker",
   placementMode: "taker",
   assets: RESEARCH_CHALLENGER_ASSETS,
   table: probabilityTable,
-  decisionEvaluator: evaluateCoinbaseSpotDecision,
+  decisionEvaluator: evaluateSingleSourceTakerDecision,
 };
 
-export function evaluateCoinbaseSpotDecision(
+export function evaluateSingleSourceTakerDecision(
   inputs: DecisionInputsBase,
 ): TradeDecision {
   if (!RESEARCH_CHALLENGER_ASSETS.includes(inputs.asset)) {

@@ -9,7 +9,7 @@ import { formatUsd } from "@alea/lib/trading/format";
 import { probabilityTable } from "@alea/lib/trading/probabilityTable/probabilityTable.generated";
 import { formatReplayEvent } from "@alea/lib/trading/replay/formatReplayEvent";
 import { runReplay } from "@alea/lib/trading/replay/runReplay";
-import { coinbaseSpotStrategy } from "@alea/lib/trading/strategy/coinbaseSpot";
+import { singleSourceTakerStrategy } from "@alea/lib/trading/strategy/singleSourceTaker";
 import { researchChallengerStrategy } from "@alea/lib/trading/strategy/researchChallenger";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -84,10 +84,10 @@ export const tradingReplayCommand = defineCommand({
       long: "--candle-source",
       valueName: "SOURCE",
       schema: z
-        .enum(["binance", "coinbase"])
+        .enum(["binance", "coinbase", "coindesk", "pyth"])
         .optional()
         .describe(
-          "Override the candle source used to bootstrap regime trackers (default: binance, matching the trained probability table).",
+          "Override the candle source used to bootstrap regime trackers (default: matches `trainingCandleSeries` — currently pyth — for parity with the trained probability table).",
         ),
     }),
     defineValueOption({
@@ -109,7 +109,7 @@ export const tradingReplayCommand = defineCommand({
         .enum(["binance-perp", "coinbase-spot", "coinbase-perp"])
         .optional()
         .describe(
-          "Captured BBO stream consumed for in-window line capture and lastTick (default: binance-perp, matching live trading).",
+          "Captured BBO stream consumed for in-window line capture and lastTick (default: derived from `trainingCandleSeries` — currently coinbase-spot since pyth has no captured BBO).",
         ),
     }),
     defineValueOption({
@@ -129,10 +129,10 @@ export const tradingReplayCommand = defineCommand({
       long: "--strategy",
       valueName: "STRATEGY",
       schema: z
-        .enum(["coinbase-spot", "consensus", "single-table"])
-        .default("coinbase-spot")
+        .enum(["single-source", "consensus", "single-table"])
+        .default("single-source")
         .describe(
-          "Decision strategy. `coinbase-spot` (default) runs the production single-source coinbase/spot strategy + execution-quality gates. `consensus` runs the legacy 4-source research-challenger consensus. `single-table` runs the bare `evaluateDecision` against `probabilityTable.generated.ts` with no execution-quality gates (diagnostic only).",
+          "Decision strategy. `single-source` (default) runs the production single-source strategy (currently pyth/spot) + execution-quality gates. `consensus` runs the legacy 4-source research-challenger consensus. `single-table` runs the bare `evaluateDecision` against `probabilityTable.generated.ts` with no execution-quality gates (diagnostic only).",
         ),
     }),
     defineValueOption({
@@ -194,8 +194,8 @@ export const tradingReplayCommand = defineCommand({
           placementMode: options.placementMode,
           ...(options.strategy === "consensus"
             ? { decisionEvaluator: researchChallengerStrategy.decisionEvaluator }
-            : options.strategy === "coinbase-spot"
-              ? { decisionEvaluator: coinbaseSpotStrategy.decisionEvaluator }
+            : options.strategy === "single-source"
+              ? { decisionEvaluator: singleSourceTakerStrategy.decisionEvaluator }
               : {}),
           signal: controller.signal,
           ...(options.candleSource !== undefined
