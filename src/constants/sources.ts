@@ -3,12 +3,15 @@
  * so the same asset/timeframe can be tracked from multiple exchanges.
  *
  * `coindesk` is the CoinDesk Aggregated Liquid Index (CADLI) — a multi-
- * exchange volume-weighted aggregate, used as a closer proxy for the
- * Chainlink Data Streams price Polymarket settles on than any single
- * exchange. See scripts/source_vs_chainlink.ts.
+ * exchange volume-weighted aggregate. `pyth` is the Pyth Network oracle
+ * median across ~10+ first-party publishers (Coinbase, Cboe, Wintermute,
+ * Virtu, etc), architecturally closest to Chainlink Data Streams' reporter
+ * model. Both are aggregate-style proxies for the price Polymarket
+ * settles on; see scripts/source_vs_chainlink.ts.
  */
 export const candleSourceValues = [
   "coinbase",
   "binance",
   "coindesk",
+  "pyth",
 ] as const;

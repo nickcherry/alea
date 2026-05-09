@@ -3,6 +3,7 @@ import { fetchBinancePerpCandles } from "@alea/lib/candles/sources/binance/fetch
 import { fetchCoinbaseCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbaseCandles";
 import { fetchCoinbasePerpCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbasePerpCandles";
 import { fetchCoinDeskCandles } from "@alea/lib/candles/sources/coindesk/fetchCoinDeskCandles";
+import { fetchPythCandles } from "@alea/lib/candles/sources/pyth/fetchPythCandles";
 import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
@@ -97,6 +98,17 @@ async function fetchCandlesPageOnce({
       switch (product) {
         case "spot":
           return fetchCoinDeskCandles({ asset, timeframe, start, end });
+        case "perp":
+          return [];
+      }
+      break;
+    case "pyth":
+      // Pyth is an oracle aggregate (no venue-level perp). Same no-op
+      // pattern as coindesk so the (source × product) iteration in the
+      // sync command doesn't need to special-case it.
+      switch (product) {
+        case "spot":
+          return fetchPythCandles({ asset, timeframe, start, end });
         case "perp":
           return [];
       }

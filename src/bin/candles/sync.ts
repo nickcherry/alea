@@ -28,12 +28,17 @@ import { z } from "zod";
 const millisecondsPerDay = 86_400_000;
 
 /**
- * Concurrent series in flight. Sized so each provider sees at most half the
- * load when the iteration order alternates Coinbase / Binance evenly — four
- * workers across two providers means roughly two concurrent requests per
- * provider, which stays comfortably below either's public rate limits.
+ * Concurrent series in flight. Was 4 when only Coinbase + Binance were in
+ * the mix (each provider saw ~2 concurrent requests, well below limits).
+ * Pyth Benchmarks rate-limits an order of magnitude tighter — its per-IP
+ * window is ~30s with no Retry-After header — and 2 is the empirical
+ * sweet spot: single-worker backfills go idle when a single page hits a
+ * long backoff chain (no fallback grinder), while 4+ trip exhaust-retry
+ * failures over multi-hour spans. With the smarter 30s-initial backoff
+ * in `fetchPythCandles` (which skips the wasted sub-window retries),
+ * 2 workers sharing the quota stay productive in aggregate.
  */
-const syncConcurrency = 4;
+const syncConcurrency = 2;
 
 /**
  * Backfills 5-minute (or 1-minute) candles into Postgres for a configurable
@@ -150,15 +155,23 @@ export const candlesSyncCommand = defineCommand({
           if (task === undefined) {
             continue;
           }
-          const result = await syncCandles({
-            db,
-            source: task.source,
-            asset: task.asset,
-            product: task.product,
-            timeframe: options.timeframe,
-            start,
-            end,
-          });
+          let result;
+          try {
+            result = await syncCandles({
+              db,
+              source: task.source,
+              asset: task.asset,
+              product: task.product,
+              timeframe: options.timeframe,
+              start,
+              end,
+            });
+          } catch (err) {
+            io.writeStderr(
+              `${pc.red("FAIL")}  ${task.source}/${task.asset}/${task.product}: ${(err as Error)?.message ?? String(err)}\n`,
+            );
+            throw err;
+          }
           results.push(result);
           const stats = summarizeSyncResult({ result });
           io.writeStdout(
