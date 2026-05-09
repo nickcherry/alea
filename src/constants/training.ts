@@ -7,7 +7,7 @@ import type { CandleSeries } from "@alea/types/candleSeries";
  * separately, so widening (or swapping) the series later is a one-line edit.
  */
 export const trainingCandleSeries: CandleSeries = {
-  source: "coinbase",
+  source: "pyth",
   product: "spot",
   timeframe: "5m",
 };

@@ -53,7 +53,7 @@ export const tradingGenProbabilityTableCommand = defineCommand({
   summary:
     "Refresh the committed live-trading probability table from local candles",
   description:
-    "Reads the local Postgres for the configured training candle series (today: binance-perp 5m + the matching 1m series) and writes src/lib/trading/probabilityTable/probabilityTable.generated.ts plus a JSON sidecar in tmp/. Snapshots are partitioned by LIVE_TRADING_REGIME_ALGO and each per-regime surface is restricted to the sweet-spot bp range. Buckets thinner than --min-samples are dropped.",
+    "Reads the local Postgres for the configured training candle series (defined in `trainingCandleSeries`) plus the matching 1m series, and writes src/lib/trading/probabilityTable/probabilityTable.generated.ts plus a JSON sidecar in tmp/. Snapshots are partitioned by LIVE_TRADING_REGIME_ALGO and each per-regime surface is restricted to the sweet-spot bp range. Buckets thinner than --min-samples are dropped.",
   options: [
     defineValueOption({
       key: "assets",

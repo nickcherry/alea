@@ -17,6 +17,7 @@ import {
   type DryOrderResolution,
 } from "@alea/lib/trading/dryRun/metrics";
 import { buildReplayMarketManifest } from "@alea/lib/trading/replay/derivedMarkets";
+import type { CandleSource } from "@alea/types/sources";
 import {
   createReplayJsonlWriter,
   type ReplayJsonlWriter,
@@ -86,7 +87,7 @@ export type RunReplayParams = {
    * comparisons against a probability table trained on a different
    * venue/product.
    */
-  readonly candleSource?: "binance" | "coinbase" | "coindesk";
+  readonly candleSource?: CandleSource;
   readonly candleProduct?: "spot" | "perp";
   /**
    * Which captured BBO stream the per-window driver consumes as its
@@ -660,8 +661,11 @@ function serializeWindowChainlink({
  * Default tick source for replay: derived from
  * `trainingCandleSeries` so the in-window BBO stream stays consistent
  * with whatever venue the active probability table was trained on.
- * Falls through to binance-perp if the training series doesn't map to
- * a captured BBO source we have wired up.
+ * Pyth has no captured BBO stream — it's an oracle, not a venue — so
+ * we fall through to coinbase-spot, which is what the live trader
+ * actually consumes when training is on pyth (see the source-history
+ * comment in `singleSourceTaker.ts`). This keeps replay aligned with
+ * what production does.
  */
 function defaultTickSourceFromTrainingSeries(): ReplayTickSource {
   const { source, product } = trainingCandleSeries;
@@ -674,7 +678,9 @@ function defaultTickSourceFromTrainingSeries(): ReplayTickSource {
   if (source === "coinbase" && product === "perp") {
     return "coinbase-perp";
   }
-  return "binance-perp";
+  // pyth (and any other oracle-style source we may add) — mirror the
+  // live trader's choice rather than the historical binance-perp default.
+  return "coinbase-spot";
 }
 
 /**
