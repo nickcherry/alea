@@ -31,6 +31,7 @@ export type ReplayEvent =
   | ReplayBinancePerpBboEvent
   | ReplayCoinbaseSpotBboEvent
   | ReplayCoinbasePerpBboEvent
+  | ReplayPythSpotBboEvent
   | ReplayChainlinkRefPriceEvent;
 
 /**
@@ -43,7 +44,8 @@ export type ReplayEvent =
 export type ReplayTickSource =
   | "binance-perp"
   | "coinbase-spot"
-  | "coinbase-perp";
+  | "coinbase-perp"
+  | "pyth-spot";
 
 export type ReplayBaseFields = {
   readonly id: string;
@@ -99,6 +101,25 @@ export type ReplayCoinbaseSpotBboEvent = ReplayBaseFields & {
 
 export type ReplayCoinbasePerpBboEvent = ReplayBaseFields & {
   readonly source: "coinbase-perp";
+  readonly kind: "bbo";
+  readonly asset: Asset;
+  readonly bid: number;
+  readonly ask: number;
+  readonly mid: number;
+  readonly tsExchangeMs: number | null;
+};
+
+/**
+ * Pyth Hermes "BBO". Pyth is a multi-publisher oracle aggregate, not
+ * a venue book — each captured tick carries a single price plus a
+ * confidence interval. We collapse `bid = ask = mid = price` on the
+ * capture side so this row shape is identical to the venue BBO
+ * events; downstream consumers that only read `mid` work unchanged,
+ * and consumers that need to spot the difference can switch on
+ * `source === "pyth-spot"`.
+ */
+export type ReplayPythSpotBboEvent = ReplayBaseFields & {
+  readonly source: "pyth-spot";
   readonly kind: "bbo";
   readonly asset: Asset;
   readonly bid: number;

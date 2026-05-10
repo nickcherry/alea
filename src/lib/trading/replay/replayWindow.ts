@@ -415,7 +415,10 @@ function handleTickBbo({
 }: {
   readonly event: Extract<
     ReplayEvent,
-    { source: "binance-perp" | "coinbase-spot" | "coinbase-perp"; kind: "bbo" }
+    {
+      source: "binance-perp" | "coinbase-spot" | "coinbase-perp" | "pyth-spot";
+      kind: "bbo";
+    }
   >;
   readonly states: Map<Asset, AssetState>;
   readonly windowStartMs: number;

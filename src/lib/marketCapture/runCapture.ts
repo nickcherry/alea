@@ -13,6 +13,7 @@ import {
 } from "@alea/lib/marketCapture/captureCoinbase";
 import { capturePolymarket } from "@alea/lib/marketCapture/capturePolymarket";
 import { capturePolymarketChainlink } from "@alea/lib/marketCapture/capturePolymarketChainlink";
+import { capturePyth } from "@alea/lib/marketCapture/capturePyth";
 import { createCaptureSink } from "@alea/lib/marketCapture/captureSink";
 import { ingestSessionJsonl } from "@alea/lib/marketCapture/ingestSessionJsonl";
 import {
@@ -164,6 +165,7 @@ export async function runCapture({
     captureBinancePerp({ assets, sink }),
     captureCoinbasePerp({ assets, sink }),
     captureCoinbaseSpot({ assets, sink }),
+    capturePyth({ assets, sink }),
     capturePolymarketChainlink({ assets, sink }),
   ];
 

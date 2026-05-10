@@ -660,12 +660,16 @@ function serializeWindowChainlink({
 /**
  * Default tick source for replay: derived from
  * `trainingCandleSeries` so the in-window BBO stream stays consistent
- * with whatever venue the active probability table was trained on.
- * Pyth has no captured BBO stream — it's an oracle, not a venue — so
- * we fall through to coinbase-spot, which is what the live trader
- * actually consumes when training is on pyth (see the source-history
- * comment in `singleSourceTaker.ts`). This keeps replay aligned with
- * what production does.
+ * with whatever venue the active probability table was trained on,
+ * and matches what the live trader consumes for in-window state.
+ *
+ * Pyth has no native BBO — it's an oracle aggregate — but
+ * `data:capture` writes its SSE stream as `pyth-spot/bbo` rows with
+ * `bid = ask = mid = price`, so replay can drive its virtual clock
+ * off the captured pyth ticks the same way it does for venue BBO.
+ * Captured tape from before that change won't have any pyth-spot
+ * rows; for those windows the operator should pass
+ * `--tick-source coinbase-spot` explicitly.
  */
 function defaultTickSourceFromTrainingSeries(): ReplayTickSource {
   const { source, product } = trainingCandleSeries;
@@ -678,8 +682,9 @@ function defaultTickSourceFromTrainingSeries(): ReplayTickSource {
   if (source === "coinbase" && product === "perp") {
     return "coinbase-perp";
   }
-  // pyth (and any other oracle-style source we may add) — mirror the
-  // live trader's choice rather than the historical binance-perp default.
+  if (source === "pyth" && product === "spot") {
+    return "pyth-spot";
+  }
   return "coinbase-spot";
 }
 

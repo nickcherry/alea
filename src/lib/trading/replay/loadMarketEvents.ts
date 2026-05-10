@@ -63,6 +63,7 @@ const KIND_BY_SOURCE: Record<string, readonly string[]> = {
   "binance-perp": ["bbo"],
   "coinbase-spot": ["bbo"],
   "coinbase-perp": ["bbo"],
+  "pyth-spot": ["bbo"],
   "polymarket-chainlink": ["reference-price"],
 };
 
@@ -269,7 +270,8 @@ export function loadMarketEvents({
       if (
         (row.source === "binance-perp" ||
           row.source === "coinbase-spot" ||
-          row.source === "coinbase-perp") &&
+          row.source === "coinbase-perp" ||
+          row.source === "pyth-spot") &&
         row.kind === "bbo"
       ) {
         if (base.asset === null) {

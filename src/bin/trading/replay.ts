@@ -106,10 +106,10 @@ export const tradingReplayCommand = defineCommand({
       long: "--tick-source",
       valueName: "SOURCE",
       schema: z
-        .enum(["binance-perp", "coinbase-spot", "coinbase-perp"])
+        .enum(["binance-perp", "coinbase-spot", "coinbase-perp", "pyth-spot"])
         .optional()
         .describe(
-          "Captured BBO stream consumed for in-window line capture and lastTick (default: derived from `trainingCandleSeries` — currently coinbase-spot since pyth has no captured BBO).",
+          "Captured BBO stream consumed for in-window line capture and lastTick (default: derived from `trainingCandleSeries` — currently pyth-spot now that pyth ticks are captured by `data:capture`).",
         ),
     }),
     defineValueOption({
