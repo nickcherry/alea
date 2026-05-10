@@ -116,16 +116,12 @@ describe("createVolXRsiDivergenceAlgo", () => {
 });
 
 describe("volXRsiDivergenceAlgos", () => {
-  it("registers six variants, one per (timeframe, lookback) pairing", () => {
-    expect(volXRsiDivergenceAlgos).toHaveLength(6);
+  it("registers the two w3 cross-product variants (5m and 15m)", () => {
+    expect(volXRsiDivergenceAlgos).toHaveLength(2);
     const ids = volXRsiDivergenceAlgos.map((a) => a.id);
     expect(ids).toEqual([
       "vol3_x_rsidiv_5m_w3",
-      "vol3_x_rsidiv_5m_w5",
-      "vol3_x_rsidiv_5m_w7",
       "vol3_x_rsidiv_15m_w3",
-      "vol3_x_rsidiv_15m_w5",
-      "vol3_x_rsidiv_15m_w7",
     ]);
   });
 

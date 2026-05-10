@@ -88,15 +88,16 @@ export function createVolXRsiDivergenceAlgo({
 }
 
 /**
- * Six combined variants, one per div lookback variant the standalone
- * div algos register. Same naming convention so the dashboard groups
- * them visually next to their solo counterparts.
+ * Two combined variants — both with `lookbackBars=3` (the shortest
+ * we trained), one each for 5m and 15m candle timeframes. The
+ * 2026-05-10 prune kept these out of an initial set of six because
+ * the w3 variants ranked highest on the cross-asset mean
+ * `calibrationScore` ladder; the longer-lookback variants (w5, w7)
+ * landed below them by a clear margin and didn't earn the dashboard
+ * real estate. Resurrect a longer lookback in one line by appending
+ * another `createVolXRsiDivergenceAlgo` call.
  */
 export const volXRsiDivergenceAlgos: readonly RegimeAlgo[] = [
   createVolXRsiDivergenceAlgo({ timeframe: "5m", lookbackBars: 3 }),
-  createVolXRsiDivergenceAlgo({ timeframe: "5m", lookbackBars: 5 }),
-  createVolXRsiDivergenceAlgo({ timeframe: "5m", lookbackBars: 7 }),
   createVolXRsiDivergenceAlgo({ timeframe: "15m", lookbackBars: 3 }),
-  createVolXRsiDivergenceAlgo({ timeframe: "15m", lookbackBars: 5 }),
-  createVolXRsiDivergenceAlgo({ timeframe: "15m", lookbackBars: 7 }),
 ];
