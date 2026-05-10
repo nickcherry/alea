@@ -10,5 +10,7 @@ export function pythResolution({
       return "1";
     case "5m":
       return "5";
+    case "15m":
+      return "15";
   }
 }

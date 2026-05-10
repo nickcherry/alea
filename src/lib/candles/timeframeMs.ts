@@ -13,5 +13,7 @@ export function timeframeMs({
       return 60_000;
     case "5m":
       return 300_000;
+    case "15m":
+      return 900_000;
   }
 }

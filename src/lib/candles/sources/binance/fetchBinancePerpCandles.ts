@@ -110,7 +110,7 @@ type ArchiveSpec = {
    */
   readonly dayStartMs?: number;
   readonly symbol?: string;
-  readonly interval?: "1m" | "5m";
+  readonly interval?: "1m" | "5m" | "15m";
 };
 
 function chooseArchive({
@@ -122,7 +122,7 @@ function chooseArchive({
   readonly dayStart: number;
   readonly todayUtc: number;
   readonly symbol: string;
-  readonly interval: "1m" | "5m";
+  readonly interval: "1m" | "5m" | "15m";
 }): ArchiveSpec {
   const day = new Date(dayStart);
   const monthEnd = Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + 1, 1);
@@ -228,7 +228,7 @@ async function fetchFapiDay({
 }: {
   readonly dayStartMs: number;
   readonly symbol: string;
-  readonly interval: "1m" | "5m";
+  readonly interval: "1m" | "5m" | "15m";
   readonly asset: Asset;
   readonly timeframe: CandleTimeframe;
 }): Promise<readonly Candle[]> {

@@ -8,11 +8,13 @@ export function coinbaseGranularity({
   timeframe,
 }: {
   readonly timeframe: CandleTimeframe;
-}): "ONE_MINUTE" | "FIVE_MINUTE" {
+}): "ONE_MINUTE" | "FIVE_MINUTE" | "FIFTEEN_MINUTE" {
   switch (timeframe) {
     case "1m":
       return "ONE_MINUTE";
     case "5m":
       return "FIVE_MINUTE";
+    case "15m":
+      return "FIFTEEN_MINUTE";
   }
 }

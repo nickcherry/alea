@@ -151,6 +151,8 @@ function barSecondsFor({
       return 60;
     case "5m":
       return 300;
+    case "15m":
+      return 900;
   }
 }
 
