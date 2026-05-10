@@ -29,8 +29,14 @@ export async function writeTrainingDistributionsArtifacts({
     pageAssets: ["training-distributions.css", "training-distributions.js"],
   });
   const html = renderTrainingDistributionsHtml({ payload, assets });
+  // Compact JSON (no pretty-printing). The dashboard HTML inlines a
+  // compact copy of the same payload via the `training-payload`
+  // <script>; pretty-printing the sidecar tripled-or-quadrupled the
+  // file size for no functional benefit, and pushed past Cloudflare
+  // Workers Assets' 25 MiB per-file cap once the cross-product
+  // regime variants started landing in the registry.
   await Promise.all([
     writeFile(htmlPath, html),
-    writeFile(jsonPath, JSON.stringify(payload, null, 2)),
+    writeFile(jsonPath, JSON.stringify(payload)),
   ]);
 }

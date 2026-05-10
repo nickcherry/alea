@@ -1,48 +1,15 @@
-import type {
-  RegimeAlgo,
-  RegimeClassifierInput,
-} from "@alea/lib/training/regimeAlgos/types";
+import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
+import {
+  type DivergenceLookback,
+  type DivergenceTimeframe,
+  readDivergenceLabel,
+} from "@alea/lib/training/regimeAlgos/rsiDivergence/readDivergenceLabel";
 import { RSI_DIVERGENCE_LABELS } from "@alea/lib/training/regimeAlgos/rsiDivergence/types";
-import type { RsiDivergenceLabel } from "@alea/lib/training/regimeAlgos/rsiDivergence/types";
-
-type DivergenceTimeframe = "5m" | "15m";
-type DivergenceLookback = 3 | 5 | 7;
 
 type AlgoConfig = {
   readonly timeframe: DivergenceTimeframe;
   readonly lookbackBars: DivergenceLookback;
 };
-
-/**
- * Pulls the right precomputed divergence label out of the classifier
- * input for the given (timeframe, lookback) variant. The labels are
- * computed once per snapshot in `computeSurvivalSnapshots` /
- * `computeRegimeClassifierInput` and surfaced as flat fields on
- * `RegimeClassifierInput`; each algo variant just selects the matching
- * field. Keeps the algo `classify` body trivial so the only place
- * divergence math can drift is the shared computation.
- */
-function readLabel(
-  input: RegimeClassifierInput,
-  { timeframe, lookbackBars }: AlgoConfig,
-): RsiDivergenceLabel | null {
-  if (timeframe === "5m") {
-    if (lookbackBars === 3) {
-      return input.rsiDivergence5mW3;
-    }
-    if (lookbackBars === 5) {
-      return input.rsiDivergence5mW5;
-    }
-    return input.rsiDivergence5mW7;
-  }
-  if (lookbackBars === 3) {
-    return input.rsiDivergence15mW3;
-  }
-  if (lookbackBars === 5) {
-    return input.rsiDivergence15mW5;
-  }
-  return input.rsiDivergence15mW7;
-}
 
 /**
  * Factory: produces a `RegimeAlgo` that partitions snapshots by RSI
@@ -88,7 +55,8 @@ export function createRsiDivergenceAlgo({
       rangeUpper: 60,
       lookbackBars,
     },
-    classify: (input) => readLabel(input, { timeframe, lookbackBars }),
+    classify: (input) =>
+      readDivergenceLabel({ input, timeframe, lookbackBars }),
   };
 }
 

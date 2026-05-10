@@ -287,11 +287,15 @@ export const WINNING_YES_PAYOUT_USD = 1;
  * training time and rendered on the dashboard, but excluded from the
  * live trading set until we've validated them in the offline data.
  * The RSI-divergence variants (`rsi_div_5m_w*`, `rsi_div_15m_w*`)
- * land here while we collect bucket counts and lead-pp numbers
- * without affecting live decisions. Promote one (or several) by
- * removing the matching prefix from this list.
+ * and the vol×divergence cross-products (`vol3_x_rsidiv_*`) land
+ * here while we collect bucket counts and lead-pp numbers without
+ * affecting live decisions. Promote one (or several) by removing
+ * the matching prefix from this list.
  */
-const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = ["rsi_div_"];
+const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = [
+  "rsi_div_",
+  "vol3_x_rsidiv_",
+];
 
 export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] =
   regimeAlgos.filter(
