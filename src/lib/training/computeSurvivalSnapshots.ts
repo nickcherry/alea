@@ -2,8 +2,38 @@ import {
   FIVE_MINUTES_MS,
   ONE_MINUTE_MS,
 } from "@alea/lib/livePrices/fiveMinuteWindow";
+import { computeWilderRsiSeries } from "@alea/lib/training/indicators/computeWilderRsiSeries";
+import { aggregate5mTo15m } from "@alea/lib/training/regimeAlgos/rsiDivergence/aggregateTo15m";
+import {
+  detectDivergencesGivenRsi,
+  type DivergenceBar,
+  labelAt,
+} from "@alea/lib/training/regimeAlgos/rsiDivergence/computeDivergence";
+import type {
+  RsiDivergenceConfig,
+  RsiDivergenceLabel,
+} from "@alea/lib/training/regimeAlgos/rsiDivergence/types";
 import type { SurvivalRemainingMinutes } from "@alea/lib/training/types";
 import type { Candle } from "@alea/types/candles";
+
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+
+/**
+ * Fixed pivot/range parameters for the RSI-divergence detector. The
+ * lookback is varied per algo variant; everything else is locked to
+ * the Pine Script defaults so two algos that disagree on lookback
+ * still see identical pivot patterns.
+ */
+const RSI_DIVERGENCE_DETECTION_CONFIG: Omit<
+  RsiDivergenceConfig,
+  "lookbackBars"
+> = {
+  rsiLength: 14,
+  lbL: 5,
+  lbR: 5,
+  rangeLower: 5,
+  rangeUpper: 60,
+};
 
 /**
  * One in-window observation: the `(remainingMinutes, distanceBp)` pair the
@@ -101,6 +131,35 @@ export type SurvivalSnapshotContext = {
    * 50 the neutral midpoint. `null` until 14 prior closes are available.
    */
   readonly rsi14x5m: number | null;
+
+  /**
+   * RSI divergence state on the 5m series, evaluated through and
+   * including the most recent COMPLETED 5m bar before the current
+   * window. The trailing number names the lookback window (in 5m
+   * bars) — bars 3, 5, and 7 give us three sensitivity settings to
+   * compare in the dashboard. `no_div` when no divergence event
+   * fired in the lookback window; `null` until enough history has
+   * accumulated for any pivot pair to clear `rangeLower`.
+   *
+   * All three fields share the same underlying pivot detection (RSI
+   * 14, lbL=5, lbR=5, rangeLower=5, rangeUpper=60); only the
+   * "active within last N bars" lookback varies. See
+   * `regimeAlgos/rsiDivergence/computeDivergence.ts`.
+   */
+  readonly rsiDivergence5mW3: RsiDivergenceLabel | null;
+  readonly rsiDivergence5mW5: RsiDivergenceLabel | null;
+  readonly rsiDivergence5mW7: RsiDivergenceLabel | null;
+
+  /**
+   * RSI divergence state on the 15m series — same algorithm as the
+   * 5m fields but the underlying bars are aggregated from three
+   * consecutive 5m bars at the natural HH:00/15/30/45 boundaries.
+   * The 15m signal updates every 3rd 5m window; intervening windows
+   * carry the same label.
+   */
+  readonly rsiDivergence15mW3: RsiDivergenceLabel | null;
+  readonly rsiDivergence15mW5: RsiDivergenceLabel | null;
+  readonly rsiDivergence15mW7: RsiDivergenceLabel | null;
 
   /**
    * Rate-of-change over the last 20 completed 5m bars, in percent:
@@ -317,6 +376,42 @@ export function* computeSurvivalSnapshots({
     const ema50x5m = ma20Index?.ema50At({ windowStartMs }) ?? null;
     const ema50SlopePct = ma20Index?.ema50SlopePctAt({ windowStartMs }) ?? null;
     const rsi14x5m = ma20Index?.rsi14At({ windowStartMs }) ?? null;
+    const rsiDivergence5mW3 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "5m",
+        lookbackBars: 3,
+      }) ?? null;
+    const rsiDivergence5mW5 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "5m",
+        lookbackBars: 5,
+      }) ?? null;
+    const rsiDivergence5mW7 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "5m",
+        lookbackBars: 7,
+      }) ?? null;
+    const rsiDivergence15mW3 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "15m",
+        lookbackBars: 3,
+      }) ?? null;
+    const rsiDivergence15mW5 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "15m",
+        lookbackBars: 5,
+      }) ?? null;
+    const rsiDivergence15mW7 =
+      ma20Index?.rsiDivergenceLabelAt({
+        windowStartMs,
+        timeframe: "15m",
+        lookbackBars: 7,
+      }) ?? null;
     const roc20Pct = ma20Index?.roc20PctAt({ windowStartMs }) ?? null;
     const atr3x5m = ma20Index?.atrAt({ windowStartMs, period: 3 }) ?? null;
     const atr4x5m = ma20Index?.atrAt({ windowStartMs, period: 4 }) ?? null;
@@ -402,6 +497,12 @@ export function* computeSurvivalSnapshots({
           ema50x5m,
           ema50SlopePct,
           rsi14x5m,
+          rsiDivergence5mW3,
+          rsiDivergence5mW5,
+          rsiDivergence5mW7,
+          rsiDivergence15mW3,
+          rsiDivergence15mW5,
+          rsiDivergence15mW7,
           roc20Pct,
           atr3x5m,
           atr4x5m,
@@ -514,6 +615,11 @@ export type FiveMinuteIndex = {
   readonly rsi14At: (input: {
     readonly windowStartMs: number;
   }) => number | null;
+  readonly rsiDivergenceLabelAt: (input: {
+    readonly windowStartMs: number;
+    readonly timeframe: "5m" | "15m";
+    readonly lookbackBars: number;
+  }) => RsiDivergenceLabel | null;
   readonly roc20PctAt: (input: {
     readonly windowStartMs: number;
   }) => number | null;
@@ -651,6 +757,56 @@ export function build5mLookback({
   const atr14 = computeWilderAtrSeries({ highs, lows, closes, period: 14 });
   const atr50 = computeWilderAtrSeries({ highs, lows, closes, period: 50 });
 
+  // RSI divergence: detect once per timeframe, query per-window with
+  // the active lookback. The 5m flags reuse the existing rsi14
+  // series; the 15m flags need their own RSI on the aggregated
+  // bars. Both detection passes are linear in the bar count.
+  const divergenceBars5m: DivergenceBar[] = startTimes.map((openTimeMs, i) => ({
+    openTimeMs,
+    high: highs[i] ?? 0,
+    low: lows[i] ?? 0,
+    close: closes[i] ?? 0,
+  }));
+  const divergence5mFlags = detectDivergencesGivenRsi({
+    bars: divergenceBars5m,
+    rsiByIndex: rsi14,
+    config: { ...RSI_DIVERGENCE_DETECTION_CONFIG, lookbackBars: 0 },
+  });
+  const bars15m = aggregate5mTo15m({ bars: divergenceBars5m });
+  const closes15m = bars15m.map((b) => b.close);
+  const rsi15m = computeWilderRsiSeries({
+    closes: closes15m,
+    period: RSI_DIVERGENCE_DETECTION_CONFIG.rsiLength,
+  });
+  const divergence15mFlags = detectDivergencesGivenRsi({
+    bars: bars15m,
+    rsiByIndex: rsi15m,
+    config: { ...RSI_DIVERGENCE_DETECTION_CONFIG, lookbackBars: 0 },
+  });
+  // Each 15m bar's CLOSE timestamp — sorted ascending, lets us
+  // binary-search for "the most recent 15m bar closed at or before
+  // a given windowStartMs" in O(log n).
+  const close15mTimes = bars15m.map((b) => b.openTimeMs + FIFTEEN_MINUTES_MS);
+  const lastClosed15mIndexAt = (target: number): number => {
+    let lo = 0;
+    let hi = close15mTimes.length - 1;
+    let ans = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const t = close15mTimes[mid];
+      if (t === undefined) {
+        break;
+      }
+      if (t <= target) {
+        ans = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return ans;
+  };
+
   const indexAtOrBefore = (target: number): number => {
     let lo = 0;
     let hi = startTimes.length - 1;
@@ -742,6 +898,31 @@ export function build5mLookback({
         return null;
       }
       return rsi14[lastIdx] ?? null;
+    },
+    rsiDivergenceLabelAt: ({ windowStartMs, timeframe, lookbackBars }) => {
+      if (timeframe === "5m") {
+        const lastIdx = indexAtOrBefore(windowStartMs);
+        if (lastIdx < 0) {
+          return null;
+        }
+        return labelAt({
+          flagsByIndex: divergence5mFlags,
+          atIdx: lastIdx,
+          lookbackBars,
+        });
+      }
+      // 15m: most recent 15m bar whose CLOSE happened at or before
+      // the snapshot window's start (so the label is "as-of" the
+      // window start, not contaminated by future data).
+      const last15mIdx = lastClosed15mIndexAt(windowStartMs);
+      if (last15mIdx < 0) {
+        return null;
+      }
+      return labelAt({
+        flagsByIndex: divergence15mFlags,
+        atIdx: last15mIdx,
+        lookbackBars,
+      });
     },
     roc20PctAt: ({ windowStartMs }) => {
       const lastIdx = indexAtOrBefore(windowStartMs);
@@ -1031,75 +1212,6 @@ function computeEmaSeries({
   return out;
 }
 
-/**
- * Wilder RSI series: `out[i]` is the N-period RSI computed through and
- * including `closes[i]`. Implementation follows the canonical Wilder
- * smoothing: average gains and losses over the first N intervals
- * (using diff between consecutive closes), then roll forward with
- * `avg = ((N-1)*avg_prev + current) / N`. RSI = 100 − 100/(1 + RS)
- * where RS = avgGain / avgLoss. The first usable index is `period`
- * (need N price diffs); earlier indices are `null`.
- */
-function computeWilderRsiSeries({
-  closes,
-  period,
-}: {
-  readonly closes: readonly number[];
-  readonly period: number;
-}): (number | null)[] {
-  const out: (number | null)[] = new Array<number | null>(closes.length).fill(
-    null,
-  );
-  if (closes.length <= period) {
-    return out;
-  }
-  let gainSum = 0;
-  let lossSum = 0;
-  for (let i = 1; i <= period; i += 1) {
-    const a = closes[i - 1];
-    const b = closes[i];
-    if (a === undefined || b === undefined) {
-      return out;
-    }
-    const diff = b - a;
-    if (diff >= 0) {
-      gainSum += diff;
-    } else {
-      lossSum -= diff;
-    }
-  }
-  let avgGain = gainSum / period;
-  let avgLoss = lossSum / period;
-  out[period] = rsiOf({ avgGain, avgLoss });
-  for (let i = period + 1; i < closes.length; i += 1) {
-    const a = closes[i - 1];
-    const b = closes[i];
-    if (a === undefined || b === undefined) {
-      continue;
-    }
-    const diff = b - a;
-    const gain = diff > 0 ? diff : 0;
-    const loss = diff < 0 ? -diff : 0;
-    avgGain = (avgGain * (period - 1) + gain) / period;
-    avgLoss = (avgLoss * (period - 1) + loss) / period;
-    out[i] = rsiOf({ avgGain, avgLoss });
-  }
-  return out;
-}
-
-function rsiOf({
-  avgGain,
-  avgLoss,
-}: {
-  readonly avgGain: number;
-  readonly avgLoss: number;
-}): number {
-  if (avgLoss === 0) {
-    return 100;
-  }
-  const rs = avgGain / avgLoss;
-  return 100 - 100 / (1 + rs);
-}
 
 /**
  * Wilder ATR series. True range per bar i:

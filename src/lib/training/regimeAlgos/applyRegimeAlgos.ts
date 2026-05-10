@@ -82,6 +82,12 @@ export function applyRegimeAlgos({
         rsi14: ctx.rsi14x5m,
         atr3: ctx.atr3x5m,
         prev5mDirection: prev5mDir,
+        rsiDivergence5mW3: ctx.rsiDivergence5mW3,
+        rsiDivergence5mW5: ctx.rsiDivergence5mW5,
+        rsiDivergence5mW7: ctx.rsiDivergence5mW7,
+        rsiDivergence15mW3: ctx.rsiDivergence15mW3,
+        rsiDivergence15mW5: ctx.rsiDivergence15mW5,
+        rsiDivergence15mW7: ctx.rsiDivergence15mW7,
       });
       if (regime === null) {
         slot.skipCount += 1;

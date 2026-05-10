@@ -9,7 +9,7 @@ describe("trendXVol6Algo", () => {
         ema20: null,
         ema50: 100,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
     expect(
@@ -18,7 +18,7 @@ describe("trendXVol6Algo", () => {
         ema20: 100,
         ema50: null,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
     expect(
@@ -27,7 +27,7 @@ describe("trendXVol6Algo", () => {
         ema20: 100,
         ema50: 100,
         atr14: null,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
     expect(
@@ -37,7 +37,7 @@ describe("trendXVol6Algo", () => {
         ema50: 100,
         atr14: 1,
         atr50: null,
-        rsi14: null, atr3: null, prev5mDirection: null,
+        rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
   });
@@ -49,7 +49,7 @@ describe("trendXVol6Algo", () => {
         ema20: 100,
         ema50: 100,
         atr14: 0,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
     expect(
@@ -59,7 +59,7 @@ describe("trendXVol6Algo", () => {
         ema50: 100,
         atr14: 1,
         atr50: 0,
-        rsi14: null, atr3: null, prev5mDirection: null,
+        rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBeNull();
   });
@@ -71,7 +71,7 @@ describe("trendXVol6Algo", () => {
       ema20: 100.1,
       ema50: 100,
       atr14: 1,
-      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
     });
     expect(low).toBe("no_trend_low_vol");
 
@@ -80,7 +80,7 @@ describe("trendXVol6Algo", () => {
       ema20: 100.1,
       ema50: 100,
       atr14: 1,
-      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
     });
     expect(downLeading).toBe("no_trend_low_vol");
   });
@@ -93,7 +93,7 @@ describe("trendXVol6Algo", () => {
         ema20: 101,
         ema50: 100,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("with_trend_low_vol");
   });
@@ -105,7 +105,7 @@ describe("trendXVol6Algo", () => {
         ema20: 101,
         ema50: 100,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("against_trend_low_vol");
   });
@@ -118,7 +118,7 @@ describe("trendXVol6Algo", () => {
         ema20: 99,
         ema50: 100,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("with_trend_low_vol");
     expect(
@@ -127,7 +127,7 @@ describe("trendXVol6Algo", () => {
         ema20: 99,
         ema50: 100,
         atr14: 1,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("against_trend_low_vol");
   });
@@ -139,7 +139,7 @@ describe("trendXVol6Algo", () => {
         ema20: 101,
         ema50: 100,
         atr14: 2,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("with_trend_high_vol");
     expect(
@@ -148,7 +148,7 @@ describe("trendXVol6Algo", () => {
         ema20: 100.1,
         ema50: 100,
         atr14: 2,
-        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+        atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
       }),
     ).toBe("no_trend_high_vol");
   });
@@ -160,7 +160,7 @@ describe("trendXVol6Algo", () => {
       ema20: 100.5,
       ema50: 100,
       atr14: 1,
-      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
     });
     expect(onBand).toBe("with_trend_low_vol");
     // Just under the band → no-trend
@@ -169,7 +169,7 @@ describe("trendXVol6Algo", () => {
       ema20: 100.4999,
       ema50: 100,
       atr14: 1,
-      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null,
+      atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null,
     });
     expect(justBelow).toBe("no_trend_low_vol");
   });
@@ -190,13 +190,13 @@ describe("trendXVol6Algo", () => {
   it("never emits a label outside its declared regimes", () => {
     const declared = new Set(trendXVol6Algo.regimes);
     const samples = [
-      { leadingSide: "up" as const, ema20: 101, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "up" as const, ema20: 99, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "down" as const, ema20: 101, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "down" as const, ema20: 99, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "up" as const, ema20: 100, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "up" as const, ema20: 101, ema50: 100, atr14: 2, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
-      { leadingSide: "down" as const, ema20: 99, ema50: 100, atr14: 5, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null },
+      { leadingSide: "up" as const, ema20: 101, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "up" as const, ema20: 99, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "down" as const, ema20: 101, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "down" as const, ema20: 99, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "up" as const, ema20: 100, ema50: 100, atr14: 1, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "up" as const, ema20: 101, ema50: 100, atr14: 2, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
+      { leadingSide: "down" as const, ema20: 99, ema50: 100, atr14: 5, atr50: 1, rsi14: null, atr3: null, prev5mDirection: null, rsiDivergence5mW3: null, rsiDivergence5mW5: null, rsiDivergence5mW7: null, rsiDivergence15mW3: null, rsiDivergence15mW5: null, rsiDivergence15mW7: null },
     ];
     for (const input of samples) {
       const label = trendXVol6Algo.classify(input);

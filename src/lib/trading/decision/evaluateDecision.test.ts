@@ -72,6 +72,12 @@ const baseRegimeInput = {
   atr3: 1,
   rsi14: 50,
   prev5mDirection: "up" as const,
+  rsiDivergence5mW3: null,
+  rsiDivergence5mW5: null,
+  rsiDivergence5mW7: null,
+  rsiDivergence15mW3: null,
+  rsiDivergence15mW5: null,
+  rsiDivergence15mW7: null,
 };
 
 const baseInputs = {
@@ -122,6 +128,12 @@ describe("evaluateDecision", () => {
         atr3: null,
         rsi14: null,
         prev5mDirection: null,
+        rsiDivergence5mW3: null,
+        rsiDivergence5mW5: null,
+        rsiDivergence5mW7: null,
+        rsiDivergence15mW3: null,
+        rsiDivergence15mW5: null,
+        rsiDivergence15mW7: null,
       },
     });
     expect(decision.kind).toBe("skip");

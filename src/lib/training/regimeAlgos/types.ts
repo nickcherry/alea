@@ -1,3 +1,4 @@
+import type { RsiDivergenceLabel } from "@alea/lib/training/regimeAlgos/rsiDivergence/types";
 import type { LeadingSide } from "@alea/lib/trading/types";
 
 /**
@@ -73,6 +74,25 @@ export type RegimeClassifierInput = {
    * live runner doesn't track previous-bar direction.
    */
   readonly prev5mDirection: "up" | "down" | null;
+
+  /**
+   * RSI-divergence state on the 5m / 15m candle series, evaluated
+   * with three different "active within last N bars" lookbacks.
+   * Same semantics as the matching fields on
+   * `SurvivalSnapshotContext`. `null` until the underlying series
+   * has accumulated enough history for any pivot pair to clear
+   * `rangeLower`, OR at decision time when the live runner doesn't
+   * compute divergence (the live regime tracker doesn't carry the
+   * full RSI history yet — same warmup story `rsi14`/`atr3` already
+   * follow). An algo that needs a divergence field returns `null`
+   * from `classify` whenever the corresponding input is `null`.
+   */
+  readonly rsiDivergence5mW3: RsiDivergenceLabel | null;
+  readonly rsiDivergence5mW5: RsiDivergenceLabel | null;
+  readonly rsiDivergence5mW7: RsiDivergenceLabel | null;
+  readonly rsiDivergence15mW3: RsiDivergenceLabel | null;
+  readonly rsiDivergence15mW5: RsiDivergenceLabel | null;
+  readonly rsiDivergence15mW7: RsiDivergenceLabel | null;
 };
 
 /**

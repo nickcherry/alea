@@ -1,4 +1,5 @@
 import { barCarry2Algo } from "@alea/lib/training/regimeAlgos/barCarry2";
+import { rsiDivergenceAlgos } from "@alea/lib/training/regimeAlgos/rsiDivergence/algo";
 import { trendXVol6Algo } from "@alea/lib/training/regimeAlgos/trendXVol6";
 import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import { volOnly3Algo } from "@alea/lib/training/regimeAlgos/volOnly3";
@@ -25,4 +26,5 @@ export const regimeAlgos: readonly RegimeAlgo[] = [
   volQuartiles4Algo,
   trendXVol6Algo,
   barCarry2Algo,
+  ...rsiDivergenceAlgos,
 ];

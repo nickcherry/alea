@@ -8,6 +8,12 @@ const baseInput = {
   atr50: 1,
   rsi14: null,
   atr3: null,
+  rsiDivergence5mW3: null,
+  rsiDivergence5mW5: null,
+  rsiDivergence5mW7: null,
+  rsiDivergence15mW3: null,
+  rsiDivergence15mW5: null,
+  rsiDivergence15mW7: null,
 } as const;
 
 describe("barCarry2Algo", () => {
@@ -92,6 +98,12 @@ describe("barCarry2Algo", () => {
       atr50: null,
       rsi14: null,
       atr3: null,
+      rsiDivergence5mW3: null,
+      rsiDivergence5mW5: null,
+      rsiDivergence5mW7: null,
+      rsiDivergence15mW3: null,
+      rsiDivergence15mW5: null,
+      rsiDivergence15mW7: null,
     });
     expect(a).toBe("continuation");
   });

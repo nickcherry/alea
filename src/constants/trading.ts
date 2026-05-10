@@ -282,7 +282,24 @@ export const WINNING_YES_PAYOUT_USD = 1;
  * Adding a new algo: append it to the registry. It auto-joins live
  * trading at the next gen-table run if any of its regimes lead.
  */
-export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] = regimeAlgos;
+/**
+ * Regime algos whose IDs match these prefixes are computed at
+ * training time and rendered on the dashboard, but excluded from the
+ * live trading set until we've validated them in the offline data.
+ * The RSI-divergence variants (`rsi_div_5m_w*`, `rsi_div_15m_w*`)
+ * land here while we collect bucket counts and lead-pp numbers
+ * without affecting live decisions. Promote one (or several) by
+ * removing the matching prefix from this list.
+ */
+const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = ["rsi_div_"];
+
+export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] =
+  regimeAlgos.filter(
+    (algo) =>
+      !LIVE_TRADING_EXCLUDED_PREFIXES.some((prefix) =>
+        algo.id.startsWith(prefix),
+      ),
+  );
 
 /**
  * Minimum average pp-lead vs the unconditional baseline for a regime
