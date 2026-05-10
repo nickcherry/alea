@@ -283,23 +283,14 @@ export const WINNING_YES_PAYOUT_USD = 1;
  * trading at the next gen-table run if any of its regimes lead.
  */
 /**
- * Regime algos whose IDs match these prefixes are computed at
- * training time and rendered on the dashboard, but excluded from the
- * live trading set until we've validated them in the offline data.
- * Currently every `vol3_x_*` cross-product variant lands here so the
- * dashboard collects bucket counts and lead-pp numbers without
- * affecting live decisions. Promote a candidate by removing the
- * matching prefix from this list.
+ * Regime algos that participate in live decisions. Empty list means
+ * "all algos in the registry" — there's currently no gate. Earlier
+ * iterations used a prefix filter to withhold experimental variants
+ * from prod; the cleaner approach is to keep the registry itself
+ * curated (every algo here is one we'd ship). Re-introduce a filter
+ * here if a specific algo is meant for dashboard-only inspection.
  */
-const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = ["vol3_x_"];
-
-export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] =
-  regimeAlgos.filter(
-    (algo) =>
-      !LIVE_TRADING_EXCLUDED_PREFIXES.some((prefix) =>
-        algo.id.startsWith(prefix),
-      ),
-  );
+export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] = regimeAlgos;
 
 /**
  * Minimum average pp-lead vs the unconditional baseline for a regime
