@@ -1,8 +1,6 @@
-import { volXRsiDivergenceAlgos } from "@alea/lib/training/regimeAlgos/rsiDivergence/volXAlgo";
-import { trendXVol6Algo } from "@alea/lib/training/regimeAlgos/trendXVol6";
 import type { RegimeAlgo } from "@alea/lib/training/regimeAlgos/types";
 import { volOnly3Algo } from "@alea/lib/training/regimeAlgos/volOnly3";
-import { volQuartiles4Algo } from "@alea/lib/training/regimeAlgos/volQuartiles4";
+import { volX } from "@alea/lib/training/regimeAlgos/volX";
 
 /**
  * The dashboard's active regime-algo set. Each algo here gets a
@@ -17,20 +15,19 @@ import { volQuartiles4Algo } from "@alea/lib/training/regimeAlgos/volQuartiles4"
  * section. Signal-to-noise on the dashboard depends on the list
  * staying focused.
  *
- * Order here is the dashboard render order. Put the live algos first
- * so the LIVE-badged sections appear at the top of the page.
- *
- * 2026-05-10 prune: down from 16 to 5 entries. Top 5 by mean
- * `calibrationScore` across btc/eth/sol/xrp from a 730d gen-table
- * run; everything else (`bar_carry_2`, the 6 standalone
- * `rsi_div_*`, and the 4 longer-lookback `vol3_x_rsidiv_*` w5/w7
- * variants) was contributing dashboard noise without competitive
- * lift. Their underlying detection code is preserved in this folder
- * so adding any of them back is a one-line registry edit.
+ * 2026-05-10 reset: dropped `vol_quartiles_4`, `trend_x_vol_6`, the
+ * entire RSI-divergence experiment, and a handful of vol×X axes that
+ * round-1 found below baseline (`bar_carry`, `rsi_zone`, `ema_trend`,
+ * `atr_accel_strict`). The four entries here passed two filters: the
+ * mean cross-asset `calibrationScore` is at-or-above `vol_only_3`,
+ * and the per-cell win-rate deltas within each vol tier are
+ * asymmetric (i.e. clearly directional, not noise). The picker auto-
+ * promotes whichever (asset, algo, regime) tuple leads the baseline
+ * by ≥ `LEADING_REGIME_MIN_LEAD_PP` at gen-table time.
  */
 export const regimeAlgos: readonly RegimeAlgo[] = [
   volOnly3Algo,
-  volQuartiles4Algo,
-  trendXVol6Algo,
-  ...volXRsiDivergenceAlgos,
+  volX.atrAccel6,
+  volX.rsiAlign6,
+  volX.atrAccelXRsiAlign12,
 ];

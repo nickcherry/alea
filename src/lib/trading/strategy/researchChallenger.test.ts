@@ -9,20 +9,21 @@ const baseInputs: DecisionInputsBase = {
   line: 100,
   currentPrice: 100.05,
   regimeInput: {
+    // ATR-14 / ATR-50 = 0.5 → vol_only_3 → "low_vol", which is the
+    // only leading regime in the persisted probability table after
+    // the 2026-05-10 reset. The legacy researchChallenger strategy
+    // needs *some* leading bucket to vote with; keeping it pinned
+    // to low_vol lets these tests still exercise the consensus +
+    // execution-quality plumbing now that we no longer run a 4-algo
+    // table.
     leadingSide: "up",
     ema20: 101,
     ema50: 100,
-    atr14: 1,
+    atr14: 0.5,
     atr50: 1,
     rsi14: null,
     atr3: null,
     prev5mDirection: "up",
-    rsiDivergence5mW3: null,
-    rsiDivergence5mW5: null,
-    rsiDivergence5mW7: null,
-    rsiDivergence15mW3: null,
-    rsiDivergence15mW5: null,
-    rsiDivergence15mW7: null,
   },
   upBestBid: 0.6,
   downBestBid: 0.1,

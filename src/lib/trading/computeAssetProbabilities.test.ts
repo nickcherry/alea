@@ -1,5 +1,5 @@
 import { computeAssetProbabilities } from "@alea/lib/trading/computeAssetProbabilities";
-import { trendXVol6Algo } from "@alea/lib/training/regimeAlgos/trendXVol6";
+import { volOnly3Algo } from "@alea/lib/training/regimeAlgos/volOnly3";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import { describe, expect, it } from "bun:test";
 
@@ -89,7 +89,7 @@ describe("computeAssetProbabilities", () => {
       candles1m: [],
       candles5m: [],
       minBucketSamples: 1,
-      regimeAlgos: [trendXVol6Algo],
+      regimeAlgos: [volOnly3Algo],
     });
     expect(result).toBeNull();
   });
@@ -121,7 +121,7 @@ describe("computeAssetProbabilities", () => {
       candles1m,
       candles5m,
       minBucketSamples: 1,
-      regimeAlgos: [trendXVol6Algo],
+      regimeAlgos: [volOnly3Algo],
     });
     expect(result).toBeNull();
   });

@@ -39,12 +39,6 @@ export function computeRegimeClassifierInput({
     atr3: null,
     rsi14: null,
     prev5mDirection: null,
-    rsiDivergence5mW3: null,
-    rsiDivergence5mW5: null,
-    rsiDivergence5mW7: null,
-    rsiDivergence15mW3: null,
-    rsiDivergence15mW5: null,
-    rsiDivergence15mW7: null,
   };
   if (recentBars.length === 0) {
     return empty;
@@ -65,43 +59,6 @@ export function computeRegimeClassifierInput({
     atr3: lookback.atrAt({ windowStartMs, period: 3 }),
     rsi14: lookback.rsi14At({ windowStartMs }),
     prev5mDirection,
-    // RSI divergence: reused from the same FiveMinuteIndex (same
-    // pattern as `rsi14`). Labels return null whenever the live bar
-    // buffer is too short to find any pivot pair clearing
-    // `rangeLower`. Note: divergence variants are filtered out of
-    // `LIVE_TRADING_REGIME_ALGOS` for now (see constants/trading.ts) —
-    // populating these fields is forward-compatible plumbing so a
-    // future "promote `rsi_div_*`" change is one line.
-    rsiDivergence5mW3: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "5m",
-      lookbackBars: 3,
-    }),
-    rsiDivergence5mW5: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "5m",
-      lookbackBars: 5,
-    }),
-    rsiDivergence5mW7: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "5m",
-      lookbackBars: 7,
-    }),
-    rsiDivergence15mW3: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "15m",
-      lookbackBars: 3,
-    }),
-    rsiDivergence15mW5: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "15m",
-      lookbackBars: 5,
-    }),
-    rsiDivergence15mW7: lookback.rsiDivergenceLabelAt({
-      windowStartMs,
-      timeframe: "15m",
-      lookbackBars: 7,
-    }),
   };
 }
 

@@ -286,16 +286,12 @@ export const WINNING_YES_PAYOUT_USD = 1;
  * Regime algos whose IDs match these prefixes are computed at
  * training time and rendered on the dashboard, but excluded from the
  * live trading set until we've validated them in the offline data.
- * The RSI-divergence variants (`rsi_div_5m_w*`, `rsi_div_15m_w*`)
- * and the vol×divergence cross-products (`vol3_x_rsidiv_*`) land
- * here while we collect bucket counts and lead-pp numbers without
- * affecting live decisions. Promote one (or several) by removing
- * the matching prefix from this list.
+ * Currently every `vol3_x_*` cross-product variant lands here so the
+ * dashboard collects bucket counts and lead-pp numbers without
+ * affecting live decisions. Promote a candidate by removing the
+ * matching prefix from this list.
  */
-const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = [
-  "rsi_div_",
-  "vol3_x_rsidiv_",
-];
+const LIVE_TRADING_EXCLUDED_PREFIXES: readonly string[] = ["vol3_x_"];
 
 export const LIVE_TRADING_REGIME_ALGOS: readonly RegimeAlgo[] =
   regimeAlgos.filter(
@@ -327,13 +323,18 @@ export const LEADING_REGIME_MIN_LEAD_PP = 1.0;
  * so the dashboard, the gen-time filter, and the persisted live table
  * all agree on which cells are trustworthy.
  *
- * 400 trades a slightly looser per-cell SE (~2.5pp on a 50/50 base
- * rate) for much wider bp coverage on tail regimes (vol_only_3
- * low/high, vol_quartiles_4 q1/q4, etc.).
+ * 200 lets the smaller buckets we get from 6-bucket vol×X
+ * cross-products credit cells that the prior 400 floor would have
+ * filtered out. Per-cell SE on a 50/50 base rate is ~3.5pp at N=200
+ * (was ~2.5pp at N=400) — a real-signal cell needs to clear ~2× SE
+ * (7pp) to register cleanly, which is still well below the
+ * cross-asset spreads we care about (10–20 pp on the leading
+ * vol_only_3 regimes). Reverted from 400 on 2026-05-10 alongside the
+ * vol×X experiment.
  *
  * Independent from the legacy filter framework's
  * `SWEET_SPOT_MIN_SAMPLES` (2,000); that one only gates the
  * deprecated binary-filter analysis under the dashboard's "Legacy
  * filters" collapsible.
  */
-export const REGIME_CELL_MIN_SAMPLES = 400;
+export const REGIME_CELL_MIN_SAMPLES = 200;
