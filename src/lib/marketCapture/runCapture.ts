@@ -6,11 +6,6 @@ import {
   currentWindowStartMs,
   FIVE_MINUTES_MS,
 } from "@alea/lib/livePrices/fiveMinuteWindow";
-import { captureBinancePerp } from "@alea/lib/marketCapture/captureBinancePerp";
-import {
-  captureCoinbasePerp,
-  captureCoinbaseSpot,
-} from "@alea/lib/marketCapture/captureCoinbase";
 import { capturePolymarket } from "@alea/lib/marketCapture/capturePolymarket";
 import { capturePolymarketChainlink } from "@alea/lib/marketCapture/capturePolymarketChainlink";
 import { capturePyth } from "@alea/lib/marketCapture/capturePyth";
@@ -162,9 +157,6 @@ export async function runCapture({
   // data* WS is window-scoped (it subscribes to the active up/down
   // markets) and is handled separately in `polyState` below.
   const priceHandles: StreamHandle[] = [
-    captureBinancePerp({ assets, sink }),
-    captureCoinbasePerp({ assets, sink }),
-    captureCoinbaseSpot({ assets, sink }),
     capturePyth({ assets, sink }),
     capturePolymarketChainlink({ assets, sink }),
   ];
