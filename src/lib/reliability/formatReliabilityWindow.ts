@@ -6,8 +6,11 @@ import {
   type ReliabilityAssetWindow,
   type ReliabilitySourceCell,
 } from "@alea/lib/reliability/types";
-import { labelAsset } from "@alea/lib/trading/live/utils";
 import pc from "picocolors";
+
+function labelAsset(asset: string): string {
+  return asset.toUpperCase().padEnd(5);
+}
 
 export function formatReliabilityWindow({
   windowStartMs,
