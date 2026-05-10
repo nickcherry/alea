@@ -1,8 +1,8 @@
-import { streamCoinbaseSpotQuotes } from "@alea/lib/exchangePrices/sources/coinbase/streamCoinbaseSpotQuotes";
 import {
   fetchExactFiveMinuteBar,
   fetchRecentFiveMinuteBars,
-} from "@alea/lib/livePrices/coinbaseSpot/fetchRecentFiveMinuteBars";
+} from "@alea/lib/livePrices/pyth/fetchRecentFiveMinuteBars";
+import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
 import type { LivePriceSource } from "@alea/lib/livePrices/source";
 import type {
   LivePriceFeedHandle,
@@ -11,39 +11,38 @@ import type {
 import type { Asset } from "@alea/types/assets";
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
 /**
- * Delay after each window-close before we poll Coinbase for the
- * just-closed 5m bar. Gives the exchange time to settle the candle
- * and the REST endpoint to serve it. ~3s is well under the live
- * runner's `WINDOW_SUMMARY_DELAY_MS` (8s) so the bar lands before
- * `wrapUpWindow` fires.
+ * Delay after each window-close before we poll Pyth Benchmarks for
+ * the just-closed 5m bar. ~3s is well under the live runner's
+ * `WINDOW_SUMMARY_DELAY_MS` (8s), and matches what `coinbaseSpot`
+ * uses for its REST poll.
  */
 const BAR_POLL_DELAY_MS = 3_000;
 
 /**
- * Trader-side adapter around the Coinbase Advanced Trade spot quote
- * stream + a synthetic bar-close emitter.
+ * Trader-side adapter around the Pyth Hermes price stream + a
+ * synthetic bar-close emitter.
  *
- * The Coinbase stream only emits per-tick BBO updates; unlike Binance's
- * `kline_5m` stream there's no native closed-bar event. Since the
- * regime trackers depend on `onBarClose`, the source spawns a 5-min
- * polling timer that fetches the just-closed bar via
- * `fetchExactFiveMinuteBar` (Coinbase Advanced Trade REST) and
- * dispatches it to the caller. The runner's existing REST-fallback
- * code (`ensureTrackersReadyForWindow`) acts as the safety net if a
- * poll misses.
+ * Pyth has no native closed-bar event (the SSE stream is per-tick
+ * aggregate prices, not OHLC). Same problem as Coinbase Advanced
+ * Trade — and same fix: spawn a 5-min polling timer that fetches
+ * the just-closed bar via the Pyth Benchmarks TradingView shim and
+ * dispatches it to the caller. The runner's REST-fallback code
+ * (`ensureTrackersReadyForWindow`) acts as the safety net if a poll
+ * misses.
  *
- * Status (2026-05-09): no longer the live default. Kept available so
- * existing dry-run sessions and ad-hoc replay configurations continue
- * to work, and as a fallback if Hermes ever goes down. The active live
- * tick source is `pythLivePriceSource` — same Chainlink-alignment
- * argument that made coinbase-spot beat binance/perp (3.31% vs ~16%
- * disagreement) gets even better with pyth (1.89%). See
- * doc/research/2026-05-08-source-vs-chainlink.md and
- * scripts/source_vs_chainlink.ts.
+ * Why pyth-spot at all: empirical work (2026-05-09) showed the Pyth
+ * multi-publisher median disagrees with Chainlink — the venue
+ * Polymarket settles on — only 1.89% of the time across 70h of
+ * captured 5m windows, vs 3.31% for coinbase-spot, the prior live
+ * tick source. Pyth's reporter-median architecture is structurally
+ * the closest free analog of Chainlink Data Streams, so the live
+ * tick now reads from the feed that most closely tracks settlement
+ * truth. See scripts/source_vs_chainlink.ts.
  */
-export const coinbaseSpotLivePriceSource: LivePriceSource = {
-  id: "coinbase-spot",
+export const pythLivePriceSource: LivePriceSource = {
+  id: "pyth-spot",
   stream: ({
     assets,
     onTick,
@@ -52,16 +51,22 @@ export const coinbaseSpotLivePriceSource: LivePriceSource = {
     onDisconnect,
     onError,
   }: LivePriceFeedParams): LivePriceFeedHandle => {
-    const tickHandle = streamCoinbaseSpotQuotes({
+    const tickHandle = streamPythHermes({
       assets,
       onTick: (tick) => {
+        // Pyth gives a single aggregate price + confidence, not a BBO.
+        // Downstream only consumes `mid`, so collapse bid/ask to the
+        // same value rather than synthesising a virtual spread from
+        // `conf` (which would mean different things in different
+        // contexts and mislead any future consumer that read it as a
+        // depth signal).
         onTick({
           asset: tick.asset,
-          bid: tick.bid,
-          ask: tick.ask,
-          mid: tick.mid,
-          exchangeTimeMs: tick.tsExchangeMs,
-          receivedAtMs: tick.tsReceivedMs,
+          bid: tick.price,
+          ask: tick.price,
+          mid: tick.price,
+          exchangeTimeMs: tick.publishTimeMs,
+          receivedAtMs: tick.receivedAtMs,
         });
       },
       onConnect,
@@ -71,9 +76,6 @@ export const coinbaseSpotLivePriceSource: LivePriceSource = {
       },
     });
 
-    // Schedule a one-shot timer that fires shortly after each window
-    // close, fetches the just-closed bar for every subscribed asset,
-    // and dispatches `onBarClose`. Reschedules itself indefinitely.
     let stopped = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
     const scheduleNextPoll = (): void => {

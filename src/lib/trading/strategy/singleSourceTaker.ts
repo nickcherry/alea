@@ -41,13 +41,20 @@ export type SingleSourceTakerStrategy = {
  *   design needed binance/perp to be a useful diversifier; with that
  *   source structurally noisy as a Chainlink proxy, the consensus was
  *   filtering on bad signal.
- * - 2026-05-08 v2: switched to pyth/spot. Pyth Network's multi-publisher
- *   median (Coinbase, Cboe, Wintermute, Virtu, etc) is architecturally
- *   the closest free analog of Chainlink Data Streams' reporter model,
- *   and across the same 70h window it disagreed with Chainlink only
- *   1.89% of the time — strictly better than coinbase/spot (3.31%) on
- *   every asset, and dramatically better on the long tail (DOGE 12×,
- *   XRP 19×). See scripts/source_vs_chainlink.ts.
+ * - 2026-05-08 v2: switched the trained probability table to pyth/spot.
+ *   Pyth Network's multi-publisher median (Coinbase, Cboe, Wintermute,
+ *   Virtu, etc) is architecturally the closest free analog of Chainlink
+ *   Data Streams' reporter model, and across the same 70h window it
+ *   disagreed with Chainlink only 1.89% of the time — strictly better
+ *   than coinbase/spot (3.31%) on every asset, and dramatically better
+ *   on the long tail (DOGE 12×, XRP 19×). See
+ *   scripts/source_vs_chainlink.ts.
+ * - 2026-05-09: live tick source moved to Pyth Hermes too. The earlier
+ *   note that "live tick source stays coinbase/spot" was based on a
+ *   misread that Pyth had no streaming API; in fact Hermes serves the
+ *   same multi-publisher aggregate over SSE at ~430ms cadence (one
+ *   Solana slot). Live in-window state and the trained table are now
+ *   both reading from the same feed. See `livePrices/pyth/`.
  */
 export const singleSourceTakerStrategy: SingleSourceTakerStrategy = {
   id: SINGLE_SOURCE_TAKER_STRATEGY_ID,
