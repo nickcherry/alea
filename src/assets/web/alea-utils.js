@@ -40,7 +40,7 @@
   }
 
   function familyLabel(family) {
-    return FAMILY_LABELS[family] || family;
+    return FAMILY_LABELS[family] || String(family).replace(/_/g, " ");
   }
 
   function winRateToneClass(wr) {

@@ -37,9 +37,10 @@ export type FilterPrediction = "up" | "down" | null;
  * family over multiple filters from the same one.
  *
  * Buckets reflect WHAT the filter is testing for, not "is the market
- * currently trending or choppy". Choosing six rather than three keeps
- * neighbouring families (e.g. band-position vs. oscillator-extreme)
- * separated even though both are mean-reversion ideas:
+ * currently trending or choppy". The original seed set used six broad
+ * buckets; later research adds narrower categories for volume,
+ * structure, continuation, and body-sequence hypotheses so the
+ * dashboard can separate genuinely different measurement bases:
  *
  *   - `band_reversion`        — vol-scaled band pierces (Bollinger,
  *                               Keltner, z-score, %B, recovery, HA)
@@ -54,6 +55,13 @@ export type FilterPrediction = "up" | "down" | null;
  *                               (pin bar, engulfing)
  *   - `divergence`            — indicator/price disagreement
  *                               (RSI divergence)
+ *   - `structure_reversion`   — failed/swept breakout structure
+ *   - `compression_continuation` — continuation after narrow/inside bars
+ *   - `volatility_compression_continuation` — squeeze breakouts
+ *   - `trend_quality` / `trend_continuation` / `trend_flip_continuation`
+ *                               — directional trend-following signals
+ *   - volume/body/sequence families — orthogonal volume participation
+ *                               and candle-body direction tests
  */
 export type FilterFamily =
   | "band_reversion"
@@ -61,7 +69,23 @@ export type FilterFamily =
   | "velocity_fade"
   | "ma_position"
   | "pattern"
-  | "divergence";
+  | "divergence"
+  | "structure_reversion"
+  | "compression_continuation"
+  | "volatility_compression_continuation"
+  | "trend_quality"
+  | "range_reversion"
+  | "trend_continuation"
+  | "trend_flip_continuation"
+  | "volume_weighted_reversion"
+  | "volume_oscillator_reversion"
+  | "volume_divergence"
+  | "volume_exhaustion"
+  | "participation_failure"
+  | "body_momentum_reversion"
+  | "body_location_oscillator"
+  | "directional_sequence_reversion"
+  | "directional_sequence_pattern";
 
 /**
  * One concrete filter implementation. The framework guarantees:

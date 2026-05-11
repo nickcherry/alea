@@ -96,6 +96,8 @@ export function familyLabel({
       return "pattern";
     case "divergence":
       return "divergence";
+    default:
+      return family.replaceAll("_", " ");
   }
 }
 

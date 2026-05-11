@@ -54,12 +54,28 @@ every candidate on every bar.
 Every filter declares one of:
 
 ```
-band_reversion        // bollinger / z-score / channel pierces
-oscillator_reversion  // RSI / Stoch / CCI / %R extremes
-velocity_fade         // fade recent magnitude / streak
-ma_position           // close vs SMA / EMA / HMA / DI
-pattern               // single- or multi-bar candle shape
-divergence            // indicator vs price disagreement
+band_reversion                      // bollinger / z-score / channel pierces
+oscillator_reversion                // RSI / Stoch / CCI / %R extremes
+velocity_fade                       // fade recent magnitude / streak
+ma_position                         // close vs SMA / EMA / HMA / DI
+pattern                             // single- or multi-bar candle shape
+divergence                          // indicator vs price disagreement
+structure_reversion                 // sweeps / failed breakouts
+compression_continuation            // inside/narrow-range breakouts
+volatility_compression_continuation // squeeze breakouts
+trend_quality                       // clean directional path quality
+range_reversion                     // range-state edge fades
+trend_continuation                  // directional trend-strength follow
+trend_flip_continuation             // trailing-stop flip follow
+volume_weighted_reversion           // VWAP-distance reversion
+volume_oscillator_reversion         // volume-weighted oscillator extremes
+volume_divergence                   // volume confirmation failure
+volume_exhaustion                   // volume climax fades
+participation_failure               // weak-volume fakeouts
+body_momentum_reversion             // average body-bias fades
+body_location_oscillator            // candle pressure oscillators
+directional_sequence_reversion      // body direction imbalance fades
+directional_sequence_pattern        // alternating body patterns
 ```
 
 This is the **filter family** — the kind of signal the filter is
