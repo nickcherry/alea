@@ -355,60 +355,83 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
-/* Config grid — a "constants this page operates on" readout. Each    */
-/* item is a vertical stack: bold key on top, mono value in the       */
-/* middle, smaller muted sub underneath. Items laid out in a fixed    */
-/* 3-column grid so they pair up cleanly without spreading thin.      */
-/* Wide items (long strings) span all columns. Page CSS must NOT      */
+/* Config grid — a "constants this page operates on" readout. Items   */
+/* are line items grouped under small gold section labels: each line  */
+/* has the key on the left, the mono value next to it, and the sub    */
+/* context pushed to the right in a muted whisper. Page CSS must NOT  */
 /* override these rules; the look is shared across every dashboard.   */
 /* ------------------------------------------------------------------ */
 
 .alea-config-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.alea-config-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.alea-config-group-title {
+  margin: 0 0 4px;
+  font-family: var(--alea-font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--alea-gold);
+}
+
+.alea-config-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .alea-config-item {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
+  align-items: baseline;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--alea-border-faint);
+}
+
+.alea-config-item:last-child {
+  border-bottom: 0;
 }
 
 .alea-config-label {
+  flex: 0 0 220px;
+  min-width: 0;
   font-family: var(--alea-font-sans);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--alea-text);
 }
 
 .alea-config-value {
+  flex: 0 0 auto;
   font-family: var(--alea-font-mono);
-  font-size: 14px;
+  font-size: 13.5px;
   font-variant-numeric: tabular-nums;
   color: var(--alea-text);
   overflow-wrap: anywhere;
 }
 
 .alea-config-sub {
+  margin-left: auto;
   font-size: 11px;
   color: var(--alea-text-subtle);
+  text-align: right;
 }
 
-.alea-config-wide {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 880px) {
-  .alea-config-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 720px) {
+  .alea-config-label {
+    flex: 0 0 160px;
   }
-}
 
-@media (max-width: 560px) {
-  .alea-config-grid {
-    grid-template-columns: 1fr;
+  .alea-config-sub {
+    display: none;
   }
 }
 

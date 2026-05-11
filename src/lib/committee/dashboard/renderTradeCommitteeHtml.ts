@@ -51,46 +51,60 @@ export function renderTradeCommitteeHtml({
       <section class="committee-section">
         <div class="alea-section-rule"><h2>Selection Config</h2></div>
         <div class="alea-config-grid">
-          ${renderConfigItem({
-            label: "Min Engagements",
-            value: `>= ${payload.selectionConfig.minEngagements.toLocaleString()}`,
-            sub: "inside the target regime",
+          ${renderConfigGroup({
+            title: "Eligibility",
+            items: [
+              {
+                label: "Min Engagements",
+                value: `>= ${payload.selectionConfig.minEngagements.toLocaleString()}`,
+                sub: "inside the target regime",
+              },
+              {
+                label: "Aggregate WR Floor",
+                value: `>= ${formatPercent({ value: payload.selectionConfig.minAggregateWinRate })}`,
+                sub: "candidate/regime aggregate",
+              },
+              {
+                label: "Worst-Quarter WR Floor",
+                value: `>= ${formatPercent({ value: payload.selectionConfig.minWorstQuarterWinRate })}`,
+                sub: "only quarters above sample floor",
+              },
+              {
+                label: "Worst-Quarter Sample",
+                value: `>= ${payload.selectionConfig.worstQuarterMinEngagements.toLocaleString()}`,
+                sub: "engagements before quarter counts",
+              },
+            ],
           })}
-          ${renderConfigItem({
-            label: "Aggregate WR Floor",
-            value: `>= ${formatPercent({ value: payload.selectionConfig.minAggregateWinRate })}`,
-            sub: "candidate/regime aggregate",
+          ${renderConfigGroup({
+            title: "Selection",
+            items: [
+              {
+                label: "Bucket Cap",
+                value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
+                sub: "selected per timeframe/regime",
+              },
+              {
+                label: "Ranking",
+                value: "Wilson low desc",
+                sub: "ties: engagements desc",
+              },
+            ],
           })}
-          ${renderConfigItem({
-            label: "Worst-Quarter WR Floor",
-            value: `>= ${formatPercent({ value: payload.selectionConfig.minWorstQuarterWinRate })}`,
-            sub: "only quarters above sample floor",
-          })}
-          ${renderConfigItem({
-            label: "Worst-Quarter Sample",
-            value: `>= ${payload.selectionConfig.worstQuarterMinEngagements.toLocaleString()}`,
-            sub: "engagements before quarter counts",
-          })}
-          ${renderConfigItem({
-            label: "Bucket Cap",
-            value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
-            sub: "selected per timeframe/regime",
-          })}
-          ${renderConfigItem({
-            label: "Ranking",
-            value: "Wilson low desc",
-            sub: "ties: engagements desc",
-          })}
-          ${renderConfigItem({
-            label: "Training Move Floor",
-            value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
-            sub: "open-to-close absolute move",
-          })}
-          ${renderConfigItem({
-            label: "Training Profile",
-            value: payload.selectionConfig.trainingOutcomeProfileId,
-            sub: "",
-            wide: true,
+          ${renderConfigGroup({
+            title: "Training",
+            items: [
+              {
+                label: "Training Move Floor",
+                value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
+                sub: "open-to-close absolute move",
+              },
+              {
+                label: "Training Profile",
+                value: payload.selectionConfig.trainingOutcomeProfileId,
+                sub: "",
+              },
+            ],
           })}
         </div>
       </section>
@@ -146,26 +160,37 @@ export function renderTradeCommitteeHtml({
 </html>`;
 }
 
-function renderConfigItem({
-  label,
-  value,
-  sub,
-  wide = false,
-}: {
+type ConfigItem = {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
-  readonly wide?: boolean;
+};
+
+function renderConfigGroup({
+  title,
+  items,
+}: {
+  readonly title: string;
+  readonly items: readonly ConfigItem[];
 }): string {
-  const cls = wide ? "alea-config-item alea-config-wide" : "alea-config-item";
-  const subHtml =
-    sub === ""
-      ? ""
-      : `<span class="alea-config-sub">${escapeHtml({ value: sub })}</span>`;
   return `
-    <div class="${cls}">
-      <span class="alea-config-label">${escapeHtml({ value: label })}</span>
-      <span class="alea-config-value">${escapeHtml({ value })}</span>
+    <div class="alea-config-group">
+      <h3 class="alea-config-group-title">${escapeHtml({ value: title })}</h3>
+      <div class="alea-config-list">
+        ${items.map(renderConfigItem).join("")}
+      </div>
+    </div>`;
+}
+
+function renderConfigItem(item: ConfigItem): string {
+  const subHtml =
+    item.sub === ""
+      ? ""
+      : `<span class="alea-config-sub">${escapeHtml({ value: item.sub })}</span>`;
+  return `
+    <div class="alea-config-item">
+      <span class="alea-config-label">${escapeHtml({ value: item.label })}</span>
+      <span class="alea-config-value">${escapeHtml({ value: item.value })}</span>
       ${subHtml}
     </div>`;
 }

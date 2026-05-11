@@ -83,38 +83,47 @@ export function renderDryRunHtml({
       <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
         <div class="alea-config-grid">
-          ${renderConfigItem({
-            label: "Decision Lead",
-            value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
-            sub: "before target candle open",
+          ${renderConfigGroup({
+            title: "Timing",
+            items: [
+              {
+                label: "Decision Lead",
+                value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
+                sub: "before target candle open",
+              },
+              {
+                label: "Hydrated Bars",
+                value: payload.decisionConfig.hydratedBars.toLocaleString(),
+                sub: "startup history per asset",
+              },
+            ],
           })}
-          ${renderConfigItem({
-            label: "Hydrated Bars",
-            value: payload.decisionConfig.hydratedBars.toLocaleString(),
-            sub: "startup history per asset",
-          })}
-          ${renderConfigItem({
-            label: "Max Votes / Filter",
-            value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
-            sub: "highest-WR engaged config wins",
-          })}
-          ${renderConfigItem({
-            label: "Min Votes",
-            value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
-            sub: "after filter-level collapse",
-          })}
-          ${renderConfigItem({
-            label: "Consensus",
-            value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
-            sub: "ties still abstain",
-          })}
-          ${renderConfigItem({
-            label: "Filter Tie Break",
-            value: formatFilterTieBreak({
-              value: payload.decisionConfig.filterTieBreak,
-            }),
-            sub: "when multiple configs engage",
-            wide: true,
+          ${renderConfigGroup({
+            title: "Voting",
+            items: [
+              {
+                label: "Max Votes / Filter",
+                value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
+                sub: "highest-WR engaged config wins",
+              },
+              {
+                label: "Min Votes",
+                value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
+                sub: "after filter-level collapse",
+              },
+              {
+                label: "Consensus",
+                value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
+                sub: "ties still abstain",
+              },
+              {
+                label: "Filter Tie Break",
+                value: formatFilterTieBreak({
+                  value: payload.decisionConfig.filterTieBreak,
+                }),
+                sub: "when multiple configs engage",
+              },
+            ],
           })}
         </div>
       </section>
@@ -346,23 +355,38 @@ function renderDirectionSplit({
   return `<span class="alea-mono"><span class="${upCls.trim()}">↑${up.toLocaleString()}</span> / <span class="${downCls.trim()}">↓${down.toLocaleString()}</span></span>`;
 }
 
-function renderConfigItem({
-  label,
-  value,
-  sub,
-  wide = false,
-}: {
+type ConfigItem = {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
-  readonly wide?: boolean;
+};
+
+function renderConfigGroup({
+  title,
+  items,
+}: {
+  readonly title: string;
+  readonly items: readonly ConfigItem[];
 }): string {
-  const cls = wide ? "alea-config-item alea-config-wide" : "alea-config-item";
   return `
-    <div class="${cls}">
-      <span class="alea-config-label">${escapeHtml({ value: label })}</span>
-      <span class="alea-config-value">${escapeHtml({ value })}</span>
-      <span class="alea-config-sub">${escapeHtml({ value: sub })}</span>
+    <div class="alea-config-group">
+      <h3 class="alea-config-group-title">${escapeHtml({ value: title })}</h3>
+      <div class="alea-config-list">
+        ${items.map(renderConfigItem).join("")}
+      </div>
+    </div>`;
+}
+
+function renderConfigItem(item: ConfigItem): string {
+  const subHtml =
+    item.sub === ""
+      ? ""
+      : `<span class="alea-config-sub">${escapeHtml({ value: item.sub })}</span>`;
+  return `
+    <div class="alea-config-item">
+      <span class="alea-config-label">${escapeHtml({ value: item.label })}</span>
+      <span class="alea-config-value">${escapeHtml({ value: item.value })}</span>
+      ${subHtml}
     </div>`;
 }
 
