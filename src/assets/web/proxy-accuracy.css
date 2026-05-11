@@ -26,24 +26,32 @@
   }
 }
 
-/* Compact stat grid replacing the old hero "Overall" card. Two columns
-   of label-over-value cells; no card chrome, no headline number. */
+/* Compact stat list — one row per metric, "Label … Value" inline so
+   the eye scans down a single column. No card chrome, no headline
+   number; the Agreement row tints green/red as its only emphasis. */
 .proxy-aggregate {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 16px;
-  row-gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 0;
+  min-width: 0;
 }
 
 .proxy-aggregate > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 14px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--alea-border-faint);
+}
+
+.proxy-aggregate > div:last-child {
+  border-bottom: 0;
 }
 
 .proxy-aggregate dt {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--alea-text-subtle);
@@ -54,11 +62,15 @@
   margin: 0;
   font-size: 13px;
   color: var(--alea-text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .proxy-aggregate-sub {
-  font-size: 11px;
+  grid-column: 2;
+  font-size: 10.5px;
   color: var(--alea-text-subtle);
+  margin-top: 1px;
 }
 
 .proxy-buckets {

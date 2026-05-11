@@ -18,129 +18,6 @@
    `.committee-period-tab` / `.committee-regime-tab` classes the JS
    uses to scope its selectors. */
 
-.committee-config-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.committee-config-item {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--alea-border-faint);
-  border-radius: 8px;
-  background: rgba(15, 27, 18, 0.52);
-}
-
-.committee-config-wide {
-  grid-column: 1 / -1;
-}
-
-.committee-config-label {
-  font-family: var(--alea-font-sans);
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--alea-text-subtle);
-}
-
-.committee-config-value {
-  font-family: var(--alea-font-mono);
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  color: var(--alea-text);
-  overflow-wrap: anywhere;
-}
-
-.committee-config-sub {
-  font-size: 12px;
-  color: var(--alea-text-muted);
-}
-
-/* Buckets overview — a 4-wide grid of (period, regime) bucket tiles.
-   Each tile is read-only: top-WR + filter + fill ratio so an operator
-   can see at a glance which buckets are crowded and which barely
-   pass the floor. */
-.committee-buckets-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.committee-bucket-tile {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--alea-border-faint);
-  border-radius: 8px;
-  background: rgba(15, 27, 18, 0.52);
-}
-
-.committee-bucket-tile.is-empty {
-  opacity: 0.45;
-}
-
-.committee-bucket-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: var(--alea-text-muted);
-  font-size: 10.5px;
-}
-
-.committee-bucket-regime {
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-}
-
-.committee-bucket-stat {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.committee-bucket-wr {
-  font-family: var(--alea-font-display);
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-  color: var(--alea-text);
-}
-
-.committee-bucket-fill {
-  color: var(--alea-text-subtle);
-  font-family: var(--alea-font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.committee-bucket-filter {
-  color: var(--alea-text-muted);
-  font-size: 11px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 980px) {
-  .committee-buckets-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .committee-buckets-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Panel chrome comes from `.alea-panel` in alea.css. This rule only
    exists so the section-specific selectors below (header band, table
    wrap) have a stable hook. */
@@ -291,17 +168,9 @@
   .committee-controls {
     justify-content: flex-start;
   }
-
-  .committee-config-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 620px) {
-  .committee-config-grid {
-    grid-template-columns: 1fr;
-  }
-
   .committee-controls .alea-pill-tabs {
     width: 100%;
     overflow-x: auto;

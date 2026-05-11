@@ -145,6 +145,24 @@ should come from restraint — gold is an accent for borders, dividers,
 active states, headings, and aggregate-line emphasis, not a fill color
 for everything.
 
+### One source of truth for shared chrome
+
+The page-level backdrop (the gold + green ambient glow over the deep
+felt-green base) is defined **once**, on `body` in `alea.css`, with
+`background-attachment: fixed` so the gradients pin to the viewport
+instead of resizing with the body's content height. Every dashboard
+must use this body backdrop unchanged.
+
+**Do not** add per-page `body { background: … }` overrides. Different
+content lengths must never produce different-looking pages. If you
+need to change the backdrop, change it in `alea.css` and it propagates
+everywhere. Same rule applies to any other foundational chrome
+(shell, header, top-nav, page-controls strip, section rules, panels,
+cards, tables, pill tabs): edit the shared rule, not the dashboard.
+Page CSS exists for layout that's genuinely page-specific (a chart's
+aspect ratio, a table's column widths), not to override defaults that
+should stay uniform.
+
 Reusable components and utilities live in `alea.css`. Reach for these
 before authoring page-local CSS:
 

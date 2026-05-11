@@ -5,7 +5,6 @@ import {
   TRAINING_OUTCOME_PROFILE_ID,
 } from "@alea/constants/training";
 import {
-  type TradeCommitteeBucketSummary,
   type TradeCommitteeCandidateRow,
   type TradeCommitteePayload,
   type TradeCommitteePeriod,
@@ -88,7 +87,6 @@ export async function loadTradeCommitteePayload({
   rows.sort(compareCommitteeRows);
 
   const filterIds = new Set(rows.map((r) => r.filterId));
-  const buckets = buildBucketSummaries({ rows });
   const selectedAtMs =
     rows.length === 0 ? null : Math.max(...rows.map((r) => r.selectedAtMs));
 
@@ -97,7 +95,6 @@ export async function loadTradeCommitteePayload({
     selectedAtMs,
     rowCount: rows.length,
     uniqueFilterCount: filterIds.size,
-    activeBucketCount: buckets.filter((b) => b.candidateCount > 0).length,
     selectionConfig: {
       ...rules,
       trainingOutcomeProfileId: TRAINING_OUTCOME_PROFILE_ID,
@@ -106,7 +103,6 @@ export async function loadTradeCommitteePayload({
       tieBreak: "n_engagements_desc",
     },
     rows,
-    buckets,
   };
 }
 
@@ -131,34 +127,6 @@ function parseMarketRegime({
       return value;
   }
   return null;
-}
-
-function buildBucketSummaries({
-  rows,
-}: {
-  readonly rows: readonly TradeCommitteeCandidateRow[];
-}): readonly TradeCommitteeBucketSummary[] {
-  const summaries: TradeCommitteeBucketSummary[] = [];
-  for (const period of PERIOD_ORDER) {
-    for (const marketRegime of REGIME_ORDER) {
-      const bucketRows = rows.filter(
-        (r) => r.period === period && r.marketRegime === marketRegime,
-      );
-      const top = bucketRows.find((r) => r.rank === 1) ?? bucketRows[0];
-      summaries.push({
-        period,
-        marketRegime,
-        candidateCount: bucketRows.length,
-        topFilterId: top?.filterId ?? null,
-        topWinRate: top?.winRate ?? null,
-        selectedAtMs:
-          bucketRows.length === 0
-            ? null
-            : Math.max(...bucketRows.map((r) => r.selectedAtMs)),
-      });
-    }
-  }
-  return summaries;
 }
 
 function compareCommitteeRows(

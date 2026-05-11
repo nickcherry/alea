@@ -20,7 +20,6 @@
   var meta = document.getElementById("committee-roster-meta");
   var periodTabs = document.querySelectorAll(".committee-period-tab");
   var regimeTabs = document.querySelectorAll(".committee-regime-tab");
-  var bucketTiles = document.querySelectorAll(".committee-bucket-tile");
 
   var currentPeriod = "5m";
   var currentRegime = "low_vol_ranging";
@@ -39,13 +38,6 @@
       currentPeriod = tab.dataset.period;
       Array.prototype.forEach.call(periodTabs, function (t) {
         t.setAttribute("aria-selected", t === tab ? "true" : "false");
-      });
-      Array.prototype.forEach.call(bucketTiles, function (tile) {
-        if (tile.dataset.period === currentPeriod) {
-          tile.removeAttribute("hidden");
-        } else {
-          tile.setAttribute("hidden", "hidden");
-        }
       });
       render();
     });
@@ -76,13 +68,11 @@
 
   function rosterMeta(visible) {
     return (
-      "Showing " +
       visible.length.toLocaleString() +
       " " +
       currentPeriod +
-      " candidates in " +
-      marketRegime(currentRegime) +
-      "."
+      " · " +
+      marketRegime(currentRegime)
     );
   }
 

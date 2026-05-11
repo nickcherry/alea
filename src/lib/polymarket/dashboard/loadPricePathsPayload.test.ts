@@ -79,20 +79,19 @@ describe("price paths dashboard payload", () => {
     expect(all?.crossings.windowsWithAnyCrossing).toBe(1);
     expect(all?.crossings.totalWindows).toBe(2);
     expect(all?.crossings.meanCrossingsPerWindow).toBe(1);
-    // Both crossings are in the late half of the window (after the 50%
-    // mark), so the early markers should be zero and the late ones >0.
-    const fourMinute = all?.crossings.markers.find(
-      (m) => m.label === "T-4:00",
-    );
-    expect(fourMinute?.crossingCount).toBe(0);
-    const oneMinute = all?.crossings.markers.find((m) => m.label === "T-1:00");
-    // Crossing at offset 240s = T-1:00 bucket (270-240=30s, falls in
-    // 240-250 bucket → T-1:00 marker resolves to the same column).
-    expect((oneMinute?.crossingCount ?? 0) + (
-      all?.crossings.markers.find((m) => m.label === "T-0:30")?.crossingCount ?? 0
-    ) + (
-      all?.crossings.markers.find((m) => m.label === "T-0:10")?.crossingCount ?? 0
-    )).toBeGreaterThanOrEqual(1);
+    // 5m / 10s buckets = 30 buckets.
+    expect(all?.crossings.buckets.length).toBe(30);
+    // Both crossings landed in the late half of the window (offset
+    // 240s and 295s). The early buckets (first half) must be empty;
+    // the late half must absorb both events.
+    const earlyCrossings = (all?.crossings.buckets ?? [])
+      .filter((b) => b.timeRemainingMs > 150_000)
+      .reduce((sum, b) => sum + b.crossingCount, 0);
+    expect(earlyCrossings).toBe(0);
+    const lateCrossings = (all?.crossings.buckets ?? [])
+      .filter((b) => b.timeRemainingMs <= 150_000)
+      .reduce((sum, b) => sum + b.crossingCount, 0);
+    expect(lateCrossings).toBe(2);
 
     const btc = fiveMinute?.slices.find((s) => s.asset === "btc");
     expect(btc?.crossings.totalCrossings).toBe(2);

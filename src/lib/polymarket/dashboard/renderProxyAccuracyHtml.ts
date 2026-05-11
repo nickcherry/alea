@@ -130,36 +130,27 @@ function renderAggregate({
       : tone === "negative"
         ? " alea-num-negative"
         : "";
-  const belowClearShare = aggregate.disagreeBelowClearShare;
   return `
     <dl class="proxy-aggregate">
       <div>
         <dt>Agreement</dt>
         <dd class="alea-mono${toneClass}">${rate}</dd>
-        <dd class="proxy-aggregate-sub">${aggregate.agreed.toLocaleString()} / ${aggregate.total.toLocaleString()}</dd>
+        <dd class="proxy-aggregate-sub alea-mono">${aggregate.agreed.toLocaleString()} / ${aggregate.total.toLocaleString()}</dd>
       </div>
       <div>
         <dt>Disagreements</dt>
         <dd class="alea-mono">${aggregate.disagreed.toLocaleString()}</dd>
       </div>
       <div>
-        <dt>Clear-move disagreements</dt>
+        <dt>Clear-move</dt>
         <dd class="alea-mono">${aggregate.clearDisagreements.toLocaleString()}</dd>
       </div>
       <div>
-        <dt>Below threshold share</dt>
-        <dd class="alea-mono">${belowClearShare === null ? "—" : `${(belowClearShare * 100).toFixed(1)}%`}</dd>
-      </div>
-      <div>
-        <dt>Disagree mean</dt>
-        <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeMeanMovePct })}</dd>
-      </div>
-      <div>
-        <dt>Disagree median</dt>
+        <dt>Median |move|</dt>
         <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeMedianMovePct })}</dd>
       </div>
       <div>
-        <dt>Disagree p90</dt>
+        <dt>P90 |move|</dt>
         <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeP90MovePct })}</dd>
       </div>
     </dl>

@@ -43,13 +43,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.markets-table-meta {
-  margin: -4px 0 12px;
-  color: var(--alea-text-subtle);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
-}
-
 /* Trading-page table runs denser than the shared default. Lay out
    columns on a fixed grid (`table-layout: fixed`) so the non-Market
    columns share a single uniform width and the Market column gets

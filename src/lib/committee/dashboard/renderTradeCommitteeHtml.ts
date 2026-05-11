@@ -1,7 +1,4 @@
-import type {
-  TradeCommitteeBucketSummary,
-  TradeCommitteePayload,
-} from "@alea/lib/committee/dashboard/types";
+import type { TradeCommitteePayload } from "@alea/lib/committee/dashboard/types";
 import {
   aleaBrandMark,
   aleaDesignSystemHead,
@@ -10,9 +7,7 @@ import {
   escapeHtml,
   escapeJsonForHtml,
   formatDateTime,
-  formatMarketRegime,
   formatPercent,
-  winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
@@ -55,7 +50,7 @@ export function renderTradeCommitteeHtml({
 
       <section class="committee-section">
         <div class="alea-section-rule"><h2>Selection Config</h2></div>
-        <div class="committee-config-grid">
+        <div class="alea-config-grid">
           ${renderConfigItem({
             label: "Min Engagements",
             value: `>= ${payload.selectionConfig.minEngagements.toLocaleString()}`,
@@ -91,19 +86,12 @@ export function renderTradeCommitteeHtml({
             value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
             sub: "open-to-close absolute move",
           })}
-          <div class="committee-config-item committee-config-wide">
-            <span class="committee-config-label">Training Profile</span>
-            <span class="committee-config-value alea-mono">${escapeHtml({
-              value: payload.selectionConfig.trainingOutcomeProfileId,
-            })}</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="committee-section">
-        <div class="alea-section-rule"><h2>Buckets</h2></div>
-        <div class="committee-buckets-grid" role="list">
-          ${renderBuckets({ payload })}
+          ${renderConfigItem({
+            label: "Training Profile",
+            value: payload.selectionConfig.trainingOutcomeProfileId,
+            sub: "",
+            wide: true,
+          })}
         </div>
       </section>
 
@@ -162,59 +150,23 @@ function renderConfigItem({
   label,
   value,
   sub,
+  wide = false,
 }: {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
+  readonly wide?: boolean;
 }): string {
+  const cls = wide ? "alea-config-item alea-config-wide" : "alea-config-item";
+  const subHtml =
+    sub === ""
+      ? ""
+      : `<span class="alea-config-sub">${escapeHtml({ value: sub })}</span>`;
   return `
-    <div class="committee-config-item">
-      <span class="committee-config-label">${escapeHtml({ value: label })}</span>
-      <span class="committee-config-value">${escapeHtml({ value })}</span>
-      <span class="committee-config-sub">${escapeHtml({ value: sub })}</span>
-    </div>`;
-}
-
-/**
- * Render the 8-bucket overview tile grid. Buckets come from the loader
- * already ordered by `(period, regime)` so the grid reads top-to-bottom
- * as 5m row then 15m row when the CSS forces 4 columns.
- */
-function renderBuckets({
-  payload,
-}: {
-  readonly payload: TradeCommitteePayload;
-}): string {
-  return payload.buckets
-    .map((b) => renderBucketTile({ bucket: b, cap: payload.selectionConfig.topN }))
-    .join("");
-}
-
-function renderBucketTile({
-  bucket,
-  cap,
-}: {
-  readonly bucket: TradeCommitteeBucketSummary;
-  readonly cap: number;
-}): string {
-  const wrLabel =
-    bucket.topWinRate === null
-      ? "—"
-      : formatPercent({ value: bucket.topWinRate });
-  const wrCls = winRateToneClass({ value: bucket.topWinRate });
-  const filterLabel = bucket.topFilterId ?? "—";
-  const isEmpty = bucket.candidateCount === 0;
-  const hidden = bucket.period === "5m" ? "" : ' hidden="hidden"';
-  return `
-    <div class="committee-bucket-tile${isEmpty ? " is-empty" : ""}" role="listitem" data-period="${bucket.period}"${hidden}>
-      <div class="committee-bucket-head">
-        <span class="committee-bucket-regime">${escapeHtml({ value: formatMarketRegime({ value: bucket.marketRegime }) })}</span>
-      </div>
-      <div class="committee-bucket-stat">
-        <span class="committee-bucket-wr${wrCls}">${wrLabel}</span>
-        <span class="committee-bucket-fill">${bucket.candidateCount.toLocaleString()} / ${cap.toLocaleString()}</span>
-      </div>
-      <div class="committee-bucket-filter alea-mono" title="${escapeHtml({ value: filterLabel })}">${escapeHtml({ value: filterLabel })}</div>
+    <div class="${cls}">
+      <span class="alea-config-label">${escapeHtml({ value: label })}</span>
+      <span class="alea-config-value">${escapeHtml({ value })}</span>
+      ${subHtml}
     </div>`;
 }
 

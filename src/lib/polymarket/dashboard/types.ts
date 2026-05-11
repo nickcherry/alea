@@ -169,23 +169,11 @@ export type PricePathMarkerShare = {
  * and the other strictly below; we bucket the event by the
  * `timeRemainingMs` of the second sample. `windowsObserved` is the
  * count of windows that had any sample in this bucket — the natural
- * denominator for `windowsWithCrossing / windowsObserved`.
+ * denominator for `windowsWithCrossing / windowsObserved`. The chart
+ * and table on the price-paths page both render one row per bucket.
  */
 export type PricePathCrossingBucket = {
   readonly timeRemainingMs: number;
-  readonly windowsObserved: number;
-  readonly windowsWithCrossing: number;
-  readonly crossingCount: number;
-};
-
-/**
- * Row in the per-marker crossings table. Same shape as a bucket but
- * pre-resolved to a fixed marker time, with a display label and the
- * second sample sitting in the bucket containing that marker.
- */
-export type PricePathCrossingMarker = {
-  readonly timeRemainingMs: number;
-  readonly label: string;
   readonly windowsObserved: number;
   readonly windowsWithCrossing: number;
   readonly crossingCount: number;
@@ -197,7 +185,6 @@ export type PricePathCrossings = {
   readonly totalCrossings: number;
   readonly meanCrossingsPerWindow: number | null;
   readonly buckets: readonly PricePathCrossingBucket[];
-  readonly markers: readonly PricePathCrossingMarker[];
 };
 
 export type PricePathAggregateSlice = {

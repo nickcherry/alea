@@ -12,14 +12,15 @@ import {
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
 /**
- * Cap on the number of rows the Markets table renders. The chart
+/**
+ * Cap on the number of rows the Recent Trades table renders. The chart
  * still draws every market so lifetime performance shape is intact;
- * the table only shows the recent slice so the page stays fast and
+ * the table only shows the most recent slice so the page stays
  * scannable. Markets are pre-sorted newest-first by
- * `buildTradingPerformancePayload`, so a `.slice(0, N)` grabs the
+ * `buildTradingPerformancePayload`, so `.slice(0, N)` grabs the
  * latest N.
  */
-const MARKETS_TABLE_LIMIT = 200;
+const RECENT_TRADES_LIMIT = 20;
 
 export function renderTradingPerformanceHtml({
   payload,
@@ -32,7 +33,7 @@ export function renderTradingPerformanceHtml({
   };
 }): string {
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
-  const visibleMarkets = payload.markets.slice(0, MARKETS_TABLE_LIMIT);
+  const visibleMarkets = payload.markets.slice(0, RECENT_TRADES_LIMIT);
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const chartTokensJson = escapeJsonForHtml({
     value: JSON.stringify(aleaChartTokens),
@@ -92,8 +93,7 @@ export function renderTradingPerformanceHtml({
       </section>
 
       <section class="trading-section">
-        <div class="alea-section-rule"><h2>Markets</h2></div>
-        ${renderTableMeta({ shown: visibleMarkets.length, total: payload.markets.length })}
+        <div class="alea-section-rule"><h2>Recent Trades</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table trading-performance-table">
             <thead>
@@ -166,19 +166,6 @@ function renderMarketRow(
       <td><span class="result-pill ${row.result}">${row.result}</span></td>
     </tr>
   `;
-}
-
-function renderTableMeta({
-  shown,
-  total,
-}: {
-  readonly shown: number;
-  readonly total: number;
-}): string {
-  if (total <= shown) {
-    return "";
-  }
-  return `<p class="markets-table-meta">latest ${shown.toLocaleString()} of ${total.toLocaleString()}</p>`;
 }
 
 function renderRolePill({

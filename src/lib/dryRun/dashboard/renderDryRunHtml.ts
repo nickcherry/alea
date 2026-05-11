@@ -82,7 +82,7 @@ export function renderDryRunHtml({
 
       <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
-        <div class="dry-run-config-grid">
+        <div class="alea-config-grid">
           ${renderConfigItem({
             label: "Decision Lead",
             value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
@@ -108,15 +108,14 @@ export function renderDryRunHtml({
             value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
             sub: "ties still abstain",
           })}
-          <div class="dry-run-config-wide">
-            ${renderConfigItem({
-              label: "Filter Tie Break",
-              value: formatFilterTieBreak({
-                value: payload.decisionConfig.filterTieBreak,
-              }),
-              sub: "when multiple configs engage",
-            })}
-          </div>
+          ${renderConfigItem({
+            label: "Filter Tie Break",
+            value: formatFilterTieBreak({
+              value: payload.decisionConfig.filterTieBreak,
+            }),
+            sub: "when multiple configs engage",
+            wide: true,
+          })}
         </div>
       </section>
 
@@ -351,16 +350,19 @@ function renderConfigItem({
   label,
   value,
   sub,
+  wide = false,
 }: {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
+  readonly wide?: boolean;
 }): string {
+  const cls = wide ? "alea-config-item alea-config-wide" : "alea-config-item";
   return `
-    <div class="dry-run-config-item">
-      <span class="dry-run-config-label">${escapeHtml({ value: label })}</span>
-      <span class="dry-run-config-value">${escapeHtml({ value })}</span>
-      <span class="dry-run-config-sub">${escapeHtml({ value: sub })}</span>
+    <div class="${cls}">
+      <span class="alea-config-label">${escapeHtml({ value: label })}</span>
+      <span class="alea-config-value">${escapeHtml({ value })}</span>
+      <span class="alea-config-sub">${escapeHtml({ value: sub })}</span>
     </div>`;
 }
 

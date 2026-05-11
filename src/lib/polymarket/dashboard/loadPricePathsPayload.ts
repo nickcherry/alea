@@ -4,7 +4,6 @@ import type {
   PricePathAggregateSlice,
   PricePathBandPoint,
   PricePathCrossingBucket,
-  PricePathCrossingMarker,
   PricePathCrossings,
   PricePathHeatmapColumn,
   PricePathMarkerShare,
@@ -359,26 +358,6 @@ function buildAggregateSlice({
     meanCrossingsPerWindow:
       windows.length === 0 ? null : totalCrossings / windows.length,
     buckets: crossingBuckets,
-    markers: tableMarkersMsFor({ durationMs, timeBucketMs }).map(
-      (timeRemainingMs): PricePathCrossingMarker => {
-        const bucket =
-          crossingBuckets[
-            columnIndexForTimeRemaining({
-              timeRemainingMs,
-              durationMs,
-              timeBucketMs,
-              columnCount,
-            })
-          ];
-        return {
-          timeRemainingMs,
-          label: formatTimeRemaining({ ms: timeRemainingMs }),
-          windowsObserved: bucket?.windowsObserved ?? 0,
-          windowsWithCrossing: bucket?.windowsWithCrossing ?? 0,
-          crossingCount: bucket?.crossingCount ?? 0,
-        };
-      },
-    ),
   };
 
   return {
@@ -505,14 +484,18 @@ function maxColumnShare({
   return max;
 }
 
+/**
+ * Time-bucket width used by the heatmap, band-decay chart, and 50c
+ * crossings chart/table. 10 seconds across every timeframe so the per-
+ * bucket numbers stay comparable between 5m and 15m and the crossings
+ * table reads at the same resolution the operator asked for.
+ */
 function timeBucketMsFor({
-  durationMs,
+  durationMs: _durationMs,
 }: {
   readonly durationMs: number;
 }): number {
-  return durationMs <= 5 * 60 * millisecondsPerSecond
-    ? 10 * millisecondsPerSecond
-    : 30 * millisecondsPerSecond;
+  return 10 * millisecondsPerSecond;
 }
 
 function tableMarkersMsFor({

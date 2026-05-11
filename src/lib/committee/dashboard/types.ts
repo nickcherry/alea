@@ -23,15 +23,6 @@ export type TradeCommitteeCandidateRow = {
   readonly selectedAtMs: number;
 };
 
-export type TradeCommitteeBucketSummary = {
-  readonly marketRegime: MarketRegime;
-  readonly period: TradeCommitteePeriod;
-  readonly candidateCount: number;
-  readonly topFilterId: string | null;
-  readonly topWinRate: number | null;
-  readonly selectedAtMs: number | null;
-};
-
 export type TradeCommitteeSelectionConfig = CommitteeSelectionRules & {
   readonly trainingOutcomeProfileId: string;
   readonly trainingOutcomeMinAbsMovePct: number;
@@ -44,8 +35,6 @@ export type TradeCommitteePayload = {
   readonly selectedAtMs: number | null;
   readonly rowCount: number;
   readonly uniqueFilterCount: number;
-  readonly activeBucketCount: number;
   readonly selectionConfig: TradeCommitteeSelectionConfig;
   readonly rows: readonly TradeCommitteeCandidateRow[];
-  readonly buckets: readonly TradeCommitteeBucketSummary[];
 };

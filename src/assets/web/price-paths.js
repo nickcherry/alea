@@ -599,8 +599,10 @@
   }
 
   /**
-   * Crossings marker table. One row per fixed marker time, showing the
-   * window denominator, crossing count, and share at that slice.
+   * Crossings table. One row per time bucket (10 seconds each) showing
+   * the window denominator, crossing count, and share at that slice.
+   * Iterates the full `buckets` array so the operator sees crossings
+   * at every 10-second slice instead of a sparse marker subset.
    */
   function renderCrossingsTable() {
     if (!crossingsTableHost) return;
@@ -609,9 +611,8 @@
       crossingsTableHost.innerHTML = "";
       return;
     }
-    var crossings = slice.crossings;
-    var markers = crossings.markers || [];
-    if (markers.length === 0) {
+    var buckets = slice.crossings.buckets || [];
+    if (buckets.length === 0) {
       crossingsTableHost.innerHTML = "";
       return;
     }
@@ -624,24 +625,24 @@
       '<th class="num-col">Crossings</th>' +
       '<th class="num-col">Share</th>' +
       "</tr></thead><tbody>" +
-      markers.map(renderCrossingsRow).join("") +
+      buckets.map(renderCrossingsRow).join("") +
       "</tbody></table></div>";
   }
 
-  function renderCrossingsRow(marker) {
-    var obs = Number(marker.windowsObserved || 0);
-    var withC = Number(marker.windowsWithCrossing || 0);
+  function renderCrossingsRow(bucket) {
+    var obs = Number(bucket.windowsObserved || 0);
+    var withC = Number(bucket.windowsWithCrossing || 0);
     var share = obs > 0 ? withC / obs : null;
     return (
       "<tr>" +
       '<td class="alea-mono">' +
-      escapeHtml(marker.label) +
+      escapeHtml(formatRemaining(bucket.timeRemainingMs)) +
       "</td>" +
       '<td class="num-col alea-mono">' +
       obs.toLocaleString() +
       "</td>" +
       '<td class="num-col alea-mono">' +
-      Number(marker.crossingCount || 0).toLocaleString() +
+      Number(bucket.crossingCount || 0).toLocaleString() +
       "</td>" +
       '<td class="num-col alea-mono">' +
       formatShare(share) +

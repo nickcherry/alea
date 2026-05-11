@@ -254,7 +254,6 @@ async function buildTradeCommitteeDashboard({
     io.writeStdout(
       `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
         `  ${pc.dim("filters=")}${payload.uniqueFilterCount.toLocaleString()}` +
-        `  ${pc.dim("buckets=")}${payload.activeBucketCount}/8` +
         `  ${pc.dim("selected_at=")}${selectedAt}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
