@@ -355,50 +355,69 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
-/* Config grid — label / value / optional sub stacks laid out in an   */
-/* auto-fit grid. Used by every "show me the constants this page     */
-/* operates on" section (Trade Decision Config, Selection Config,    */
-/* etc.). No card chrome per item — just bare text in columns, so the */
-/* eye scans across without each value living in its own box.        */
+/* Config grid — a "constants this page operates on" readout. Two     */
+/* columns of `Label  Value` rows separated by hairlines. Reads like  */
+/* a config dump: label small-uppercase muted on the left, value mono */
+/* tabular on the right, optional sub-text falling under the value    */
+/* right-aligned in a muted whisper. Wide items span both columns.    */
+/* Page CSS must NOT override these rules; the look is shared across  */
+/* every dashboard.                                                   */
 /* ------------------------------------------------------------------ */
 
 .alea-config-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 36px;
+  row-gap: 0;
 }
 
 .alea-config-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 18px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--alea-border-faint);
   min-width: 0;
 }
 
 .alea-config-label {
+  grid-column: 1;
   font-family: var(--alea-font-sans);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--alea-text-subtle);
 }
 
 .alea-config-value {
+  grid-column: 2;
   font-family: var(--alea-font-mono);
-  font-size: 13.5px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: var(--alea-text);
+  text-align: right;
   overflow-wrap: anywhere;
 }
 
 .alea-config-sub {
-  font-size: 11px;
+  grid-column: 2;
+  font-size: 10.5px;
   color: var(--alea-text-subtle);
+  text-align: right;
+  margin-top: 1px;
 }
 
 .alea-config-wide {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .alea-config-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
 }
 
 /* ------------------------------------------------------------------ */
