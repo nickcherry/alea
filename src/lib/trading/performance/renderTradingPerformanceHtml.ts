@@ -4,6 +4,12 @@ import {
   aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import {
+  escapeHtml,
+  escapeJsonForHtml,
+  formatDateTime,
+  infoTip,
+} from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
 /**
@@ -199,19 +205,6 @@ function renderRolePill({
   return `<span class="role-pill role-${role}">${label}</span>`;
 }
 
-function formatDateTime({ ms }: { readonly ms: number }): string {
-  if (!Number.isFinite(ms) || ms <= 0) {
-    return "unknown";
-  }
-  return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function formatSignedUsd({ value }: { readonly value: number }): string {
   if (value === 0) {
     return "$0.00";
@@ -248,19 +241,6 @@ function shortId({ value }: { readonly value: string }): string {
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }
 
-function escapeHtml({ value }: { readonly value: string }): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function escapeJsonForHtml({ value }: { readonly value: string }): string {
-  return value.replaceAll("<", "\\u003c");
-}
-
 const TP_TIPS = {
   lifetimePnl:
     "Net value across all Polymarket markets: realized results plus current open value.",
@@ -276,8 +256,3 @@ const TP_TIPS = {
   status: "Current settlement or position state.",
 };
 
-function infoTip({ text }: { readonly text: string }): string {
-  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({
-    value: text,
-  })}" aria-label="${escapeHtml({ value: text })}"></span>`;
-}

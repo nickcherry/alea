@@ -14,87 +14,33 @@
 /* Period tabs                                                         */
 /* ------------------------------------------------------------------ */
 
+/* Sticky filter strip — keeps period / regime toggles in view as the
+   12,000-px filter stack scrolls beneath the header. Sticking to
+   `top: 0` means it parks where the topnav used to live once both
+   have scrolled past the page header. */
 .exploration-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin: 0 0 16px;
-}
-
-.exploration-period-tabs,
-.exploration-regime-tabs {
-  display: inline-flex;
-  gap: 0;
-  padding: 3px;
-  border: 1px solid var(--alea-border-muted);
-  border-radius: 999px;
-  background: var(--alea-bg-soft);
-}
-
-.regime-tab {
-  appearance: none;
-  background: transparent;
-  color: var(--alea-text-muted);
-  border: 0;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-family: var(--alea-font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    color 0.12s ease;
-}
-
-.regime-tab:hover {
-  color: var(--alea-text);
-}
-
-.regime-tab[aria-selected="true"] {
+  margin: 0 -36px 16px;
+  padding: 10px 36px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
   background: linear-gradient(
     180deg,
-    rgba(215, 170, 69, 0.18),
-    rgba(215, 170, 69, 0.08)
+    rgba(7, 9, 10, 0.96) 0%,
+    rgba(7, 9, 10, 0.92) 100%
   );
-  color: var(--alea-text);
-  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--alea-border-faint);
 }
 
-.period-tab {
-  appearance: none;
-  background: transparent;
-  color: var(--alea-text-muted);
-  border: 0;
-  padding: 6px 22px;
-  border-radius: 999px;
-  font-family: var(--alea-font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    color 0.12s ease;
-}
-
-.period-tab:hover {
-  color: var(--alea-text);
-}
-
-.period-tab[aria-selected="true"] {
-  background: linear-gradient(
-    180deg,
-    rgba(215, 170, 69, 0.18),
-    rgba(215, 170, 69, 0.08)
-  );
-  color: var(--alea-text);
-  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
-}
+/* Pill tabs themselves come from alea.css via `.alea-pill-tabs` +
+   `.alea-pill-tab.is-prominent`. Page-local hooks live on the
+   `.period-tab` / `.regime-tab` classes the JS uses to wire up
+   filter state. */
 
 /* ------------------------------------------------------------------ */
 /* Filter stack                                                        */
@@ -113,16 +59,15 @@
    right-aligned strip of aggregate stats; the body is a slim table
    of the family's configs. */
 
+/* Panel chrome (border, radius, bg gradient, shadow) lives in
+   `.alea-panel` in alea.css — `.filter-card` only adds the exploration-
+   specific behavior (header gradient + table body wiring).
+   Deliberately NO `overflow: hidden` here: it clipped the
+   `.alea-info-tip` bubble when it extended above the card
+   boundary. The first/last child set their own corner radii so the
+   header gradient and table edges still hug the panel border. */
 .filter-card {
-  border: 1px solid var(--alea-border-muted);
-  border-radius: 12px;
-  background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
-  box-shadow: var(--alea-shadow-soft);
-  /* No `overflow: hidden` — that clipped the .alea-info-tip tooltip
-     bubble when it extended above the card boundary. Instead, give
-     the first/last child their own corner-rounded radii so the
-     header gradient and table edges still hug the card's rounded
-     border. */
+  /* Inherits chrome from .alea-panel. */
 }
 
 .filter-card .filter-card-header {
@@ -229,6 +174,41 @@
   color: var(--alea-text-subtle);
   background: rgba(215, 170, 69, 0.06);
   border: 1px solid var(--alea-border-faint);
+}
+
+/* Family color coding — each filter family carries a distinct tint so
+   the eye can spot "all my top performers are band-reversion" without
+   reading every id. Tints are intentionally muted; the chip is still
+   a label, not a button. */
+.filter-card-family.fam-band_reversion {
+  color: var(--alea-blue);
+  border-color: rgba(91, 149, 255, 0.4);
+  background: rgba(91, 149, 255, 0.08);
+}
+.filter-card-family.fam-oscillator_reversion {
+  color: var(--alea-green);
+  border-color: rgba(70, 195, 123, 0.4);
+  background: rgba(70, 195, 123, 0.08);
+}
+.filter-card-family.fam-velocity_fade {
+  color: var(--alea-orange);
+  border-color: rgba(255, 165, 102, 0.4);
+  background: rgba(255, 165, 102, 0.08);
+}
+.filter-card-family.fam-ma_position {
+  color: var(--alea-marble);
+  border-color: rgba(232, 222, 196, 0.32);
+  background: rgba(232, 222, 196, 0.06);
+}
+.filter-card-family.fam-pattern {
+  color: var(--alea-gold);
+  border-color: rgba(215, 170, 69, 0.45);
+  background: rgba(215, 170, 69, 0.08);
+}
+.filter-card-family.fam-divergence {
+  color: var(--alea-red);
+  border-color: rgba(216, 90, 79, 0.42);
+  background: rgba(216, 90, 79, 0.08);
 }
 
 /* Right-aligned strip of stat chips. Each chip is "label value"; the
@@ -392,17 +372,18 @@
 }
 
 .q-strip-wrap {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
 }
 
 .q-strip {
-  display: inline-flex;
+  display: flex;
   align-items: stretch;
   gap: 2px;
-  padding: 0 2px;
+  padding: 0 3px;
   background: linear-gradient(
     180deg,
     rgba(15, 27, 18, 0.4),
@@ -415,10 +396,31 @@
 .q-bar {
   position: relative;
   display: inline-block;
-  flex: 0 0 auto;
-  width: 12px;
+  flex: 1 1 0;
+  min-width: 4px;
   height: 28px;
   cursor: default;
+}
+
+/* Year-axis row: one tick per quarter, labelled only at Q1 boundaries.
+   Flex shares match the bar strip so labels align with their column. */
+.q-axis {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0 3px;
+}
+
+.q-axis-tick {
+  flex: 1 1 0;
+  min-width: 4px;
+  text-align: center;
+  font-family: var(--alea-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--alea-text-subtle);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .q-bar::before {

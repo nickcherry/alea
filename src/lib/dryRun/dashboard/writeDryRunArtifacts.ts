@@ -15,7 +15,7 @@ export async function writeDryRunArtifacts({
 }): Promise<void> {
   const assets = await copyDashboardAssets({
     htmlPath,
-    pageAssets: ["dry-run.css"],
+    pageAssets: ["dry-run.css", "dry-run.js"],
   });
   const html = renderDryRunHtml({ payload, assets });
   await Promise.all([

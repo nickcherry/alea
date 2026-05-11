@@ -1,15 +1,21 @@
 import type {
-  TradeCommitteeCandidateRow,
+  TradeCommitteeBucketSummary,
   TradeCommitteePayload,
 } from "@alea/lib/committee/dashboard/types";
-import type { FilterFamily } from "@alea/lib/filters/types";
 import {
   aleaBrandMark,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import {
+  escapeHtml,
+  escapeJsonForHtml,
+  formatDateTime,
+  formatMarketRegime,
+  formatPercent,
+  infoTip,
+  winRateToneClass,
+} from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
-
-const DEFAULT_PERIOD = "5m";
 
 export function renderTradeCommitteeHtml({
   payload,
@@ -26,13 +32,14 @@ export function renderTradeCommitteeHtml({
     `${payload.rowCount.toLocaleString()} committee candidates`,
   ].join('<span class="sep">&middot;</span>');
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
-  const defaultRows = payload.rows.filter((r) => r.period === DEFAULT_PERIOD);
   const medianWinRate = median({
     values: payload.rows.map((row) => row.winRate),
   });
   const bestWinRate = max({
     values: payload.rows.map((row) => row.winRate),
   });
+  const cap = payload.selectionConfig.topN;
+  const maxRosterSize = cap * 8;
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -71,13 +78,10 @@ export function renderTradeCommitteeHtml({
           tip: TIPS.medianWinRate,
         })}
         ${renderMetric({
-          label: "Selected At",
-          value:
-            payload.selectedAtMs === null
-              ? "&mdash;"
-              : formatShortDateTime({ ms: payload.selectedAtMs }),
-          sub: "latest roster snapshot",
-          tip: TIPS.selectedAt,
+          label: "Roster Fill",
+          value: `${payload.rowCount.toLocaleString()} / ${maxRosterSize.toLocaleString()}`,
+          sub: `${payload.activeBucketCount}/8 buckets · cap ${cap.toLocaleString()} each`,
+          tip: TIPS.rosterFill,
         })}
       </section>
 
@@ -128,29 +132,29 @@ export function renderTradeCommitteeHtml({
         </div>
       </section>
 
-      <section class="committee-roster-card">
+      <section class="alea-card with-corners">
+        <div class="alea-section-rule"><h2>Buckets</h2></div>
+        <div class="committee-buckets-grid" role="list">
+          ${renderBuckets({ payload })}
+        </div>
+      </section>
+
+      <section class="alea-panel committee-roster-card">
         <header class="committee-roster-header">
           <div>
             <div class="alea-section-rule"><h2>Roster</h2></div>
-            <p id="committee-roster-meta" class="committee-roster-meta">${renderRosterMeta(
-              {
-                rows: defaultRows,
-                period: DEFAULT_PERIOD,
-                regime: "all",
-              },
-            )}</p>
+            <p id="committee-roster-meta" class="committee-roster-meta"></p>
           </div>
           <div class="committee-controls" aria-label="Roster filters">
-            <div class="committee-period-tabs" role="tablist" aria-label="Candle period">
-              <button class="committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
-              <button class="committee-period-tab" role="tab" data-period="15m" aria-selected="false">15min</button>
+            <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+              <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
+              <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
             </div>
-            <div class="committee-regime-tabs" role="tablist" aria-label="Market regime">
-              <button class="committee-regime-tab" role="tab" data-regime="all" aria-selected="true">All</button>
-              <button class="committee-regime-tab" role="tab" data-regime="low_vol_ranging" aria-selected="false">Low vol ranging</button>
-              <button class="committee-regime-tab" role="tab" data-regime="low_vol_trending" aria-selected="false">Low vol trending</button>
-              <button class="committee-regime-tab" role="tab" data-regime="high_vol_ranging" aria-selected="false">High vol ranging</button>
-              <button class="committee-regime-tab" role="tab" data-regime="high_vol_trending" aria-selected="false">High vol trending</button>
+            <div class="alea-pill-tabs" role="tablist" aria-label="Market regime">
+              <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="low_vol_ranging" aria-selected="true">Low vol ranging</button>
+              <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="low_vol_trending" aria-selected="false">Low vol trending</button>
+              <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="high_vol_ranging" aria-selected="false">High vol ranging</button>
+              <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="high_vol_trending" aria-selected="false">High vol trending</button>
             </div>
           </div>
         </header>
@@ -178,9 +182,7 @@ export function renderTradeCommitteeHtml({
                 <th class="num-col">Worst Q WR${infoTip({ text: TIPS.worstQuarter })}</th>
               </tr>
             </thead>
-            <tbody id="committee-rows">
-              ${renderRows({ rows: defaultRows })}
-            </tbody>
+            <tbody id="committee-rows" aria-live="polite"></tbody>
           </table>
         </div>
       </section>
@@ -228,123 +230,47 @@ function renderConfigItem({
     </div>`;
 }
 
-function renderRows({
-  rows,
+/**
+ * Render the 8-bucket overview tile grid. Buckets come from the loader
+ * already ordered by `(period, regime)` so the grid reads top-to-bottom
+ * as 5m row then 15m row when the CSS forces 4 columns.
+ */
+function renderBuckets({
+  payload,
 }: {
-  readonly rows: readonly TradeCommitteeCandidateRow[];
+  readonly payload: TradeCommitteePayload;
 }): string {
-  if (rows.length === 0) {
-    return `<tr><td colspan="8"><span class="alea-muted">No candidates in this scope.</span></td></tr>`;
-  }
-  return rows.map((row) => renderRow({ row })).join("");
+  return payload.buckets
+    .map((b) => renderBucketTile({ bucket: b, cap: payload.selectionConfig.topN }))
+    .join("");
 }
 
-function renderRow({
-  row,
+function renderBucketTile({
+  bucket,
+  cap,
 }: {
-  readonly row: TradeCommitteeCandidateRow;
+  readonly bucket: TradeCommitteeBucketSummary;
+  readonly cap: number;
 }): string {
-  const family =
-    row.filterFamily === null
-      ? "unregistered"
-      : familyLabel({ family: row.filterFamily });
-  const worst =
-    row.worstQuarterWinRate === null
-      ? '<span class="alea-muted">&mdash;</span>'
-      : `<span class="alea-mono${toneClass({ value: row.worstQuarterWinRate })}">${formatPercent(
-          {
-            value: row.worstQuarterWinRate,
-          },
-        )}</span>`;
+  const wrLabel =
+    bucket.topWinRate === null
+      ? "—"
+      : formatPercent({ value: bucket.topWinRate });
+  const wrCls = winRateToneClass({ value: bucket.topWinRate });
+  const filterLabel = bucket.topFilterId ?? "—";
+  const isEmpty = bucket.candidateCount === 0;
   return `
-    <tr>
-      <td class="num-col"><span class="committee-rank-pill">#${row.rank.toLocaleString()}</span></td>
-      <td><span class="committee-bucket-pill">${escapeHtml({
-        value: formatMarketRegime({ value: row.marketRegime }),
-      })}</span></td>
-      <td>
-        <div class="committee-filter-cell">
-          <span class="committee-filter-id alea-mono">${escapeHtml({ value: row.filterId })}</span>
-          <span class="committee-filter-family">${escapeHtml({ value: family })}</span>
-        </div>
-      </td>
-      <td><span class="alea-mono committee-config-text" title="${escapeHtml({
-        value: row.configCanon,
-      })}">${escapeHtml({ value: row.configCanon })}</span></td>
-      <td class="num-col alea-mono">${row.nEngagements.toLocaleString()}</td>
-      <td class="num-col">${renderWinRateCell({ row })}</td>
-      <td class="num-col alea-mono${toneClass({ value: row.wilsonLow })}">${formatPercent(
-        {
-          value: row.wilsonLow,
-        },
-      )}</td>
-      <td class="num-col">${worst}</td>
-    </tr>`;
-}
-
-function renderWinRateCell({
-  row,
-}: {
-  readonly row: TradeCommitteeCandidateRow;
-}): string {
-  return `
-    <div class="committee-wr-cell">
-      <span class="committee-wr-value${toneClass({ value: row.winRate })}">${formatPercent(
-        {
-          value: row.winRate,
-        },
-      )}</span>
-      <span class="committee-wr-sub">${row.nWins.toLocaleString()}/${row.nEngagements.toLocaleString()}</span>
+    <div class="committee-bucket-tile${isEmpty ? " is-empty" : ""}" role="listitem">
+      <div class="committee-bucket-head">
+        <span class="committee-bucket-period">${escapeHtml({ value: bucket.period })}</span>
+        <span class="committee-bucket-regime">${escapeHtml({ value: formatMarketRegime({ value: bucket.marketRegime }) })}</span>
+      </div>
+      <div class="committee-bucket-stat">
+        <span class="committee-bucket-wr${wrCls}">${wrLabel}</span>
+        <span class="committee-bucket-fill">${bucket.candidateCount.toLocaleString()} / ${cap.toLocaleString()}</span>
+      </div>
+      <div class="committee-bucket-filter alea-mono" title="${escapeHtml({ value: filterLabel })}">${escapeHtml({ value: filterLabel })}</div>
     </div>`;
-}
-
-function renderRosterMeta({
-  rows,
-  period,
-  regime,
-}: {
-  readonly rows: readonly TradeCommitteeCandidateRow[];
-  readonly period: string;
-  readonly regime: string;
-}): string {
-  const regimeLabel =
-    regime === "all" ? "all regimes" : formatMarketRegime({ value: regime });
-  return `Showing ${rows.length.toLocaleString()} ${period} candidates in ${regimeLabel}.`;
-}
-
-function familyLabel({ family }: { readonly family: FilterFamily }): string {
-  switch (family) {
-    case "band_reversion":
-      return "band reversion";
-    case "oscillator_reversion":
-      return "oscillator reversion";
-    case "velocity_fade":
-      return "velocity fade";
-    case "ma_position":
-      return "ma position";
-    case "pattern":
-      return "pattern";
-    case "divergence":
-      return "divergence";
-  }
-}
-
-function formatMarketRegime({ value }: { readonly value: string }): string {
-  return value.replaceAll("_", " ");
-}
-
-function toneClass({ value }: { readonly value: number }): string {
-  if (value >= 0.52) {
-    return " alea-num-positive";
-  }
-  if (value < 0.48) {
-    return " alea-num-negative";
-  }
-  return "";
-}
-
-function formatPercent({ value }: { readonly value: number }): string {
-  return `${(value * 100).toFixed(1)}%`;
 }
 
 function median({
@@ -374,58 +300,18 @@ function max({
   return Math.max(...values);
 }
 
-function formatDateTime({ ms }: { readonly ms: number }): string {
-  if (!Number.isFinite(ms) || ms <= 0) {
-    return "unknown";
-  }
-  return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatShortDateTime({ ms }: { readonly ms: number }): string {
-  return new Date(ms).toLocaleString("en-US", {
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function escapeHtml({ value }: { readonly value: string }): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function escapeJsonForHtml({ value }: { readonly value: string }): string {
-  return value.replaceAll("<", "\\u003c");
-}
-
-function infoTip({ text }: { readonly text: string }): string {
-  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({
-    value: text,
-  })}" aria-label="${escapeHtml({ value: text })}"></span>`;
-}
-
 const TIPS = {
   candidates:
     "Selected committee rows. Each row is one filter config admitted to one timeframe/regime bucket.",
   medianWinRate:
     "Middle win rate across selected candidates. Useful as a quick roster-quality check.",
-  selectedAt: "When the committee roster was last selected.",
+  rosterFill:
+    "How full the roster is. Each (timeframe, regime) bucket caps at the per-bucket limit; a low fill means few candidates met the floors.",
   rank: "Rank within this timeframe and regime. #1 is the strongest selected candidate.",
   regime: "Market state where this candidate is allowed to vote.",
   filter: "Signal rule and its strategy family.",
   config: "Exact knob values selected for this filter.",
-  engagements: "How many backtest calls this candidate made in this regime.",
+  engagements: "How many training calls this candidate made in this regime.",
   winRate: "Share of those calls that were correct.",
   wilson:
     "Conservative win-rate estimate used for ranking; rewards high WR with enough sample.",

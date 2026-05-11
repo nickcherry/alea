@@ -11,10 +11,17 @@ describe("renderTradeCommitteeHtml", () => {
 
     expect(html).toContain("Trade Committee");
     expect(html).toContain('href="/committee/" aria-current="page"');
-    expect(html).toContain("low vol ranging");
+    // Regime label appears in the tab-button row, not in the body —
+    // the table body is JS-hydrated from the embedded JSON payload.
+    expect(html).toContain("Low vol ranging");
+    expect(html).toContain('data-regime="low_vol_ranging" aria-selected="true"');
+    expect(html).not.toContain('data-regime="all"');
+    // The JSON payload script tag carries the row data verbatim.
     expect(html).toContain("rsi_mean_rev");
     expect(html).toContain('data-period="15m"');
     expect(html).toContain("Median WR");
+    expect(html).toContain("Roster Fill");
+    expect(html).not.toContain("Selected At");
     expect(html).not.toContain("Active Buckets");
     expect(html).toContain("Bucket Cap");
     expect(html).toContain("Aggregate WR Floor");

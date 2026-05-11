@@ -31,6 +31,10 @@ export type DryRunDashboardAssetRow = {
   readonly pending: number;
   readonly wins: number;
   readonly winRate: number | null;
+  /** Settled decisions where the committee called UP. */
+  readonly upSettled: number;
+  /** Settled decisions where the committee called DOWN. */
+  readonly downSettled: number;
 };
 
 export type DryRunDashboardRecentRow = {
@@ -53,6 +57,10 @@ export type DryRunDashboardRegimeAggregate = {
   readonly calls: number;
   readonly wins: number;
   readonly winRate: number | null;
+  /** Settled decisions where the committee called UP in this regime. */
+  readonly upSettled: number;
+  /** Settled decisions where the committee called DOWN in this regime. */
+  readonly downSettled: number;
 };
 
 export type DryRunDashboardCumulativeRow = {

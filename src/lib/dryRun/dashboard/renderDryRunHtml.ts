@@ -4,15 +4,25 @@ import type {
 } from "@alea/lib/dryRun/dashboard/types";
 import {
   aleaBrandMark,
+  aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import {
+  escapeHtml,
+  escapeJsonForHtml,
+  formatDateTime,
+  formatMarketRegime as formatMarketRegimeRaw,
+  formatPercent,
+  infoTip,
+  winRateToneClass,
+} from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
 function formatMarketRegime(value: string | null): string {
   if (value === null) {
     return "—";
   }
-  return value.replaceAll("_", " ");
+  return formatMarketRegimeRaw({ value });
 }
 
 const RECENT_TABLE_LIMIT = 50;
@@ -29,17 +39,16 @@ export function renderDryRunHtml({
 }): string {
   const summary = payload.summary;
   const wr =
-    summary.winRate === null ? "—" : `${(summary.winRate * 100).toFixed(1)}%`;
+    summary.winRate === null
+      ? "—"
+      : formatPercent({ value: summary.winRate });
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
-  const tone = toneClass(summary.winRate);
-  const wrToneClass =
-    tone === "positive"
-      ? " alea-num-positive"
-      : tone === "negative"
-        ? " alea-num-negative"
-        : "";
+  const wrToneClass = winRateToneClass({ value: summary.winRate });
   const recentRows = payload.recent.slice(0, RECENT_TABLE_LIMIT);
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
+  const chartTokensJson = escapeJsonForHtml({
+    value: JSON.stringify(aleaChartTokens),
+  });
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -47,6 +56,8 @@ export function renderDryRunHtml({
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Alea &middot; Dry Run</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js" charset="utf-8"></script>
   ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
 </head>
 <body>
@@ -62,7 +73,7 @@ export function renderDryRunHtml({
         ${renderMetric({
           label: "Win Rate",
           value: wr,
-          sub: `${summary.totalWins.toLocaleString()} of ${summary.settledDecisions.toLocaleString()} settled`,
+          sub: `${summary.totalWins.toLocaleString()} of ${summary.settledDecisions.toLocaleString()} settled · ${summary.upDecisions.toLocaleString()}↑ / ${summary.downDecisions.toLocaleString()}↓`,
           toneClass: wrToneClass,
           tip: DR_TIPS.winRate,
         })}
@@ -93,12 +104,12 @@ export function renderDryRunHtml({
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Cumulative Win Rate</h2></div>
-        <div class="dry-run-chart" id="dry-run-chart">
-          ${
-            payload.cumulative.length === 0
-              ? '<div class="dry-run-empty">No settled decisions yet — the chart will populate as the dry-run loop finalizes bars.</div>'
-              : renderInlineSparkline({ cumulative: payload.cumulative })
-          }
+        <div class="dry-run-chart-frame">
+          <div id="dry-run-chart" class="dry-run-chart-host"></div>
+          <div id="dry-run-chart-empty" class="dry-run-empty"${payload.cumulative.length === 0 ? "" : ' style="display:none"'}>
+            No settled decisions yet — the chart will populate as the dry-run loop finalizes bars.
+          </div>
+          <div id="dry-run-tooltip" class="alea-tooltip"></div>
         </div>
       </section>
 
@@ -111,30 +122,26 @@ export function renderDryRunHtml({
                 <th>Regime${infoTip({ text: DR_TIPS.regimeName })}</th>
                 <th class="num-col">Calls${infoTip({ text: DR_TIPS.callsRegime })}</th>
                 <th class="num-col">Win Rate${infoTip({ text: DR_TIPS.callsWr })}</th>
+                <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
               </tr>
             </thead>
             <tbody>
               ${
                 payload.perRegime.length === 0
-                  ? `<tr><td colspan="3"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>`
+                  ? `<tr><td colspan="4"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>`
                   : payload.perRegime
                       .map((r) => {
                         const wrStr =
                           r.winRate === null
                             ? '<span class="alea-muted">—</span>'
-                            : `${(r.winRate * 100).toFixed(1)}%`;
-                        const wrTone = toneClass(r.winRate);
-                        const cls =
-                          wrTone === "positive"
-                            ? " alea-num-positive"
-                            : wrTone === "negative"
-                              ? " alea-num-negative"
-                              : "";
+                            : formatPercent({ value: r.winRate });
+                        const cls = winRateToneClass({ value: r.winRate });
                         return `
                           <tr>
                             <td><span class="asset-pill">${escapeHtml({ value: formatMarketRegime(r.marketRegime) })}</span></td>
                             <td class="num-col alea-mono">${r.calls.toLocaleString()}</td>
                             <td class="num-col alea-mono${cls}">${wrStr}</td>
+                            <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
                           </tr>`;
                       })
                       .join("")
@@ -153,6 +160,7 @@ export function renderDryRunHtml({
                 <th>Asset${infoTip({ text: DR_TIPS.recentAsset })}</th>
                 <th class="num-col">Calls${infoTip({ text: DR_TIPS.callsAsset })}</th>
                 <th class="num-col">Win Rate${infoTip({ text: DR_TIPS.callsWr })}</th>
+                <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
               </tr>
             </thead>
             <tbody>
@@ -161,19 +169,14 @@ export function renderDryRunHtml({
                   const wrStr =
                     r.winRate === null
                       ? '<span class="alea-muted">—</span>'
-                      : `${(r.winRate * 100).toFixed(1)}%`;
-                  const wrTone = toneClass(r.winRate);
-                  const cls =
-                    wrTone === "positive"
-                      ? " alea-num-positive"
-                      : wrTone === "negative"
-                        ? " alea-num-negative"
-                        : "";
+                      : formatPercent({ value: r.winRate });
+                  const cls = winRateToneClass({ value: r.winRate });
                   return `
                 <tr>
                   <td><span class="asset-pill">${escapeHtml({ value: r.asset })}</span></td>
                   <td class="num-col alea-mono">${r.settled.toLocaleString()}</td>
                   <td class="num-col alea-mono${cls}">${wrStr}</td>
+                  <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
                 </tr>
               `;
                 })
@@ -196,6 +199,7 @@ export function renderDryRunHtml({
                 <th>Market Regime${infoTip({ text: DR_TIPS.recentRegime })}</th>
                 <th class="num-col">Synth Open${infoTip({ text: DR_TIPS.recentSynthOpen })}</th>
                 <th class="num-col">Actual Close${infoTip({ text: DR_TIPS.recentActualClose })}</th>
+                <th class="num-col">Move${infoTip({ text: DR_TIPS.recentMove })}</th>
                 <th>Outcome${infoTip({ text: DR_TIPS.recentOutcome })}</th>
               </tr>
             </thead>
@@ -208,6 +212,7 @@ export function renderDryRunHtml({
     </main>
   </div>
   <script id="dry-run-payload" type="application/json">${payloadJson}</script>
+  <script id="dry-run-tokens" type="application/json">${chartTokensJson}</script>
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
@@ -235,6 +240,10 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
     row.marketRegime === null
       ? '<span class="alea-muted">—</span>'
       : `<span class="asset-pill">${escapeHtml({ value: formatMarketRegime(row.marketRegime) })}</span>`;
+  const moveCell = renderMoveCell({
+    synthOpen: row.synthOpen,
+    actualClose: row.actualClose,
+  });
   return `
     <tr>
       <td class="alea-mono">${escapeHtml({ value: ts })}</td>
@@ -243,62 +252,54 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       <td>${regimeCell}</td>
       <td class="num-col alea-mono">${row.synthOpen.toFixed(2)}</td>
       <td class="num-col alea-mono">${close}</td>
+      <td class="num-col">${moveCell}</td>
       <td>${outcome}</td>
     </tr>
   `;
 }
 
 /**
- * Tiny inline SVG sparkline of the cumulative win-rate series.
- * Self-contained — no chart library, no uPlot. Renders a polyline
- * normalised to the data's range with a horizontal 50 % reference.
+ * Open-to-close percent move with sign. Green for up moves, red for
+ * down. `—` while the bar is still pending.
  */
-function renderInlineSparkline({
-  cumulative,
+function renderMoveCell({
+  synthOpen,
+  actualClose,
 }: {
-  readonly cumulative: ReadonlyArray<{
-    readonly tsMs: number;
-    readonly cumWinRate: number;
-    readonly settled: number;
-  }>;
+  readonly synthOpen: number;
+  readonly actualClose: number | null;
 }): string {
-  if (cumulative.length === 0) {
-    return "";
+  if (actualClose === null || synthOpen === 0) {
+    return '<span class="alea-muted">—</span>';
   }
-  const w = 800;
-  const h = 200;
-  const padX = 16;
-  const padY = 14;
-  const xs = cumulative.map((d) => d.tsMs);
-  const ys = cumulative.map((d) => d.cumWinRate);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(0.35, ...ys);
-  const maxY = Math.max(0.65, ...ys);
-  const xOf = (x: number): number =>
-    padX + ((x - minX) / Math.max(1, maxX - minX)) * (w - padX * 2);
-  const yOf = (y: number): number =>
-    h - padY - ((y - minY) / Math.max(0.01, maxY - minY)) * (h - padY * 2);
-  const pts = cumulative
-    .map((d) => `${xOf(d.tsMs).toFixed(1)},${yOf(d.cumWinRate).toFixed(1)}`)
-    .join(" ");
-  const baselineY = yOf(0.5).toFixed(1);
-  const lastWr = ys[ys.length - 1]!;
-  const lastTone =
-    lastWr >= 0.52
-      ? "var(--alea-green)"
-      : lastWr < 0.48
-        ? "var(--alea-red)"
-        : "var(--alea-gold)";
-  return `
-    <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" class="dry-run-svg">
-      <line x1="${padX}" x2="${w - padX}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(215,170,69,0.35)" stroke-dasharray="3 3" />
-      <polyline fill="none" stroke="${lastTone}" stroke-width="1.5" points="${pts}" />
-      <text x="${w - padX}" y="${padY + 4}" fill="${lastTone}" font-family="ui-monospace" font-size="11" text-anchor="end">
-        ${(lastWr * 100).toFixed(1)}% (n=${cumulative.length})
-      </text>
-    </svg>
-  `;
+  const pct = ((actualClose - synthOpen) / synthOpen) * 100;
+  const sign = pct > 0 ? "+" : pct < 0 ? "" : "";
+  const cls =
+    pct > 0
+      ? " alea-num-positive"
+      : pct < 0
+        ? " alea-num-negative"
+        : " alea-muted";
+  return `<span class="alea-mono${cls}">${sign}${pct.toFixed(2)}%</span>`;
+}
+
+/**
+ * "↑n / ↓n" badge — tone-tinted on the side that dominates so the eye
+ * spots a directional bias without reading both numbers.
+ */
+function renderDirectionSplit({
+  up,
+  down,
+}: {
+  readonly up: number;
+  readonly down: number;
+}): string {
+  if (up + down === 0) {
+    return '<span class="alea-muted">—</span>';
+  }
+  const upCls = up >= down ? "" : " alea-muted";
+  const downCls = down > up ? "" : " alea-muted";
+  return `<span class="alea-mono"><span class="${upCls.trim()}">↑${up.toLocaleString()}</span> / <span class="${downCls.trim()}">↓${down.toLocaleString()}</span></span>`;
 }
 
 function renderMetric({
@@ -348,49 +349,11 @@ const DR_TIPS = {
   recentRegime: "Market state when the call was made.",
   recentSynthOpen: "Price used as the bar open.",
   recentActualClose: "Final price after the bar closed.",
+  recentMove:
+    "Open-to-close percent move. Positive = up, negative = down. The committee wins when this matches its UP/DOWN call.",
   recentOutcome:
     "WIN if the call matched the actual direction; otherwise LOSS.",
+  directionSplit:
+    "How the committee's settled calls split between UP (↑) and DOWN (↓) in this slice. A heavy lean hints at a one-way bias.",
 };
 
-function infoTip({ text }: { readonly text: string }): string {
-  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({ value: text })}" aria-label="${escapeHtml({ value: text })}"></span>`;
-}
-
-function toneClass(wr: number | null): "positive" | "negative" | "neutral" {
-  if (wr === null) {
-    return "neutral";
-  }
-  if (wr >= 0.52) {
-    return "positive";
-  }
-  if (wr < 0.48) {
-    return "negative";
-  }
-  return "neutral";
-}
-
-function formatDateTime({ ms }: { readonly ms: number }): string {
-  if (!Number.isFinite(ms) || ms <= 0) {
-    return "unknown";
-  }
-  return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function escapeHtml({ value }: { readonly value: string }): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function escapeJsonForHtml({ value }: { readonly value: string }): string {
-  return value.replaceAll("<", "\\u003c");
-}

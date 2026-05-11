@@ -100,11 +100,19 @@ export async function loadDryRunPayload({
       .executeTakeFirstOrThrow(),
     db
       .selectFrom("dry_run_decisions")
-      .select(({ fn }) => [
+      .select(({ fn, eb }) => [
         "asset",
         fn.count<string>("id").filterWhere("won", "is not", null).as("settled"),
         fn.count<string>("id").filterWhere("won", "is", null).as("pending"),
         fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
+        fn
+          .count<string>("id")
+          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]))
+          .as("up_settled"),
+        fn
+          .count<string>("id")
+          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]))
+          .as("down_settled"),
       ])
       .groupBy("asset")
       .orderBy("asset", "asc")
@@ -134,10 +142,18 @@ export async function loadDryRunPayload({
       .execute(),
     db
       .selectFrom("dry_run_decisions")
-      .select(({ fn }) => [
+      .select(({ fn, eb }) => [
         "market_regime",
         fn.count<string>("id").filterWhere("won", "is not", null).as("calls"),
         fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
+        fn
+          .count<string>("id")
+          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]))
+          .as("up_settled"),
+        fn
+          .count<string>("id")
+          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]))
+          .as("down_settled"),
       ])
       .groupBy("market_regime")
       .execute(),
@@ -189,6 +205,8 @@ export async function loadDryRunPayload({
       pending: Number(r.pending),
       wins,
       winRate: settled === 0 ? null : wins / settled,
+      upSettled: Number(r.up_settled ?? 0),
+      downSettled: Number(r.down_settled ?? 0),
     };
   });
 
@@ -210,6 +228,8 @@ export async function loadDryRunPayload({
         calls,
         wins,
         winRate: calls === 0 ? null : wins / calls,
+        upSettled: Number(r.up_settled ?? 0),
+        downSettled: Number(r.down_settled ?? 0),
       };
     })
     .filter((r) => r.calls > 0)

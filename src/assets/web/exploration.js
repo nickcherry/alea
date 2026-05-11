@@ -41,20 +41,12 @@
   // ...".
   var currentRegime = "all";
 
-  // Declared BEFORE the initial `render()` call below: `var` hoists
-  // the declaration but not the assignment, and renderFilterCard
-  // reads this object at call time. Having the initial render() run
-  // before the assignment line caused a silent TypeError that left
-  // every subsequent tab click as a no-op (the SSR'd HTML never got
-  // replaced).
-  var FAMILY_LABELS = {
-    band_reversion: "band reversion",
-    oscillator_reversion: "oscillator reversion",
-    velocity_fade: "velocity fade",
-    ma_position: "ma position",
-    pattern: "pattern",
-    divergence: "divergence",
-  };
+  var alea = window.alea;
+  var escapeHtml = alea.escapeHtml;
+  var percent = alea.formatPercent;
+  var toneClass = alea.winRateToneClass;
+  var infoTip = alea.infoTip;
+  var familyLabelFor = alea.familyLabel;
 
   // Plain-English column / metric explanations surfaced via the
   // .alea-info-tip ⓘ icon. Keep in sync with TIPS in
@@ -75,17 +67,6 @@
     quarters:
       "Quarter-by-quarter win rate, oldest to newest. Green is above 50%, red below 50%.",
   };
-
-  function infoTip(text) {
-    var safe = escapeHtml(text);
-    return (
-      ' <span class="alea-info-tip" tabindex="0" data-tip="' +
-      safe +
-      '" aria-label="' +
-      safe +
-      '"></span>'
-    );
-  }
 
   Array.prototype.forEach.call(periodTabs, function (tab) {
     tab.addEventListener("click", function () {
@@ -263,12 +244,12 @@
     var avg = g.avgWinRate === null ? "&mdash;" : percent(g.avgWinRate);
     var tone = toneClass(g.avgWinRate);
     var body = g.rows.map(renderSubRow).join("");
-    var familyLabel = FAMILY_LABELS[g.family] || g.family;
+    var familyLabel = familyLabelFor(g.family);
     var isCollapsed = !!collapsed[g.filterId];
     var collapsedCls = isCollapsed ? " is-collapsed" : "";
     var ariaExpanded = isCollapsed ? "false" : "true";
     return (
-      '<section class="filter-card' +
+      '<section class="alea-panel filter-card' +
       collapsedCls +
       '" data-filter-id="' +
       escapeHtml(g.filterId) +
@@ -280,7 +261,9 @@
       '<h2 class="filter-card-id">' +
       escapeHtml(g.filterId) +
       "</h2>" +
-      '<span class="filter-card-family">' +
+      '<span class="filter-card-family fam-' +
+      escapeHtml(g.family) +
+      '">' +
       escapeHtml(familyLabel) +
       "</span>" +
       "</div>" +
@@ -319,12 +302,12 @@
       '<div class="filter-card-table-wrap">' +
       '<table class="filter-card-table">' +
       "<colgroup>" +
-      '<col style="width: 28%" />' +
-      '<col style="width: 11%" />' +
-      '<col style="width: 17%" />' +
-      '<col style="width: 11%" />' +
-      '<col style="width: 11%" />' +
-      '<col style="width: 22%" />' +
+      '<col style="width: 32%" />' +
+      '<col style="width: 8%" />' +
+      '<col style="width: 13%" />' +
+      '<col style="width: 8%" />' +
+      '<col style="width: 8%" />' +
+      '<col style="width: 31%" />' +
       "</colgroup>" +
       "<thead>" +
       "<tr>" +
@@ -399,10 +382,21 @@
       return '<span class="alea-muted">&mdash;</span>';
     }
     var bars = qs.map(renderQuarterBar).join("");
+    var axis = qs
+      .map(function (q) {
+        var label = q.quarter === 1 ? "'" + String(q.year).slice(2) : "";
+        return '<span class="q-axis-tick">' + label + "</span>";
+      })
+      .join("");
     return (
-      '<div class="q-strip-wrap"><div class="q-strip" role="img" aria-label="Per-quarter win rate">' +
+      '<div class="q-strip-wrap">' +
+      '<div class="q-strip" role="img" aria-label="Per-quarter win rate">' +
       bars +
-      "</div></div>"
+      "</div>" +
+      '<div class="q-axis" aria-hidden="true">' +
+      axis +
+      "</div>" +
+      "</div>"
     );
   }
 
@@ -471,25 +465,5 @@
 
   function bare(v) {
     return v === null ? "&mdash;" : (v * 100).toFixed(1);
-  }
-
-  function toneClass(wr) {
-    if (wr === null) return "";
-    if (wr >= 0.52) return " alea-num-positive";
-    if (wr < 0.48) return " alea-num-negative";
-    return "";
-  }
-
-  function percent(v) {
-    return (v * 100).toFixed(1) + "%";
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
   }
 })();

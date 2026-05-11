@@ -21,8 +21,9 @@ const ASSET_SOURCE_DIR = resolve(
  *
  * The shared `alea.css` is always copied first, before any page assets,
  * so its tokens and base styles cascade beneath page overrides. The
- * shared info-tooltip script is copied before page scripts so every
- * dashboard gets the same overlay behavior.
+ * shared `alea-utils.js` (formatting helpers + `window.alea` namespace)
+ * and `alea-info-tooltips.js` (overlay behavior) are copied before page
+ * scripts so every dashboard gets the same helpers and overlay.
  *
  * @example
  *   const { stylesheets, scripts } = await copyDashboardAssets({
@@ -30,7 +31,7 @@ const ASSET_SOURCE_DIR = resolve(
  *     pageAssets: ["exploration.css", "exploration.js"],
  *   });
  *   // stylesheets = ["index.assets/alea.css", "index.assets/exploration.css"]
- *   // scripts     = ["index.assets/alea-info-tooltips.js", "index.assets/exploration.js"]
+ *   // scripts     = ["index.assets/alea-utils.js", "index.assets/alea-info-tooltips.js", "index.assets/exploration.js"]
  */
 export async function copyDashboardAssets({
   htmlPath,
@@ -50,7 +51,12 @@ export async function copyDashboardAssets({
   const assetsDir = assetsDirFor(htmlPath);
   await mkdir(assetsDir, { recursive: true });
 
-  const allAssets = ["alea.css", "alea-info-tooltips.js", ...pageAssets];
+  const allAssets = [
+    "alea.css",
+    "alea-utils.js",
+    "alea-info-tooltips.js",
+    ...pageAssets,
+  ];
   await Promise.all(
     allAssets.map((name) =>
       copyFile(resolve(ASSET_SOURCE_DIR, name), resolve(assetsDir, name)),

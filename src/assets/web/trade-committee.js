@@ -22,16 +22,16 @@
   var regimeTabs = document.querySelectorAll(".committee-regime-tab");
 
   var currentPeriod = "5m";
-  var currentRegime = "all";
+  var currentRegime = "low_vol_ranging";
 
-  var FAMILY_LABELS = {
-    band_reversion: "band reversion",
-    oscillator_reversion: "oscillator reversion",
-    velocity_fade: "velocity fade",
-    ma_position: "ma position",
-    pattern: "pattern",
-    divergence: "divergence",
+  var alea = window.alea;
+  var escapeHtml = alea.escapeHtml;
+  var percent = alea.formatPercent;
+  var marketRegime = function (v) {
+    return alea.formatMarketRegime(v);
   };
+  var toneClass = alea.winRateToneClass;
+  var familyLabelFor = alea.familyLabel;
 
   Array.prototype.forEach.call(periodTabs, function (tab) {
     tab.addEventListener("click", function () {
@@ -58,10 +58,7 @@
   function render() {
     if (!tbody) return;
     var visible = rows.filter(function (r) {
-      return (
-        r.period === currentPeriod &&
-        (currentRegime === "all" || r.marketRegime === currentRegime)
-      );
+      return r.period === currentPeriod && r.marketRegime === currentRegime;
     });
     tbody.innerHTML = renderRows(visible);
     if (meta) {
@@ -70,15 +67,13 @@
   }
 
   function rosterMeta(visible) {
-    var regimeLabel =
-      currentRegime === "all" ? "all regimes" : marketRegime(currentRegime);
     return (
       "Showing " +
       visible.length.toLocaleString() +
       " " +
       currentPeriod +
       " candidates in " +
-      regimeLabel +
+      marketRegime(currentRegime) +
       "."
     );
   }
@@ -92,7 +87,7 @@
 
   function renderRow(row) {
     var family = row.filterFamily
-      ? FAMILY_LABELS[row.filterFamily] || row.filterFamily
+      ? familyLabelFor(row.filterFamily)
       : "unregistered";
     var worst =
       row.worstQuarterWinRate === null
@@ -160,26 +155,4 @@
     );
   }
 
-  function marketRegime(value) {
-    return String(value).replace(/_/g, " ");
-  }
-
-  function toneClass(wr) {
-    if (wr >= 0.52) return " alea-num-positive";
-    if (wr < 0.48) return " alea-num-negative";
-    return "";
-  }
-
-  function percent(value) {
-    return (Number(value) * 100).toFixed(1) + "%";
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
 })();

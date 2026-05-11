@@ -4,18 +4,24 @@
  * num-positive/negative, muted) come from alea.css.
  */
 
-.dry-run-chart {
+/* uPlot-hosted cumulative WR chart. The frame mirrors the trading
+   page's `.chart-frame` so the two dashboards feel like the same
+   product. */
+.dry-run-chart-frame {
   position: relative;
   border-radius: 10px;
-  background: linear-gradient(180deg, rgba(15, 27, 18, 0.6), rgba(7, 9, 10, 0.4));
+  background:
+    radial-gradient(circle at 92% 10%, rgba(215, 170, 69, 0.05), transparent 36%),
+    linear-gradient(180deg, rgba(15, 27, 18, 0.6), rgba(7, 9, 10, 0.4));
   border: 1px solid var(--alea-border-muted);
-  padding: 8px;
+  padding: 12px 8px 6px;
 }
 
-.dry-run-svg {
+.dry-run-chart-host {
+  position: relative;
   width: 100%;
-  height: 200px;
-  display: block;
+  height: 240px;
+  min-height: 240px;
 }
 
 .dry-run-empty {

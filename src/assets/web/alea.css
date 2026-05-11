@@ -191,6 +191,19 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* Panel — flat list/roster container. Lighter chrome than `.alea-card`*/
+/* (no corner brackets, no radial accents). Use for filter stacks and */
+/* roster wrappers where the panel is a frame for tabular data.       */
+/* ------------------------------------------------------------------ */
+
+.alea-panel {
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
+  box-shadow: var(--alea-shadow-soft);
+}
+
+/* ------------------------------------------------------------------ */
 /* Cards                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -321,6 +334,60 @@ body {
 @media (max-width: 720px) {
   .alea-topnav { padding: 6px 12px; }
   .alea-topnav-link { padding: 6px 10px; font-size: 12px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Pill tabs — segmented control with rounded background.            */
+/* Used by every page-level period / regime selector. Container is   */
+/* a pill-shaped frame, tabs are pill-shaped buttons inside it.      */
+/* ------------------------------------------------------------------ */
+
+.alea-pill-tabs {
+  display: inline-flex;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 999px;
+  background: var(--alea-bg-soft);
+}
+
+.alea-pill-tab {
+  appearance: none;
+  background: transparent;
+  color: var(--alea-text-muted);
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--alea-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+/* Larger variant for primary / fewer-option selectors (period, etc.). */
+.alea-pill-tab.is-prominent {
+  padding: 6px 22px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.alea-pill-tab:hover {
+  color: var(--alea-text);
+}
+
+.alea-pill-tab[aria-selected="true"] {
+  background: linear-gradient(
+    180deg,
+    rgba(215, 170, 69, 0.18),
+    rgba(215, 170, 69, 0.08)
+  );
+  color: var(--alea-text);
+  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
 }
 
 /* ------------------------------------------------------------------ */
