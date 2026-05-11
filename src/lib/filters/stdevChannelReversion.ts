@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * Linear regression channel reversion. Fits an OLS line to the
  * trailing N closes, then computes the std-dev of residuals.
- * Fires when the latest close sits more than `multiplier` × stddev
+ * Engages when the latest close sits more than `multiplier` × stddev
  * away from the regression line:
  *
  *   close_i ≥ line(i) + multiplier · stddev  →  DOWN
@@ -27,7 +27,7 @@ export const stdevChannelReversion: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Linear-regression-channel reversion. Fits OLS to trailing closes, computes residual std-dev; fires when the latest close clears `multiplier`σ of residuals. Trend-aware analog of Bollinger.",
+    "Linear-regression-channel reversion. Fits OLS to trailing closes, computes residual std-dev; engages when the latest close clears `multiplier`σ of residuals. Trend-aware analog of Bollinger.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

@@ -24,7 +24,7 @@ export const emaPosition: Filter<MovingAveragePositionConfig> = {
   version: 1,
   family: "ma_position",
   description:
-    "Fires on the close's position relative to an N-bar EMA. Same decision tree as `sma_position`; only the baseline differs (EMA weights recent bars more heavily).",
+    "Engages on the close's position relative to an N-bar EMA. Same decision tree as `sma_position`; only the baseline differs (EMA weights recent bars more heavily).",
   configSchema: movingAveragePositionConfigSchema,
   requiredBars: (c) => c.length + 1,
   predict: makeMovingAveragePredict({

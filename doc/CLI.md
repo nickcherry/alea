@@ -27,7 +27,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `candles:sync`
   `candles:fill-gaps`
 - `backtest:*`
-  `backtest:run` — runs every registered filter × default config × (period × asset) against the cached pyth/spot candles and upserts results into `filter_runs` + per-fire rows into `filter_engagements`.
+  `backtest:run` — runs every registered filter × default config × (period × asset) against the cached pyth/spot candles and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `regimes:*`
   `regimes:backfill` — classifies every bar in `candles` into a market regime and writes the tags to `bar_regimes`. See [REGIMES.md](./REGIMES.md).
 - `committee:*`

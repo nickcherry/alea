@@ -52,9 +52,8 @@ export interface MarketEventTable {
  * Aggregate cache for the filter-committee backtest: one row per
  * (filter_id, filter_version, config_canon, period, asset). See
  * migration `202605110000_create_filter_runs.ts` for the original
- * rationale. The per-fire detail used to live here as a JSONB
- * `fires` blob; migration `202605120000_create_filter_engagements.ts`
- * pulled that out into a relational `filter_engagements` table.
+ * rationale. Per-prediction detail lives in the relational
+ * `filter_engagements` table.
  * The columns left here exist purely to support fast leaderboard
  * queries without scanning engagements.
  */
@@ -77,9 +76,9 @@ export interface FilterRunTable {
     string | number | bigint
   >;
   readonly n_bars: number;
-  readonly n_fires_up: number;
+  readonly n_engagements_up: number;
   readonly n_wins_up: number;
-  readonly n_fires_down: number;
+  readonly n_engagements_down: number;
   readonly n_wins_down: number;
   readonly computed_at_ms: ColumnType<
     string,
@@ -89,11 +88,11 @@ export interface FilterRunTable {
 }
 
 /**
- * Append-only per-prediction tape. One row per non-abstain fire of
- * any candidate. `run_hash` joins to `filter_runs`; `ts_ms` is the
+ * Append-only per-prediction tape. One row per non-abstain engagement
+ * of any candidate. `run_hash` joins to `filter_runs`; `ts_ms` is the
  * open-time of the candle being predicted (NOT the candle the filter
- * last saw). `direction` is the filter's vote ('u' or 'd'); `won`
- * is 1 iff the realised direction matched.
+ * last saw). `direction` is the filter's vote ('u' or 'd'); `won` is
+ * 1 iff the realised direction matched.
  *
  * Quarter buckets are derived from `ts_ms` at query time
  * (`extract(quarter from to_timestamp(ts_ms / 1000.0))`); there's no
@@ -156,7 +155,7 @@ export interface CommitteeSelectionTable {
   readonly filter_version: number;
   readonly config_canon: string;
   readonly rank: number;
-  readonly n_fires: number;
+  readonly n_engagements: number;
   readonly n_wins: number;
   readonly win_rate: number;
   readonly wilson_low: number;

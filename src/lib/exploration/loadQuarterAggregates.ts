@@ -5,7 +5,7 @@ export type QuarterAggregateRow = {
   readonly run_hash: string;
   readonly year: number;
   readonly quarter: number;
-  readonly n_fires: number;
+  readonly n_engagements: number;
   readonly n_wins: number;
 };
 
@@ -24,14 +24,14 @@ export async function loadQuarterAggregates({
     run_hash: string;
     year: number;
     quarter: number;
-    n_fires: string;
+    n_engagements: string;
     n_wins: string;
   }>`
     select
       run_hash,
       extract(year from to_timestamp(ts_ms / 1000.0))::int as year,
       extract(quarter from to_timestamp(ts_ms / 1000.0))::int as quarter,
-      count(*)::text as n_fires,
+      count(*)::text as n_engagements,
       coalesce(sum(won), 0)::text as n_wins
     from filter_engagements
     group by run_hash, year, quarter
@@ -41,7 +41,7 @@ export async function loadQuarterAggregates({
     run_hash: r.run_hash,
     year: r.year,
     quarter: r.quarter,
-    n_fires: Number(r.n_fires),
+    n_engagements: Number(r.n_engagements),
     n_wins: Number(r.n_wins),
   }));
 }

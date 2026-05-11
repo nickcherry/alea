@@ -10,7 +10,7 @@ import { z } from "zod";
  *   CMO    = 100 × (sumGain - sumLoss) / (sumGain + sumLoss)
  *
  * Ranges -100..100. Like RSI but uses raw sums rather than averages
- * with Wilder smoothing — reacts faster to recent action. Fires UP
+ * with Wilder smoothing — reacts faster to recent action. Engages UP
  * at deep negatives (oversold), DOWN at deep positives.
  */
 const configSchema = z.object({

@@ -3,13 +3,13 @@ import type { Filter } from "@alea/lib/filters/types";
 import { z } from "zod";
 
 /**
- * Multi-bar percent-return reversion. Fires when the close has
+ * Multi-bar percent-return reversion. Engages when the close has
  * moved more than `threshold` percent (as a fraction) over the
  * trailing `lookback` bars:
  *
  *   r = (close_i - close_{i - lookback}) / close_{i - lookback}
- *   if r ≥ +threshold   →  fire DOWN  (fade the sustained up move)
- *   if r ≤ -threshold   →  fire UP    (fade the sustained drop)
+ *   if r ≥ +threshold   →  engage DOWN  (fade the sustained up move)
+ *   if r ≤ -threshold   →  engage UP    (fade the sustained drop)
  *
  * Time-extended analog of `atr_burst_fade`. That one tests "single
  * bar moved a lot vs. normal volatility"; this one tests
@@ -28,7 +28,7 @@ import { z } from "zod";
 const configSchema = z.object({
   /** Bars over which we measure the cumulative return. */
   lookback: z.number().int().positive().default(5),
-  /** Absolute return required to fire, as a fraction (0.01 = 1%). */
+  /** Absolute return required to engage, as a fraction (0.01 = 1%). */
   threshold: z.number().positive().default(0.01),
 });
 type Config = z.infer<typeof configSchema>;

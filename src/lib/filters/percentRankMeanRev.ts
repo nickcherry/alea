@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * Non-parametric percent-rank mean reversion. For the latest close,
  * compute the percentile rank within the trailing `length` closes.
- * Fire UP at low ranks, DOWN at high ranks:
+ * Engage UP at low ranks, DOWN at high ranks:
  *
  *   rank = (# of trailing closes ≤ current) / length × 100
  *   if  rank ≤ oversold      →  UP
@@ -27,7 +27,7 @@ export const percentRankMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Percentile-rank mean reversion. Computes where the latest close sits in the trailing N-bar close distribution and fires on extremes. Distribution-free, robust to outliers, distinct from range-based Stochastic.",
+    "Percentile-rank mean reversion. Computes where the latest close sits in the trailing N-bar close distribution and engages on extremes. Distribution-free, robust to outliers, distinct from range-based Stochastic.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

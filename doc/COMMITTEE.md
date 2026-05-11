@@ -25,14 +25,14 @@ live loop. Classify the bar's regime → look up the roster for
 For a `(filter, config)` candidate to qualify for regime R's
 committee, **within that regime** it must clear:
 
-| Rule | Default | Why |
-|---|---|---|
-| Min engagements in regime | `≥ 20` | Below this the WR is too noisy to act on |
-| Aggregate WR in regime | `≥ 53%` | Proves a base-rate edge over coin-flip |
+| Rule                       | Default | Why                                             |
+| -------------------------- | ------- | ----------------------------------------------- |
+| Min engagements in regime  | `≥ 20`  | Below this the WR is too noisy to act on        |
+| Aggregate WR in regime     | `≥ 53%` | Proves a base-rate edge over coin-flip          |
 | Worst-quarter WR in regime | `≥ 50%` | Rejects "one good year, several bad" candidates |
 
 The worst-quarter check only applies to quarters with at least 10
-fires inside this regime. Candidates with no quarter that meaningful
+engagements inside this regime. Candidates with no quarter that meaningful
 skip the check (sparse + high-WR is admissible).
 
 Defaults live in
@@ -43,10 +43,10 @@ no auto-relaxation for rare regimes today. If a regime ends up with
 smaller than the top-N cap.
 
 Qualifying candidates are **ranked by Wilson 95% lower bound desc**
-(with `nFires` desc as tie-break). Wilson LB punishes small samples
+(with `nEngagements` desc as tie-break). Wilson LB punishes small samples
 in the ranking even after they cleared the absolute eligibility
-floor, so a 20-fire 80% candidate gets admitted but ranks below a
-500-fire 60% candidate. Take the **top 10**.
+floor, so a 20-engagement 80% candidate gets admitted but ranks below a
+500-engagement 60% candidate. Take the **top 10**.
 
 Final selection: top 10 per `(market_regime, period)`. With 4
 regimes × 2 periods = 8 buckets, the table holds up to 80 rows.
@@ -65,16 +65,16 @@ consumer can warn when the roster is stale.
 Schema in
 [`202605120400_committee_selections`](../src/lib/db/migrations/202605120400_committee_selections.ts).
 
-| Column | Meaning |
-|---|---|
-| `market_regime` | One of the four regime tags |
-| `period` | `5m` or `15m` |
-| `filter_id`, `filter_version`, `config_canon` | Candidate identity |
-| `rank` | 1-based position within the bucket |
-| `n_fires`, `n_wins`, `win_rate` | Aggregate stats at selection time |
-| `wilson_low` | Wilson LB used for ranking |
-| `worst_quarter_wr` | The worst quarter's WR, or null when none cleared the sample gate |
-| `selected_at_ms` | When `committee:select` produced this row |
+| Column                                        | Meaning                                                           |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| `market_regime`                               | One of the four regime tags                                       |
+| `period`                                      | `5m` or `15m`                                                     |
+| `filter_id`, `filter_version`, `config_canon` | Candidate identity                                                |
+| `rank`                                        | 1-based position within the bucket                                |
+| `n_engagements`, `n_wins`, `win_rate`         | Aggregate stats at selection time                                 |
+| `wilson_low`                                  | Wilson LB used for ranking                                        |
+| `worst_quarter_wr`                            | The worst quarter's WR, or null when none cleared the sample gate |
+| `selected_at_ms`                              | When `committee:select` produced this row                         |
 
 Primary key: `(market_regime, period, filter_id, filter_version, config_canon)`.
 Replacing the whole table on every run is cheap (≤ 80 rows
@@ -91,7 +91,7 @@ At each 5-minute boundary the loop:
 1. Builds the synthetic bar window (real history + the in-flight
    bar with Pyth's t-5s price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
-   - `null` → abstain entirely; no decision row, no log of a fire.
+   - `null` → abstain entirely; no decision row, no engagement log.
 3. Looks up the roster bucket for `(marketRegime, "5m")`.
    - Empty bucket → abstain entirely.
 4. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
@@ -105,7 +105,7 @@ function, ~15 lines: tally up/down/abstain, strict majority wins.
 job. By the time votes reach the aggregator they're already
 filtered to the right regime.
 
-Every fired decision lands in `dry_run_decisions` with the regime
+Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See
 [DRY_RUN.md](./DRY_RUN.md).
 
@@ -129,7 +129,7 @@ should see the diff and re-launch deliberately.
 ## Live vs dry-run
 
 The committee logic is **identical**. The only difference between
-modes is what happens with a fired decision:
+modes is what happens with an actionable decision:
 
 - Dry-run today: persist to `dry_run_decisions`, no order placed.
 - Live (when it ships): the same persistence plus a maker order on

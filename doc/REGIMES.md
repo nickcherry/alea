@@ -70,7 +70,7 @@ Schema:
 [`202605120300_bar_regimes`](../src/lib/db/migrations/202605120300_bar_regimes.ts).
 The exploration dashboard's per-regime aggregator joins
 `filter_engagements` against this table on
-`(asset, period, ts_ms)` to bucket fires. The committee selection
+`(asset, period, ts_ms)` to bucket engagements. The committee selection
 command does the same.
 
 Backfilling is a one-shot CLI:

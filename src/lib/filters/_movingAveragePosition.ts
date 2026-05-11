@@ -1,4 +1,8 @@
-import type { Filter, FilterBar, FilterPrediction } from "@alea/lib/filters/types";
+import type {
+  Filter,
+  FilterBar,
+  FilterPrediction,
+} from "@alea/lib/filters/types";
 import { z } from "zod";
 
 /**
@@ -29,10 +33,10 @@ export const movingAveragePositionConfigSchema = z.object({
   mode: z.enum(["trend", "revert"]).default("revert"),
   /**
    * Minimum absolute deviation from the MA (as a fraction of the MA
-   * value) for the filter to fire. `0` means "fire on any side";
-   * higher values gate the filter to only fire when price is
+   * value) for the filter to engage. `0` means "engage on any side";
+   * higher values gate the filter to only engage when price is
    * meaningfully stretched, useful for the reversion hypothesis.
-   * E.g. `0.005` = "only fire when price is at least 0.5% from the
+   * E.g. `0.005` = "only engage when price is at least 0.5% from the
    * MA".
    */
   threshold: z.number().min(0).default(0),
@@ -59,12 +63,7 @@ export function makeMovingAveragePredict({
     const series = computeMa(bars, config);
     const ma = series[series.length - 1];
     const close = bars[bars.length - 1]?.close;
-    if (
-      ma === null ||
-      ma === undefined ||
-      close === undefined ||
-      ma === 0
-    ) {
+    if (ma === null || ma === undefined || close === undefined || ma === 0) {
       return null;
     }
     const deviation = (close - ma) / ma;
@@ -94,15 +93,15 @@ function resolveDirection({
  * Seed configs shared across the position filters. Only revert
  * configs survived the >50% prune — the trend variants at every
  * length came in at 47-49% WR (anti-edge, predictably the inverse
- * of the revert side). Thresholds run from 0 (always fire) up to
+ * of the revert side). Thresholds run from 0 (always engage) up to
  * 0.02 (deep-stretch only) so the per-length decay curve stays
  * visible across the surviving grid.
  */
 export const defaultMovingAveragePositionConfigs: ReadonlyArray<MovingAveragePositionConfig> =
   [
-    {"length":14,"mode":"revert","threshold":0.005},
-    {"length":14,"mode":"revert","threshold":0.01},
-    {"length":20,"mode":"revert","threshold":0.005},
-    {"length":20,"mode":"revert","threshold":0.01},
-    {"length":20,"mode":"revert","threshold":0.02},
+    { length: 14, mode: "revert", threshold: 0.005 },
+    { length: 14, mode: "revert", threshold: 0.01 },
+    { length: 20, mode: "revert", threshold: 0.005 },
+    { length: 20, mode: "revert", threshold: 0.01 },
+    { length: 20, mode: "revert", threshold: 0.02 },
   ];

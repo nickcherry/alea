@@ -18,10 +18,10 @@ import { sql } from "kysely";
  */
 export async function loadCandidateRegimeStats({
   db,
-  worstQuarterMinFires,
+  worstQuarterMinEngagements,
 }: {
   readonly db: DatabaseClient;
-  readonly worstQuarterMinFires: number;
+  readonly worstQuarterMinEngagements: number;
 }): Promise<readonly CandidateRegimeStats[]> {
   const rows = await sql<{
     filter_id: string;
@@ -31,7 +31,7 @@ export async function loadCandidateRegimeStats({
     market_regime: string;
     year: number;
     quarter: number;
-    n_fires: string;
+    n_engagements: string;
     n_wins: string;
   }>`
     select
@@ -42,7 +42,7 @@ export async function loadCandidateRegimeStats({
       br.market_regime,
       extract(year from to_timestamp(fe.ts_ms / 1000.0))::int as year,
       extract(quarter from to_timestamp(fe.ts_ms / 1000.0))::int as quarter,
-      count(*)::text as n_fires,
+      count(*)::text as n_engagements,
       coalesce(sum(fe.won), 0)::text as n_wins
     from filter_engagements fe
     join filter_runs fr on fr.run_hash = fe.run_hash
@@ -61,14 +61,14 @@ export async function loadCandidateRegimeStats({
     configCanon: string;
     period: string;
     marketRegime: string;
-    aggFires: number;
+    aggEngagements: number;
     aggWins: number;
     /** quarter WRs that cleared the sample-size guard */
     quarterWRsKept: number[];
   };
   const byKey = new Map<string, Bucket>();
   for (const r of rows.rows) {
-    const nFires = Number(r.n_fires);
+    const nEngagements = Number(r.n_engagements);
     const nWins = Number(r.n_wins);
     const key = `${r.filter_id}|${r.filter_version}|${r.config_canon}|${r.period}|${r.market_regime}`;
     let b = byKey.get(key);
@@ -79,23 +79,23 @@ export async function loadCandidateRegimeStats({
         configCanon: r.config_canon,
         period: r.period,
         marketRegime: r.market_regime,
-        aggFires: 0,
+        aggEngagements: 0,
         aggWins: 0,
         quarterWRsKept: [],
       };
       byKey.set(key, b);
     }
-    b.aggFires += nFires;
+    b.aggEngagements += nEngagements;
     b.aggWins += nWins;
-    if (nFires >= worstQuarterMinFires) {
-      b.quarterWRsKept.push(nWins / nFires);
+    if (nEngagements >= worstQuarterMinEngagements) {
+      b.quarterWRsKept.push(nWins / nEngagements);
     }
   }
 
   const out: CandidateRegimeStats[] = [];
   for (const b of byKey.values()) {
-    const winRate = b.aggFires === 0 ? 0 : b.aggWins / b.aggFires;
-    const wilson = wilsonInterval95({ wins: b.aggWins, n: b.aggFires });
+    const winRate = b.aggEngagements === 0 ? 0 : b.aggWins / b.aggEngagements;
+    const wilson = wilsonInterval95({ wins: b.aggWins, n: b.aggEngagements });
     const worstQuarterWinRate =
       b.quarterWRsKept.length === 0 ? null : Math.min(...b.quarterWRsKept);
     out.push({
@@ -104,7 +104,7 @@ export async function loadCandidateRegimeStats({
       configCanon: b.configCanon,
       period: b.period,
       marketRegime: b.marketRegime,
-      nFires: b.aggFires,
+      nEngagements: b.aggEngagements,
       nWins: b.aggWins,
       winRate,
       wilsonLow: wilson.low,

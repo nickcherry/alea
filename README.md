@@ -18,7 +18,7 @@ edge.
    `"up" | "down" | null` from a trailing bar window. See
    [FILTERS.md](./doc/FILTERS.md).
 2. **Backtest** evaluates every `(filter, config, period, asset)`
-   candidate against the cached candles, persisting per-fire rows
+   candidate against the cached candles, persisting per-engagement rows
    to `filter_engagements` and aggregates to `filter_runs`. See
    [BACKTEST.md](./doc/BACKTEST.md).
 3. **Market regimes** classify every historical bar into one of

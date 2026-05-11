@@ -10,7 +10,7 @@ import { z } from "zod";
  * (close near the top), abstains otherwise.
  *
  * Structurally identical to `rsi_meanrev` — extreme oscillator
- * reading triggers a reversion bet — but the underlying indicator
+ * reading is enough to engage a reversion bet — but the underlying indicator
  * normalizes against the **recent high-low range** instead of the
  * period's gain/loss distribution. RSI says "this is the gain
  * percentile of the last N close-to-close moves"; Stochastic says
@@ -34,7 +34,7 @@ export const stochasticMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Mean reversion on the Stochastic %K oscillator. Fires UP when %K ≤ `oversold`, DOWN when ≥ `overbought`. %K is normalized against the trailing high-low range, not (like RSI) against the period's gain/loss distribution — head-to-head with `rsi_meanrev` tells us which normalization basis carries the reversion signal.",
+    "Mean reversion on the Stochastic %K oscillator. Engages UP when %K ≤ `oversold`, DOWN when ≥ `overbought`. %K is normalized against the trailing high-low range, not (like RSI) against the period's gain/loss distribution — head-to-head with `rsi_meanrev` tells us which normalization basis carries the reversion signal.",
   configSchema,
   // %K needs `lookback` bars + (smoothK - 1) more for smoothing.
   requiredBars: (c) => c.lookback + c.smoothK,

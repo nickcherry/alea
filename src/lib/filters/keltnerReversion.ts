@@ -13,7 +13,7 @@ import { z } from "zod";
  *   lower  = middle - multiplier · ATR(length)
  *
  * but with ATR-based bands instead of standard-deviation-based.
- * Fires DOWN when close pierces the upper band (revert toward the
+ * Engages DOWN when close pierces the upper band (revert toward the
  * middle), UP when close pierces the lower band.
  *
  * Hypothesis being tested: ATR weights every bar's range equally
@@ -39,7 +39,7 @@ export const keltnerReversion: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Mean-reversion on Keltner channels (middle ± multiplier × ATR). Fires DOWN when close pierces the upper band, UP when it pierces the lower band, abstains otherwise. ATR-anchored sibling of `bollinger_reversion`; running them side-by-side tells us whether std-dev or ATR is the better volatility measure for band-based reversion on crypto bars.",
+    "Mean-reversion on Keltner channels (middle ± multiplier × ATR). Engages DOWN when close pierces the upper band, UP when it pierces the lower band, abstains otherwise. ATR-anchored sibling of `bollinger_reversion`; running them side-by-side tells us whether std-dev or ATR is the better volatility measure for band-based reversion on crypto bars.",
   configSchema,
   // ATR + EMA/SMA both need ~length bars; +1 for the prior-close
   // that ATR's first TR consumes.

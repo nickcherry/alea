@@ -8,8 +8,8 @@ import { z } from "zod";
  * bar's close-to-close move exceeds `multiplier × ATR`:
  *
  *   move = close_i - close_{i-1}
- *   if  move > +multiplier · ATR_{i-1}   → fire DOWN
- *   if  move < -multiplier · ATR_{i-1}   → fire UP
+ *   if  move > +multiplier · ATR_{i-1}   → engage DOWN
+ *   if  move < -multiplier · ATR_{i-1}   → engage UP
  *
  * Pure "big move = exhaustion" hypothesis without any level anchor.
  * Distinct from every reversion filter we've shipped so far:

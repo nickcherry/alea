@@ -3,7 +3,7 @@
  *
  * Picked over the textbook normal-approximation because it stays well
  * behaved near 0% and 100% and at low sample counts — exactly the
- * regime a freshly-added candidate lives in until enough fires
+ * regime a freshly-added candidate lives in until enough engagements
  * accumulate. Formula reference: Wilson (1927); see also
  * https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval.
  *

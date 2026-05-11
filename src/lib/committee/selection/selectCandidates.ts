@@ -11,17 +11,17 @@ import type {
  * tests can pin behavior without a Postgres dependency.
  *
  * Eligibility (per regime):
- *   - `nFires ≥ minFires`
+ *   - `nEngagements ≥ minEngagements`
  *   - `winRate ≥ minAggregateWinRate`
  *   - `worstQuarterWinRate ≥ minWorstQuarterWinRate` when not null.
  *     A `null` worst-quarter score (no quarter cleared the sample
  *     gate) skips this check rather than disqualifies — sparse
  *     candidates with high aggregate WR should still be eligible.
  *
- * Ranking: Wilson 95% lower bound desc, with `nFires` desc as
+ * Ranking: Wilson 95% lower bound desc, with `nEngagements` desc as
  * tie-break. Wilson LB punishes small samples in the ordering even
- * when they cleared the absolute eligibility bar, so a 20-fire 80%
- * candidate gets in but ranks below a 500-fire 60% candidate.
+ * when they cleared the absolute eligibility bar, so a 20-engagement
+ * 80% candidate gets in but ranks below a 500-engagement 60% candidate.
  */
 export function selectCommitteeCandidates({
   stats,
@@ -47,7 +47,7 @@ export function selectCommitteeCandidates({
       if (b.wilsonLow !== a.wilsonLow) {
         return b.wilsonLow - a.wilsonLow;
       }
-      return b.nFires - a.nFires;
+      return b.nEngagements - a.nEngagements;
     });
     const top = list.slice(0, rules.topN);
     for (let i = 0; i < top.length; i++) {
@@ -64,7 +64,7 @@ function isEligible({
   readonly stats: CandidateRegimeStats;
   readonly rules: CommitteeSelectionRules;
 }): boolean {
-  if (stats.nFires < rules.minFires) {
+  if (stats.nEngagements < rules.minEngagements) {
     return false;
   }
   if (stats.winRate < rules.minAggregateWinRate) {

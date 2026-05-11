@@ -23,11 +23,9 @@ import { type Kysely, sql } from "kysely";
  *     range over ts_ms; computed via to_timestamp in SQL)
  *
  * Storage estimate at the current scale (6 filters × ~3 configs
- * each × 5 assets × 2 timeframes ≈ 200 runs, ~30k fires/run median)
- * is ~6M rows × ~25 bytes payload = ~150 MB plus index overhead.
- * Postgres handles that without blinking. The earlier `fires` JSONB
- * column on `filter_runs` is dropped in the same migration since
- * it's now redundant.
+ * each × 5 assets × 2 timeframes ≈ 200 runs, ~30k engagements/run
+ * median) is ~6M rows × ~25 bytes payload = ~150 MB plus index
+ * overhead. Postgres handles that without blinking.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`
@@ -42,13 +40,16 @@ export async function up(db: Kysely<Database>): Promise<void> {
     )
   `.execute(db);
 
-  await sql`alter table filter_runs drop column if exists fires`.execute(db);
+  await sql`
+    alter table filter_runs
+    drop column if exists engagements
+  `.execute(db);
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
   await sql`
     alter table filter_runs
-    add column if not exists fires jsonb not null default '[]'::jsonb
+    add column if not exists engagements jsonb not null default '[]'::jsonb
   `.execute(db);
   await sql`drop table if exists filter_engagements`.execute(db);
 }

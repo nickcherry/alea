@@ -2,9 +2,9 @@ import type { FilterFamily } from "@alea/lib/filters/types";
 import type { CandleTimeframe } from "@alea/types/candles";
 
 /**
- * One filter's co-firing relationship with another. Jaccard is the
- * fraction of (asset, ts_ms) cells where BOTH filters fired out of
- * the union where EITHER fired — symmetric, 0..1. Pulled per period
+ * One filter's co-engagement relationship with another. Jaccard is the
+ * fraction of (asset, ts_ms) cells where BOTH filters engaged out of
+ * the union where EITHER engaged — symmetric, 0..1. Pulled per period
  * because two filters can be correlated on 5m bars but uncorrelated
  * on 15m bars (or vice versa).
  */
@@ -19,13 +19,13 @@ export type FilterPeerOverlap = {
  * every asset. `label` is the canonical "YYYY-QN" string (e.g.
  * "2025-Q1"); the dashboard sorts chronologically by (year, quarter).
  * Win rate is decimal `[0, 1]` or `null` when the quarter had zero
- * fires (rare — implies every asset was outside its trading window).
+ * engagements (rare — implies every asset was outside its trading window).
  */
 export type ExplorationQuarter = {
   readonly label: string;
   readonly year: number;
   readonly quarter: number;
-  readonly nFires: number;
+  readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
 };
@@ -53,15 +53,15 @@ export type ExplorationCandidateRow = {
   readonly configCanon: string;
   readonly period: CandleTimeframe;
   readonly nBars: number;
-  readonly nFires: number;
+  readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
   readonly ciLow: number;
   readonly ciHigh: number;
-  readonly nFiresUp: number;
+  readonly nEngagementsUp: number;
   readonly nWinsUp: number;
   readonly winRateUp: number | null;
-  readonly nFiresDown: number;
+  readonly nEngagementsDown: number;
   readonly nWinsDown: number;
   readonly winRateDown: number | null;
   readonly quarters: readonly ExplorationQuarter[];
@@ -73,15 +73,15 @@ export type ExplorationCandidateRow = {
    */
   readonly family: FilterFamily;
   /**
-   * Top other filter families this filter fires alongside, sorted
+   * Top other filter families this filter engages alongside, sorted
    * by Jaccard descending. Computed per-period so we can spot
    * "effectively the same signal" pairs.
    */
   readonly topPeers: readonly FilterPeerOverlap[];
   /**
-   * Per-market-regime stratification of this candidate's fires.
+   * Per-market-regime stratification of this candidate's engagements.
    * Map keys are `MarketRegime` strings (e.g. "low_vol_trending").
-   * Missing entries mean the regime had zero fires for this row.
+   * Missing entries mean the regime had zero engagements for this row.
    * Only populated when `bar_regimes` is non-empty — empty before
    * the backfill runs.
    */
@@ -89,22 +89,22 @@ export type ExplorationCandidateRow = {
 };
 
 /**
- * Aggregated fire/win counts and Wilson CI for one (candidate,
+ * Aggregated engagement/win counts and Wilson CI for one (candidate,
  * regime) cell. `quarters` is the chronological per-quarter slice
  * within this regime — same shape as the all-bars `quarters` array
- * on the parent row but filtered to fires that happened while the
+ * on the parent row but filtered to engagements that happened while the
  * market was in this regime.
  */
 export type ExplorationRegimeStats = {
-  readonly nFires: number;
+  readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
   readonly ciLow: number;
   readonly ciHigh: number;
-  readonly nFiresUp: number;
+  readonly nEngagementsUp: number;
   readonly nWinsUp: number;
   readonly winRateUp: number | null;
-  readonly nFiresDown: number;
+  readonly nEngagementsDown: number;
   readonly nWinsDown: number;
   readonly winRateDown: number | null;
   readonly quarters: readonly ExplorationQuarter[];

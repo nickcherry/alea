@@ -30,7 +30,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       filter_version integer not null,
       config_canon text not null,
       rank integer not null,
-      n_fires integer not null,
+      n_engagements integer not null,
       n_wins integer not null,
       win_rate double precision not null,
       wilson_low double precision not null,

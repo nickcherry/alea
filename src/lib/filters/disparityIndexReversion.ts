@@ -10,7 +10,7 @@ import { z } from "zod";
  *
  * The percent distance between close and its EMA — a single
  * normalized oscillator that's positive when above the EMA, negative
- * when below. Fires UP when DI ≤ -threshold (stretched below),
+ * when below. Engages UP when DI ≤ -threshold (stretched below),
  * DOWN when DI ≥ +threshold (stretched above).
  *
  * Conceptually the same hypothesis as `ema_position` revert mode,

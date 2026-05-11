@@ -1,6 +1,6 @@
 /**
  * Market regime tags computed at decision time. The committee
- * fires for every candidate regardless of regime; we record the
+ * evaluates every candidate regardless of regime; we record the
  * regime so we can later analyse hit-rate by market state and,
  * eventually, scope the committee to candidates that historically
  * win in that regime.

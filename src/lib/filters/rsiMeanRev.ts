@@ -23,7 +23,7 @@ export const rsiMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Classic two-sided RSI mean reversion. Fires UP when the latest RSI is at or below `oversold` (the indicator says 'price has fallen too far, expect a bounce'), DOWN when it's at or above `overbought` (the inverse), abstains when RSI sits in the neutral band between the two. RSI is computed with Wilder smoothing — the canonical formula TradingView and most charting tools use.",
+    "Classic two-sided RSI mean reversion. Engages UP when the latest RSI is at or below `oversold` (the indicator says 'price has fallen too far, expect a bounce'), DOWN when it's at or above `overbought` (the inverse), abstains when RSI sits in the neutral band between the two. RSI is computed with Wilder smoothing — the canonical formula TradingView and most charting tools use.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

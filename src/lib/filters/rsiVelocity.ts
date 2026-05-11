@@ -4,14 +4,14 @@ import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import { z } from "zod";
 
 /**
- * RSI velocity reversion. Fires on the *rate of change* of RSI
+ * RSI velocity reversion. Engages on the *rate of change* of RSI
  * rather than its current level:
  *
  *   delta = RSI_i - RSI_{i - lookback}
- *   if delta ≤ -threshold   →  fire UP   (RSI dropped sharply)
- *   if delta ≥ +threshold   →  fire DOWN (RSI surged sharply)
+ *   if delta ≤ -threshold   →  engage UP   (RSI dropped sharply)
+ *   if delta ≥ +threshold   →  engage DOWN (RSI surged sharply)
  *
- * Distinct from `rsi_meanrev`, which fires on the indicator's
+ * Distinct from `rsi_meanrev`, which engages on the indicator's
  * absolute level (RSI ≤ 30 → UP). The level view says "we're at
  * an extreme". The velocity view says "we just got there fast".
  * These can disagree: RSI can sit at 25 for several bars (level
@@ -29,7 +29,7 @@ const configSchema = z.object({
   rsiLength: z.number().int().positive().default(14),
   /** Bars between the two RSI samples we diff. */
   lookback: z.number().int().positive().default(3),
-  /** Absolute RSI delta required to fire. */
+  /** Absolute RSI delta required to engage. */
   threshold: z.number().positive().default(20),
 });
 type Config = z.infer<typeof configSchema>;
@@ -39,7 +39,7 @@ export const rsiVelocity: Filter<Config> = {
   version: 1,
   family: "velocity_fade",
   description:
-    "Fires on the RATE of change of RSI rather than its level. A drop ≥ `threshold` RSI points across `lookback` bars → UP; symmetric for DOWN. Alternative to `rsi_meanrev` that tests whether 'we got to an extreme fast' is a stronger signal than 'we are at an extreme'.",
+    "Engages on the RATE of change of RSI rather than its level. A drop ≥ `threshold` RSI points across `lookback` bars → UP; symmetric for DOWN. Alternative to `rsi_meanrev` that tests whether 'we got to an extreme fast' is a stronger signal than 'we are at an extreme'.",
   configSchema,
   requiredBars: (c) => c.rsiLength + c.lookback + 1,
   predict: (config, bars) => {

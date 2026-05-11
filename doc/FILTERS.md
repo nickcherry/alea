@@ -141,7 +141,7 @@ committee selector then ranks among those.
 Filters that fail to clear the committee's eligibility bar in **any**
 regime (see [COMMITTEE.md](./COMMITTEE.md)) are dead weight in the
 exploration dashboard but harmless — they cost a small amount of
-backtest CPU on the next `backtest:run` and otherwise don't fire.
+backtest CPU on the next `backtest:run` and otherwise don't engage.
 Delete the file (and its `all.ts` import) when you're sure it
 doesn't pay rent.
 

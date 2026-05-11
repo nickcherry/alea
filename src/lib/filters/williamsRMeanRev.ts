@@ -23,7 +23,7 @@ export const williamsRMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Williams %R mean reversion. Fires UP at oversold readings (≤ `oversold`, default -80), DOWN at overbought (≥ `overbought`, default -20). Inverted-Stochastic family.",
+    "Williams %R mean reversion. Engages UP at oversold readings (≤ `oversold`, default -80), DOWN at overbought (≥ `overbought`, default -20). Inverted-Stochastic family.",
   configSchema,
   requiredBars: (c) => c.lookback + 1,
   predict: (config, bars) => {

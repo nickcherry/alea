@@ -4,14 +4,14 @@ import { computeAroonSeries } from "@alea/lib/indicators/aroon";
 import { z } from "zod";
 
 /**
- * Aroon-based reversion. Fires when one Aroon leg is high enough
+ * Aroon-based reversion. Engages when one Aroon leg is high enough
  * (the recent extreme just printed) AND the other leg is low
  * enough (the opposite extreme is far behind):
  *
- *   AroonUp   ≥ upTrigger   AND  AroonDown ≤ downTrigger   →  fire DOWN
- *   AroonDown ≥ upTrigger   AND  AroonUp   ≤ downTrigger   →  fire UP
+ *   AroonUp   ≥ upTrigger   AND  AroonDown ≤ downTrigger   →  engage DOWN
+ *   AroonDown ≥ upTrigger   AND  AroonUp   ≤ downTrigger   →  engage UP
  *
- * The trigger thresholds are symmetric by name but applied to the
+ * The threshold names are symmetric but applied to the
  * matching leg — `upTrigger` is what the "winning" leg must clear
  * (e.g. 90 — within the last 10% of the window), `downTrigger` is
  * the ceiling for the opposite, losing leg (e.g. 30 — its extreme
@@ -42,7 +42,7 @@ export const aroonReversion: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Reversion on Aroon Up/Down asymmetry. Fires DOWN when AroonUp clears `upTrigger` (recent new high just printed) AND AroonDown sits below `downTrigger` (no recent low). Symmetric for UP. Tests whether the TIME-domain extreme reading carries the same reversion signal as the magnitude-domain oscillators.",
+    "Reversion on Aroon Up/Down asymmetry. Engages DOWN when AroonUp clears `upTrigger` (recent new high just printed) AND AroonDown sits below `downTrigger` (no recent low). Symmetric for UP. Tests whether the TIME-domain extreme reading carries the same reversion signal as the magnitude-domain oscillators.",
   configSchema,
   requiredBars: (c) => c.period + 1,
   predict: (config, bars) => {

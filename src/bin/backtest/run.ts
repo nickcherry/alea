@@ -83,7 +83,7 @@ export const backtestRunCommand = defineCommand({
     "bun alea backtest:run --filters rsi_meanrev,zscore_reversion",
   ],
   output:
-    "One line per (filter, config, period, asset): fire count, win count, win rate.",
+    "One line per (filter, config, period, asset): engagement count, win count, win rate.",
   sideEffects:
     "Reads `candles` (pyth/spot only). Upserts into `filter_runs`. No network.",
   async run({ io, options }) {
@@ -127,24 +127,25 @@ export const backtestRunCommand = defineCommand({
             });
             const tag = result.fromCache ? pc.dim("(cached)") : pc.green("•");
             const upWr =
-              result.stats.nFiresUp === 0
+              result.stats.nEngagementsUp === 0
                 ? "—"
-                : `${((100 * result.stats.nWinsUp) / result.stats.nFiresUp).toFixed(1)}%`;
+                : `${((100 * result.stats.nWinsUp) / result.stats.nEngagementsUp).toFixed(1)}%`;
             const downWr =
-              result.stats.nFiresDown === 0
+              result.stats.nEngagementsDown === 0
                 ? "—"
-                : `${((100 * result.stats.nWinsDown) / result.stats.nFiresDown).toFixed(1)}%`;
-            const totalFires = result.stats.nFiresUp + result.stats.nFiresDown;
+                : `${((100 * result.stats.nWinsDown) / result.stats.nEngagementsDown).toFixed(1)}%`;
+            const totalEngagements =
+              result.stats.nEngagementsUp + result.stats.nEngagementsDown;
             const totalWins = result.stats.nWinsUp + result.stats.nWinsDown;
             const overallWr =
-              totalFires === 0
+              totalEngagements === 0
                 ? "—"
-                : `${((100 * totalWins) / totalFires).toFixed(1)}%`;
+                : `${((100 * totalWins) / totalEngagements).toFixed(1)}%`;
             io.writeStdout(
               `  ${tag} ${pc.bold(cand.filterId.padEnd(22))} ${pc.dim(cand.configCanon.padEnd(50))} ` +
-                `engagements=${String(totalFires).padStart(6)} wr=${overallWr.padStart(6)} ` +
-                `(up ${String(result.stats.nFiresUp).padStart(5)}/${upWr.padStart(6)}  ` +
-                `down ${String(result.stats.nFiresDown).padStart(5)}/${downWr.padStart(6)})\n`,
+                `engagements=${String(totalEngagements).padStart(6)} wr=${overallWr.padStart(6)} ` +
+                `(up ${String(result.stats.nEngagementsUp).padStart(5)}/${upWr.padStart(6)}  ` +
+                `down ${String(result.stats.nEngagementsDown).padStart(5)}/${downWr.padStart(6)})\n`,
             );
           }
         }

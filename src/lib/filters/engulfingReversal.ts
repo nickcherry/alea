@@ -3,7 +3,7 @@ import type { Filter } from "@alea/lib/filters/types";
 import { z } from "zod";
 
 /**
- * Engulfing reversal — two-bar momentum-shift pattern. Fires when
+ * Engulfing reversal — two-bar momentum-shift pattern. Engages when
  * the latest bar's body covers the prior bar's body and the two
  * bars have opposite colors:
  *
@@ -46,7 +46,7 @@ export const engulfingReversal: Filter<Config> = {
   version: 1,
   family: "pattern",
   description:
-    "Two-bar engulfing pattern. Fires UP when the current green bar's body fully covers the prior red bar's body (and current body ≥ `minBodyRatio` × prior body); DOWN on the symmetric bearish case. Pure shape signal — no levels, no oscillators — testing whether a single decisive reversal bar predicts continued reversal at bar+1.",
+    "Two-bar engulfing pattern. Engages UP when the current green bar's body fully covers the prior red bar's body (and current body ≥ `minBodyRatio` × prior body); DOWN on the symmetric bearish case. Pure shape signal — no levels, no oscillators — testing whether a single decisive reversal bar predicts continued reversal at bar+1.",
   configSchema,
   requiredBars: () => 2,
   predict: (config, bars) => {

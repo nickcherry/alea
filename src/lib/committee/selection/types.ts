@@ -9,24 +9,24 @@ export type CommitteeSelectionRules = {
   /** Minimum aggregate engagements in a regime for the candidate to
    * be considered eligible. Below this the WR is too noisy to act
    * on. */
-  readonly minFires: number;
+  readonly minEngagements: number;
   /** Floor on the (candidate, regime) aggregate win rate. */
   readonly minAggregateWinRate: number;
   /** Floor on the worst quarter's win rate within this regime. A
-   * quarter must have at least `worstQuarterMinFires` fires to enter
+   * quarter must have at least `worstQuarterMinEngagements` engagements to enter
    * the floor check; candidates with no quarter large enough skip
    * the check entirely. */
   readonly minWorstQuarterWinRate: number;
-  readonly worstQuarterMinFires: number;
+  readonly worstQuarterMinEngagements: number;
   /** Top-K cap per (regime, period). */
   readonly topN: number;
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
-  minFires: 20,
+  minEngagements: 20,
   minAggregateWinRate: 0.53,
   minWorstQuarterWinRate: 0.5,
-  worstQuarterMinFires: 10,
+  worstQuarterMinEngagements: 10,
   topN: 10,
 };
 
@@ -37,11 +37,11 @@ export type CandidateRegimeStats = {
   readonly configCanon: string;
   readonly period: string;
   readonly marketRegime: string;
-  readonly nFires: number;
+  readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number;
   readonly wilsonLow: number;
-  /** Lowest WR across quarters with `≥ worstQuarterMinFires` fires
+  /** Lowest WR across quarters with `≥ worstQuarterMinEngagements` engagements
    * within this regime. `null` when no quarter clears the sample
    * minimum — in that case the worst-quarter floor doesn't apply. */
   readonly worstQuarterWinRate: number | null;

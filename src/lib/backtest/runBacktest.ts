@@ -7,9 +7,9 @@ import type { CandleTimeframe } from "@alea/types/candles";
 
 export type BacktestStats = {
   readonly nBars: number;
-  readonly nFiresUp: number;
+  readonly nEngagementsUp: number;
   readonly nWinsUp: number;
-  readonly nFiresDown: number;
+  readonly nEngagementsDown: number;
   readonly nWinsDown: number;
 };
 
@@ -72,7 +72,7 @@ const ENGAGEMENT_INSERT_CHUNK = 5000;
  * authoritative cache. If a row exists whose `range_last_ms` is
  * at least the latest bar's `openTimeMs`, the function returns
  * the cached stats unchanged. Otherwise it recomputes from
- * scratch and replaces both the aggregate row and the per-fire
+ * scratch and replaces both the aggregate row and the per-engagement
  * rows in `filter_engagements` atomically (per-run).
  */
 export async function runBacktestForCandidate({
@@ -125,9 +125,9 @@ export async function runBacktestForCandidate({
         rangeLastMs: cachedLast,
         stats: {
           nBars: existing.n_bars,
-          nFiresUp: existing.n_fires_up,
+          nEngagementsUp: existing.n_engagements_up,
           nWinsUp: existing.n_wins_up,
-          nFiresDown: existing.n_fires_down,
+          nEngagementsDown: existing.n_engagements_down,
           nWinsDown: existing.n_wins_down,
         },
         fromCache: true,
@@ -193,9 +193,9 @@ export async function runBacktestForCandidate({
         range_first_ms: rangeFirstMs,
         range_last_ms: rangeLastMs,
         n_bars: stats.nBars,
-        n_fires_up: stats.nFiresUp,
+        n_engagements_up: stats.nEngagementsUp,
         n_wins_up: stats.nWinsUp,
-        n_fires_down: stats.nFiresDown,
+        n_engagements_down: stats.nEngagementsDown,
         n_wins_down: stats.nWinsDown,
         computed_at_ms: Date.now(),
       })
@@ -206,9 +206,9 @@ export async function runBacktestForCandidate({
           range_first_ms: rangeFirstMs,
           range_last_ms: rangeLastMs,
           n_bars: stats.nBars,
-          n_fires_up: stats.nFiresUp,
+          n_engagements_up: stats.nEngagementsUp,
           n_wins_up: stats.nWinsUp,
-          n_fires_down: stats.nFiresDown,
+          n_engagements_down: stats.nEngagementsDown,
           n_wins_down: stats.nWinsDown,
           computed_at_ms: Date.now(),
         }),
@@ -255,9 +255,9 @@ function walkBars({
   readonly stats: BacktestStats;
   readonly engagements: readonly BacktestEngagement[];
 } {
-  let nFiresUp = 0;
+  let nEngagementsUp = 0;
   let nWinsUp = 0;
-  let nFiresDown = 0;
+  let nEngagementsDown = 0;
   let nWinsDown = 0;
   const engagements: BacktestEngagement[] = [];
   const start = Math.max(requiredBars - 1, 0);
@@ -277,12 +277,12 @@ function walkBars({
       won,
     });
     if (pred === "up") {
-      nFiresUp += 1;
+      nEngagementsUp += 1;
       if (won === 1) {
         nWinsUp += 1;
       }
     } else {
-      nFiresDown += 1;
+      nEngagementsDown += 1;
       if (won === 1) {
         nWinsDown += 1;
       }
@@ -291,9 +291,9 @@ function walkBars({
   return {
     stats: {
       nBars: bars.length,
-      nFiresUp,
+      nEngagementsUp,
       nWinsUp,
-      nFiresDown,
+      nEngagementsDown,
       nWinsDown,
     },
     engagements,

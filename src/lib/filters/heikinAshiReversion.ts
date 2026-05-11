@@ -11,8 +11,8 @@ import { z } from "zod";
  *
  *   HA series ← computeHeikinAshiSeries(bars)
  *   bands     ← Bollinger(HA_close, length, multiplier)
- *   if HA_close ≤ lower  →  fire UP
- *   if HA_close ≥ upper  →  fire DOWN
+ *   if HA_close ≤ lower  →  engage UP
+ *   if HA_close ≥ upper  →  engage DOWN
  *
  * Direct apples-to-apples test of "does smoothing the input help
  * the Bollinger reversion signal?". HA candles average raw OHLC
@@ -22,9 +22,9 @@ import { z } from "zod";
  * improvement; if it's flat or worse, HA's smoothing is just
  * absorbing signal along with noise.
  *
- * The fire condition uses HA_close, NOT the raw close — this is
+ * The engagement condition uses HA_close, NOT the raw close — this is
  * a pure HA-on-HA test. A version that uses the raw close to
- * trigger but HA bands for the level would be a different test.
+ * engaged on the raw close but HA bands for the level would be a different test.
  */
 const configSchema = z.object({
   length: z.number().int().positive().default(20),

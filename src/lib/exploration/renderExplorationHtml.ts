@@ -129,17 +129,17 @@ type FilterGroup = {
   readonly family: FilterFamily;
   readonly rows: readonly ExplorationCandidateRow[];
   readonly avgWinRate: number | null;
-  readonly totalFires: number;
+  readonly totalEngagements: number;
 };
 
 /**
  * Group a flat row list by `filterId`, compute per-group aggregates,
  * and sort the groups by `avgWinRate` descending. `avgWinRate` is
- * the fire-weighted total WR across the family's configs
- * (`sumWins / sumFires`), not the mean of per-config WRs — the latter
- * is sensitive to small-sample configs (e.g. a config with 33 fires
+ * the engagement-weighted total WR across the family's configs
+ * (`sumWins / sumEngagements`), not the mean of per-config WRs — the latter
+ * is sensitive to small-sample configs (e.g. a config with 33 engagements
  * at 97 % WR drags the simple mean up even though the family's actual
- * performance is dominated by configs with thousands of fires).
+ * performance is dominated by configs with thousands of engagements).
  *
  * Within each group, rows are sorted by individual win rate
  * descending so the best-tuned variant surfaces at the top of its
@@ -161,16 +161,17 @@ function groupRowsByFilter({
   }
   const groups: FilterGroup[] = [];
   for (const [filterId, list] of byFilter.entries()) {
-    const totalFires = list.reduce((s, r) => s + r.nFires, 0);
+    const totalEngagements = list.reduce((s, r) => s + r.nEngagements, 0);
     const totalWins = list.reduce((s, r) => s + r.nWins, 0);
-    const avgWinRate = totalFires === 0 ? null : totalWins / totalFires;
+    const avgWinRate =
+      totalEngagements === 0 ? null : totalWins / totalEngagements;
     const sorted = [...list].sort((a, b) => {
       const aRate = a.winRate ?? -1;
       const bRate = b.winRate ?? -1;
       if (bRate !== aRate) {
         return bRate - aRate;
       }
-      return b.nFires - a.nFires;
+      return b.nEngagements - a.nEngagements;
     });
     const first = sorted[0]!;
     groups.push({
@@ -178,7 +179,7 @@ function groupRowsByFilter({
       family: first.family,
       rows: sorted,
       avgWinRate,
-      totalFires,
+      totalEngagements,
     });
   }
   groups.sort((a, b) => {
@@ -187,7 +188,7 @@ function groupRowsByFilter({
     if (bAvg !== aAvg) {
       return bAvg - aAvg;
     }
-    return b.totalFires - a.totalFires;
+    return b.totalEngagements - a.totalEngagements;
   });
   return groups;
 }
@@ -221,9 +222,9 @@ function renderFilterCard({ group }: { readonly group: FilterGroup }): string {
               <span class="filter-card-meta-label">configs${infoTip({ text: TIPS.familyConfigs })}</span>
               <span class="filter-card-meta-value">${group.rows.length}</span>
             </span>
-            <span class="filter-card-meta-item is-fires">
+            <span class="filter-card-meta-item is-engagements">
               <span class="filter-card-meta-label">engagements${infoTip({ text: TIPS.familyEngagements })}</span>
-              <span class="filter-card-meta-value">${group.totalFires.toLocaleString()}</span>
+              <span class="filter-card-meta-value">${group.totalEngagements.toLocaleString()}</span>
             </span>
           </div>
           <span class="filter-card-chevron" aria-hidden="true">▸</span>
@@ -274,7 +275,7 @@ function renderSubRow({
   return `
     <tr>
       <td class="config-col"><span class="alea-mono config-text">${escapeHtml({ value: row.configCanon })}</span></td>
-      <td class="num-col alea-mono">${row.nFires.toLocaleString()}</td>
+      <td class="num-col alea-mono">${row.nEngagements.toLocaleString()}</td>
       <td class="wr-col">${renderWrCell({ row })}</td>
       <td class="num-col">${minCell}</td>
       <td class="num-col">${maxCell}</td>
@@ -297,7 +298,7 @@ function minMaxTone({ value }: { readonly value: number }): string {
  * Mini bar chart, one vertical bar per quarter, oldest left to
  * newest right. Bars grow UP from a 50% baseline when WR > 50%
  * (green) and DOWN when WR < 50% (red); height encodes magnitude.
- * Quarters with zero fires render as an empty slot so timeline
+ * Quarters with zero engagements render as an empty slot so timeline
  * alignment stays correct.
  *
  * Magnitude scaling: 10 percentage points of deviation = full
@@ -320,9 +321,9 @@ function renderQuarterStrip({
 function renderQuarterBar({ q }: { readonly q: ExplorationQuarter }): string {
   const wrLabel =
     q.winRate === null ? "—" : formatPercent({ value: q.winRate });
-  const title = `${q.label}: ${wrLabel} (${q.nWins.toLocaleString()}/${q.nFires.toLocaleString()})`;
+  const title = `${q.label}: ${wrLabel} (${q.nWins.toLocaleString()}/${q.nEngagements.toLocaleString()})`;
   const titleAttr = escapeHtml({ value: title });
-  if (q.winRate === null || q.nFires === 0) {
+  if (q.winRate === null || q.nEngagements === 0) {
     return `<span class="q-bar" title="${titleAttr}"></span>`;
   }
   // ±10pp WR deviation maps to the full 12px bar height. Floor
@@ -355,7 +356,7 @@ function renderWrCell({
 }: {
   readonly row: ExplorationCandidateRow;
 }): string {
-  if (row.winRate === null || row.nFires === 0) {
+  if (row.winRate === null || row.nEngagements === 0) {
     return '<span class="alea-muted">—</span>';
   }
   const wrPct = formatPercent({ value: row.winRate });
@@ -441,13 +442,13 @@ const TIPS = {
   familyConfigs:
     "Number of distinct parameter settings (knob values) we backtested for this filter family.",
   familyEngagements:
-    "Total times any config in this filter family triggered an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
+    "Total times any config in this filter family engaged with an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
   config:
     "The specific parameter values for this row of the family — the exact knobs that produced the win rate to the right.",
   engagements:
-    "How many times this exact config triggered a prediction across the backtest history.",
+    "How many times this exact config engaged with a prediction across the backtest history.",
   winRate:
-    "Percent of triggers where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
+    "Percent of engagements where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
   minQwr:
     "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
   maxQwr: "The best quarter this config had — a robustness ceiling.",

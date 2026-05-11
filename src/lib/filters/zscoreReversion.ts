@@ -5,7 +5,7 @@ import { z } from "zod";
 
 /**
  * Z-score reversion. Computes how many standard deviations the
- * latest close is above/below its trailing mean, fires the opposite
+ * latest close is above/below its trailing mean, engages the opposite
  * direction when the magnitude clears `threshold`:
  *
  *   z = (close - SMA_N) / stddev_N
@@ -13,7 +13,7 @@ import { z } from "zod";
  * UP if `z ≤ -threshold`, DOWN if `z ≥ +threshold`, abstain otherwise.
  *
  * This is what Bollinger Bands ARE under the hood (`z = 2` ≈ the
- * 2σ pierce that `bollinger_reversion` fires on), but with the
+ * 2σ pierce that `bollinger_reversion` engages on), but with the
  * threshold exposed as a continuous knob. The point is to sweep
  * `threshold` and see where the reversion edge actually peaks —
  * does it kick in at 2σ like Bollinger suggests, or earlier (1.5σ),
@@ -23,7 +23,7 @@ import { z } from "zod";
  */
 const configSchema = z.object({
   length: z.number().int().positive().default(20),
-  /** Absolute z-score required to fire. */
+  /** Absolute z-score required to engage. */
   threshold: z.number().positive().default(2),
 });
 type Config = z.infer<typeof configSchema>;
@@ -33,7 +33,7 @@ export const zscoreReversion: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Continuous-threshold reversion on the close's z-score vs trailing mean. Fires UP when z ≤ -`threshold`, DOWN when z ≥ +`threshold`. Equivalent to `bollinger_reversion` at `threshold = multiplier`, but with the threshold exposed as a continuous knob so we can find where the reversion edge actually peaks rather than locking to the textbook 2σ.",
+    "Continuous-threshold reversion on the close's z-score vs trailing mean. Engages UP when z ≤ -`threshold`, DOWN when z ≥ +`threshold`. Equivalent to `bollinger_reversion` at `threshold = multiplier`, but with the threshold exposed as a continuous knob so we can find where the reversion edge actually peaks rather than locking to the textbook 2σ.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

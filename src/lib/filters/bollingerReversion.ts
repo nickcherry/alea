@@ -4,7 +4,7 @@ import { computeBollingerSeries } from "@alea/lib/indicators/bollinger";
 import { z } from "zod";
 
 /**
- * Bollinger Band reversion. Fires UP when the latest close is at or
+ * Bollinger Band reversion. Engages UP when the latest close is at or
  * below the lower band ("oversold relative to recent vol"), DOWN
  * when it's at or above the upper band ("overbought relative to
  * recent vol"). Abstains in the middle.
@@ -25,7 +25,7 @@ export const bollingerReversion: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Two-sided Bollinger Band reversion. Fires UP when the latest close pierces or touches the lower band (mean − `multiplier` × stddev over `period` bars), DOWN when it pierces or touches the upper band. Abstains between the bands. Same mean-reversion bet as `rsi_meanrev` but the threshold scales with recent volatility instead of recent gain/loss balance.",
+    "Two-sided Bollinger Band reversion. Engages UP when the latest close pierces or touches the lower band (mean − `multiplier` × stddev over `period` bars), DOWN when it pierces or touches the upper band. Abstains between the bands. Same mean-reversion bet as `rsi_meanrev` but the threshold scales with recent volatility instead of recent gain/loss balance.",
   configSchema,
   requiredBars: (c) => c.period,
   predict: (config, bars) => {

@@ -28,7 +28,7 @@ const TOP_PEERS_PER_FILTER = 5;
  * contributed to that quarter).
  *
  * Rows are sorted by total win rate descending, with ties broken by
- * total fires descending.
+ * total engagements descending.
  */
 export async function loadExplorationPayload({
   db,
@@ -50,9 +50,9 @@ export async function loadExplorationPayload({
           "period",
           "asset",
           "n_bars",
-          "n_fires_up",
+          "n_engagements_up",
           "n_wins_up",
-          "n_fires_down",
+          "n_engagements_down",
           "n_wins_down",
         ])
         .execute(),
@@ -101,34 +101,34 @@ export async function loadExplorationPayload({
     configCanon: string;
     period: string;
     nBars: number; // max across assets — informational, not summed
-    nFires: number;
+    nEngagements: number;
     nWins: number;
-    nFiresUp: number;
+    nEngagementsUp: number;
     nWinsUp: number;
-    nFiresDown: number;
+    nEngagementsDown: number;
     nWinsDown: number;
     quartersByLabel: Map<
       string,
       {
         year: number;
         quarter: number;
-        nFires: number;
+        nEngagements: number;
         nWins: number;
       }
     >;
     regimes: Map<
       string,
       {
-        nFiresUp: number;
+        nEngagementsUp: number;
         nWinsUp: number;
-        nFiresDown: number;
+        nEngagementsDown: number;
         nWinsDown: number;
         quartersByLabel: Map<
           string,
           {
             year: number;
             quarter: number;
-            nFires: number;
+            nEngagements: number;
             nWins: number;
           }
         >;
@@ -147,11 +147,11 @@ export async function loadExplorationPayload({
         configCanon: r.config_canon,
         period: r.period,
         nBars: 0,
-        nFires: 0,
+        nEngagements: 0,
         nWins: 0,
-        nFiresUp: 0,
+        nEngagementsUp: 0,
         nWinsUp: 0,
-        nFiresDown: 0,
+        nEngagementsDown: 0,
         nWinsDown: 0,
         quartersByLabel: new Map(),
         regimes: new Map(),
@@ -159,11 +159,11 @@ export async function loadExplorationPayload({
       buckets.set(key, b);
     }
     b.nBars = Math.max(b.nBars, r.n_bars);
-    b.nFires += r.n_fires_up + r.n_fires_down;
+    b.nEngagements += r.n_engagements_up + r.n_engagements_down;
     b.nWins += r.n_wins_up + r.n_wins_down;
-    b.nFiresUp += r.n_fires_up;
+    b.nEngagementsUp += r.n_engagements_up;
     b.nWinsUp += r.n_wins_up;
-    b.nFiresDown += r.n_fires_down;
+    b.nEngagementsDown += r.n_engagements_down;
     b.nWinsDown += r.n_wins_down;
   }
 
@@ -185,12 +185,12 @@ export async function loadExplorationPayload({
       qb = {
         year: q.year,
         quarter: q.quarter,
-        nFires: 0,
+        nEngagements: 0,
         nWins: 0,
       };
       b.quartersByLabel.set(label, qb);
     }
-    qb.nFires += q.n_fires;
+    qb.nEngagements += q.n_engagements;
     qb.nWins += q.n_wins;
   }
 
@@ -213,19 +213,19 @@ export async function loadExplorationPayload({
     let rb = b.regimes.get(rr.market_regime);
     if (rb === undefined) {
       rb = {
-        nFiresUp: 0,
+        nEngagementsUp: 0,
         nWinsUp: 0,
-        nFiresDown: 0,
+        nEngagementsDown: 0,
         nWinsDown: 0,
         quartersByLabel: new Map(),
       };
       b.regimes.set(rr.market_regime, rb);
     }
     if (rr.direction === "u") {
-      rb.nFiresUp += rr.n_fires;
+      rb.nEngagementsUp += rr.n_engagements;
       rb.nWinsUp += rr.n_wins;
     } else {
-      rb.nFiresDown += rr.n_fires;
+      rb.nEngagementsDown += rr.n_engagements;
       rb.nWinsDown += rr.n_wins;
     }
     const label = `${rr.year}-Q${rr.quarter}`;
@@ -234,18 +234,18 @@ export async function loadExplorationPayload({
       qb = {
         year: rr.year,
         quarter: rr.quarter,
-        nFires: 0,
+        nEngagements: 0,
         nWins: 0,
       };
       rb.quartersByLabel.set(label, qb);
     }
-    qb.nFires += rr.n_fires;
+    qb.nEngagements += rr.n_engagements;
     qb.nWins += rr.n_wins;
   }
 
   const enriched: ExplorationCandidateRow[] = [];
   for (const [id, b] of buckets.entries()) {
-    const ci = wilsonInterval95({ wins: b.nWins, n: b.nFires });
+    const ci = wilsonInterval95({ wins: b.nWins, n: b.nEngagements });
     const quarters: ExplorationQuarter[] = Array.from(
       b.quartersByLabel.entries(),
     )
@@ -253,9 +253,9 @@ export async function loadExplorationPayload({
         label,
         year: qb.year,
         quarter: qb.quarter,
-        nFires: qb.nFires,
+        nEngagements: qb.nEngagements,
         nWins: qb.nWins,
-        winRate: qb.nFires === 0 ? null : qb.nWins / qb.nFires,
+        winRate: qb.nEngagements === 0 ? null : qb.nWins / qb.nEngagements,
       }))
       .sort((a, c) => {
         if (a.year !== c.year) {
@@ -276,9 +276,9 @@ export async function loadExplorationPayload({
     const topPeers = peersByPeriodFilter.get(`${b.period}|${b.filterId}`) ?? [];
     const byRegime: Record<string, ExplorationRegimeStats> = {};
     for (const [regime, stats] of b.regimes.entries()) {
-      const rFires = stats.nFiresUp + stats.nFiresDown;
+      const rEngagements = stats.nEngagementsUp + stats.nEngagementsDown;
       const rWins = stats.nWinsUp + stats.nWinsDown;
-      const rci = wilsonInterval95({ wins: rWins, n: rFires });
+      const rci = wilsonInterval95({ wins: rWins, n: rEngagements });
       const rQuarters: ExplorationQuarter[] = Array.from(
         stats.quartersByLabel.entries(),
       )
@@ -286,9 +286,9 @@ export async function loadExplorationPayload({
           label,
           year: qb.year,
           quarter: qb.quarter,
-          nFires: qb.nFires,
+          nEngagements: qb.nEngagements,
           nWins: qb.nWins,
-          winRate: qb.nFires === 0 ? null : qb.nWins / qb.nFires,
+          winRate: qb.nEngagements === 0 ? null : qb.nWins / qb.nEngagements,
         }))
         .sort((a, c) => {
           if (a.year !== c.year) {
@@ -300,18 +300,23 @@ export async function loadExplorationPayload({
         .map((q) => q.winRate)
         .filter((v): v is number => v !== null);
       byRegime[regime] = {
-        nFires: rFires,
+        nEngagements: rEngagements,
         nWins: rWins,
-        winRate: rFires === 0 ? null : rWins / rFires,
-        ciLow: rFires === 0 ? 0 : rci.low,
-        ciHigh: rFires === 0 ? 0 : rci.high,
-        nFiresUp: stats.nFiresUp,
+        winRate: rEngagements === 0 ? null : rWins / rEngagements,
+        ciLow: rEngagements === 0 ? 0 : rci.low,
+        ciHigh: rEngagements === 0 ? 0 : rci.high,
+        nEngagementsUp: stats.nEngagementsUp,
         nWinsUp: stats.nWinsUp,
-        winRateUp: stats.nFiresUp === 0 ? null : stats.nWinsUp / stats.nFiresUp,
-        nFiresDown: stats.nFiresDown,
+        winRateUp:
+          stats.nEngagementsUp === 0
+            ? null
+            : stats.nWinsUp / stats.nEngagementsUp,
+        nEngagementsDown: stats.nEngagementsDown,
         nWinsDown: stats.nWinsDown,
         winRateDown:
-          stats.nFiresDown === 0 ? null : stats.nWinsDown / stats.nFiresDown,
+          stats.nEngagementsDown === 0
+            ? null
+            : stats.nWinsDown / stats.nEngagementsDown,
         quarters: rQuarters,
         quarterWinRateMin:
           rQuarterRates.length === 0 ? null : Math.min(...rQuarterRates),
@@ -327,17 +332,18 @@ export async function loadExplorationPayload({
       configCanon: b.configCanon,
       period: b.period as ExplorationCandidateRow["period"],
       nBars: b.nBars,
-      nFires: b.nFires,
+      nEngagements: b.nEngagements,
       nWins: b.nWins,
-      winRate: b.nFires === 0 ? null : b.nWins / b.nFires,
-      ciLow: b.nFires === 0 ? 0 : ci.low,
-      ciHigh: b.nFires === 0 ? 0 : ci.high,
-      nFiresUp: b.nFiresUp,
+      winRate: b.nEngagements === 0 ? null : b.nWins / b.nEngagements,
+      ciLow: b.nEngagements === 0 ? 0 : ci.low,
+      ciHigh: b.nEngagements === 0 ? 0 : ci.high,
+      nEngagementsUp: b.nEngagementsUp,
       nWinsUp: b.nWinsUp,
-      winRateUp: b.nFiresUp === 0 ? null : b.nWinsUp / b.nFiresUp,
-      nFiresDown: b.nFiresDown,
+      winRateUp: b.nEngagementsUp === 0 ? null : b.nWinsUp / b.nEngagementsUp,
+      nEngagementsDown: b.nEngagementsDown,
       nWinsDown: b.nWinsDown,
-      winRateDown: b.nFiresDown === 0 ? null : b.nWinsDown / b.nFiresDown,
+      winRateDown:
+        b.nEngagementsDown === 0 ? null : b.nWinsDown / b.nEngagementsDown,
       quarters,
       quarterWinRateMin:
         quarterRates.length === 0 ? null : Math.min(...quarterRates),
@@ -355,7 +361,7 @@ export async function loadExplorationPayload({
     if (bRate !== aRate) {
       return bRate - aRate;
     }
-    return b.nFires - a.nFires;
+    return b.nEngagements - a.nEngagements;
   });
 
   return {

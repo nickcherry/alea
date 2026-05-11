@@ -36,7 +36,7 @@
   var currentPeriod = "5m";
   // Regime filter: "all" shows the all-bars aggregate (the default
   // numbers from filter_runs); any other value swaps each row's
-  // fires/wins/winRate/ci to the `byRegime[regime]` view so the
+  // engagements/wins/winRate/ci to the `byRegime[regime]` view so the
   // user can see "how does this filter perform when the market is
   // ...".
   var currentRegime = "all";
@@ -65,13 +65,13 @@
     familyConfigs:
       "Number of distinct parameter settings (knob values) we backtested for this filter family.",
     familyEngagements:
-      "Total times any config in this filter family triggered an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
+      "Total times any config in this filter family engaged with an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
     config:
       "The specific parameter values for this row of the family — the exact knobs that produced the win rate to the right.",
     engagements:
-      "How many times this exact config triggered a prediction across the backtest history.",
+      "How many times this exact config engaged with a prediction across the backtest history.",
     winRate:
-      "Percent of triggers where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
+      "Percent of engagements where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
     minQwr:
       "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
     maxQwr: "The best quarter this config had — a robustness ceiling.",
@@ -136,7 +136,7 @@
     stack.innerHTML = groups.map(renderFilterCard).join("");
   }
 
-  // Returns a shallow-copied row where every fire/win field comes
+  // Returns a shallow-copied row where every engagement/win field comes
   // from `byRegime[regime]` — totals, up/down split, quarter strip,
   // CI bounds. The all-bars row is preserved untouched so the user
   // can flip back to "all" without re-fetching.
@@ -144,15 +144,15 @@
     var by = (r.byRegime && r.byRegime[regime]) || null;
     if (by === null) {
       return Object.assign({}, r, {
-        nFires: 0,
+        nEngagements: 0,
         nWins: 0,
         winRate: null,
         ciLow: 0,
         ciHigh: 0,
-        nFiresUp: 0,
+        nEngagementsUp: 0,
         nWinsUp: 0,
         winRateUp: null,
-        nFiresDown: 0,
+        nEngagementsDown: 0,
         nWinsDown: 0,
         winRateDown: null,
         quarters: [],
@@ -161,15 +161,15 @@
       });
     }
     return Object.assign({}, r, {
-      nFires: by.nFires,
+      nEngagements: by.nEngagements,
       nWins: by.nWins,
       winRate: by.winRate,
       ciLow: by.ciLow,
       ciHigh: by.ciHigh,
-      nFiresUp: by.nFiresUp,
+      nEngagementsUp: by.nEngagementsUp,
       nWinsUp: by.nWinsUp,
       winRateUp: by.winRateUp,
-      nFiresDown: by.nFiresDown,
+      nEngagementsDown: by.nEngagementsDown,
       nWinsDown: by.nWinsDown,
       winRateDown: by.winRateDown,
       quarters: by.quarters || [],
@@ -212,13 +212,13 @@
     });
   }
 
-  // Family-card aggregate. We use fire-weighted total WR
-  // (`sumWins / sumFires` across the family's configs), NOT the
+  // Family-card aggregate. We use engagement-weighted total WR
+  // (`sumWins / sumEngagements` across the family's configs), NOT the
   // mean of per-config WRs. The mean-of-WRs is sensitive to
   // small-sample configs — in a regime-scoped view a config with
-  // 33 fires at 97% WR drags the simple mean way up even though the
+  // 33 engagements at 97% WR drags the simple mean way up even though the
   // family's actual performance is dominated by configs with
-  // thousands of fires. The fire-weighted number is the "this
+  // thousands of engagements. The engagement-weighted number is the "this
   // filter wins X% of the time" stat the user expects to sort by.
   function groupByFilter(list) {
     var byId = Object.create(null);
@@ -237,18 +237,19 @@
     }
     var groups = order.map(function (id) {
       var g = byId[id];
-      g.totalFires = g.rows.reduce(function (s, r) {
-        return s + r.nFires;
+      g.totalEngagements = g.rows.reduce(function (s, r) {
+        return s + r.nEngagements;
       }, 0);
       g.totalWins = g.rows.reduce(function (s, r) {
         return s + r.nWins;
       }, 0);
-      g.avgWinRate = g.totalFires === 0 ? null : g.totalWins / g.totalFires;
+      g.avgWinRate =
+        g.totalEngagements === 0 ? null : g.totalWins / g.totalEngagements;
       g.rows = g.rows.slice().sort(function (a, b) {
         var aRate = a.winRate === null ? -1 : a.winRate;
         var bRate = b.winRate === null ? -1 : b.winRate;
         if (bRate !== aRate) return bRate - aRate;
-        return b.nFires - a.nFires;
+        return b.nEngagements - a.nEngagements;
       });
       return g;
     });
@@ -256,7 +257,7 @@
       var aAvg = a.avgWinRate === null ? -1 : a.avgWinRate;
       var bAvg = b.avgWinRate === null ? -1 : b.avgWinRate;
       if (bAvg !== aAvg) return bAvg - aAvg;
-      return b.totalFires - a.totalFires;
+      return b.totalEngagements - a.totalEngagements;
     });
     return groups;
   }
@@ -306,12 +307,12 @@
       g.rows.length +
       "</span>" +
       "</span>" +
-      '<span class="filter-card-meta-item is-fires">' +
+      '<span class="filter-card-meta-item is-engagements">' +
       '<span class="filter-card-meta-label">engagements' +
       infoTip(TIPS.familyEngagements) +
       "</span>" +
       '<span class="filter-card-meta-value">' +
-      g.totalFires.toLocaleString() +
+      g.totalEngagements.toLocaleString() +
       "</span>" +
       "</span>" +
       "</div>" +
@@ -368,7 +369,7 @@
       escapeHtml(r.configCanon) +
       "</span></td>" +
       '<td class="num-col alea-mono">' +
-      r.nFires.toLocaleString() +
+      r.nEngagements.toLocaleString() +
       "</td>" +
       '<td class="wr-col">' +
       renderWrCell(r) +
@@ -417,10 +418,10 @@
       " (" +
       q.nWins.toLocaleString() +
       "/" +
-      q.nFires.toLocaleString() +
+      q.nEngagements.toLocaleString() +
       ")";
     var titleAttr = escapeHtml(title);
-    if (q.winRate === null || q.nFires === 0) {
+    if (q.winRate === null || q.nEngagements === 0) {
       return '<span class="q-bar" title="' + titleAttr + '"></span>';
     }
     var deviation = q.winRate - 0.5;
@@ -446,7 +447,7 @@
   }
 
   function renderWrCell(r) {
-    if (r.winRate === null || r.nFires === 0) {
+    if (r.winRate === null || r.nEngagements === 0) {
       return '<span class="alea-muted">&mdash;</span>';
     }
     var tone = toneClass(r.winRate);

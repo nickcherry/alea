@@ -21,12 +21,12 @@ export type FilterBar = {
 /**
  * What a filter returns for one decision moment.
  *
- * - `"up"` / `"down"`: the filter has fired and predicts the next
+ * - `"up"` / `"down"`: the filter has engaged and predicts the next
  *   bar will close above / below its open.
  * - `null`: abstain. The filter has no opinion at this moment. Not
  *   the same as "predicts no change" — it means the filter's
- *   trigger conditions weren't met. Abstains are not recorded in
- *   the `fires` blob and don't affect the win rate denominator.
+ *   engagement conditions weren't met. Abstains are not recorded in
+ *   `filter_engagements` and don't affect the win rate denominator.
  */
 export type FilterPrediction = "up" | "down" | null;
 
@@ -83,7 +83,7 @@ export type FilterFamily =
  *      the filter and adding a new one.
  *
  * `description` is for the dashboard tooltip — one or two sentences,
- * lay-readable but technically faithful (e.g. "Fires UP when RSI is
+ * lay-readable but technically faithful (e.g. "Engages UP when RSI is
  * oversold (≤ `low`) and DOWN when overbought (≥ `high`); otherwise
  * abstains. Classic two-sided mean-reversion rule.").
  */

@@ -34,7 +34,7 @@ export async function persistCommitteeSelections({
           filter_version: s.filterVersion,
           config_canon: s.configCanon,
           rank: s.rank,
-          n_fires: s.nFires,
+          n_engagements: s.nEngagements,
           n_wins: s.nWins,
           win_rate: s.winRate,
           wilson_low: s.wilsonLow,

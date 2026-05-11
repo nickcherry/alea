@@ -31,7 +31,7 @@ export const committeeSelectCommand = defineCommand({
   summary:
     "Pick the top-N candidates per market regime and write committee_selections",
   description:
-    "Scans regime-stratified backtest stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min fires, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (market_regime, period), and rewrites committee_selections.",
+    "Scans regime-stratified backtest stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min engagements, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (market_regime, period), and rewrites committee_selections.",
   options: [],
   examples: ["bun alea committee:select"],
   output:
@@ -42,17 +42,17 @@ export const committeeSelectCommand = defineCommand({
     io.writeStdout(`${pc.bold("committee:select")}\n\n`);
     const rules = DEFAULT_COMMITTEE_SELECTION_RULES;
     io.writeStdout(
-      `${pc.dim("rules:")} minFires=${rules.minFires} ` +
+      `${pc.dim("rules:")} minEngagements=${rules.minEngagements} ` +
         `aggWR>=${(rules.minAggregateWinRate * 100).toFixed(0)}% ` +
         `worstQ WR>=${(rules.minWorstQuarterWinRate * 100).toFixed(0)}% ` +
-        `(q>=${rules.worstQuarterMinFires} fires) ` +
+        `(q>=${rules.worstQuarterMinEngagements} engagements) ` +
         `top=${rules.topN}\n\n`,
     );
     const db = createDatabase();
     try {
       const stats = await loadCandidateRegimeStats({
         db,
-        worstQuarterMinFires: rules.worstQuarterMinFires,
+        worstQuarterMinEngagements: rules.worstQuarterMinEngagements,
       });
       const selections = selectCommitteeCandidates({ stats, rules });
       const selectedAtMs = Date.now();
@@ -79,7 +79,7 @@ export const committeeSelectCommand = defineCommand({
           `  ${pc.bold((period ?? "?").padEnd(4))} ${pc.dim(regime ?? "?")} ` +
             `${pc.green(`selected=${list.length}`)} ` +
             `${pc.dim("top=")}${(top.winRate * 100).toFixed(1)}% ${top.filterId} ` +
-            `${pc.dim(`(${top.nFires.toLocaleString()} fires)`)} ` +
+            `${pc.dim(`(${top.nEngagements.toLocaleString()} engagements)`)} ` +
             `${pc.dim(`last=${(last.winRate * 100).toFixed(1)}%`)}\n`,
         );
       }

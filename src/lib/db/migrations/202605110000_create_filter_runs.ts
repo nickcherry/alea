@@ -15,16 +15,12 @@ import { type Kysely, sql } from "kysely";
  *   summarises. If the backtest CLI is asked for a window the row
  *   already covers (range_last_ms >= target), it skips; otherwise
  *   it recomputes.
- * - `n_fires_*` / `n_wins_*`: aggregate stats. Win rate is
+ * - `n_engagements_*` / `n_wins_*`: aggregate stats. Win rate is
  *   computed in dashboards on the fly.
- * - `fires`: jsonb array of `[ts_ms, "u"|"d", 0|1]` triples,
- *   one entry per non-abstain bar. Abstains are not stored.
  *
  * NOTE (May 2026 follow-up): the next migration
- * `202605120000_create_filter_engagements` drops the `fires` column
- * in favour of an append-only `filter_engagements` table. New
- * deployments end up with the engagements table; the JSONB column
- * never carries production data.
+ * `202605120000_create_filter_engagements` adds the append-only
+ * `filter_engagements` table that carries per-prediction detail.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`
@@ -39,17 +35,16 @@ export async function up(db: Kysely<Database>): Promise<void> {
       range_first_ms bigint not null,
       range_last_ms bigint not null,
       n_bars integer not null,
-      n_fires_up integer not null,
+      n_engagements_up integer not null,
       n_wins_up integer not null,
-      n_fires_down integer not null,
+      n_engagements_down integer not null,
       n_wins_down integer not null,
-      fires jsonb not null default '[]'::jsonb,
       computed_at_ms bigint not null,
       constraint filter_runs_period_check check (period in ('5m', '15m')),
       constraint filter_runs_counts_nonneg check (
-        n_fires_up >= 0 and n_wins_up >= 0
-        and n_fires_down >= 0 and n_wins_down >= 0
-        and n_wins_up <= n_fires_up and n_wins_down <= n_fires_down
+        n_engagements_up >= 0 and n_wins_up >= 0
+        and n_engagements_down >= 0 and n_wins_down >= 0
+        and n_wins_up <= n_engagements_up and n_wins_down <= n_engagements_down
       )
     )
   `.execute(db);

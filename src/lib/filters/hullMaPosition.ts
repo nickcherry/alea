@@ -9,7 +9,7 @@ import { z } from "zod";
  *
  *   HMA(p) = WMA( 2·WMA(close, p/2) - WMA(close, p), sqrt(p) )
  *
- * Fires reversion when the close pulls away from HMA by `threshold`
+ * Engages reversion when the close pulls away from HMA by `threshold`
  * (fraction of HMA value).
  */
 function wma(values: readonly number[], period: number): number | null {

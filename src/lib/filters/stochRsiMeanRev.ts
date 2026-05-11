@@ -20,7 +20,7 @@ import { z } from "zod";
  * "how extreme is the current RSI value relative to its trailing
  * range" — which can disagree with the RSI level itself.
  *
- * Fires UP at low %SRSI (current RSI is at the low end of its
+ * Engages UP at low %SRSI (current RSI is at the low end of its
  * recent range), DOWN at high %SRSI.
  */
 const configSchema = z.object({
@@ -37,7 +37,7 @@ export const stochRsiMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Stochastic RSI mean reversion. Stochastic-normalize the RSI series, then fire on the resulting compound oscillator's extremes. Tests whether COMPOSING two oscillators (Stoch of RSI) captures signal that running them in confluence (AND) misses.",
+    "Stochastic RSI mean reversion. Stochastic-normalize the RSI series, then engage on the resulting compound oscillator's extremes. Tests whether COMPOSING two oscillators (Stoch of RSI) captures signal that running them in confluence (AND) misses.",
   configSchema,
   requiredBars: (c) => c.rsiLength + c.stochLookback + c.smoothK,
   predict: (config, bars) => {

@@ -11,7 +11,7 @@ import { z } from "zod";
  *
  * DEMA reduces lag relative to a single EMA by subtracting the
  * lagging "EMA of EMA" from twice the EMA. Apply Bollinger Bands to
- * the DEMA series and fire on pierces — tests whether a less-laggy
+ * the DEMA series and engage on pierces — tests whether a less-laggy
  * smoothed input improves the basic Bollinger reversion signal.
  */
 const configSchema = z.object({

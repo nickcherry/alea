@@ -20,7 +20,7 @@ export type DryRunDashboardSummary = {
   /**
    * Average number of candidates that voted (up or down — abstains
    * excluded) per non-abstaining decision. Lower = the committee is
-   * firing on slim engagement; higher = broad consensus.
+   * acting on slim engagement; higher = broad consensus.
    */
   readonly avgEngagement: number | null;
 };

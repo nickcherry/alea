@@ -29,7 +29,7 @@ export const tsiMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Mean reversion on the True Strength Index — double-smoothed momentum oscillator. Smoother than RSI / CMO at the cost of more lag; fires on canonical ±25 extremes by default.",
+    "Mean reversion on the True Strength Index — double-smoothed momentum oscillator. Smoother than RSI / CMO at the cost of more lag; engages on canonical ±25 extremes by default.",
   configSchema,
   requiredBars: (c) => c.longLen + c.shortLen + 2,
   predict: (config, bars) => {

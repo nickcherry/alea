@@ -7,7 +7,7 @@ import { type Kysely, sql } from "kysely";
  * Populated by the `regimes:backfill` CLI command, which loads the
  * candle history and runs the same classifier the dry-run loop uses
  * (`lib/regime/classify.ts`). The exploration aggregator joins this
- * table with `filter_engagements` to stratify a filter's fires by
+ * table with `filter_engagements` to stratify a filter's engagements by
  * the market regime they happened in — so the dashboard can answer
  * "how does zscore_reversion behave when the market is high-vol
  * ranging" without re-running the backtest.

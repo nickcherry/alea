@@ -6,8 +6,8 @@ import { z } from "zod";
  * Streak fade. Predicts the OPPOSITE of the most recent run of
  * same-color bars, once that run hits `minStreak`:
  *
- *   N consecutive green bars (close ≥ open)   →   fire DOWN
- *   N consecutive red   bars (close <  open)   →   fire UP
+ *   N consecutive green bars (close ≥ open)   →   engage DOWN
+ *   N consecutive red   bars (close <  open)   →   engage UP
  *
  * Bar color uses the same tie-break as the outcome rule
  * (close == open ⇒ "up"), so the streak signal lives in the same
@@ -27,7 +27,7 @@ import { z } from "zod";
 const configSchema = z.object({
   /**
    * Minimum number of consecutive same-color bars (including the
-   * latest one) required to fire. Below this, abstain.
+   * latest one) required to engage. Below this, abstain.
    */
   minStreak: z.number().int().min(2).default(3),
 });
@@ -38,7 +38,7 @@ export const streakFade: Filter<Config> = {
   version: 1,
   family: "velocity_fade",
   description:
-    "Fires opposite the most recent run of same-color bars once the streak length reaches `minStreak`. Direct inverse of the deleted `prior_bar_carry` filter — that one bet on continuation and lost monotonically with longer streaks; this bets on reversal and should win progressively more.",
+    "Engages opposite the most recent run of same-color bars once the streak length reaches `minStreak`. Direct inverse of the deleted `prior_bar_carry` filter — that one bet on continuation and lost monotonically with longer streaks; this bets on reversal and should win progressively more.",
   configSchema,
   requiredBars: (c) => c.minStreak,
   predict: (config, bars) => {

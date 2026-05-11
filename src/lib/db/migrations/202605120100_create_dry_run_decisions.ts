@@ -4,7 +4,7 @@ import { type Kysely, sql } from "kysely";
 /**
  * Append-only log of every committee decision the dry-run runner
  * makes. One row per (asset, ts_ms) where the committee chose to
- * fire — abstains are dropped because they have no actionable
+ * make an actionable prediction — abstains are dropped because they have no actionable
  * downstream behaviour and would bloat the table.
  *
  * - `ts_ms`: open time of the candle the committee predicts.

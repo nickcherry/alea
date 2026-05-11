@@ -4,19 +4,19 @@ import { computeBollingerSeries } from "@alea/lib/indicators/bollinger";
 import { z } from "zod";
 
 /**
- * Bollinger pierce recovery. Fires only after we've seen a band
+ * Bollinger pierce recovery. Engages only after we've seen a band
  * pierce AND a close back inside the band — i.e. the reversion has
  * already started by one bar:
  *
  *   bar i-1: close ≤ lower band   →   bar i: close > lower band   →   predict UP
  *   bar i-1: close ≥ upper band   →   bar i: close < upper band   →   predict DOWN
  *
- * The basic `bollinger_reversion` fires the moment a close exits
+ * The basic `bollinger_reversion` engages the moment a close exits
  * the band, betting on a future reversion. This filter waits one
- * more bar for the actual recovery to confirm before firing.
+ * more bar for the actual recovery to confirm before engaging.
  * Hypothesis: confirmation costs us one bar of opportunity but pays
- * back with a noticeably higher per-fire WR, because we no longer
- * fire on the bars that just keep going. The tradeoff between
+ * back with a noticeably higher per-engagement WR, because we no longer
+ * engage on the bars that just keep going. The tradeoff between
  * "earlier signal at modest edge" (the basic version) and "later
  * signal at higher edge" (this one) is exactly the kind of thing
  * the dashboard quarter-strip is good for visualising.
@@ -37,7 +37,7 @@ export const bollingerRecovery: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Fires after a confirmed Bollinger pierce + recovery: bar i-1 closes outside the band, bar i closes back inside, predict continued reversion at bar i+1. Lagged-confirmation sibling of `bollinger_reversion`; trades earlier-and-cheaper for later-and-cleaner.",
+    "Engages after a confirmed Bollinger pierce + recovery: bar i-1 closes outside the band, bar i closes back inside, predict continued reversion at bar i+1. Lagged-confirmation sibling of `bollinger_reversion`; trades earlier-and-cheaper for later-and-cleaner.",
   configSchema,
   requiredBars: (c) => c.length + 2,
   predict: (config, bars) => {

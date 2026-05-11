@@ -15,7 +15,7 @@ import { z } from "zod";
  * — revert down).
  *
  * This is the continuous version of `bollinger_reversion`. That one
- * fires the instant close crosses the band (a binary event); %B
+ * engages the instant close crosses the band (a binary event); %B
  * exposes "how far past" as a tunable knob. Tests whether the
  * sweet spot for reversion is "just barely through" (%B ≈ 0) or
  * "well past" (%B ≈ -0.1).
@@ -23,9 +23,9 @@ import { z } from "zod";
 const configSchema = z.object({
   length: z.number().int().positive().default(20),
   multiplier: z.number().positive().default(2),
-  /** Fire UP when %B is at or below this. 0 = at lower band, negative = past it. */
+  /** Engage UP when %B is at or below this. 0 = at lower band, negative = past it. */
   lowerEnter: z.number().default(0),
-  /** Fire DOWN when %B is at or above this. 1 = at upper band, > 1 = past it. */
+  /** Engage DOWN when %B is at or above this. 1 = at upper band, > 1 = past it. */
   upperEnter: z.number().default(1),
 });
 type Config = z.infer<typeof configSchema>;
@@ -35,7 +35,7 @@ export const bollingerPercentB: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Bollinger %B reversion. %B reads as 0 at the lower band, 1 at the upper band, negative below the lower band, > 1 above the upper band. Fires UP when %B ≤ `lowerEnter`, DOWN when %B ≥ `upperEnter`. Continuous-threshold sibling of `bollinger_reversion`: that one fires the instant the close crosses; this one lets you tune 'how far past' the band counts as a signal.",
+    "Bollinger %B reversion. %B reads as 0 at the lower band, 1 at the upper band, negative below the lower band, > 1 above the upper band. Engages UP when %B ≤ `lowerEnter`, DOWN when %B ≥ `upperEnter`. Continuous-threshold sibling of `bollinger_reversion`: that one engages the instant the close crosses; this one lets you tune 'how far past' the band counts as a signal.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

@@ -17,14 +17,14 @@ import { computeSmaSeries } from "@alea/lib/indicators/sma";
  * SMA) and the entire family came in under 50% aggregate. This
  * filter tests the simpler reading: just price vs. one SMA, with an
  * optional stretch-threshold gate so the reversion variant only
- * fires when price is meaningfully stretched.
+ * engages when price is meaningfully stretched.
  */
 export const smaPosition: Filter<MovingAveragePositionConfig> = {
   id: "sma_position",
   version: 1,
   family: "ma_position",
   description:
-    "Fires on the close's position relative to an N-bar SMA. `mode=trend` predicts UP when above and DOWN when below (the 'price tends to continue with the SMA bias' hypothesis); `mode=revert` predicts the inverse (mean-reversion to the SMA). `threshold` gates the firing to only fire when the close is at least that fraction of the SMA away — useful for testing the 'reversion only happens at extremes' variant.",
+    "Engages on the close's position relative to an N-bar SMA. `mode=trend` predicts UP when above and DOWN when below (the 'price tends to continue with the SMA bias' hypothesis); `mode=revert` predicts the inverse (mean-reversion to the SMA). `threshold` gates engagement so the filter only engages when the close is at least that fraction of the SMA away — useful for testing the 'reversion only happens at extremes' variant.",
   configSchema: movingAveragePositionConfigSchema,
   requiredBars: (c) => c.length + 1,
   predict: makeMovingAveragePredict({

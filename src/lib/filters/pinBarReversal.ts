@@ -12,7 +12,7 @@ import { z } from "zod";
  *   bearish pin: long UPPER wick, tiny body in the lower part of
  *                the range → bears rejected the highs → predict DOWN
  *
- * Trigger conditions (configurable, defaults in parentheses):
+ * Engagement conditions (configurable, defaults in parentheses):
  *
  *   - `body / range ≤ maxBodyFraction`     (0.33)
  *   - `dominantWick / body ≥ minWickRatio` (2.0)
@@ -22,7 +22,7 @@ import { z } from "zod";
  * directly, with no reference to a moving average, oscillator, or
  * level. Hypothesis: shape alone carries reversal signal because a
  * long wick is the visible imprint of price testing-then-failing
- * a level — even when our level-based filters don't fire on the
+ * a level — even when our level-based filters don't engage on the
  * same bar. If WR comes in the 53-56% band, shape is roughly as
  * informative as a single oscillator extreme. If it underperforms,
  * the shape signal is already absorbed by the level-based family
@@ -54,7 +54,7 @@ export const pinBarReversal: Filter<Config> = {
   version: 1,
   family: "pattern",
   description:
-    "Single-bar shape filter. Fires UP on a bullish pin bar (long lower wick, tiny body near the high) and DOWN on a bearish pin bar (long upper wick, tiny body near the low). First shape-only filter in the registry — tests whether candle shape carries reversal signal beyond what level / oscillator filters already see.",
+    "Single-bar shape filter. Engages UP on a bullish pin bar (long lower wick, tiny body near the high) and DOWN on a bearish pin bar (long upper wick, tiny body near the low). First shape-only filter in the registry — tests whether candle shape carries reversal signal beyond what level / oscillator filters already see.",
   configSchema,
   requiredBars: () => 1,
   predict: (config, bars) => {

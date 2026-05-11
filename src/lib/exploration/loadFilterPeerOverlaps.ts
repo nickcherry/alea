@@ -9,14 +9,14 @@ export type FilterPeerOverlapRow = {
 };
 
 /**
- * Computes the Jaccard similarity of co-firing for every pair of
+ * Computes the Jaccard similarity of co-engagement for every pair of
  * filter families per period:
  *
- *   J(A, B) = |bars where A fired ∩ bars where B fired|
- *             / |bars where A fired ∪ bars where B fired|
+ *   J(A, B) = |bars where A engaged ∩ bars where B engaged|
+ *             / |bars where A engaged ∪ bars where B engaged|
  *
  * This is filter-family level, not per-config: the union of all of a
- * filter's configs' fires defines its fire-bar set.
+ * filter's configs' engagements defines its engagement-bar set.
  */
 export async function loadFilterPeerOverlaps({
   db,
@@ -31,7 +31,7 @@ export async function loadFilterPeerOverlaps({
     total_a: string;
     total_b: string;
   }>`
-    with filter_fire_bars as (
+    with filter_engagement_bars as (
       select distinct
         fr.filter_id,
         fr.period,
@@ -42,7 +42,7 @@ export async function loadFilterPeerOverlaps({
     ),
     filter_totals as (
       select filter_id, period, count(*) as total
-      from filter_fire_bars
+      from filter_engagement_bars
       group by filter_id, period
     ),
     pair_shared as (
@@ -51,8 +51,8 @@ export async function loadFilterPeerOverlaps({
         b.filter_id as filter_b,
         a.period as period,
         count(*) as shared
-      from filter_fire_bars a
-      join filter_fire_bars b
+      from filter_engagement_bars a
+      join filter_engagement_bars b
         on a.period = b.period
         and a.asset = b.asset
         and a.ts_ms = b.ts_ms

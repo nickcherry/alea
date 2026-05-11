@@ -59,10 +59,7 @@ export const dashboardsBuildCommand = defineCommand({
         ),
     }),
   ],
-  examples: [
-    "bun alea dashboards:build",
-    "bun alea dashboards:build --deploy",
-  ],
+  examples: ["bun alea dashboards:build", "bun alea dashboards:build --deploy"],
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
@@ -164,7 +161,10 @@ async function buildExplorationDashboard({
     const htmlPath = resolvePath(explorationDir, "index.html");
     const jsonPath = resolvePath(explorationDir, "data.json");
     await writeExplorationArtifacts({ payload, htmlPath, jsonPath });
-    const totalFires = payload.rows.reduce((s, r) => s + r.nFires, 0);
+    const totalEngagements = payload.rows.reduce(
+      (s, r) => s + r.nEngagements,
+      0,
+    );
     const topRow = payload.rows[0];
     const topLabel =
       topRow === undefined || topRow.winRate === null
@@ -172,7 +172,7 @@ async function buildExplorationDashboard({
         : `${(topRow.winRate * 100).toFixed(1)}% ${topRow.filterId} ${topRow.period}`;
     io.writeStdout(
       `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
-        `  ${pc.dim("engagements=")}${totalFires.toLocaleString()}` +
+        `  ${pc.dim("engagements=")}${totalEngagements.toLocaleString()}` +
         `  ${pc.dim("top=")}${topLabel}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
@@ -195,8 +195,7 @@ async function buildDryRunDashboard({
     const jsonPath = resolvePath(dryRunDir, "data.json");
     await writeDryRunArtifacts({ payload, htmlPath, jsonPath });
     const s = payload.summary;
-    const wr =
-      s.winRate === null ? "—" : `${(s.winRate * 100).toFixed(1)}%`;
+    const wr = s.winRate === null ? "—" : `${(s.winRate * 100).toFixed(1)}%`;
     io.writeStdout(
       `  ${pc.green("decisions =")} ${s.totalDecisions.toLocaleString()}` +
         `  ${pc.dim("settled=")}${s.settledDecisions.toLocaleString()}` +

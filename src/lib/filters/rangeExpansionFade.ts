@@ -10,8 +10,8 @@ import { z } from "zod";
  *   range_i = high_i - low_i
  *   avg     = mean(range_{i-window..i-1})
  *   if  range_i > multiplier · avg:
- *     close_i ≥ open_i  →  fire DOWN   (green burst → expect red next)
- *     close_i <  open_i  →  fire UP
+ *     close_i ≥ open_i  →  engage DOWN   (green burst → expect red next)
+ *     close_i <  open_i  →  engage UP
  *
  * Sibling of `atr_burst_fade` but anchored on the bar's RANGE
  * (high - low) rather than its close-to-close MOVE:

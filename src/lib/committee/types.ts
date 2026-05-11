@@ -2,7 +2,7 @@ import type { Candidate, FilterPrediction } from "@alea/lib/filters/types";
 
 /**
  * A single candidate's vote at one decision moment. `null` is
- * abstain (the underlying filter returned null because its trigger
+ * abstain (the underlying filter returned null because its engagement
  * conditions weren't met or the bar window was too short).
  */
 export type CandidateVote = {

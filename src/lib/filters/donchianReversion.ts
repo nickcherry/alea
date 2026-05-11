@@ -3,7 +3,7 @@ import type { Filter } from "@alea/lib/filters/types";
 import { z } from "zod";
 
 /**
- * Donchian channel reversion. Fire UP when the latest close is at
+ * Donchian channel reversion. Engage UP when the latest close is at
  * or below the lowest low of the trailing `period` bars, DOWN when
  * at or above the highest high. Raw-extreme reversion — no
  * volatility scaling, no smoothing — distinct from Bollinger /
@@ -19,7 +19,7 @@ export const donchianReversion: Filter<Config> = {
   version: 1,
   family: "band_reversion",
   description:
-    "Fires UP when the latest close is at or below the trailing N-bar low, DOWN when at or above the trailing N-bar high. Pure raw-extreme channel reversion, no volatility scaling.",
+    "Engages UP when the latest close is at or below the trailing N-bar low, DOWN when at or above the trailing N-bar high. Pure raw-extreme channel reversion, no volatility scaling.",
   configSchema,
   requiredBars: (c) => c.period + 1,
   predict: (config, bars) => {

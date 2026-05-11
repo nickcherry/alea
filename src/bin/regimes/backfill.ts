@@ -11,8 +11,8 @@ import pc from "picocolors";
  * (asset, period, ts_ms) bar in the canonical pyth-spot candles
  * series and persists the result to `bar_regimes`. The exploration
  * aggregator joins this table against `filter_engagements` to
- * stratify a filter's fires by the regime the market was in when
- * it fired — letting the dashboard show, per filter, "55 % overall
+ * stratify a filter's engagements by the regime the market was in when
+ * it engaged — letting the dashboard show, per filter, "55 % overall
  * but 62 % in low-vol-ranging, 47 % in high-vol-trending".
  *
  * The classifier itself lives in `lib/regime/classify.ts` and is
@@ -109,11 +109,9 @@ export const regimesBackfillCommand = defineCommand({
             .insertInto("bar_regimes")
             .values(slice)
             .onConflict((oc) =>
-              oc
-                .columns(["asset", "period", "ts_ms"])
-                .doUpdateSet({
-                  market_regime: (eb) => eb.ref("excluded.market_regime"),
-                }),
+              oc.columns(["asset", "period", "ts_ms"]).doUpdateSet({
+                market_regime: (eb) => eb.ref("excluded.market_regime"),
+              }),
             )
             .execute();
         }

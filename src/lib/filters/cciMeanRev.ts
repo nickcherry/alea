@@ -22,9 +22,9 @@ import { z } from "zod";
  */
 const configSchema = z.object({
   length: z.number().int().positive().default(20),
-  /** Fire DOWN when CCI ≥ this. */
+  /** Engage DOWN when CCI ≥ this. */
   overbought: z.number().default(100),
-  /** Fire UP when CCI ≤ this. */
+  /** Engage UP when CCI ≤ this. */
   oversold: z.number().default(-100),
 });
 type Config = z.infer<typeof configSchema>;
@@ -34,7 +34,7 @@ export const cciMeanRev: Filter<Config> = {
   version: 1,
   family: "oscillator_reversion",
   description:
-    "Mean reversion on the Commodity Channel Index. Fires UP when CCI ≤ `oversold`, DOWN when ≥ `overbought`. Third oscillator family in the registry — alongside RSI (gain/loss percentile) and Stochastic (recent-range percentile), CCI uses mean absolute deviation of the typical price. Side-by-side WR tells us whether the MAD-based normalization sees the same reversion signal as the other two.",
+    "Mean reversion on the Commodity Channel Index. Engages UP when CCI ≤ `oversold`, DOWN when ≥ `overbought`. Third oscillator family in the registry — alongside RSI (gain/loss percentile) and Stochastic (recent-range percentile), CCI uses mean absolute deviation of the typical price. Side-by-side WR tells us whether the MAD-based normalization sees the same reversion signal as the other two.",
   configSchema,
   requiredBars: (c) => c.length + 1,
   predict: (config, bars) => {

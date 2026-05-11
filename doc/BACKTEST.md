@@ -40,10 +40,10 @@ that touches bar `i + 1`, and only after the prediction is locked
 in:
 
 ```ts
-const window = bars.slice(i - requiredBars + 1, i + 1);  // exclusive of i+1
-const pred = predict(window);                             // sees only past + current closed bar
-const next = bars[i + 1]!;                                // ONLY used to score
-const actual = next.close >= next.open ? "up" : "down";   // tie rounds up
+const window = bars.slice(i - requiredBars + 1, i + 1); // exclusive of i+1
+const pred = predict(window); // sees only past + current closed bar
+const next = bars[i + 1]!; // ONLY used to score
+const actual = next.close >= next.open ? "up" : "down"; // tie rounds up
 ```
 
 If you add a new filter, your `predict` is handed `window` and that's
@@ -60,19 +60,19 @@ Two tables back the framework:
 `filter_runs` — aggregate cache, one row per
 `(filter_id, filter_version, config_canon, period, asset)`. PK is a
 SHA-256-derived `run_hash` over those five identity fields. Holds
-just the counters (`n_fires_up`, `n_wins_up`, `n_fires_down`,
+just the counters (`n_engagements_up`, `n_wins_up`, `n_engagements_down`,
 `n_wins_down`, etc.) plus the `range_first_ms`/`range_last_ms`
 window the row summarises. The leaderboard query reads from here.
 
 `filter_engagements` — append-only per-prediction tape. One row per
-non-abstain fire:
+non-abstain engagement:
 
-| column       | type     | meaning                                              |
-|--------------|----------|------------------------------------------------------|
-| `run_hash`   | text     | joins to `filter_runs`                               |
-| `ts_ms`      | bigint   | open-time of the candle being predicted (bar `i+1`)  |
-| `direction`  | char(1)  | `'u'` or `'d'`                                       |
-| `won`        | smallint | `0` or `1`                                           |
+| column      | type     | meaning                                             |
+| ----------- | -------- | --------------------------------------------------- |
+| `run_hash`  | text     | joins to `filter_runs`                              |
+| `ts_ms`     | bigint   | open-time of the candle being predicted (bar `i+1`) |
+| `direction` | char(1)  | `'u'` or `'d'`                                      |
+| `won`       | smallint | `0` or `1`                                          |
 
 Primary key `(run_hash, ts_ms)` covers the two natural query
 shapes: "all engagements for this candidate" (range scan on
@@ -97,7 +97,7 @@ Every historical bar is tagged with a market regime (see
 aggregates and per-(candidate, regime, quarter) strips. The
 dashboard surfaces this as the regime selector tabs — picking a
 specific regime re-aggregates the leaderboard to "how did this
-config perform when the market was in *that* state".
+config perform when the market was in _that_ state".
 
 The same join feeds `committee:select` (see
 [COMMITTEE.md](./COMMITTEE.md)), which uses regime-stratified
@@ -113,13 +113,13 @@ select
   fe.run_hash,
   extract(year from to_timestamp(fe.ts_ms / 1000.0))::int as year,
   extract(quarter from to_timestamp(fe.ts_ms / 1000.0))::int as quarter,
-  count(*) as n_fires,
+  count(*) as n_engagements,
   sum(fe.won) as n_wins
 from filter_engagements fe
 group by fe.run_hash, year, quarter;
 ```
 
-The exploration loader fires this once per dashboard build, then
+The exploration loader runs this once per dashboard build, then
 folds per-asset rows together so each (filter, config, period)
 candidate has a single chronological quarter list. A second query
 adds regime + quarter to the GROUP BY for the regime-scoped view.
@@ -148,5 +148,5 @@ live committee.
 - [`src/bin/backtest/run.ts`](../src/bin/backtest/run.ts) — the CLI
   command.
 - [`src/lib/db/migrations/202605110000_create_filter_runs.ts`](../src/lib/db/migrations/202605110000_create_filter_runs.ts)
-  + [`202605120000_create_filter_engagements.ts`](../src/lib/db/migrations/202605120000_create_filter_engagements.ts)
-  — schemas.
+  - [`202605120000_create_filter_engagements.ts`](../src/lib/db/migrations/202605120000_create_filter_engagements.ts)
+    — schemas.

@@ -6,17 +6,17 @@ import type {
 import { describe, expect, it } from "bun:test";
 
 const RULES: CommitteeSelectionRules = {
-  minFires: 20,
+  minEngagements: 20,
   minAggregateWinRate: 0.53,
   minWorstQuarterWinRate: 0.5,
-  worstQuarterMinFires: 10,
+  worstQuarterMinEngagements: 10,
   topN: 3,
 };
 
 function stats(
   partial: Partial<CandidateRegimeStats> & {
     filterId: string;
-    nFires: number;
+    nEngagements: number;
     winRate: number;
     wilsonLow: number;
   },
@@ -26,17 +26,22 @@ function stats(
     configCanon: `${partial.filterId}-default`,
     period: "5m",
     marketRegime: "low_vol_ranging",
-    nWins: Math.round(partial.nFires * partial.winRate),
+    nWins: Math.round(partial.nEngagements * partial.winRate),
     worstQuarterWinRate: 0.6,
     ...partial,
   };
 }
 
 describe("selectCommitteeCandidates", () => {
-  it("drops candidates below the fire minimum", () => {
+  it("drops candidates below the engagement minimum", () => {
     const result = selectCommitteeCandidates({
       stats: [
-        stats({ filterId: "a", nFires: 19, winRate: 0.9, wilsonLow: 0.7 }),
+        stats({
+          filterId: "a",
+          nEngagements: 19,
+          winRate: 0.9,
+          wilsonLow: 0.7,
+        }),
       ],
       rules: RULES,
     });
@@ -46,7 +51,12 @@ describe("selectCommitteeCandidates", () => {
   it("drops candidates below the aggregate WR floor", () => {
     const result = selectCommitteeCandidates({
       stats: [
-        stats({ filterId: "a", nFires: 500, winRate: 0.52, wilsonLow: 0.5 }),
+        stats({
+          filterId: "a",
+          nEngagements: 500,
+          winRate: 0.52,
+          wilsonLow: 0.5,
+        }),
       ],
       rules: RULES,
     });
@@ -58,7 +68,7 @@ describe("selectCommitteeCandidates", () => {
       stats: [
         stats({
           filterId: "a",
-          nFires: 500,
+          nEngagements: 500,
           winRate: 0.6,
           wilsonLow: 0.55,
           worstQuarterWinRate: 0.42,
@@ -74,7 +84,7 @@ describe("selectCommitteeCandidates", () => {
       stats: [
         stats({
           filterId: "a",
-          nFires: 30,
+          nEngagements: 30,
           winRate: 0.65,
           wilsonLow: 0.51,
           worstQuarterWinRate: null,
@@ -86,24 +96,24 @@ describe("selectCommitteeCandidates", () => {
     expect(result[0]!.rank).toBe(1);
   });
 
-  it("ranks by Wilson lower bound desc, ties broken by nFires desc", () => {
+  it("ranks by Wilson lower bound desc, ties broken by nEngagements desc", () => {
     const result = selectCommitteeCandidates({
       stats: [
         stats({
           filterId: "small_lucky",
-          nFires: 25,
+          nEngagements: 25,
           winRate: 0.8,
           wilsonLow: 0.55,
         }),
         stats({
           filterId: "big_solid",
-          nFires: 1000,
+          nEngagements: 1000,
           winRate: 0.6,
           wilsonLow: 0.57,
         }),
         stats({
           filterId: "tie_smaller",
-          nFires: 100,
+          nEngagements: 100,
           winRate: 0.6,
           wilsonLow: 0.55,
         }),
@@ -123,7 +133,7 @@ describe("selectCommitteeCandidates", () => {
         stats({
           filterId: `${regime}_${i}`,
           marketRegime: regime,
-          nFires: 200 - i,
+          nEngagements: 200 - i,
           winRate: 0.6,
           wilsonLow: 0.6 - i * 0.001,
         }),

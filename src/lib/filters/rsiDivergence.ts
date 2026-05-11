@@ -81,7 +81,7 @@ export const rsiDivergence: Filter<Config> = {
   version: 1,
   family: "divergence",
   description:
-    "RSI/price divergence. Fires UP on a confirmed pivot low when RSI made a higher-low against a price lower-low (regular bullish divergence — classic reversal pattern); fires DOWN on the symmetric pivot-high case. Hidden continuation divergences are off by default. Pivot definition + bar-gap range match TradingView's Pine `ta.pivothigh / ta.pivotlow` builtins so the signal is identical to the indicator a chart trader would see.",
+    "RSI/price divergence. Engages UP on a confirmed pivot low when RSI made a higher-low against a price lower-low (regular bullish divergence — classic reversal pattern); engages DOWN on the symmetric pivot-high case. Hidden continuation divergences are off by default. Pivot definition + bar-gap range match TradingView's Pine `ta.pivothigh / ta.pivotlow` builtins so the signal is identical to the indicator a chart trader would see.",
   configSchema,
   requiredBars: (c) =>
     // We need RSI valid at the earliest pivot we might inspect:

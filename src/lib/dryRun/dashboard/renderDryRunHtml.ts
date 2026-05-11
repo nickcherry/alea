@@ -86,7 +86,7 @@ export function renderDryRunHtml({
               : summary.avgEngagement.toLocaleString(undefined, {
                   maximumFractionDigits: 1,
                 }),
-          sub: "candidates voting up or down per fired decision",
+          sub: "candidates voting up or down per actionable decision",
           tip: DR_TIPS.avgEngagement,
         })}
       </section>
@@ -337,7 +337,7 @@ const DR_TIPS = {
   candidates:
     "How many (filter, config) entries are registered in the committee. Each one independently votes UP, DOWN, or abstain on every bar.",
   avgEngagement:
-    "Across decisions where the committee fired, the average number of candidates that didn't abstain (i.e. actually voted UP or DOWN). Higher = broader agreement.",
+    "Across decisions where the committee made an actionable prediction, the average number of candidates that didn't abstain (i.e. actually voted UP or DOWN). Higher = broader agreement.",
   regimeName:
     "Classified market state at decision time: vol level (low/high) × directionality (trending/ranging).",
   callsRegime:
