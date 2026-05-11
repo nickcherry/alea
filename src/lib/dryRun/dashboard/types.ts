@@ -18,11 +18,21 @@ export type DryRunDashboardSummary = {
    */
   readonly candidateCount: number;
   /**
-   * Average number of candidates that voted (up or down — abstains
+   * Average number of filter-collapsed votes (up or down — abstains
    * excluded) per non-abstaining decision. Lower = the committee is
    * acting on slim engagement; higher = broad consensus.
    */
   readonly avgEngagement: number | null;
+};
+
+export type DryRunDecisionConfig = {
+  readonly period: string;
+  readonly leadTimeMs: number;
+  readonly hydratedBars: number;
+  readonly maxVotesPerFilter: number;
+  readonly minVotesToTrade: number;
+  readonly minConsensusFraction: number;
+  readonly filterTieBreak: string;
 };
 
 export type DryRunDashboardAssetRow = {
@@ -72,6 +82,7 @@ export type DryRunDashboardCumulativeRow = {
 
 export type DryRunDashboardPayload = {
   readonly generatedAtMs: number;
+  readonly decisionConfig: DryRunDecisionConfig;
   readonly summary: DryRunDashboardSummary;
   readonly perAsset: readonly DryRunDashboardAssetRow[];
   readonly perRegime: readonly DryRunDashboardRegimeAggregate[];

@@ -147,7 +147,12 @@ describe("fetchPolymarketResolution", () => {
   it("builds the slug from asset, timeframe, and unix-seconds window", async () => {
     let capturedUrl = "";
     globalThis.fetch = mock(async (input: string | URL | Request) => {
-      capturedUrl = typeof input === "string" ? input : input.toString();
+      capturedUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
       return new Response(JSON.stringify([]), { status: 200 });
     }) as unknown as typeof originalFetch;
     await fetchPolymarketResolution({

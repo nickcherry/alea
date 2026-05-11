@@ -14,7 +14,9 @@ describe("renderTradeCommitteeHtml", () => {
     // Regime label appears in the tab-button row, not in the body —
     // the table body is JS-hydrated from the embedded JSON payload.
     expect(html).toContain("Low vol ranging");
-    expect(html).toContain('data-regime="low_vol_ranging" aria-selected="true"');
+    expect(html).toContain(
+      'data-regime="low_vol_ranging" aria-selected="true"',
+    );
     expect(html).not.toContain('data-regime="all"');
     // The JSON payload script tag carries the row data verbatim.
     expect(html).toContain("rsi_mean_rev");
@@ -26,7 +28,7 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).toContain("Bucket Cap");
     expect(html).toContain("Aggregate WR Floor");
     expect(html).toContain("Wilson low desc");
-    expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.01");
+    expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.02");
   });
 });
 
@@ -43,8 +45,8 @@ function payloadFixture(): TradeCommitteePayload {
       minWorstQuarterWinRate: 0.5,
       worstQuarterMinEngagements: 10,
       topN: 10,
-      trainingOutcomeProfileId: "pyth-open-close-min-abs-move-pct-v1:0.01",
-      trainingOutcomeMinAbsMovePct: 0.01,
+      trainingOutcomeProfileId: "pyth-open-close-min-abs-move-pct-v1:0.02",
+      trainingOutcomeMinAbsMovePct: 0.02,
       rankingMetric: "wilson_low_desc",
       tieBreak: "n_engagements_desc",
     },

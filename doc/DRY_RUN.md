@@ -22,20 +22,22 @@ identical to what live trading will use; see
 For each of the 5 supported assets (`btc`, `eth`, `sol`, `xrp`,
 `doge`):
 
-1. **Hydrate** — load the most recent 150 closed 5-minute bars from
-   `candles` (pyth-spot canonical series). 150 is wider than the
-   classifier's 100-bar window and the deepest filter's
+1. **Hydrate** — load the most recent
+   `TRADE_DECISION_HYDRATE_BARS` closed 5-minute bars from `candles`
+   (pyth-spot canonical series). The current value, 150, is wider
+   than the classifier's 100-bar window and the deepest filter's
    `requiredBars`, so the first decision always has enough history.
 2. **Subscribe** — open one Pyth Hermes SSE stream for all 5 assets
    (multi-id query — one socket, all feeds). Ticks update an
    in-memory bar accumulator: each tick's price advances `high` /
    `low` / `close` of the current bar; crossing a 5-minute
    boundary finalizes the just-closed bar and starts a new one.
-3. **Predict** — `LEAD_TIME_MS = 5s` before each 5-minute boundary,
-   snapshot the current Pyth price as the synthetic close of the
-   about-to-finalize bar. Run the regime classifier. Look up the
-   committee roster for that regime. Aggregate votes via simple
-   majority. If non-abstain, persist the decision; otherwise skip.
+3. **Predict** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
+   5-minute boundary, snapshot the current Pyth price as the
+   synthetic close of the about-to-finalize bar. Run the regime
+   classifier. Look up the committee roster for that regime. Apply
+   the shared trade decision policy. If non-abstain, persist the
+   decision; otherwise skip.
 4. **Score** — when a closed bar's actual close arrives (via the
    normal tick-driven finalize on the next bar's first tick),
    compare to the prediction. Update the pending row's
@@ -67,9 +69,15 @@ At T-5s of each boundary, for each asset:
 3. Look up the roster bucket for `(regime, "5m")` in
    `committee_selections`. Empty bucket → abstain.
 4. Evaluate each rostered candidate's `predict` on the same bar
-   window. Aggregate via simple majority. Tie or all-abstain →
-   abstain.
-5. Persist if non-abstain.
+   window.
+5. Collapse votes to at most one active vote per `filter_id`. When
+   multiple configs for a filter engage, the engaged config with the
+   highest selected-regime `win_rate` counts.
+6. Require the shared minimum-vote and consensus settings from
+   [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
+   With today's defaults this is simple majority after filter collapse;
+   ties and all-abstain still abstain.
+7. Persist if non-abstain.
 
 The committee is loaded once at startup and cached for the life of
 the process. If you re-run `committee:select` while a dry-run is
@@ -82,18 +90,18 @@ Append-only. One row per non-abstain decision. Schema:
 and the `market_regime` column added by
 [`202605120200_dry_run_market_regime`](../src/lib/db/migrations/202605120200_dry_run_market_regime.ts).
 
-| Column | Meaning |
-|---|---|
-| `id` | bigserial PK |
-| `ts_ms` | Open-time of the target bar (the bar being predicted) |
-| `decided_at_ms` | Wall-clock when the prediction was made |
-| `asset`, `period` | Self-explanatory |
-| `prediction` | `'u'` or `'d'` |
-| `synth_open` | Pyth price snapshotted at T-5s — used as the bar's synthetic open |
-| `regime_votes` | JSON `{up, down, abstain}` totals across the regime roster |
-| `actual_close` | Filled in once the target bar settles |
-| `won` | 0/1, null until scored |
-| `market_regime` | Classifier's read at decision time |
+| Column            | Meaning                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `id`              | bigserial PK                                                         |
+| `ts_ms`           | Open-time of the target bar (the bar being predicted)                |
+| `decided_at_ms`   | Wall-clock when the prediction was made                              |
+| `asset`, `period` | Self-explanatory                                                     |
+| `prediction`      | `'u'` or `'d'`                                                       |
+| `synth_open`      | Pyth price snapshotted at T-5s — used as the bar's synthetic open    |
+| `regime_votes`    | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
+| `actual_close`    | Filled in once the target bar settles                                |
+| `won`             | 0/1, null until scored                                               |
+| `market_regime`   | Classifier's read at decision time                                   |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when
@@ -139,7 +147,9 @@ contract.
 
 The dry-run results render as a separate page on the alea worker
 under `/dryrun/`. The page reads `dry_run_decisions` at build time,
-not live — refresh via `bun alea dashboards:build --deploy`. See
+not live. It also renders the active trade decision constants next to
+the performance metrics so the displayed hit rate is tied to the
+policy that produced it. Refresh via `bun alea dashboards:build --deploy`. See
 [DASHBOARDS.md](./DASHBOARDS.md) for the build contract and
 [`src/lib/dryRun/dashboard/`](../src/lib/dryRun/dashboard/) for the
 loader + renderer.

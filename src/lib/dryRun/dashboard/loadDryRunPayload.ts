@@ -1,5 +1,14 @@
 import "@alea/lib/filters/all";
 
+import {
+  MAX_COMMITTEE_VOTES_PER_FILTER,
+  MIN_COMMITTEE_CONSENSUS_FRACTION,
+  MIN_COMMITTEE_VOTES_TO_TRADE,
+  TRADE_DECISION_FILTER_TIE_BREAK,
+  TRADE_DECISION_HYDRATE_BARS,
+  TRADE_DECISION_LEAD_TIME_MS,
+  TRADE_DECISION_PERIOD,
+} from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type {
@@ -19,7 +28,7 @@ const RECENT_LIMIT = 200;
  *   - Pre-rewrite (array): `[{regime, winner, up, down, abstain}, …]`
  *     — per-filter-family breakdown. We sum the up/down/abstain
  *     across families to recover the total tally.
- *   - Post-rewrite (object): `{up, down, abstain}` — flat tally.
+ *   - Current object: `{up, down, abstain}` — filter-collapsed tally.
  *
  * The dashboard only needs total engagement (up + down) for the
  * "avg engagement" metric, so collapsing both shapes to totals is
@@ -107,11 +116,15 @@ export async function loadDryRunPayload({
         fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
         fn
           .count<string>("id")
-          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]))
+          .filterWhere(
+            eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]),
+          )
           .as("up_settled"),
         fn
           .count<string>("id")
-          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]))
+          .filterWhere(
+            eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]),
+          )
           .as("down_settled"),
       ])
       .groupBy("asset")
@@ -148,11 +161,15 @@ export async function loadDryRunPayload({
         fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
         fn
           .count<string>("id")
-          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]))
+          .filterWhere(
+            eb.and([eb("won", "is not", null), eb("prediction", "=", "u")]),
+          )
           .as("up_settled"),
         fn
           .count<string>("id")
-          .filterWhere(eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]))
+          .filterWhere(
+            eb.and([eb("won", "is not", null), eb("prediction", "=", "d")]),
+          )
           .as("down_settled"),
       ])
       .groupBy("market_regime")
@@ -268,6 +285,15 @@ export async function loadDryRunPayload({
 
   return {
     generatedAtMs: now(),
+    decisionConfig: {
+      period: TRADE_DECISION_PERIOD,
+      leadTimeMs: TRADE_DECISION_LEAD_TIME_MS,
+      hydratedBars: TRADE_DECISION_HYDRATE_BARS,
+      maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
+      minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
+      minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
+      filterTieBreak: TRADE_DECISION_FILTER_TIE_BREAK,
+    },
     summary,
     perAsset,
     perRegime,

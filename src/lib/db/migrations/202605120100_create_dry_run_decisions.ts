@@ -16,7 +16,8 @@ import { type Kysely, sql } from "kysely";
  * - `synth_open`: the price used as the synthetic prior-bar close
  *   (and the assumed open of the target bar). Stored so the
  *   dashboard can show "we predicted UP from $63,841.20".
- * - `regime_votes`: jsonb dump of the per-regime tally for audit.
+ * - `regime_votes`: jsonb dump of the filter-collapsed committee
+ *   tally for audit.
  * - `actual_close`: filled in later (`null` until the target bar
  *   actually closes) — the canonical close from `candles` once
  *   the bar settles. Used to determine `won`.

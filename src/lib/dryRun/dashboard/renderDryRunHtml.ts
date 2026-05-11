@@ -39,9 +39,7 @@ export function renderDryRunHtml({
 }): string {
   const summary = payload.summary;
   const wr =
-    summary.winRate === null
-      ? "—"
-      : formatPercent({ value: summary.winRate });
+    summary.winRate === null ? "—" : formatPercent({ value: summary.winRate });
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const wrToneClass = winRateToneClass({ value: summary.winRate });
   const recentRows = payload.recent.slice(0, RECENT_TABLE_LIMIT);
@@ -97,9 +95,54 @@ export function renderDryRunHtml({
               : summary.avgEngagement.toLocaleString(undefined, {
                   maximumFractionDigits: 1,
                 }),
-          sub: "candidates voting up or down per actionable decision",
+          sub: "filter-collapsed votes per actionable decision",
           tip: DR_TIPS.avgEngagement,
         })}
+      </section>
+
+      <section class="alea-card with-corners">
+        <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
+        <div class="dry-run-config-grid">
+          ${renderConfigItem({
+            label: "Period",
+            value: payload.decisionConfig.period,
+            sub: "committee roster bucket",
+          })}
+          ${renderConfigItem({
+            label: "Decision Lead",
+            value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
+            sub: "before target candle open",
+          })}
+          ${renderConfigItem({
+            label: "Hydrated Bars",
+            value: payload.decisionConfig.hydratedBars.toLocaleString(),
+            sub: "startup history per asset",
+          })}
+          ${renderConfigItem({
+            label: "Max Votes / Filter",
+            value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
+            sub: "highest-WR engaged config wins",
+          })}
+          ${renderConfigItem({
+            label: "Min Votes",
+            value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
+            sub: "after filter-level collapse",
+          })}
+          ${renderConfigItem({
+            label: "Consensus",
+            value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
+            sub: "ties still abstain",
+          })}
+          <div class="dry-run-config-wide">
+            ${renderConfigItem({
+              label: "Filter Tie Break",
+              value: formatFilterTieBreak({
+                value: payload.decisionConfig.filterTieBreak,
+              }),
+              sub: "when multiple configs engage",
+            })}
+          </div>
+        </div>
       </section>
 
       <section class="alea-card with-corners">
@@ -324,6 +367,30 @@ function renderMetric({
   `;
 }
 
+function renderConfigItem({
+  label,
+  value,
+  sub,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly sub: string;
+}): string {
+  return `
+    <div class="dry-run-config-item">
+      <span class="dry-run-config-label">${escapeHtml({ value: label })}</span>
+      <span class="dry-run-config-value">${escapeHtml({ value })}</span>
+      <span class="dry-run-config-sub">${escapeHtml({ value: sub })}</span>
+    </div>`;
+}
+
+function formatFilterTieBreak({ value }: { readonly value: string }): string {
+  if (value === "highest_win_rate_then_engagements_then_rank") {
+    return "win rate > engagements > rank";
+  }
+  return value;
+}
+
 /**
  * Plain-English tooltips for the dry-run dashboard. Surface every
  * table column header and metric label so a non-author landing on
@@ -337,7 +404,7 @@ const DR_TIPS = {
     "All dry-run calls made. Pending calls are waiting for the target bar to close.",
   candidates: "Committee filter configs available to vote.",
   avgEngagement:
-    "Average number of candidates that actually voted on an actionable call.",
+    "Average number of filter-collapsed votes on an actionable call.",
   regimeName:
     "Market state at decision time: volatility plus trending/ranging.",
   callsRegime: "Settled calls made in this regime.",
@@ -356,4 +423,3 @@ const DR_TIPS = {
   directionSplit:
     "How the committee's settled calls split between UP (↑) and DOWN (↓) in this slice. A heavy lean hints at a one-way bias.",
 };
-

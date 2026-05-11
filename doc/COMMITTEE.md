@@ -4,7 +4,7 @@ The committee is what turns a roomful of small predictive filters
 into a single trade direction. At decision time it classifies the
 market regime, looks up which candidates qualified to vote in that
 regime, evaluates each one on the current bar window, and takes a
-simple majority of the non-abstain votes.
+trade decision from the filtered vote tally.
 
 The same logic drives the dry-run loop today and will drive live
 trading when it ships. There is no separate "live committee".
@@ -18,7 +18,8 @@ DB table. Selection is **manual** — operator runs it after a fresh
 
 **Evaluation** runs every 5-minute boundary, inside the dry-run /
 live loop. Classify the bar's regime → look up the roster for
-`(regime, period)` → evaluate each candidate → simple majority.
+`(regime, period)` → evaluate each candidate → apply the shared trade
+decision policy.
 
 ## Selection: eligibility + ranking
 
@@ -83,7 +84,7 @@ in practice).
 ## Evaluation
 
 The dry-run loop loads the table once at startup into an in-memory
-roster (`(regime, period) → Set<candidateKey>`). See
+roster (`(regime, period) → selected candidate keys + stats`). See
 [`loadCommitteeRoster`](../src/lib/committee/selection/loadCommitteeRoster.ts).
 
 At each 5-minute boundary the loop:
@@ -95,15 +96,39 @@ At each 5-minute boundary the loop:
 3. Looks up the roster bucket for `(marketRegime, "5m")`.
    - Empty bucket → abstain entirely.
 4. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
-   Each candidate's `predict` runs; votes are collected.
-5. Simple majority of `(up, down)` wins; tie or all-abstain → no
-   decision.
+   Each selected candidate config's `predict` runs; votes are
+   collected with the selection-time win rate.
+5. Collapse to at most one active vote per `filter_id`. If multiple
+   configs for the same filter engage, the engaged config with the
+   highest selected-regime `win_rate` is the one that counts. Abstain
+   configs do not block a lower-WR engaged config for the same filter.
+6. Apply the trade decision constants: minimum non-abstain votes,
+   consensus fraction, and tie handling.
 
-[`aggregateCommittee`](../src/lib/committee/aggregate.ts) is one
-function, ~15 lines: tally up/down/abstain, strict majority wins.
-**No regime grouping inside the committee** — that's the selector's
-job. By the time votes reach the aggregator they're already
-filtered to the right regime.
+[`aggregateCommittee`](../src/lib/committee/aggregate.ts) is the
+shared policy function. It has no dry-run-specific behavior. Live
+trading must call the same evaluator/aggregator before placing an
+order so dry-run and live voting stay identical.
+
+## Trade decision constants
+
+Critical decision settings live in
+[`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
+
+| Constant                           |    Default | Meaning                                                                             |
+| ---------------------------------- | ---------: | ----------------------------------------------------------------------------------- |
+| `TRADE_DECISION_PERIOD`            |       `5m` | Roster period used by the current decision loop                                     |
+| `TRADE_DECISION_LEAD_TIME_MS`      |     `5000` | Snapshot/live decision lead before target candle open                               |
+| `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
+| `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `1` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_CONSENSUS_FRACTION` |      `0.5` | Winning side must hold at least this share; ties still abstain                      |
+| `TRADE_DECISION_FILTER_TIE_BREAK`  | highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
+
+With the current constants, the final decision is simple majority
+after filter-level vote collapse. A single engaged filter can trade;
+raising `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both dry-run
+and live.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See
@@ -141,12 +166,15 @@ against the dry-run loop will behave identically in live trading.
 ## Files
 
 - [`src/lib/committee/aggregate.ts`](../src/lib/committee/aggregate.ts) —
-  simple-majority aggregator. Pure.
+  shared trade-decision vote policy. Pure.
 - [`src/lib/committee/runCommittee.ts`](../src/lib/committee/runCommittee.ts) —
   `evaluateCommittee` — runs each candidate's `predict` on a bar
   window, returns the aggregated decision + per-candidate vote log.
 - [`src/lib/committee/types.ts`](../src/lib/committee/types.ts) —
   `CandidateVote`, `CommitteeDecision`.
+- [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts) —
+  decision-period, lead-time, one-vote-per-filter, vote-count, and
+  consensus constants.
 - [`src/lib/committee/selection/`](../src/lib/committee/selection/) —
   eligibility rules, the pure selector, the regime-stats loader,
   the roster loader, and persistence.

@@ -1,6 +1,11 @@
 import "@alea/lib/filters/all";
 
 import {
+  TRADE_DECISION_HYDRATE_BARS,
+  TRADE_DECISION_LEAD_TIME_MS,
+  TRADE_DECISION_PERIOD,
+} from "@alea/constants/tradeDecision";
+import {
   evaluateCommittee,
   listCommitteeCandidates,
 } from "@alea/lib/committee/runCommittee";
@@ -10,6 +15,7 @@ import {
   loadCommitteeRoster,
   rosterBucketKey,
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
+import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadRecentBars } from "@alea/lib/dryRun/loadRecentBars";
 import type { DryRunAssetState } from "@alea/lib/dryRun/types";
@@ -20,21 +26,6 @@ import type { MarketRegime } from "@alea/lib/regime/types";
 import type { Asset } from "@alea/types/assets";
 
 const FIVE_MIN_MS = 5 * 60 * 1000;
-const PERIOD_LABEL = "5m";
-/**
- * How many seconds before the next 5m boundary we snapshot the
- * Pyth price as the synthetic close. The user picked 5 seconds —
- * close enough to the true close that the synthetic ≈ actual, but
- * far enough that an order placed on Polymarket has time to
- * actually sit on the book.
- */
-const LEAD_TIME_MS = 5 * 1000;
-/**
- * Bar-history depth hydrated from the candles table at startup.
- * Big enough to cover the longest filter's requiredBars (~100 at
- * 5m) plus headroom for any future filter additions.
- */
-const HYDRATE_DEPTH = 150;
 
 export type DryRunHandle = {
   readonly stop: () => Promise<void>;
@@ -89,12 +80,12 @@ export type DryRunLogEvent =
  *
  * Operations:
  *   1. Hydrate per-asset bar buffer from `candles` (most recent
- *      HYDRATE_DEPTH closed 5m bars per asset).
+ *      trade-decision history bars per asset).
  *   2. Subscribe to Pyth Hermes for the requested assets. Each
  *      tick updates the current-bar accumulator; tick boundary
  *      transitions finalize the just-closed bar AND score any
  *      pending decisions whose target was that bar.
- *   3. Schedule a tick that fires `LEAD_TIME_MS` before each 5m
+ *   3. Schedule a tick that fires before each 5m
  *      boundary: snapshot the current Pyth price as the synthetic
  *      close of the about-to-finalize bar, build a synthetic bar
  *      object, run the committee, and persist the decision if it's
@@ -112,7 +103,11 @@ export async function runDryRun({
   const states = new Map<Asset, DryRunAssetState>();
   // Hydrate.
   for (const asset of assets) {
-    const bars = await loadRecentBars({ db, asset, limit: HYDRATE_DEPTH });
+    const bars = await loadRecentBars({
+      db,
+      asset,
+      limit: TRADE_DECISION_HYDRATE_BARS,
+    });
     states.set(asset, {
       asset,
       bars,
@@ -126,12 +121,12 @@ export async function runDryRun({
   const roster = await loadCommitteeRoster({ db });
   {
     let total = 0;
-    for (const set of roster.byKey.values()) {
-      total += set.size;
+    for (const bucket of roster.byBucket.values()) {
+      total += bucket.length;
     }
     log({
       kind: "roster",
-      bucketCount: roster.byKey.size,
+      bucketCount: roster.byBucket.size,
       totalCandidates: total,
       selectedAtMs: roster.selectedAtMs,
     });
@@ -220,7 +215,7 @@ export async function runDryRun({
       try {
         const now = Date.now();
         const nextBoundary = Math.ceil(now / FIVE_MIN_MS) * FIVE_MIN_MS;
-        const fireTime = nextBoundary - LEAD_TIME_MS;
+        const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
         if (now >= fireTime) {
           for (const state of states.values()) {
             if (state.lastPredictedBoundary >= nextBoundary) {
@@ -296,16 +291,23 @@ async function makePrediction({
   // classifier can't decide a regime (early-history, can't happen
   // post-hydration in practice) we abstain entirely — no decision,
   // no DB row.
-  const rosterCandidates: Candidate[] = [];
+  const rosterCandidates: CommitteeCandidate[] = [];
   if (marketRegime !== null) {
-    const bucket = roster.byKey.get(
-      rosterBucketKey({ marketRegime, period: PERIOD_LABEL }),
+    const bucket = roster.byBucket.get(
+      rosterBucketKey({ marketRegime, period: TRADE_DECISION_PERIOD }),
     );
     if (bucket !== undefined) {
-      for (const key of bucket) {
-        const cand = candidatesByKey.get(key);
+      for (const member of bucket) {
+        const cand = candidatesByKey.get(member.key);
         if (cand !== undefined) {
-          rosterCandidates.push(cand);
+          rosterCandidates.push({
+            candidate: cand,
+            selection: {
+              winRate: member.winRate,
+              nEngagements: member.nEngagements,
+              rank: member.rank,
+            },
+          });
         }
       }
     }
@@ -342,18 +344,17 @@ async function makePrediction({
   // prior bar AND the open we're betting the next bar moves away
   // from.
   //
-  // `regime_votes` keeps its legacy column name but now stores the
-  // flat candidate tally — `{up, down, abstain}` — since the
-  // committee no longer groups by filter family. Old rows from
-  // before this change still hold the array-shaped per-family
-  // breakdown; the dashboard loader handles both formats.
+  // `regime_votes` keeps its legacy column name but stores the
+  // filter-collapsed decision tally — `{up, down, abstain}`. Old
+  // rows from before this change still hold the array-shaped
+  // per-family breakdown; the dashboard loader handles both formats.
   const inserted = await db
     .insertInto("dry_run_decisions")
     .values({
       ts_ms: targetTsMs,
       decided_at_ms: Date.now(),
       asset: state.asset,
-      period: PERIOD_LABEL,
+      period: TRADE_DECISION_PERIOD,
       prediction,
       synth_open: cur.close,
       regime_votes: JSON.stringify({
@@ -387,8 +388,8 @@ async function finalizeAndScore({
   // Append the bar to the rolling buffer; trim to avoid unbounded
   // growth.
   state.bars.push(closedBar);
-  if (state.bars.length > HYDRATE_DEPTH * 2) {
-    state.bars = state.bars.slice(-HYDRATE_DEPTH);
+  if (state.bars.length > TRADE_DECISION_HYDRATE_BARS * 2) {
+    state.bars = state.bars.slice(-TRADE_DECISION_HYDRATE_BARS);
   }
   // Score any pending decisions whose target was THIS bar.
   const pending = pendingByAsset.get(state.asset);

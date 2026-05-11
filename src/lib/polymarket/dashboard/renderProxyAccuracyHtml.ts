@@ -11,12 +11,7 @@ import {
 } from "@alea/lib/ui/aleaDesignSystem";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
-/**
- * Renders the proxy-accuracy dashboard — "is Pyth a reliable proxy
- * for Polymarket's Chainlink-settled crypto markets?" Aggregates show
- * agreement rate per (timeframe, asset), and the histograms make the
- * "tiny candle vs. clear-direction disagreement" story visible.
- */
+/** Renders the proxy-accuracy dashboard. */
 export function renderProxyAccuracyHtml({
   payload,
   assets,
@@ -44,25 +39,10 @@ export function renderProxyAccuracyHtml({
     <header class="alea-header">
       <div class="alea-brand-row">${aleaBrandMark()}</div>
       <h1 class="alea-title">Proxy Accuracy</h1>
-      <p class="alea-subtitle">Pyth open/close vs. Polymarket Chainlink settlement &middot; ${subtitle}</p>
+      <p class="alea-subtitle">${subtitle}</p>
     </header>
     ${renderTopNav({ activeId: "proxy" })}
     <main class="alea-main">
-      <section class="alea-card with-corners proxy-intro">
-        <p>
-          Each row pairs a Polymarket up/down crypto market's
-          ${tip({
-            text: "Polymarket settles these with Chainlink Data Streams' BTC/USD (and equivalents).",
-            label: "Chainlink-derived settlement",
-          })} with the Pyth open/close for the same window. If they
-          agree directionally, Pyth is faithful at that bar. If they
-          disagree, the question is "how big was the Pyth move?" —
-          tiny moves (sub-bp) flip easily on boundary jitter, but
-          clear-direction disagreements would have trained or traded
-          us against the actual settled side.
-        </p>
-      </section>
-
       <section class="alea-summary-grid cols-4">
         ${renderMetric({
           label: "Polymarket Rows",
@@ -389,18 +369,8 @@ function renderMetric({
   `;
 }
 
-function tip({
-  text,
-  label,
-}: {
-  readonly text: string;
-  readonly label?: string;
-}): string {
-  const tag = ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({ value: text })}" aria-label="${escapeHtml({ value: text })}"></span>`;
-  if (label === undefined) {
-    return tag;
-  }
-  return `<span class="proxy-tip-label">${escapeHtml({ value: label })}</span>${tag}`;
+function tip({ text }: { readonly text: string }): string {
+  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({ value: text })}" aria-label="${escapeHtml({ value: text })}"></span>`;
 }
 
 function agreementTone({
@@ -460,10 +430,7 @@ function formatWindowRange({
   if (firstMs === null || lastMs === null) {
     return "—";
   }
-  const days = Math.max(
-    1,
-    Math.round((lastMs - firstMs) / 86_400_000),
-  );
+  const days = Math.max(1, Math.round((lastMs - firstMs) / 86_400_000));
   return `${days} d`;
 }
 

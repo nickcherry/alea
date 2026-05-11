@@ -112,7 +112,9 @@ export interface FilterEngagementTable {
 }
 
 /**
- * One row per committee decision made by the dry-run runner. See
+ * One row per committee decision made by the dry-run runner. The
+ * vote tally stored in `regime_votes` is after the shared
+ * one-vote-per-filter policy. See
  * migration `202605120100_create_dry_run_decisions.ts` for the
  * column-by-column rationale. `actual_close` / `won` start null
  * and get filled in once the target bar settles.

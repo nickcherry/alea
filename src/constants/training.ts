@@ -3,7 +3,7 @@
  * Pyth candle becomes a training outcome. Example: 0.01 means
  * 0.01%, not 0.01 as a fraction.
  */
-export const TRAINING_OUTCOME_MIN_ABS_MOVE_PCT = 0.01;
+export const TRAINING_OUTCOME_MIN_ABS_MOVE_PCT = 0.02;
 
 /**
  * Persisted on derived backtest rows so old labels are not reused after

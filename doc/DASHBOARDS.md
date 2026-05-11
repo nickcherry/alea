@@ -241,7 +241,8 @@ needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
 it with a warning so the rest of the site can still rebuild. The
 exploration page builds from `filter_runs` + `bar_regimes`, the trade
 committee page builds from `committee_selections`, and the dry-run page
-builds from `dry_run_decisions` — all three work without trading creds.
+builds from `dry_run_decisions` plus the shared trade-decision constants
+shown on the page — all three work without trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
