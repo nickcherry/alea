@@ -1,12 +1,13 @@
+import "@alea/lib/filters/all";
+
 import { assetValues } from "@alea/constants/assets";
+import { runBacktestForCandidate } from "@alea/lib/backtest/runBacktest";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
-import "@alea/lib/filters/all";
 import { allCandidates } from "@alea/lib/filters/registry";
 import type { FilterBar } from "@alea/lib/filters/types";
-import { runBacktestForCandidate } from "@alea/lib/backtest/runBacktest";
 import type { Asset } from "@alea/types/assets";
 import { assetSchema } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
@@ -42,11 +43,7 @@ export const backtestRunCommand = defineCommand({
         .transform((v) =>
           v === undefined ? undefined : v.split(",").map((s) => s.trim()),
         )
-        .pipe(
-          z
-            .array(candleTimeframeSchema)
-            .default([...SUPPORTED_PERIODS]),
-        )
+        .pipe(z.array(candleTimeframeSchema).default([...SUPPORTED_PERIODS]))
         .describe(
           `Candle periods to evaluate (default: ${SUPPORTED_PERIODS.join(",")}).`,
         ),
@@ -91,10 +88,12 @@ export const backtestRunCommand = defineCommand({
     "Reads `candles` (pyth/spot only). Upserts into `filter_runs`. No network.",
   async run({ io, options }) {
     const candidates = allCandidates();
-    const restrictTo = options.filters.length > 0 ? new Set(options.filters) : null;
-    const selected = restrictTo === null
-      ? candidates
-      : candidates.filter((c) => restrictTo.has(c.filterId));
+    const restrictTo =
+      options.filters.length > 0 ? new Set(options.filters) : null;
+    const selected =
+      restrictTo === null
+        ? candidates
+        : candidates.filter((c) => restrictTo.has(c.filterId));
     if (selected.length === 0) {
       io.writeStdout(pc.yellow("no candidates matched filter list\n"));
       return;
@@ -175,9 +174,10 @@ async function loadBars({
     .orderBy("timestamp", "asc")
     .execute();
   return rows.map((r) => ({
-    openTimeMs: r.timestamp instanceof Date
-      ? r.timestamp.getTime()
-      : new Date(r.timestamp).getTime(),
+    openTimeMs:
+      r.timestamp instanceof Date
+        ? r.timestamp.getTime()
+        : new Date(r.timestamp).getTime(),
     open: r.open,
     high: r.high,
     low: r.low,

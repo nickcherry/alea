@@ -45,7 +45,9 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 
 .regime-tab:hover {
@@ -53,7 +55,11 @@
 }
 
 .regime-tab[aria-selected="true"] {
-  background: linear-gradient(180deg, rgba(215, 170, 69, 0.18), rgba(215, 170, 69, 0.08));
+  background: linear-gradient(
+    180deg,
+    rgba(215, 170, 69, 0.18),
+    rgba(215, 170, 69, 0.08)
+  );
   color: var(--alea-text);
   box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
 }
@@ -71,7 +77,9 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 
 .period-tab:hover {
@@ -79,7 +87,11 @@
 }
 
 .period-tab[aria-selected="true"] {
-  background: linear-gradient(180deg, rgba(215, 170, 69, 0.18), rgba(215, 170, 69, 0.08));
+  background: linear-gradient(
+    180deg,
+    rgba(215, 170, 69, 0.18),
+    rgba(215, 170, 69, 0.08)
+  );
   color: var(--alea-text);
   box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
 }
@@ -93,7 +105,6 @@
   flex-direction: column;
   gap: 14px;
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Filter card                                                         */
@@ -168,7 +179,9 @@
   display: inline-block;
   color: var(--alea-text-subtle);
   font-size: 12px;
-  transition: transform 0.12s ease, color 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    color 0.12s ease;
   transform: rotate(90deg);
 }
 
@@ -204,7 +217,7 @@
   color: var(--alea-text);
 }
 
-.filter-card-regime {
+.filter-card-family {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
@@ -390,7 +403,11 @@
   align-items: stretch;
   gap: 2px;
   padding: 0 2px;
-  background: linear-gradient(180deg, rgba(15, 27, 18, 0.4), rgba(7, 9, 10, 0.2));
+  background: linear-gradient(
+    180deg,
+    rgba(15, 27, 18, 0.4),
+    rgba(7, 9, 10, 0.2)
+  );
   border: 1px solid var(--alea-border-faint);
   border-radius: 4px;
 }

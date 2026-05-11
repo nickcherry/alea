@@ -1,4 +1,3 @@
-import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
 import {
   baselineReliabilitySource,
   comparableReliabilitySourceValues,
@@ -6,6 +5,7 @@ import {
   type ReliabilityAssetWindow,
   type ReliabilitySourceCell,
 } from "@alea/lib/reliability/types";
+import { FIVE_MINUTES_MS } from "@alea/lib/time/fiveMinuteWindow";
 import pc from "picocolors";
 
 function labelAsset(asset: string): string {

@@ -1,4 +1,9 @@
+import "@alea/lib/filters/all";
+
 import type { DatabaseClient } from "@alea/lib/db/types";
+import { loadFilterPeerOverlaps } from "@alea/lib/exploration/loadFilterPeerOverlaps";
+import { loadQuarterAggregates } from "@alea/lib/exploration/loadQuarterAggregates";
+import { loadRegimeAggregates } from "@alea/lib/exploration/loadRegimeAggregates";
 import type {
   ExplorationCandidateRow,
   ExplorationPayload,
@@ -7,10 +12,8 @@ import type {
   FilterPeerOverlap,
 } from "@alea/lib/exploration/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
-import "@alea/lib/filters/all";
 import { getFilter } from "@alea/lib/filters/registry";
-import type { Regime } from "@alea/lib/filters/types";
-import { sql } from "kysely";
+import type { FilterFamily } from "@alea/lib/filters/types";
 
 const TOP_PEERS_PER_FILTER = 5;
 
@@ -36,43 +39,45 @@ export async function loadExplorationPayload({
 }): Promise<ExplorationPayload> {
   const [perAssetRows, quarterRows, peerOverlapRows, regimeRows] =
     await Promise.all([
-    db
-      .selectFrom("filter_runs")
-      .select([
-        "run_hash",
-        "filter_id",
-        "filter_version",
-        "config",
-        "config_canon",
-        "period",
-        "asset",
-        "n_bars",
-        "n_fires_up",
-        "n_wins_up",
-        "n_fires_down",
-        "n_wins_down",
-      ])
-      .execute(),
-    loadQuarterAggregates({ db }),
-    loadFilterPeerOverlaps({ db }),
-    loadRegimeAggregates({ db }),
-  ]);
+      db
+        .selectFrom("filter_runs")
+        .select([
+          "run_hash",
+          "filter_id",
+          "filter_version",
+          "config",
+          "config_canon",
+          "period",
+          "asset",
+          "n_bars",
+          "n_fires_up",
+          "n_wins_up",
+          "n_fires_down",
+          "n_wins_down",
+        ])
+        .execute(),
+      loadQuarterAggregates({ db }),
+      loadFilterPeerOverlaps({ db }),
+      loadRegimeAggregates({ db }),
+    ]);
 
   // Index the peer-overlap table by (period, filterId) so we can
   // tack the top-K peers onto each row's payload below.
   const peersByPeriodFilter = new Map<string, FilterPeerOverlap[]>();
   for (const row of peerOverlapRows) {
-    const aReg = regimeOf(row.filterA);
-    const bReg = regimeOf(row.filterB);
-    if (aReg === null || bReg === null) continue;
+    const aFamily = familyOf(row.filterA);
+    const bFamily = familyOf(row.filterB);
+    if (aFamily === null || bFamily === null) {
+      continue;
+    }
     pushPeer(peersByPeriodFilter, row.period, row.filterA, {
       otherFilterId: row.filterB,
-      otherRegime: bReg,
+      otherFamily: bFamily,
       jaccard: row.jaccard,
     });
     pushPeer(peersByPeriodFilter, row.period, row.filterB, {
       otherFilterId: row.filterA,
-      otherRegime: aReg,
+      otherFamily: aFamily,
       jaccard: row.jaccard,
     });
   }
@@ -167,9 +172,13 @@ export async function loadExplorationPayload({
   // total.
   for (const q of quarterRows) {
     const key = runHashToBucketKey.get(q.run_hash);
-    if (key === undefined) continue;
+    if (key === undefined) {
+      continue;
+    }
     const b = buckets.get(key);
-    if (b === undefined) continue;
+    if (b === undefined) {
+      continue;
+    }
     const label = `${q.year}-Q${q.quarter}`;
     let qb = b.quartersByLabel.get(label);
     if (qb === undefined) {
@@ -194,9 +203,13 @@ export async function loadExplorationPayload({
   // headline regime total.
   for (const rr of regimeRows) {
     const key = runHashToBucketKey.get(rr.run_hash);
-    if (key === undefined) continue;
+    if (key === undefined) {
+      continue;
+    }
     const b = buckets.get(key);
-    if (b === undefined) continue;
+    if (b === undefined) {
+      continue;
+    }
     let rb = b.regimes.get(rr.market_regime);
     if (rb === undefined) {
       rb = {
@@ -245,21 +258,22 @@ export async function loadExplorationPayload({
         winRate: qb.nFires === 0 ? null : qb.nWins / qb.nFires,
       }))
       .sort((a, c) => {
-        if (a.year !== c.year) return a.year - c.year;
+        if (a.year !== c.year) {
+          return a.year - c.year;
+        }
         return a.quarter - c.quarter;
       });
     const quarterRates = quarters
       .map((q) => q.winRate)
       .filter((v): v is number => v !== null);
-    const regime = regimeOf(b.filterId);
-    if (regime === null) {
+    const family = familyOf(b.filterId);
+    if (family === null) {
       // Filter row exists in `filter_runs` but the file isn't
       // registered (deleted but rows not yet purged). Skip — it
       // shouldn't appear on the dashboard.
       continue;
     }
-    const topPeers =
-      peersByPeriodFilter.get(`${b.period}|${b.filterId}`) ?? [];
+    const topPeers = peersByPeriodFilter.get(`${b.period}|${b.filterId}`) ?? [];
     const byRegime: Record<string, ExplorationRegimeStats> = {};
     for (const [regime, stats] of b.regimes.entries()) {
       const rFires = stats.nFiresUp + stats.nFiresDown;
@@ -277,7 +291,9 @@ export async function loadExplorationPayload({
           winRate: qb.nFires === 0 ? null : qb.nWins / qb.nFires,
         }))
         .sort((a, c) => {
-          if (a.year !== c.year) return a.year - c.year;
+          if (a.year !== c.year) {
+            return a.year - c.year;
+          }
           return a.quarter - c.quarter;
         });
       const rQuarterRates = rQuarters
@@ -291,14 +307,11 @@ export async function loadExplorationPayload({
         ciHigh: rFires === 0 ? 0 : rci.high,
         nFiresUp: stats.nFiresUp,
         nWinsUp: stats.nWinsUp,
-        winRateUp:
-          stats.nFiresUp === 0 ? null : stats.nWinsUp / stats.nFiresUp,
+        winRateUp: stats.nFiresUp === 0 ? null : stats.nWinsUp / stats.nFiresUp,
         nFiresDown: stats.nFiresDown,
         nWinsDown: stats.nWinsDown,
         winRateDown:
-          stats.nFiresDown === 0
-            ? null
-            : stats.nWinsDown / stats.nFiresDown,
+          stats.nFiresDown === 0 ? null : stats.nWinsDown / stats.nFiresDown,
         quarters: rQuarters,
         quarterWinRateMin:
           rQuarterRates.length === 0 ? null : Math.min(...rQuarterRates),
@@ -330,7 +343,7 @@ export async function loadExplorationPayload({
         quarterRates.length === 0 ? null : Math.min(...quarterRates),
       quarterWinRateMax:
         quarterRates.length === 0 ? null : Math.max(...quarterRates),
-      regime,
+      family,
       topPeers,
       byRegime,
     });
@@ -361,212 +374,9 @@ function bucketKey(row: {
   return `${row.filter_id}|${row.filter_version}|${row.config_canon}|${row.period}`;
 }
 
-/**
- * Internal: pulls all per-(run_hash, year, quarter, direction)
- * counts out of Postgres in one shot. Year/quarter are derived from
- * `ts_ms` via `to_timestamp` — there's no stored quarter column.
- * Pg returns bigint as a string by default; we cast to text and
- * parse client-side since the values fit comfortably in a JS number.
- */
-async function loadQuarterAggregates({
-  db,
-}: {
-  readonly db: DatabaseClient;
-}): Promise<
-  ReadonlyArray<{
-    readonly run_hash: string;
-    readonly year: number;
-    readonly quarter: number;
-    readonly n_fires: number;
-    readonly n_wins: number;
-  }>
-> {
-  const rows = await sql<{
-    run_hash: string;
-    year: number;
-    quarter: number;
-    n_fires: string;
-    n_wins: string;
-  }>`
-    select
-      run_hash,
-      extract(year from to_timestamp(ts_ms / 1000.0))::int as year,
-      extract(quarter from to_timestamp(ts_ms / 1000.0))::int as quarter,
-      count(*)::text as n_fires,
-      coalesce(sum(won), 0)::text as n_wins
-    from filter_engagements
-    group by run_hash, year, quarter
-  `.execute(db);
-
-  return rows.rows.map((r) => ({
-    run_hash: r.run_hash,
-    year: r.year,
-    quarter: r.quarter,
-    n_fires: Number(r.n_fires),
-    n_wins: Number(r.n_wins),
-  }));
-}
-
-/**
- * Computes the Jaccard similarity of co-firing for every pair of
- * (filter family, filter family) per period:
- *
- *   J(A, B) = |bars where A fired ∩ bars where B fired|
- *             ───────────────────────────────────────────
- *             |bars where A fired ∪ bars where B fired|
- *
- * Filter-family level (not per-config) — the union of all of that
- * filter's configs' fires defines its "fire-bar set". Two
- * configurations of the same filter shouldn't count as separate
- * peers; that's why we union them.
- *
- * Implementation: SQL self-join through a deduplicated
- * `(filter_id, period, asset, ts_ms)` view. Postgres handles the
- * 21² × 2 periods table; the inner self-join is bounded by the
- * average number of filters firing per bar.
- */
-async function loadFilterPeerOverlaps({
-  db,
-}: {
-  readonly db: DatabaseClient;
-}): Promise<
-  ReadonlyArray<{
-    readonly period: string;
-    readonly filterA: string;
-    readonly filterB: string;
-    readonly jaccard: number;
-  }>
-> {
-  const rows = await sql<{
-    period: string;
-    filter_a: string;
-    filter_b: string;
-    shared: string;
-    total_a: string;
-    total_b: string;
-  }>`
-    with filter_fire_bars as (
-      select distinct
-        fr.filter_id,
-        fr.period,
-        fr.asset,
-        fe.ts_ms
-      from filter_runs fr
-      join filter_engagements fe on fe.run_hash = fr.run_hash
-    ),
-    filter_totals as (
-      select filter_id, period, count(*) as total
-      from filter_fire_bars
-      group by filter_id, period
-    ),
-    pair_shared as (
-      select
-        a.filter_id as filter_a,
-        b.filter_id as filter_b,
-        a.period as period,
-        count(*) as shared
-      from filter_fire_bars a
-      join filter_fire_bars b
-        on a.period = b.period
-        and a.asset = b.asset
-        and a.ts_ms = b.ts_ms
-       and a.filter_id < b.filter_id
-      group by a.filter_id, b.filter_id, a.period
-    )
-    select
-      p.period,
-      p.filter_a,
-      p.filter_b,
-      p.shared::text as shared,
-      ta.total::text as total_a,
-      tb.total::text as total_b
-    from pair_shared p
-    join filter_totals ta on ta.filter_id = p.filter_a and ta.period = p.period
-    join filter_totals tb on tb.filter_id = p.filter_b and tb.period = p.period
-  `.execute(db);
-
-  return rows.rows.map((r) => {
-    const shared = Number(r.shared);
-    const totalA = Number(r.total_a);
-    const totalB = Number(r.total_b);
-    const union = totalA + totalB - shared;
-    const jaccard = union === 0 ? 0 : shared / union;
-    return {
-      period: r.period,
-      filterA: r.filter_a,
-      filterB: r.filter_b,
-      jaccard,
-    };
-  });
-}
-
-/**
- * Per-(run_hash, market_regime, direction, year, quarter) fire/win
- * counts. Joins `filter_engagements` with `bar_regimes` on
- * (asset, period, ts_ms); filter_engagements doesn't carry
- * asset/period directly so we go through `filter_runs`. Rows with a
- * null market_regime (early-history bars where the classifier had
- * < 100 priors) are dropped — they account for ~0.07 % of bars.
- *
- * One query feeds three views: total per-regime, up/down split per
- * regime, and per-(regime, quarter) strip. The TS-side enrichment
- * sums along the appropriate axes.
- */
-async function loadRegimeAggregates({
-  db,
-}: {
-  readonly db: DatabaseClient;
-}): Promise<
-  ReadonlyArray<{
-    readonly run_hash: string;
-    readonly market_regime: string;
-    readonly direction: "u" | "d";
-    readonly year: number;
-    readonly quarter: number;
-    readonly n_fires: number;
-    readonly n_wins: number;
-  }>
-> {
-  const rows = await sql<{
-    run_hash: string;
-    market_regime: string;
-    direction: "u" | "d";
-    year: number;
-    quarter: number;
-    n_fires: string;
-    n_wins: string;
-  }>`
-    select
-      fe.run_hash,
-      br.market_regime,
-      fe.direction,
-      extract(year from to_timestamp(fe.ts_ms / 1000.0))::int as year,
-      extract(quarter from to_timestamp(fe.ts_ms / 1000.0))::int as quarter,
-      count(*)::text as n_fires,
-      coalesce(sum(fe.won), 0)::text as n_wins
-    from filter_engagements fe
-    join filter_runs fr on fr.run_hash = fe.run_hash
-    join bar_regimes br
-      on br.asset = fr.asset
-      and br.period = fr.period
-      and br.ts_ms = fe.ts_ms
-    where br.market_regime is not null
-    group by fe.run_hash, br.market_regime, fe.direction, year, quarter
-  `.execute(db);
-  return rows.rows.map((r) => ({
-    run_hash: r.run_hash,
-    market_regime: r.market_regime,
-    direction: r.direction,
-    year: r.year,
-    quarter: r.quarter,
-    n_fires: Number(r.n_fires),
-    n_wins: Number(r.n_wins),
-  }));
-}
-
-function regimeOf(filterId: string): Regime | null {
+function familyOf(filterId: string): FilterFamily | null {
   const entry = getFilter(filterId);
-  return entry === undefined ? null : entry.filter.regime;
+  return entry === undefined ? null : entry.filter.family;
 }
 
 function pushPeer(

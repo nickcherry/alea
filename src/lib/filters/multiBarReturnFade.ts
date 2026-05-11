@@ -36,7 +36,7 @@ type Config = z.infer<typeof configSchema>;
 export const multiBarReturnFade: Filter<Config> = {
   id: "multi_bar_return_fade",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fades sustained percent moves. If the close has moved up by at least `threshold` over the last `lookback` bars, predict DOWN; symmetric for UP. No mean anchor or volatility normalization — pure cumulative return as the signal. Tests whether sustained drift mean-reverts the same way single-bar bursts do.",
   configSchema,
@@ -65,10 +65,10 @@ export const multiBarReturnFade: Filter<Config> = {
 registerFilter({
   filter: multiBarReturnFade as Filter<unknown>,
   defaultConfigs: () => [
-    {"lookback":5,"threshold":0.03},
-    {"lookback":3,"threshold":0.02},
-    {"lookback":5,"threshold":0.02},
-    {"lookback":3,"threshold":0.01},
-    {"lookback":5,"threshold":0.01},
+    { lookback: 5, threshold: 0.03 },
+    { lookback: 3, threshold: 0.02 },
+    { lookback: 5, threshold: 0.02 },
+    { lookback: 3, threshold: 0.01 },
+    { lookback: 5, threshold: 0.01 },
   ],
 });

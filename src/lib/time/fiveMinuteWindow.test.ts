@@ -4,7 +4,7 @@ import {
   flooredRemainingMinutes,
   nextWindowStartMs,
   remainingInWindowMs,
-} from "@alea/lib/livePrices/fiveMinuteWindow";
+} from "@alea/lib/time/fiveMinuteWindow";
 import { describe, expect, it } from "bun:test";
 
 const T_BOUNDARY = Date.UTC(2026, 0, 1, 0, 5, 0);

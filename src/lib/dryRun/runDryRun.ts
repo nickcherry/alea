@@ -1,14 +1,18 @@
-import { evaluateCommittee, listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
+import "@alea/lib/filters/all";
+
+import {
+  evaluateCommittee,
+  listCommitteeCandidates,
+} from "@alea/lib/committee/runCommittee";
 import {
   candidateRosterKey,
+  type CommitteeRoster,
   loadCommitteeRoster,
   rosterBucketKey,
-  type CommitteeRoster,
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadRecentBars } from "@alea/lib/dryRun/loadRecentBars";
 import type { DryRunAssetState } from "@alea/lib/dryRun/types";
-import "@alea/lib/filters/all";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
@@ -43,7 +47,11 @@ export type DryRunOptions = {
 };
 
 export type DryRunLogEvent =
-  | { readonly kind: "hydrated"; readonly asset: Asset; readonly barCount: number }
+  | {
+      readonly kind: "hydrated";
+      readonly asset: Asset;
+      readonly barCount: number;
+    }
   | { readonly kind: "connected" }
   | { readonly kind: "disconnected"; readonly reason: string }
   | {
@@ -118,7 +126,9 @@ export async function runDryRun({
   const roster = await loadCommitteeRoster({ db });
   {
     let total = 0;
-    for (const set of roster.byKey.values()) total += set.size;
+    for (const set of roster.byKey.values()) {
+      total += set.size;
+    }
     log({
       kind: "roster",
       bucketCount: roster.byKey.size,
@@ -150,9 +160,12 @@ export async function runDryRun({
     assets: [...assets],
     onTick: (tick) => {
       const state = states.get(tick.asset);
-      if (state === undefined) return;
+      if (state === undefined) {
+        return;
+      }
       // Boundary the tick belongs to.
-      const boundary = Math.floor(tick.publishTimeMs / FIVE_MIN_MS) * FIVE_MIN_MS;
+      const boundary =
+        Math.floor(tick.publishTimeMs / FIVE_MIN_MS) * FIVE_MIN_MS;
       if (state.currentBar === null) {
         state.currentBar = {
           openTimeMs: boundary,
@@ -172,7 +185,10 @@ export async function runDryRun({
           pendingByAsset,
           log,
         }).catch((e) =>
-          log({ kind: "error", message: `finalize/score failed: ${String(e)}` }),
+          log({
+            kind: "error",
+            message: `finalize/score failed: ${String(e)}`,
+          }),
         );
         state.currentBar = {
           openTimeMs: boundary,
@@ -184,8 +200,12 @@ export async function runDryRun({
         return;
       }
       // In-progress bar — update HL + latest close.
-      if (tick.price > state.currentBar.high) state.currentBar.high = tick.price;
-      if (tick.price < state.currentBar.low) state.currentBar.low = tick.price;
+      if (tick.price > state.currentBar.high) {
+        state.currentBar.high = tick.price;
+      }
+      if (tick.price < state.currentBar.low) {
+        state.currentBar.low = tick.price;
+      }
       state.currentBar.close = tick.price;
     },
     onConnect: () => log({ kind: "connected" }),
@@ -203,7 +223,9 @@ export async function runDryRun({
         const fireTime = nextBoundary - LEAD_TIME_MS;
         if (now >= fireTime) {
           for (const state of states.values()) {
-            if (state.lastPredictedBoundary >= nextBoundary) continue;
+            if (state.lastPredictedBoundary >= nextBoundary) {
+              continue;
+            }
             state.lastPredictedBoundary = nextBoundary;
             await makePrediction({
               db,
@@ -282,7 +304,9 @@ async function makePrediction({
     if (bucket !== undefined) {
       for (const key of bucket) {
         const cand = candidatesByKey.get(key);
-        if (cand !== undefined) rosterCandidates.push(cand);
+        if (cand !== undefined) {
+          rosterCandidates.push(cand);
+        }
       }
     }
   }
@@ -307,7 +331,9 @@ async function makePrediction({
     down: decision.down,
     abstain: decision.abstain,
   });
-  if (decision.prediction === null) return;
+  if (decision.prediction === null) {
+    return;
+  }
   const prediction = decision.prediction === "up" ? "u" : "d";
   // Persist. The target bar's open = targetTsMs (i.e. the upcoming
   // 5m boundary). Its open price is approximately the current Pyth
@@ -334,7 +360,7 @@ async function makePrediction({
         up: decision.up,
         down: decision.down,
         abstain: decision.abstain,
-      }) as never,
+      }),
       market_regime: marketRegime,
     })
     .returning("id")
@@ -366,9 +392,13 @@ async function finalizeAndScore({
   }
   // Score any pending decisions whose target was THIS bar.
   const pending = pendingByAsset.get(state.asset);
-  if (pending === undefined) return;
+  if (pending === undefined) {
+    return;
+  }
   const decisionId = pending.get(closedBar.openTimeMs);
-  if (decisionId === undefined) return;
+  if (decisionId === undefined) {
+    return;
+  }
   pending.delete(closedBar.openTimeMs);
   // Tie handling matches the backtest: close == open ⇒ "up".
   const actualUp = closedBar.close >= closedBar.open;

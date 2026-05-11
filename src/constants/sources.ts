@@ -7,7 +7,8 @@
  * median across ~10+ first-party publishers (Coinbase, Cboe, Wintermute,
  * Virtu, etc), architecturally closest to Chainlink Data Streams' reporter
  * model. Both are aggregate-style proxies for the price Polymarket
- * settles on; see scripts/source_vs_chainlink.ts.
+ * settles on; see the latency/reliability experiment docs for the
+ * exchange-vs-reference research history.
  */
 export const candleSourceValues = [
   "coinbase",

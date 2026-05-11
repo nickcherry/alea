@@ -1,6 +1,6 @@
 import {
-  scanPolymarketTradingPerformance,
   type DataApiFetch,
+  scanPolymarketTradingPerformance,
   type TradingPerformanceScanProgress,
 } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
 import { describe, expect, it } from "bun:test";

@@ -13,13 +13,17 @@ import { z } from "zod";
  * (fraction of HMA value).
  */
 function wma(values: readonly number[], period: number): number | null {
-  if (values.length < period) return null;
+  if (values.length < period) {
+    return null;
+  }
   let weightedSum = 0;
   let weightSum = 0;
   for (let k = 0; k < period; k += 1) {
     const w = k + 1;
     const v = values[values.length - period + k];
-    if (v === undefined) return null;
+    if (v === undefined) {
+      return null;
+    }
     weightedSum += v * w;
     weightSum += w;
   }
@@ -35,7 +39,7 @@ type Config = z.infer<typeof configSchema>;
 export const hullMaPosition: Filter<Config> = {
   id: "hull_ma_position",
   version: 1,
-  regime: "ma_position",
+  family: "ma_position",
   description:
     "Mean reversion against a Hull Moving Average. Hull MA reduces lag vs. SMA/EMA via stacked WMAs; tests whether the less-laggy baseline gives a cleaner reversion signal.",
   configSchema,
@@ -46,7 +50,9 @@ export const hullMaPosition: Filter<Config> = {
     const half = Math.max(1, Math.floor(p / 2));
     const w1 = wma(closes, half);
     const w2 = wma(closes, p);
-    if (w1 === null || w2 === null) return null;
+    if (w1 === null || w2 === null) {
+      return null;
+    }
     // Build the diff series 2·WMA(p/2) - WMA(p), but we only need
     // its trailing sqrt(p) values for the final WMA. Construct
     // those by sliding the half/full WMAs back through the series.
@@ -56,15 +62,23 @@ export const hullMaPosition: Filter<Config> = {
       const slice = closes.slice(0, i + 1);
       const wh = wma(slice, half);
       const wp = wma(slice, p);
-      if (wh === null || wp === null) continue;
+      if (wh === null || wp === null) {
+        continue;
+      }
       diff.push(2 * wh - wp);
     }
-    if (diff.length < sqp) return null;
+    if (diff.length < sqp) {
+      return null;
+    }
     const hma = wma(diff, sqp);
     const close = closes[closes.length - 1];
-    if (hma === null || close === undefined || hma <= 0) return null;
+    if (hma === null || close === undefined || hma <= 0) {
+      return null;
+    }
     const dev = (close - hma) / hma;
-    if (Math.abs(dev) < config.threshold) return null;
+    if (Math.abs(dev) < config.threshold) {
+      return null;
+    }
     return dev > 0 ? "down" : "up";
   },
 };
@@ -72,10 +86,10 @@ export const hullMaPosition: Filter<Config> = {
 registerFilter({
   filter: hullMaPosition as Filter<unknown>,
   defaultConfigs: () => [
-    {"period":20,"threshold":0.01},
-    {"period":50,"threshold":0.01},
-    {"period":20,"threshold":0.005},
-    {"period":14,"threshold":0.003},
-    {"period":20,"threshold":0.003},
+    { period: 20, threshold: 0.01 },
+    { period: 50, threshold: 0.01 },
+    { period: 20, threshold: 0.005 },
+    { period: 14, threshold: 0.003 },
+    { period: 20, threshold: 0.003 },
   ],
 });

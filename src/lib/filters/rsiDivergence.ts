@@ -1,6 +1,6 @@
-import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter, FilterBar } from "@alea/lib/filters/types";
+import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import { z } from "zod";
 
 /**
@@ -79,7 +79,7 @@ type Config = z.infer<typeof configSchema>;
 export const rsiDivergence: Filter<Config> = {
   id: "rsi_divergence",
   version: 1,
-  regime: "divergence",
+  family: "divergence",
   description:
     "RSI/price divergence. Fires UP on a confirmed pivot low when RSI made a higher-low against a price lower-low (regular bullish divergence — classic reversal pattern); fires DOWN on the symmetric pivot-high case. Hidden continuation divergences are off by default. Pivot definition + bar-gap range match TradingView's Pine `ta.pivothigh / ta.pivotlow` builtins so the signal is identical to the indicator a chart trader would see.",
   configSchema,
@@ -107,8 +107,20 @@ export const rsiDivergence: Filter<Config> = {
       return null;
     }
 
-    const isLow = isPivot({ rsi, idx: pivotIdx, lbL: config.lbL, lbR: config.lbR, kind: "low" });
-    const isHigh = isPivot({ rsi, idx: pivotIdx, lbL: config.lbL, lbR: config.lbR, kind: "high" });
+    const isLow = isPivot({
+      rsi,
+      idx: pivotIdx,
+      lbL: config.lbL,
+      lbR: config.lbR,
+      kind: "low",
+    });
+    const isHigh = isPivot({
+      rsi,
+      idx: pivotIdx,
+      lbL: config.lbL,
+      lbR: config.lbR,
+      kind: "high",
+    });
     if (!isLow && !isHigh) {
       return null;
     }
@@ -246,11 +258,46 @@ function findPriorPivot({
 registerFilter({
   filter: rsiDivergence as Filter<unknown>,
   defaultConfigs: () => [
-    {"lbL":3,"lbR":3,"period":14,"rangeLower":3,"rangeUpper":40,"includeHidden":false},
-    {"lbL":5,"lbR":5,"period":21,"rangeLower":5,"rangeUpper":60,"includeHidden":false},
-    {"lbL":5,"lbR":5,"period":14,"rangeLower":5,"rangeUpper":60,"includeHidden":false},
-    {"lbL":7,"lbR":7,"period":14,"rangeLower":7,"rangeUpper":80,"includeHidden":false},
-    {"lbL":5,"lbR":5,"period":7,"rangeLower":5,"rangeUpper":60,"includeHidden":false},
+    {
+      lbL: 3,
+      lbR: 3,
+      period: 14,
+      rangeLower: 3,
+      rangeUpper: 40,
+      includeHidden: false,
+    },
+    {
+      lbL: 5,
+      lbR: 5,
+      period: 21,
+      rangeLower: 5,
+      rangeUpper: 60,
+      includeHidden: false,
+    },
+    {
+      lbL: 5,
+      lbR: 5,
+      period: 14,
+      rangeLower: 5,
+      rangeUpper: 60,
+      includeHidden: false,
+    },
+    {
+      lbL: 7,
+      lbR: 7,
+      period: 14,
+      rangeLower: 7,
+      rangeUpper: 80,
+      includeHidden: false,
+    },
+    {
+      lbL: 5,
+      lbR: 5,
+      period: 7,
+      rangeLower: 5,
+      rangeUpper: 60,
+      includeHidden: false,
+    },
   ],
 });
 

@@ -31,10 +31,10 @@ export type FilterBar = {
 export type FilterPrediction = "up" | "down" | null;
 
 /**
- * Strategy regime a filter belongs to. Used to group cards on the
+ * Strategy family a filter belongs to. Used to group cards on the
  * exploration dashboard and to drive committee-construction logic
  * later: when picking diversified peers, prefer one filter from each
- * regime over multiple filters from the same one.
+ * family over multiple filters from the same one.
  *
  * Buckets reflect WHAT the filter is testing for, not "is the market
  * currently trending or choppy". Choosing six rather than three keeps
@@ -55,7 +55,7 @@ export type FilterPrediction = "up" | "down" | null;
  *   - `divergence`            — indicator/price disagreement
  *                               (RSI divergence)
  */
-export type Regime =
+export type FilterFamily =
   | "band_reversion"
   | "oscillator_reversion"
   | "velocity_fade"
@@ -91,7 +91,7 @@ export type Filter<TConfig> = {
   readonly id: string;
   readonly version: number;
   readonly description: string;
-  readonly regime: Regime;
+  readonly family: FilterFamily;
   readonly configSchema: z.ZodType<TConfig>;
   readonly requiredBars: (config: TConfig) => number;
   readonly predict: (

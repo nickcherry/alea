@@ -15,8 +15,8 @@ export type CandidateVote = {
  * across every voting candidate. `null` means no actionable signal
  * — either no candidate voted, or up and down ties.
  *
- * `up` / `down` / `abstain` record the tally of all candidates for
- * audit + dashboard analytics.
+ * `up` / `down` / `abstain` record the tally of all evaluated
+ * candidates for audit + dashboard analytics.
  */
 export type CommitteeDecision = {
   readonly prediction: FilterPrediction;

@@ -37,7 +37,7 @@ type Config = z.infer<typeof configSchema>;
 export const keltnerReversion: Filter<Config> = {
   id: "keltner_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Mean-reversion on Keltner channels (middle ± multiplier × ATR). Fires DOWN when close pierces the upper band, UP when it pierces the lower band, abstains otherwise. ATR-anchored sibling of `bollinger_reversion`; running them side-by-side tells us whether std-dev or ATR is the better volatility measure for band-based reversion on crypto bars.",
   configSchema,
@@ -86,10 +86,10 @@ export const keltnerReversion: Filter<Config> = {
 registerFilter({
   filter: keltnerReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":20,"useEma":false,"multiplier":3},
-    {"length":20,"useEma":true,"multiplier":3},
-    {"length":20,"useEma":true,"multiplier":2.5},
-    {"length":20,"useEma":false,"multiplier":2.5},
-    {"length":20,"useEma":false,"multiplier":2},
+    { length: 20, useEma: false, multiplier: 3 },
+    { length: 20, useEma: true, multiplier: 3 },
+    { length: 20, useEma: true, multiplier: 2.5 },
+    { length: 20, useEma: false, multiplier: 2.5 },
+    { length: 20, useEma: false, multiplier: 2 },
   ],
 });

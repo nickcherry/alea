@@ -27,43 +27,61 @@ type Config = z.infer<typeof configSchema>;
 export const tsiMeanRev: Filter<Config> = {
   id: "tsi_meanrev",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Mean reversion on the True Strength Index — double-smoothed momentum oscillator. Smoother than RSI / CMO at the cost of more lag; fires on canonical ±25 extremes by default.",
   configSchema,
   requiredBars: (c) => c.longLen + c.shortLen + 2,
   predict: (config, bars) => {
     const n = bars.length;
-    if (n < 2) return null;
+    if (n < 2) {
+      return null;
+    }
     const deltas: number[] = [];
     const absDeltas: number[] = [];
     for (let k = 1; k < n; k += 1) {
       const a = bars[k - 1]?.close;
       const b = bars[k]?.close;
-      if (a === undefined || b === undefined) return null;
+      if (a === undefined || b === undefined) {
+        return null;
+      }
       const d = b - a;
       deltas.push(d);
       absDeltas.push(Math.abs(d));
     }
     const ema1 = computeEmaSeries({ closes: deltas, period: config.longLen });
-    const ema2 = computeEmaSeries({ closes: absDeltas, period: config.longLen });
+    const ema2 = computeEmaSeries({
+      closes: absDeltas,
+      period: config.longLen,
+    });
     // EMA-of-EMA — feed first EMA output through again. Replace
     // null seed entries with the underlying delta so the second
     // EMA can converge.
-    const ema1f = ema1.map((v, i) => (v === null ? deltas[i] ?? 0 : v));
-    const ema2f = ema2.map((v, i) => (v === null ? absDeltas[i] ?? 0 : v));
+    const ema1f = ema1.map((v, i) => (v === null ? (deltas[i] ?? 0) : v));
+    const ema2f = ema2.map((v, i) => (v === null ? (absDeltas[i] ?? 0) : v));
     const pc = computeEmaSeries({ closes: ema1f, period: config.shortLen });
     const apc = computeEmaSeries({ closes: ema2f, period: config.shortLen });
     const idx = pc.length - 1;
     const num = pc[idx];
     const den = apc[idx];
-    if (num === null || num === undefined || den === null || den === undefined) {
+    if (
+      num === null ||
+      num === undefined ||
+      den === null ||
+      den === undefined
+    ) {
       return null;
     }
-    if (den <= 0) return null;
+    if (den <= 0) {
+      return null;
+    }
     const tsi = (100 * num) / den;
-    if (tsi <= config.oversold) return "up";
-    if (tsi >= config.overbought) return "down";
+    if (tsi <= config.oversold) {
+      return "up";
+    }
+    if (tsi >= config.overbought) {
+      return "down";
+    }
     return null;
   },
 };
@@ -71,10 +89,10 @@ export const tsiMeanRev: Filter<Config> = {
 registerFilter({
   filter: tsiMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    {"longLen":13,"oversold":-40,"shortLen":7,"overbought":40},
-    {"longLen":13,"oversold":-25,"shortLen":7,"overbought":25},
-    {"longLen":25,"oversold":-40,"shortLen":13,"overbought":40},
-    {"longLen":25,"oversold":-25,"shortLen":13,"overbought":25},
-    {"longLen":40,"oversold":-25,"shortLen":13,"overbought":25},
+    { longLen: 13, oversold: -40, shortLen: 7, overbought: 40 },
+    { longLen: 13, oversold: -25, shortLen: 7, overbought: 25 },
+    { longLen: 25, oversold: -40, shortLen: 13, overbought: 40 },
+    { longLen: 25, oversold: -25, shortLen: 13, overbought: 25 },
+    { longLen: 40, oversold: -25, shortLen: 13, overbought: 25 },
   ],
 });

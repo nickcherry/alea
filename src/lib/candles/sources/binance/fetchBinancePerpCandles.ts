@@ -244,7 +244,7 @@ async function fetchFapiDay({
       status: response.status,
     });
   }
-  const raw = (await response.json()) as unknown;
+  const raw = await response.json();
   if (!Array.isArray(raw)) {
     throw new BinancePerpFetchError({
       message: `Binance fapi ${url} returned non-array body`,
@@ -253,9 +253,13 @@ async function fetchFapiDay({
   }
   const candles: Candle[] = [];
   for (const row of raw) {
-    if (!Array.isArray(row) || row.length < 6) continue;
+    if (!Array.isArray(row) || row.length < 6) {
+      continue;
+    }
     const openTimeMs = Number(row[0]);
-    if (!Number.isFinite(openTimeMs)) continue;
+    if (!Number.isFinite(openTimeMs)) {
+      continue;
+    }
     candles.push({
       source: "binance",
       asset,

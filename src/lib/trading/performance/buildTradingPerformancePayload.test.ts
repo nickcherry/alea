@@ -1,7 +1,6 @@
 import {
   buildTradingPerformancePayload,
   type TradingPerformanceInputActivity,
-  type TradingPerformanceInputPosition,
 } from "@alea/lib/trading/performance/buildTradingPerformancePayload";
 import { describe, expect, it } from "bun:test";
 

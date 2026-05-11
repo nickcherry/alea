@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@alea/lib/db/types";
-import type { Candidate, FilterBar } from "@alea/lib/filters/types";
-import { getFilter } from "@alea/lib/filters/registry";
 import { runHash } from "@alea/lib/filters/hash";
+import { getFilter } from "@alea/lib/filters/registry";
+import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
 
@@ -144,8 +144,7 @@ export async function runBacktestForCandidate({
   const { stats, engagements } = walkBars({
     bars,
     requiredBars,
-    predict: (window) =>
-      entry.filter.predict(candidate.config as never, window),
+    predict: (window) => entry.filter.predict(candidate.config, window),
   });
 
   // Replace the engagement set + upsert the aggregate row inside a

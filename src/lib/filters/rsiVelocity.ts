@@ -37,7 +37,7 @@ type Config = z.infer<typeof configSchema>;
 export const rsiVelocity: Filter<Config> = {
   id: "rsi_velocity",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fires on the RATE of change of RSI rather than its level. A drop ≥ `threshold` RSI points across `lookback` bars → UP; symmetric for DOWN. Alternative to `rsi_meanrev` that tests whether 'we got to an extreme fast' is a stronger signal than 'we are at an extreme'.",
   configSchema,
@@ -73,10 +73,10 @@ export const rsiVelocity: Filter<Config> = {
 registerFilter({
   filter: rsiVelocity as Filter<unknown>,
   defaultConfigs: () => [
-    {"lookback":3,"rsiLength":14,"threshold":25},
-    {"lookback":3,"rsiLength":14,"threshold":30},
-    {"lookback":2,"rsiLength":14,"threshold":25},
-    {"lookback":2,"rsiLength":14,"threshold":20},
-    {"lookback":3,"rsiLength":14,"threshold":20},
+    { lookback: 3, rsiLength: 14, threshold: 25 },
+    { lookback: 3, rsiLength: 14, threshold: 30 },
+    { lookback: 2, rsiLength: 14, threshold: 25 },
+    { lookback: 2, rsiLength: 14, threshold: 20 },
+    { lookback: 3, rsiLength: 14, threshold: 20 },
   ],
 });

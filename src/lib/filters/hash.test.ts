@@ -1,4 +1,4 @@
-import { canonicalJson, candidateHash, runHash } from "@alea/lib/filters/hash";
+import { candidateHash, canonicalJson, runHash } from "@alea/lib/filters/hash";
 import { describe, expect, it } from "bun:test";
 
 describe("canonicalJson", () => {

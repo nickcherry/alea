@@ -63,8 +63,8 @@ edge.
 
 - [CLI](./doc/CLI.md) — command structure, families, side effects.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape
-  recorder for Polymarket + Binance + Coinbase + Chainlink
-  reference events.
+  recorder for Polymarket market data, Pyth spot ticks, and
+  Polymarket Chainlink reference events.
 - [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — finding the
   fastest useful leading-indicator feeds.
 - [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) —

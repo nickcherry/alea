@@ -65,7 +65,7 @@ export const candlesFillGapsCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(z.array(candleSourceSchema).default([...candleSourceValues]))
-        .describe("Comma-separated sources: coinbase,binance."),
+        .describe("Comma-separated sources: coinbase,binance,coindesk,pyth."),
     }),
     defineValueOption({
       key: "products",
@@ -81,13 +81,13 @@ export const candlesFillGapsCommand = defineCommand({
   ],
   examples: [
     "bun alea candles:fill-gaps",
-    "bun alea candles:fill-gaps --sources coinbase",
+    "bun alea candles:fill-gaps --sources pyth",
     "bun alea candles:fill-gaps --assets btc --products spot",
   ],
   output:
     "Per-(source, asset, product) gap counts, missing bars, recovered bars, and elapsed time.",
   sideEffects:
-    "Hits Coinbase Advanced Trade and Binance public market data; upserts into the candles table.",
+    "Hits the configured candle source APIs and upserts into the candles table.",
   async run({ io, options }) {
     io.writeStdout(
       `${pc.bold("alea candles:fill-gaps")} ${pc.cyan(options.timeframe)}\n`,

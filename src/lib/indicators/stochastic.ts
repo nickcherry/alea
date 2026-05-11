@@ -57,8 +57,12 @@ export function computeStochasticKSeries({
       if (h === undefined || l === undefined) {
         continue;
       }
-      if (h > hi) hi = h;
-      if (l < lo) lo = l;
+      if (h > hi) {
+        hi = h;
+      }
+      if (l < lo) {
+        lo = l;
+      }
     }
     const c = closes[i];
     const range = hi - lo;
@@ -77,12 +81,16 @@ export function computeStochasticKSeries({
   const smoothed = computeSmaSeries({ closes: filled, period: smoothK });
   const out: (number | null)[] = new Array<number | null>(n).fill(null);
   for (let i = 0; i < n; i += 1) {
-    if (raw[i] === null) continue;
+    if (raw[i] === null) {
+      continue;
+    }
     // The SMA at index `i` averages indices [i - smoothK + 1, i]; we
     // only treat the result as valid once every input in that window
     // has a non-null raw %K. The earliest such index is
     // `lookback - 1 + smoothK - 1`.
-    if (i < lookback - 1 + smoothK - 1) continue;
+    if (i < lookback - 1 + smoothK - 1) {
+      continue;
+    }
     out[i] = smoothed[i] ?? null;
   }
   return out;

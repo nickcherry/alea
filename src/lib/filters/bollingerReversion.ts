@@ -1,6 +1,6 @@
-import { computeBollingerSeries } from "@alea/lib/indicators/bollinger";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
+import { computeBollingerSeries } from "@alea/lib/indicators/bollinger";
 import { z } from "zod";
 
 /**
@@ -23,7 +23,7 @@ type Config = z.infer<typeof configSchema>;
 export const bollingerReversion: Filter<Config> = {
   id: "bollinger_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Two-sided Bollinger Band reversion. Fires UP when the latest close pierces or touches the lower band (mean − `multiplier` × stddev over `period` bars), DOWN when it pierces or touches the upper band. Abstains between the bands. Same mean-reversion bet as `rsi_meanrev` but the threshold scales with recent volatility instead of recent gain/loss balance.",
   configSchema,
@@ -61,10 +61,10 @@ export const bollingerReversion: Filter<Config> = {
 registerFilter({
   filter: bollingerReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"period":14,"multiplier":3},
-    {"period":14,"multiplier":2.5},
-    {"period":20,"multiplier":3},
-    {"period":20,"multiplier":2.5},
-    {"period":14,"multiplier":2},
+    { period: 14, multiplier: 3 },
+    { period: 14, multiplier: 2.5 },
+    { period: 20, multiplier: 3 },
+    { period: 20, multiplier: 2.5 },
+    { period: 14, multiplier: 2 },
   ],
 });

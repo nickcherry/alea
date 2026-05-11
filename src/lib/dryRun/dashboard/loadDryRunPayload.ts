@@ -1,3 +1,5 @@
+import "@alea/lib/filters/all";
+
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type {
@@ -8,7 +10,6 @@ import type {
   DryRunDashboardRegimeAggregate,
   DryRunDashboardSummary,
 } from "@alea/lib/dryRun/dashboard/types";
-import "@alea/lib/filters/all";
 
 const RECENT_LIMIT = 200;
 
@@ -29,13 +30,17 @@ function totalsFromVotes(raw: unknown): {
   readonly down: number;
   readonly abstain: number;
 } {
-  if (raw === null || raw === undefined) return { up: 0, down: 0, abstain: 0 };
+  if (raw === null || raw === undefined) {
+    return { up: 0, down: 0, abstain: 0 };
+  }
   if (Array.isArray(raw)) {
     let up = 0;
     let down = 0;
     let abstain = 0;
     for (const entry of raw) {
-      if (typeof entry !== "object" || entry === null) continue;
+      if (typeof entry !== "object" || entry === null) {
+        continue;
+      }
       const e = entry as { up?: number; down?: number; abstain?: number };
       up += Number(e.up ?? 0);
       down += Number(e.down ?? 0);
@@ -61,112 +66,91 @@ export async function loadDryRunPayload({
   readonly db: DatabaseClient;
   readonly now?: () => number;
 }): Promise<DryRunDashboardPayload> {
-  const [summaryRows, assetRows, recentRows, settledRows, regimeRows, engagementRows] =
-    await Promise.all([
-      db
-        .selectFrom("dry_run_decisions")
-        .select(({ fn }) => [
-          fn.count<string>("id").as("total"),
-          fn
-            .count<string>("id")
-            .filterWhere("won", "is not", null)
-            .as("settled"),
-          fn
-            .count<string>("id")
-            .filterWhere("won", "is", null)
-            .as("pending"),
-          fn
-            .sum<string>("won")
-            .filterWhere("won", "is not", null)
-            .as("wins"),
-          fn
-            .count<string>("id")
-            .filterWhere("prediction", "=", "u")
-            .as("up_total"),
-          fn
-            .count<string>("id")
-            .filterWhere("prediction", "=", "d")
-            .as("down_total"),
-          fn
-            .sum<string>("won")
-            .filterWhere("prediction", "=", "u")
-            .as("up_wins"),
-          fn
-            .sum<string>("won")
-            .filterWhere("prediction", "=", "d")
-            .as("down_wins"),
-          fn.min<string>("decided_at_ms").as("first_at"),
-          fn.max<string>("decided_at_ms").as("last_at"),
-        ])
-        .executeTakeFirstOrThrow(),
-      db
-        .selectFrom("dry_run_decisions")
-        .select(({ fn }) => [
-          "asset",
-          fn
-            .count<string>("id")
-            .filterWhere("won", "is not", null)
-            .as("settled"),
-          fn
-            .count<string>("id")
-            .filterWhere("won", "is", null)
-            .as("pending"),
-          fn
-            .sum<string>("won")
-            .filterWhere("won", "is not", null)
-            .as("wins"),
-        ])
-        .groupBy("asset")
-        .orderBy("asset", "asc")
-        .execute(),
-      db
-        .selectFrom("dry_run_decisions")
-        .select([
-          "id",
-          "ts_ms",
-          "decided_at_ms",
-          "asset",
-          "prediction",
-          "synth_open",
-          "actual_close",
-          "won",
-          "market_regime",
-        ])
-        .where("won", "is not", null)
-        .orderBy("ts_ms", "desc")
-        .limit(RECENT_LIMIT)
-        .execute(),
-      db
-        .selectFrom("dry_run_decisions")
-        .select(["ts_ms", "won"])
-        .where("won", "is not", null)
-        .orderBy("ts_ms", "asc")
-        .execute(),
-      db
-        .selectFrom("dry_run_decisions")
-        .select(({ fn }) => [
-          "market_regime",
-          fn
-            .count<string>("id")
-            .filterWhere("won", "is not", null)
-            .as("calls"),
-          fn
-            .sum<string>("won")
-            .filterWhere("won", "is not", null)
-            .as("wins"),
-        ])
-        .groupBy("market_regime")
-        .execute(),
-      // Engagement: pull all settled rows' regime_votes for the avg
-      // engagement metric. We could push this into SQL with a jsonb
-      // accessor but the row count is bounded by overnight volume
-      // (~thousands), so a TS pass is fine.
-      db
-        .selectFrom("dry_run_decisions")
-        .select(["regime_votes"])
-        .where("won", "is not", null)
-        .execute(),
-    ]);
+  const [
+    summaryRows,
+    assetRows,
+    recentRows,
+    settledRows,
+    regimeRows,
+    engagementRows,
+  ] = await Promise.all([
+    db
+      .selectFrom("dry_run_decisions")
+      .select(({ fn }) => [
+        fn.count<string>("id").as("total"),
+        fn.count<string>("id").filterWhere("won", "is not", null).as("settled"),
+        fn.count<string>("id").filterWhere("won", "is", null).as("pending"),
+        fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
+        fn
+          .count<string>("id")
+          .filterWhere("prediction", "=", "u")
+          .as("up_total"),
+        fn
+          .count<string>("id")
+          .filterWhere("prediction", "=", "d")
+          .as("down_total"),
+        fn.sum<string>("won").filterWhere("prediction", "=", "u").as("up_wins"),
+        fn
+          .sum<string>("won")
+          .filterWhere("prediction", "=", "d")
+          .as("down_wins"),
+        fn.min<string>("decided_at_ms").as("first_at"),
+        fn.max<string>("decided_at_ms").as("last_at"),
+      ])
+      .executeTakeFirstOrThrow(),
+    db
+      .selectFrom("dry_run_decisions")
+      .select(({ fn }) => [
+        "asset",
+        fn.count<string>("id").filterWhere("won", "is not", null).as("settled"),
+        fn.count<string>("id").filterWhere("won", "is", null).as("pending"),
+        fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
+      ])
+      .groupBy("asset")
+      .orderBy("asset", "asc")
+      .execute(),
+    db
+      .selectFrom("dry_run_decisions")
+      .select([
+        "id",
+        "ts_ms",
+        "decided_at_ms",
+        "asset",
+        "prediction",
+        "synth_open",
+        "actual_close",
+        "won",
+        "market_regime",
+      ])
+      .where("won", "is not", null)
+      .orderBy("ts_ms", "desc")
+      .limit(RECENT_LIMIT)
+      .execute(),
+    db
+      .selectFrom("dry_run_decisions")
+      .select(["ts_ms", "won"])
+      .where("won", "is not", null)
+      .orderBy("ts_ms", "asc")
+      .execute(),
+    db
+      .selectFrom("dry_run_decisions")
+      .select(({ fn }) => [
+        "market_regime",
+        fn.count<string>("id").filterWhere("won", "is not", null).as("calls"),
+        fn.sum<string>("won").filterWhere("won", "is not", null).as("wins"),
+      ])
+      .groupBy("market_regime")
+      .execute(),
+    // Engagement: pull all settled rows' regime_votes for the avg
+    // engagement metric. We could push this into SQL with a jsonb
+    // accessor but the row count is bounded by overnight volume
+    // (~thousands), so a TS pass is fine.
+    db
+      .selectFrom("dry_run_decisions")
+      .select(["regime_votes"])
+      .where("won", "is not", null)
+      .execute(),
+  ]);
 
   const settledNum = Number(summaryRows.settled);
   const winsNum = Number(summaryRows.wins ?? 0);

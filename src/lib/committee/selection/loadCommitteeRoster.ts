@@ -78,7 +78,9 @@ export async function loadCommitteeRoster({
       }),
     );
     const t = Number(r.selected_at_ms);
-    if (selectedAtMs === null || t > selectedAtMs) selectedAtMs = t;
+    if (selectedAtMs === null || t > selectedAtMs) {
+      selectedAtMs = t;
+    }
   }
   return { selectedAtMs, byKey };
 }

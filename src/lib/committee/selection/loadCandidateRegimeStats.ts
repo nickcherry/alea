@@ -1,5 +1,5 @@
-import type { DatabaseClient } from "@alea/lib/db/types";
 import type { CandidateRegimeStats } from "@alea/lib/committee/selection/types";
+import type { DatabaseClient } from "@alea/lib/db/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
 import { sql } from "kysely";
 

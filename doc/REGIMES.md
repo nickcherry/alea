@@ -11,8 +11,8 @@ were we in when this bar closed". Regime tags drive two things:
   candidates vote. See [COMMITTEE.md](./COMMITTEE.md).
 
 A regime is **about the market state**, not about a filter's
-strategy family. The `regime` field on a `Filter` object is unrelated
-(it tags the filter family — see [FILTERS.md](./FILTERS.md)).
+strategy family. A filter's `family` field tags its signal class; see
+[FILTERS.md](./FILTERS.md).
 
 ## Tag set
 
@@ -86,12 +86,12 @@ classifier change overwrites every existing row.
 
 Current distribution on 5m + 15m combined (~1.36M bars total):
 
-| Regime | Share |
-|---|---|
-| `low_vol_trending` | 54% |
-| `low_vol_ranging` | 24% |
-| `high_vol_trending` | 17% |
-| `high_vol_ranging` | 5% |
+| Regime                 | Share |
+| ---------------------- | ----- |
+| `low_vol_trending`     | 54%   |
+| `low_vol_ranging`      | 24%   |
+| `high_vol_trending`    | 17%   |
+| `high_vol_ranging`     | 5%    |
 | `null` (early-history) | 0.07% |
 
 That's a real asymmetry in the data, not a calibration accident.

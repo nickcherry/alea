@@ -16,10 +16,10 @@ A registered filter exports four things:
 
 ```ts
 type Filter<TConfig> = {
-  readonly id: string;                    // snake_case, stable
-  readonly version: number;                // bump on logic change
-  readonly description: string;            // lay-readable
-  readonly regime: Regime;                 // filter family tag
+  readonly id: string; // snake_case, stable
+  readonly version: number; // bump on logic change
+  readonly description: string; // lay-readable
+  readonly family: FilterFamily; // strategy family tag
   readonly configSchema: z.ZodType<TConfig>;
   readonly requiredBars: (config: TConfig) => number;
   readonly predict: (
@@ -49,7 +49,7 @@ don't contribute to win rate and aren't recorded in
 the committee's job is to combine signals, not to demand one from
 every candidate on every bar.
 
-## Filter `regime` tag
+## Filter `family` tag
 
 Every filter declares one of:
 
@@ -63,14 +63,9 @@ divergence            // indicator vs price disagreement
 ```
 
 This is the **filter family** — the kind of signal the filter is
-testing. It's metadata for the exploration dashboard (which groups
-cards by family) and for an operator scanning the registry. **It is
-not a market regime.** Market regime is a separate concept; see
-[REGIMES.md](./REGIMES.md).
-
-The name `regime` on this field is a historical artifact. Don't
-extend it; if we need a real disambiguation pass we'll rename it to
-`family`.
+testing. It's metadata for the exploration dashboard and for an
+operator scanning the registry. **It is not a market regime.** Market
+regime is a separate concept; see [REGIMES.md](./REGIMES.md).
 
 ## Bar windows + the no-leak rule
 
@@ -153,7 +148,7 @@ doesn't pay rent.
 ## Files
 
 - [`src/lib/filters/types.ts`](../src/lib/filters/types.ts) — `Filter`,
-  `Candidate`, `Regime`.
+  `Candidate`, `FilterFamily`.
 - [`src/lib/filters/registry.ts`](../src/lib/filters/registry.ts) —
   registration + lookup + `allCandidates`.
 - [`src/lib/filters/hash.ts`](../src/lib/filters/hash.ts) — the

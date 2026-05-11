@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
-
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
+import { describe, expect, test } from "bun:test";
 
 describe("wilsonInterval95", () => {
   test("returns [0, 1] for zero samples (no information)", () => {

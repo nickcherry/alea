@@ -91,7 +91,7 @@ export const candlesSyncCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(z.array(candleSourceSchema).default([...candleSourceValues]))
-        .describe("Comma-separated sources: coinbase,binance."),
+        .describe("Comma-separated sources: coinbase,binance,coindesk,pyth."),
     }),
     defineValueOption({
       key: "products",
@@ -108,13 +108,13 @@ export const candlesSyncCommand = defineCommand({
   examples: [
     "bun alea candles:sync",
     "bun alea candles:sync --timeframe 5m --days 730",
-    "bun alea candles:sync --assets btc,eth --sources binance",
+    "bun alea candles:sync --assets btc,eth --sources pyth",
     "bun alea candles:sync --products spot",
   ],
   output:
     "Prints per-(source, asset) row counts and page-latency stats, then the overall total.",
   sideEffects:
-    "Hits Coinbase Advanced Trade and Binance public market data; upserts into the candles table.",
+    "Hits the configured candle source APIs and upserts into the candles table.",
   async run({ io, options }) {
     const end = alignTimeframeWindow({
       date: new Date(),
@@ -134,9 +134,7 @@ export const candlesSyncCommand = defineCommand({
     const overallStart = performance.now();
 
     // Iterate `asset → product → source` so the queue alternates providers
-    // every other task. With concurrency 8 that lands ~4 requests on each
-    // provider at any moment — well below both Coinbase Advanced Trade's and
-    // Binance Vision's public rate limits.
+    // every other task so no provider gets the whole queue in one burst.
     const tasks: SyncTask[] = [];
     for (const asset of options.assets) {
       for (const product of options.products) {

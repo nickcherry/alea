@@ -42,14 +42,17 @@ export function classifyMarketRegime({
 }: {
   readonly bars: readonly FilterBar[];
 }): MarketRegime | null {
-  if (bars.length < BASELINE_BARS) return null;
+  if (bars.length < BASELINE_BARS) {
+    return null;
+  }
 
   // Volatility component: realised vol on the recent slice vs
   // distribution of realised vols across baseline windows.
   const recent = bars.slice(-RECENT_BARS);
   const recentVol = realisedVol(recent);
   const baselineMedian = baselineVolMedian(bars);
-  const isHighVol = baselineMedian > 0 && recentVol / baselineMedian > HIGH_VOL_RATIO;
+  const isHighVol =
+    baselineMedian > 0 && recentVol / baselineMedian > HIGH_VOL_RATIO;
 
   // Directionality component: |linreg slope * n| relative to ATR.
   const slope = linregSlope(recent);
@@ -57,9 +60,15 @@ export function classifyMarketRegime({
   const trendStrength = atr === 0 ? 0 : (Math.abs(slope) * RECENT_BARS) / atr;
   const isTrending = trendStrength > TREND_THRESHOLD;
 
-  if (isHighVol && isTrending) return "high_vol_trending";
-  if (isHighVol && !isTrending) return "high_vol_ranging";
-  if (!isHighVol && isTrending) return "low_vol_trending";
+  if (isHighVol && isTrending) {
+    return "high_vol_trending";
+  }
+  if (isHighVol && !isTrending) {
+    return "high_vol_ranging";
+  }
+  if (!isHighVol && isTrending) {
+    return "low_vol_trending";
+  }
   return "low_vol_ranging";
 }
 
@@ -68,15 +77,21 @@ export function classifyMarketRegime({
  * for windows shorter than 2.
  */
 function realisedVol(bars: readonly FilterBar[]): number {
-  if (bars.length < 2) return 0;
+  if (bars.length < 2) {
+    return 0;
+  }
   const returns: number[] = [];
   for (let i = 1; i < bars.length; i++) {
     const prev = bars[i - 1]!.close;
     const curr = bars[i]!.close;
-    if (prev <= 0 || curr <= 0) continue;
+    if (prev <= 0 || curr <= 0) {
+      continue;
+    }
     returns.push(Math.log(curr / prev));
   }
-  if (returns.length === 0) return 0;
+  if (returns.length === 0) {
+    return 0;
+  }
   const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
   const variance =
     returns.reduce((a, b) => a + (b - mean) ** 2, 0) / returns.length;
@@ -93,7 +108,9 @@ function baselineVolMedian(bars: readonly FilterBar[]): number {
     const window = bars.slice(i - RECENT_BARS, i);
     vols.push(realisedVol(window));
   }
-  if (vols.length === 0) return 0;
+  if (vols.length === 0) {
+    return 0;
+  }
   vols.sort((a, b) => a - b);
   return vols[Math.floor(vols.length / 2)]!;
 }
@@ -105,7 +122,9 @@ function baselineVolMedian(bars: readonly FilterBar[]): number {
  */
 function linregSlope(bars: readonly FilterBar[]): number {
   const n = bars.length;
-  if (n < 2) return 0;
+  if (n < 2) {
+    return 0;
+  }
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
@@ -118,7 +137,9 @@ function linregSlope(bars: readonly FilterBar[]): number {
     sumXX += i * i;
   }
   const denom = n * sumXX - sumX * sumX;
-  if (denom === 0) return 0;
+  if (denom === 0) {
+    return 0;
+  }
   return (n * sumXY - sumX * sumY) / denom;
 }
 
@@ -128,7 +149,9 @@ function linregSlope(bars: readonly FilterBar[]): number {
  * regime baseline (we only need a stable per-bar volatility unit).
  */
 function avgTrueRange(bars: readonly FilterBar[]): number {
-  if (bars.length < 2) return 0;
+  if (bars.length < 2) {
+    return 0;
+  }
   let sum = 0;
   let count = 0;
   for (let i = 1; i < bars.length; i++) {

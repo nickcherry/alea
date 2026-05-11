@@ -9,7 +9,9 @@ import {
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
 function formatMarketRegime(value: string | null): string {
-  if (value === null) return "—";
+  if (value === null) {
+    return "—";
+  }
   return value.replaceAll("_", " ");
 }
 
@@ -254,9 +256,15 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
 function renderInlineSparkline({
   cumulative,
 }: {
-  readonly cumulative: ReadonlyArray<{ readonly tsMs: number; readonly cumWinRate: number; readonly settled: number }>;
+  readonly cumulative: ReadonlyArray<{
+    readonly tsMs: number;
+    readonly cumWinRate: number;
+    readonly settled: number;
+  }>;
 }): string {
-  if (cumulative.length === 0) return "";
+  if (cumulative.length === 0) {
+    return "";
+  }
   const w = 800;
   const h = 200;
   const padX = 16;
@@ -271,7 +279,9 @@ function renderInlineSparkline({
     padX + ((x - minX) / Math.max(1, maxX - minX)) * (w - padX * 2);
   const yOf = (y: number): number =>
     h - padY - ((y - minY) / Math.max(0.01, maxY - minY)) * (h - padY * 2);
-  const pts = cumulative.map((d) => `${xOf(d.tsMs).toFixed(1)},${yOf(d.cumWinRate).toFixed(1)}`).join(" ");
+  const pts = cumulative
+    .map((d) => `${xOf(d.tsMs).toFixed(1)},${yOf(d.cumWinRate).toFixed(1)}`)
+    .join(" ");
   const baselineY = yOf(0.5).toFixed(1);
   const lastWr = ys[ys.length - 1]!;
   const lastTone =
@@ -332,22 +342,17 @@ const DR_TIPS = {
     "Classified market state at decision time: vol level (low/high) × directionality (trending/ranging).",
   callsRegime:
     "Settled committee decisions made while the market was in this regime.",
-  callsAsset:
-    "Settled committee decisions on this crypto.",
-  callsWr:
-    "Win rate of the settled committee decisions in this row.",
+  callsAsset: "Settled committee decisions on this crypto.",
+  callsWr: "Win rate of the settled committee decisions in this row.",
   recentTime:
     "Time the bar opened (the bar the committee was predicting). UTC.",
-  recentAsset:
-    "Which crypto the committee was predicting.",
+  recentAsset: "Which crypto the committee was predicting.",
   recentPrediction:
     "Direction the committee predicted for the next 5-minute bar.",
-  recentRegime:
-    "Market regime classified at the moment the committee decided.",
+  recentRegime: "Market regime classified at the moment the committee decided.",
   recentSynthOpen:
     "Pyth spot price snapshotted ~5 s before the boundary. Used as the bar's synthetic open in the absence of real market data.",
-  recentActualClose:
-    "Actual closing price of the bar once it finished.",
+  recentActualClose: "Actual closing price of the bar once it finished.",
   recentOutcome:
     "WIN if the committee's prediction matched the bar's actual direction; LOSS otherwise. Ties (open = close) settle UP.",
 };
@@ -356,17 +361,23 @@ function infoTip({ text }: { readonly text: string }): string {
   return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({ value: text })}" aria-label="${escapeHtml({ value: text })}"></span>`;
 }
 
-function toneClass(
-  wr: number | null,
-): "positive" | "negative" | "neutral" {
-  if (wr === null) return "neutral";
-  if (wr >= 0.52) return "positive";
-  if (wr < 0.48) return "negative";
+function toneClass(wr: number | null): "positive" | "negative" | "neutral" {
+  if (wr === null) {
+    return "neutral";
+  }
+  if (wr >= 0.52) {
+    return "positive";
+  }
+  if (wr < 0.48) {
+    return "negative";
+  }
   return "neutral";
 }
 
 function formatDateTime({ ms }: { readonly ms: number }): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "unknown";
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return "unknown";
+  }
   return new Date(ms).toLocaleString("en-US", {
     year: "numeric",
     month: "short",

@@ -53,8 +53,8 @@ export function computeHeikinAshiSeries({
   const c0 = closes[0]!;
   haClose[0] = (o0 + h0 + l0 + c0) / 4;
   haOpen[0] = (o0 + c0) / 2;
-  haHigh[0] = Math.max(h0, haOpen[0]!, haClose[0]!);
-  haLow[0] = Math.min(l0, haOpen[0]!, haClose[0]!);
+  haHigh[0] = Math.max(h0, haOpen[0], haClose[0]);
+  haLow[0] = Math.min(l0, haOpen[0], haClose[0]);
   for (let i = 1; i < n; i += 1) {
     const o = opens[i]!;
     const h = highs[i]!;

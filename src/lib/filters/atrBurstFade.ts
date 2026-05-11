@@ -39,7 +39,7 @@ type Config = z.infer<typeof configSchema>;
 export const atrBurstFade: Filter<Config> = {
   id: "atr_burst_fade",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fades single-bar close-to-close bursts. If the latest move is more than `multiplier × ATR` of the prior bar's ATR, predict the opposite direction. No baseline / level anchor — only the size of the move matters. Cleanest test of the 'big move = exhaustion' hypothesis without conflating with mean-reversion-to-MA.",
   configSchema,
@@ -80,10 +80,10 @@ export const atrBurstFade: Filter<Config> = {
 registerFilter({
   filter: atrBurstFade as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":14,"multiplier":3},
-    {"length":50,"multiplier":2.5},
-    {"length":7,"multiplier":3},
-    {"length":50,"multiplier":2},
-    {"length":14,"multiplier":2.5},
+    { length: 14, multiplier: 3 },
+    { length: 50, multiplier: 2.5 },
+    { length: 7, multiplier: 3 },
+    { length: 50, multiplier: 2 },
+    { length: 14, multiplier: 2.5 },
   ],
 });

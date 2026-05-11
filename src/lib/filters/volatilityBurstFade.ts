@@ -25,14 +25,16 @@ type Config = z.infer<typeof configSchema>;
 export const volatilityBurstFade: Filter<Config> = {
   id: "volatility_burst_fade",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fades single-bar volatility bursts. When the latest bar's true range exceeds `multiplier` × prior-bar ATR, predict the opposite of the bar's color. Wilder-ATR baseline is smoother than the simple-SMA baseline used by `range_expansion_fade`.",
   configSchema,
   requiredBars: (c) => c.length + 2,
   predict: (config, bars) => {
     const n = bars.length;
-    if (n < 2) return null;
+    if (n < 2) {
+      return null;
+    }
     const closes = bars.map((b) => b.close);
     const highs = bars.map((b) => b.high);
     const lows = bars.map((b) => b.low);
@@ -43,7 +45,9 @@ export const volatilityBurstFade: Filter<Config> = {
       period: config.length,
     });
     const baseline = atr[n - 2];
-    if (baseline === null || baseline === undefined || baseline <= 0) return null;
+    if (baseline === null || baseline === undefined || baseline <= 0) {
+      return null;
+    }
     const cur = bars[n - 1]!;
     const prevClose = closes[n - 2]!;
     const tr = Math.max(
@@ -51,7 +55,9 @@ export const volatilityBurstFade: Filter<Config> = {
       Math.abs(cur.high - prevClose),
       Math.abs(cur.low - prevClose),
     );
-    if (tr < config.multiplier * baseline) return null;
+    if (tr < config.multiplier * baseline) {
+      return null;
+    }
     const isGreen = cur.close >= cur.open;
     return isGreen ? "down" : "up";
   },
@@ -60,10 +66,10 @@ export const volatilityBurstFade: Filter<Config> = {
 registerFilter({
   filter: volatilityBurstFade as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":14,"multiplier":3},
-    {"length":14,"multiplier":2.5},
-    {"length":50,"multiplier":2.5},
-    {"length":14,"multiplier":2},
-    {"length":50,"multiplier":2},
+    { length: 14, multiplier: 3 },
+    { length: 14, multiplier: 2.5 },
+    { length: 50, multiplier: 2.5 },
+    { length: 14, multiplier: 2 },
+    { length: 50, multiplier: 2 },
   ],
 });

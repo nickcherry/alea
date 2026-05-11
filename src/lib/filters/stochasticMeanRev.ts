@@ -32,7 +32,7 @@ type Config = z.infer<typeof configSchema>;
 export const stochasticMeanRev: Filter<Config> = {
   id: "stochastic_meanrev",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Mean reversion on the Stochastic %K oscillator. Fires UP when %K ≤ `oversold`, DOWN when ≥ `overbought`. %K is normalized against the trailing high-low range, not (like RSI) against the period's gain/loss distribution — head-to-head with `rsi_meanrev` tells us which normalization basis carries the reversion signal.",
   configSchema,
@@ -66,10 +66,10 @@ export const stochasticMeanRev: Filter<Config> = {
 registerFilter({
   filter: stochasticMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    {"smoothK":1,"lookback":14,"oversold":10,"overbought":90},
-    {"smoothK":1,"lookback":7,"oversold":10,"overbought":90},
-    {"smoothK":3,"lookback":7,"oversold":10,"overbought":90},
-    {"smoothK":3,"lookback":14,"oversold":10,"overbought":90},
-    {"smoothK":3,"lookback":21,"oversold":10,"overbought":90},
+    { smoothK: 1, lookback: 14, oversold: 10, overbought: 90 },
+    { smoothK: 1, lookback: 7, oversold: 10, overbought: 90 },
+    { smoothK: 3, lookback: 7, oversold: 10, overbought: 90 },
+    { smoothK: 3, lookback: 14, oversold: 10, overbought: 90 },
+    { smoothK: 3, lookback: 21, oversold: 10, overbought: 90 },
   ],
 });

@@ -23,7 +23,7 @@ type Config = z.infer<typeof configSchema>;
 export const demaBollingerReversion: Filter<Config> = {
   id: "dema_bollinger_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Bollinger reversion on a DEMA-smoothed close series. DEMA reduces lag vs. a single EMA; tests whether a less-laggy smoothed input helps the basic Bollinger reversion signal.",
   configSchema,
@@ -32,8 +32,13 @@ export const demaBollingerReversion: Filter<Config> = {
     const closes = bars.map((b) => b.close);
     const ema1 = computeEmaSeries({ closes, period: config.length });
     // EMA of EMA — feed the first EMA's non-null tail through again.
-    const ema1Filled = ema1.map((v, idx) => (v === null ? closes[idx] ?? 0 : v));
-    const ema2 = computeEmaSeries({ closes: ema1Filled, period: config.length });
+    const ema1Filled = ema1.map((v, idx) =>
+      v === null ? (closes[idx] ?? 0) : v,
+    );
+    const ema2 = computeEmaSeries({
+      closes: ema1Filled,
+      period: config.length,
+    });
     const dema: number[] = new Array(closes.length).fill(0);
     for (let i = 0; i < closes.length; i += 1) {
       const e1 = ema1[i];
@@ -53,11 +58,21 @@ export const demaBollingerReversion: Filter<Config> = {
     const d = dema[i];
     const u = upper[i];
     const l = lower[i];
-    if (d === undefined || u === null || u === undefined || l === null || l === undefined) {
+    if (
+      d === undefined ||
+      u === null ||
+      u === undefined ||
+      l === null ||
+      l === undefined
+    ) {
       return null;
     }
-    if (d <= l) return "up";
-    if (d >= u) return "down";
+    if (d <= l) {
+      return "up";
+    }
+    if (d >= u) {
+      return "down";
+    }
     return null;
   },
 };
@@ -65,10 +80,10 @@ export const demaBollingerReversion: Filter<Config> = {
 registerFilter({
   filter: demaBollingerReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":14,"multiplier":2.5},
-    {"length":20,"multiplier":3},
-    {"length":20,"multiplier":2.5},
-    {"length":14,"multiplier":2},
-    {"length":20,"multiplier":2},
+    { length: 14, multiplier: 2.5 },
+    { length: 20, multiplier: 3 },
+    { length: 20, multiplier: 2.5 },
+    { length: 14, multiplier: 2 },
+    { length: 20, multiplier: 2 },
   ],
 });

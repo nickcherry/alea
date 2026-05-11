@@ -1,8 +1,3 @@
-import {
-  currentWindowStartMs,
-  FIVE_MINUTES_MS,
-  nextWindowStartMs,
-} from "@alea/lib/livePrices/fiveMinuteWindow";
 import { emptyReliabilitySummary } from "@alea/lib/reliability/computeReliabilitySummary";
 import { startReliabilityFeeds } from "@alea/lib/reliability/feeds/startReliabilityFeeds";
 import { finalizeReliabilityWindow } from "@alea/lib/reliability/finalizeReliabilityWindow";
@@ -18,6 +13,11 @@ import {
   type ReliabilitySourceHealth,
   reliabilitySourceValues,
 } from "@alea/lib/reliability/types";
+import {
+  currentWindowStartMs,
+  FIVE_MINUTES_MS,
+  nextWindowStartMs,
+} from "@alea/lib/time/fiveMinuteWindow";
 import { discoverPolymarketMarket } from "@alea/lib/trading/vendor/polymarket/discoverMarket";
 import type { Asset } from "@alea/types/assets";
 

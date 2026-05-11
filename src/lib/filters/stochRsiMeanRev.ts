@@ -35,7 +35,7 @@ type Config = z.infer<typeof configSchema>;
 export const stochRsiMeanRev: Filter<Config> = {
   id: "stoch_rsi_meanrev",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Stochastic RSI mean reversion. Stochastic-normalize the RSI series, then fire on the resulting compound oscillator's extremes. Tests whether COMPOSING two oscillators (Stoch of RSI) captures signal that running them in confluence (AND) misses.",
   configSchema,
@@ -63,13 +63,21 @@ export const stochRsiMeanRev: Filter<Config> = {
           ok = false;
           break;
         }
-        if (v > hi) hi = v;
-        if (v < lo) lo = v;
+        if (v > hi) {
+          hi = v;
+        }
+        if (v < lo) {
+          lo = v;
+        }
       }
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       const span = hi - lo;
       const current = rsi[i];
-      if (span <= 0 || current === null || current === undefined) continue;
+      if (span <= 0 || current === null || current === undefined) {
+        continue;
+      }
       srsi[i] = ((current - lo) / span) * 100;
     }
     // Smooth via simple moving average if smoothK > 1.
@@ -109,10 +117,40 @@ export const stochRsiMeanRev: Filter<Config> = {
 registerFilter({
   filter: stochRsiMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    {"smoothK":1,"oversold":10,"rsiLength":14,"overbought":90,"stochLookback":14},
-    {"smoothK":3,"oversold":10,"rsiLength":14,"overbought":90,"stochLookback":14},
-    {"smoothK":1,"oversold":20,"rsiLength":14,"overbought":80,"stochLookback":14},
-    {"smoothK":3,"oversold":15,"rsiLength":14,"overbought":85,"stochLookback":14},
-    {"smoothK":3,"oversold":20,"rsiLength":7,"overbought":80,"stochLookback":14},
+    {
+      smoothK: 1,
+      oversold: 10,
+      rsiLength: 14,
+      overbought: 90,
+      stochLookback: 14,
+    },
+    {
+      smoothK: 3,
+      oversold: 10,
+      rsiLength: 14,
+      overbought: 90,
+      stochLookback: 14,
+    },
+    {
+      smoothK: 1,
+      oversold: 20,
+      rsiLength: 14,
+      overbought: 80,
+      stochLookback: 14,
+    },
+    {
+      smoothK: 3,
+      oversold: 15,
+      rsiLength: 14,
+      overbought: 85,
+      stochLookback: 14,
+    },
+    {
+      smoothK: 3,
+      oversold: 20,
+      rsiLength: 7,
+      overbought: 80,
+      stochLookback: 14,
+    },
   ],
 });

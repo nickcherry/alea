@@ -1,4 +1,4 @@
-import { FIVE_MINUTES_MS } from "@alea/lib/livePrices/fiveMinuteWindow";
+import { FIVE_MINUTES_MS } from "@alea/lib/time/fiveMinuteWindow";
 
 /**
  * Per-window file naming utilities. The capture pipeline uses 5-minute

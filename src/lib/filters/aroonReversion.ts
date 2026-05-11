@@ -40,7 +40,7 @@ type Config = z.infer<typeof configSchema>;
 export const aroonReversion: Filter<Config> = {
   id: "aroon_reversion",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Reversion on Aroon Up/Down asymmetry. Fires DOWN when AroonUp clears `upTrigger` (recent new high just printed) AND AroonDown sits below `downTrigger` (no recent low). Symmetric for UP. Tests whether the TIME-domain extreme reading carries the same reversion signal as the magnitude-domain oscillators.",
   configSchema,
@@ -72,10 +72,10 @@ export const aroonReversion: Filter<Config> = {
 registerFilter({
   filter: aroonReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"period":50,"upTrigger":100,"downTrigger":0},
-    {"period":25,"upTrigger":100,"downTrigger":0},
-    {"period":25,"upTrigger":100,"downTrigger":30},
-    {"period":14,"upTrigger":100,"downTrigger":0},
-    {"period":14,"upTrigger":100,"downTrigger":30},
+    { period: 50, upTrigger: 100, downTrigger: 0 },
+    { period: 25, upTrigger: 100, downTrigger: 0 },
+    { period: 25, upTrigger: 100, downTrigger: 30 },
+    { period: 14, upTrigger: 100, downTrigger: 0 },
+    { period: 14, upTrigger: 100, downTrigger: 30 },
   ],
 });

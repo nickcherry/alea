@@ -1,6 +1,6 @@
 {
   "name": "alea",
-  "description": "Probabilistic trader for Polymarket's 5-minute crypto up/down markets, fed by leading-indicator price feeds from Binance, Coinbase, and the Chainlink oracle Polymarket settles on.",
+  "description": "Filter-committee research toolkit for Polymarket's 5-minute crypto up/down markets, fed by Pyth candles and live Pyth/Chainlink reference streams.",
   "type": "module",
   "private": true,
   "bin": {

@@ -3,16 +3,16 @@
  * `market_event` table 1:1 so the JSONL → Postgres ingester can map
  * fields without a translation step.
  *
- * `tsMs` is the venue's clock when known (Binance bookTicker `T`,
- * Polymarket `timestamp`, etc.); it falls back to `receivedMs` when
- * the venue doesn't surface its own timestamp. Keeping both columns
- * separate is deliberate — research can spot venue clock skew and
- * inter-venue latency by their delta.
+ * `tsMs` is the venue/source clock when known (Pyth publish time,
+ * Polymarket event timestamp, Chainlink exchange timestamp, etc.);
+ * it falls back to `receivedMs` when the source doesn't surface its
+ * own timestamp. Keeping both columns separate is deliberate —
+ * research can spot clock skew and inter-feed latency by their delta.
  *
  * `kind` is intentionally a free string rather than a TS union: each
  * source has its own vocabulary (Polymarket has `book`/`trade`/
- * `price-change`/`tick-size-change`/`resolved`; Binance has
- * `bbo`/`kline-close`; we add `connect`/`disconnect`/`resync` for
+ * `price-change`/`tick-size-change`/`resolved`; Pyth emits `bbo`;
+ * Chainlink emits `reference-price`; we add `connect`/`disconnect`/`resync` for
  * stream-state markers). Constraining at the type level would either
  * be a giant union or hide ambiguity at the source-selection layer.
  *

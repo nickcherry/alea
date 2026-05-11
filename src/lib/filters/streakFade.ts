@@ -36,7 +36,7 @@ type Config = z.infer<typeof configSchema>;
 export const streakFade: Filter<Config> = {
   id: "streak_fade",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fires opposite the most recent run of same-color bars once the streak length reaches `minStreak`. Direct inverse of the deleted `prior_bar_carry` filter — that one bet on continuation and lost monotonically with longer streaks; this bets on reversal and should win progressively more.",
   configSchema,
@@ -53,9 +53,13 @@ export const streakFade: Filter<Config> = {
     const latestColor = colorOf(n - 1);
     let streak = 1;
     for (let k = n - 2; k >= 0; k -= 1) {
-      if (colorOf(k) !== latestColor) break;
+      if (colorOf(k) !== latestColor) {
+        break;
+      }
       streak += 1;
-      if (streak >= config.minStreak) break;
+      if (streak >= config.minStreak) {
+        break;
+      }
     }
     if (streak < config.minStreak) {
       return null;
@@ -67,10 +71,10 @@ export const streakFade: Filter<Config> = {
 registerFilter({
   filter: streakFade as Filter<unknown>,
   defaultConfigs: () => [
-    {"minStreak":10},
-    {"minStreak":7},
-    {"minStreak":6},
-    {"minStreak":9},
-    {"minStreak":5},
+    { minStreak: 10 },
+    { minStreak: 7 },
+    { minStreak: 6 },
+    { minStreak: 9 },
+    { minStreak: 5 },
   ],
 });

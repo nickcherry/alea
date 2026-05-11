@@ -32,7 +32,7 @@ type Config = z.infer<typeof configSchema>;
 export const cciMeanRev: Filter<Config> = {
   id: "cci_meanrev",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Mean reversion on the Commodity Channel Index. Fires UP when CCI ≤ `oversold`, DOWN when ≥ `overbought`. Third oscillator family in the registry — alongside RSI (gain/loss percentile) and Stochastic (recent-range percentile), CCI uses mean absolute deviation of the typical price. Side-by-side WR tells us whether the MAD-based normalization sees the same reversion signal as the other two.",
   configSchema,
@@ -61,10 +61,10 @@ export const cciMeanRev: Filter<Config> = {
 registerFilter({
   filter: cciMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":20,"oversold":-250,"overbought":250},
-    {"length":14,"oversold":-200,"overbought":200},
-    {"length":20,"oversold":-200,"overbought":200},
-    {"length":30,"oversold":-200,"overbought":200},
-    {"length":14,"oversold":-150,"overbought":150},
+    { length: 20, oversold: -250, overbought: 250 },
+    { length: 14, oversold: -200, overbought: 200 },
+    { length: 20, oversold: -200, overbought: 200 },
+    { length: 30, oversold: -200, overbought: 200 },
+    { length: 14, oversold: -150, overbought: 150 },
   ],
 });

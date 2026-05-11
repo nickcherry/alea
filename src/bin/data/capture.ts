@@ -21,11 +21,11 @@ const repoRoot = resolvePath(import.meta.dir, "../../..");
  * Long-running market-data capture.
  *
  * Subscribes to the same Polymarket up/down 5m WS the dry-run trader
- * uses, plus the Binance USDT-M perpetual BBO + 5m kline WS for the
- * configured asset set, and writes every event to a per-window JSONL
- * file under `tmp/market-capture/YYYY-MM-DD/<windowKey>.jsonl`. On
- * each 5-minute boundary the previous file is closed and (unless
- * `--no-ingest` is passed) bulk-loaded into the `market_event` table.
+ * uses, plus Pyth spot and Polymarket Chainlink reference-price feeds,
+ * and writes every event to a per-window JSONL file under
+ * `tmp/market-capture/YYYY-MM-DD/<windowKey>.jsonl`. On each 5-minute
+ * boundary the previous file is closed and (unless `--no-ingest` is
+ * passed) bulk-loaded into the `market_event` table.
  *
  * Designed to run for days without intervention. Recovery on restart
  * picks up any orphaned `.jsonl` files in the capture directory and
@@ -34,9 +34,9 @@ const repoRoot = resolvePath(import.meta.dir, "../../..");
 export const dataCaptureCommand = defineCommand({
   name: "data:capture",
   summary:
-    "Long-running capture of Polymarket + Binance + Coinbase + Chainlink market-data events to disk and Postgres",
+    "Long-running capture of Polymarket + Pyth + Chainlink market-data events to disk and Postgres",
   description:
-    "Opens the Polymarket public market-data WS for current/next-window up/down 5m markets, the Binance USDT-M perp BBO+kline WS, the Coinbase Advanced Trade level2 channel for both <asset>-USD spot and <asset>-PERP-INTX perp, and Polymarket's RTDS Chainlink reference-price topic — all for the configured asset set. Writes each event as one JSONL line under tmp/market-capture/, rotating files at the 5-minute window boundary. Successfully rotated files are bulk-loaded into the market_event Postgres table. On startup, recovers and loads any orphaned .jsonl files from prior runs. Exits cleanly on SIGINT/SIGTERM.",
+    "Opens the Polymarket public market-data WS for current/next-window up/down 5m markets, the Pyth Hermes spot-price stream, and Polymarket's RTDS Chainlink reference-price topic — all for the configured asset set. Writes each event as one JSONL line under tmp/market-capture/, rotating files at the 5-minute window boundary. Successfully rotated files are bulk-loaded into the market_event Postgres table. On startup, recovers and loads any orphaned .jsonl files from prior runs. Exits cleanly on SIGINT/SIGTERM.",
   options: [
     defineValueOption({
       key: "assets",
@@ -79,7 +79,7 @@ export const dataCaptureCommand = defineCommand({
   output:
     "Streams one log line per state change (rotation, recovered session, ingest result, ws connect/disconnect/error). The JSONL tape itself is the primary artifact — stdout is operator visibility only.",
   sideEffects:
-    "Opens Polymarket, Binance, and Coinbase WebSockets plus the Polymarket-RTDS Chainlink stream; calls Polymarket gamma-api/CLOB read endpoints to discover markets each window; writes JSONL files under tmp/market-capture/ (or the directory passed to --dir); inserts rows into the market_event Postgres table unless --no-ingest is set.",
+    "Opens the Polymarket market-data WebSocket, the Pyth Hermes SSE stream, and the Polymarket-RTDS Chainlink stream; calls Polymarket gamma-api/CLOB read endpoints to discover markets each window; writes JSONL files under tmp/market-capture/ (or the directory passed to --dir); inserts rows into the market_event Postgres table unless --no-ingest is set.",
   async run({ io, options }) {
     const dir = options.dir ?? defaultCaptureDir({ repoRoot });
     const ingest = !options.noIngest;

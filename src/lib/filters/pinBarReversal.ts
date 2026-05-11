@@ -52,7 +52,7 @@ type Config = z.infer<typeof configSchema>;
 export const pinBarReversal: Filter<Config> = {
   id: "pin_bar_reversal",
   version: 1,
-  regime: "pattern",
+  family: "pattern",
   description:
     "Single-bar shape filter. Fires UP on a bullish pin bar (long lower wick, tiny body near the high) and DOWN on a bearish pin bar (long upper wick, tiny body near the low). First shape-only filter in the registry — tests whether candle shape carries reversal signal beyond what level / oscillator filters already see.",
   configSchema,
@@ -100,10 +100,10 @@ export const pinBarReversal: Filter<Config> = {
 registerFilter({
   filter: pinBarReversal as Filter<unknown>,
   defaultConfigs: () => [
-    {"minWickRatio":4,"maxBodyFraction":0.1,"maxOppositeWickFraction":0.1},
-    {"minWickRatio":3,"maxBodyFraction":0.15,"maxOppositeWickFraction":0.15},
-    {"minWickRatio":3,"maxBodyFraction":0.2,"maxOppositeWickFraction":0.15},
-    {"minWickRatio":2.5,"maxBodyFraction":0.25,"maxOppositeWickFraction":0.2},
-    {"minWickRatio":2,"maxBodyFraction":0.33,"maxOppositeWickFraction":0.25},
+    { minWickRatio: 4, maxBodyFraction: 0.1, maxOppositeWickFraction: 0.1 },
+    { minWickRatio: 3, maxBodyFraction: 0.15, maxOppositeWickFraction: 0.15 },
+    { minWickRatio: 3, maxBodyFraction: 0.2, maxOppositeWickFraction: 0.15 },
+    { minWickRatio: 2.5, maxBodyFraction: 0.25, maxOppositeWickFraction: 0.2 },
+    { minWickRatio: 2, maxBodyFraction: 0.33, maxOppositeWickFraction: 0.25 },
   ],
 });

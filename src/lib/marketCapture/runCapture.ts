@@ -2,20 +2,18 @@ import { resolve as resolvePath } from "node:path";
 
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { StreamHandle } from "@alea/lib/exchangePrices/types";
-import {
-  currentWindowStartMs,
-  FIVE_MINUTES_MS,
-} from "@alea/lib/livePrices/fiveMinuteWindow";
 import { capturePolymarket } from "@alea/lib/marketCapture/capturePolymarket";
 import { capturePolymarketChainlink } from "@alea/lib/marketCapture/capturePolymarketChainlink";
 import { capturePyth } from "@alea/lib/marketCapture/capturePyth";
 import { createCaptureSink } from "@alea/lib/marketCapture/captureSink";
 import { ingestSessionJsonl } from "@alea/lib/marketCapture/ingestSessionJsonl";
-import {
-  createCaptureJsonlWriter,
-} from "@alea/lib/marketCapture/jsonlWriter";
+import { createCaptureJsonlWriter } from "@alea/lib/marketCapture/jsonlWriter";
 import { scanPendingSessions } from "@alea/lib/marketCapture/scanPendingSessions";
 import { sessionForWindow } from "@alea/lib/marketCapture/session";
+import {
+  currentWindowStartMs,
+  FIVE_MINUTES_MS,
+} from "@alea/lib/time/fiveMinuteWindow";
 import { discoverPolymarketMarket } from "@alea/lib/trading/vendor/polymarket/discoverMarket";
 import type {
   MarketDataStreamHandle,
@@ -75,8 +73,8 @@ export type RunCaptureParams = {
  *   1. Boot: scan `dir` for orphaned `.jsonl` files from prior runs
  *      and ingest them (if any). Open a fresh JSONL writer for the
  *      current window.
- *   2. Spin up Binance perp WS — long-lived, doesn't change with
- *      windows.
+ *   2. Spin up Pyth and Polymarket Chainlink streams — long-lived,
+ *      not scoped to individual windows.
  *   3. Spin up the Polymarket WS for the current window (and the
  *      next window when we're within `DISCOVERY_LEAD_MS` of its
  *      start). Re-create on each window boundary so the new

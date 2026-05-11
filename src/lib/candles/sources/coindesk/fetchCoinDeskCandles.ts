@@ -9,7 +9,7 @@ const indexBaseUrl =
  * exchange index that tracks the same kind of cross-venue aggregation
  * Chainlink's DON publishes — empirically much closer to Polymarket's
  * settlement price than any single exchange. See
- * scripts/source_vs_chainlink.ts for the comparison numbers.
+ * doc/RELIABILITY_EXPERIMENT.md for the comparison context.
  */
 const market = "cadli";
 /**

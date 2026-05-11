@@ -44,7 +44,9 @@ export function selectCommitteeCandidates({
   const out: SelectedCandidate[] = [];
   for (const list of byKey.values()) {
     list.sort((a, b) => {
-      if (b.wilsonLow !== a.wilsonLow) return b.wilsonLow - a.wilsonLow;
+      if (b.wilsonLow !== a.wilsonLow) {
+        return b.wilsonLow - a.wilsonLow;
+      }
       return b.nFires - a.nFires;
     });
     const top = list.slice(0, rules.topN);
@@ -62,8 +64,12 @@ function isEligible({
   readonly stats: CandidateRegimeStats;
   readonly rules: CommitteeSelectionRules;
 }): boolean {
-  if (stats.nFires < rules.minFires) return false;
-  if (stats.winRate < rules.minAggregateWinRate) return false;
+  if (stats.nFires < rules.minFires) {
+    return false;
+  }
+  if (stats.winRate < rules.minAggregateWinRate) {
+    return false;
+  }
   if (
     stats.worstQuarterWinRate !== null &&
     stats.worstQuarterWinRate < rules.minWorstQuarterWinRate

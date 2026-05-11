@@ -6,12 +6,11 @@ import type { Asset } from "@alea/types/assets";
 
 /**
  * Wires the Pyth Hermes SSE price stream into the capture pipeline.
- * Same role `captureCoinbaseSpot` and `captureBinancePerp` play for
- * their venue feeds — except Pyth gives a single multi-publisher
- * aggregate price (no BBO depth), so we collapse `bid = ask = mid`
- * to keep the on-disk shape compatible with the replay loader's
- * BBO-shaped consumer. The raw `conf` (Pyth's 1σ confidence band)
- * is preserved in the payload as an extra field for diagnostics.
+ * Pyth gives a single multi-publisher aggregate price (no BBO depth),
+ * so we collapse `bid = ask = mid` to keep the on-disk shape
+ * compatible with replay consumers that expect BBO-like ticks. The
+ * raw `conf` (Pyth's 1σ confidence band) is preserved in the payload
+ * as an extra field for diagnostics.
  *
  * Captured under `source = "pyth-spot"` so replay can opt in via
  * `--tick-source pyth-spot` once data is on disk.

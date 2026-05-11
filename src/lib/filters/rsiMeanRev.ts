@@ -1,6 +1,6 @@
-import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
+import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import { z } from "zod";
 
 /**
@@ -21,7 +21,7 @@ type Config = z.infer<typeof configSchema>;
 export const rsiMeanRev: Filter<Config> = {
   id: "rsi_meanrev",
   version: 1,
-  regime: "oscillator_reversion",
+  family: "oscillator_reversion",
   description:
     "Classic two-sided RSI mean reversion. Fires UP when the latest RSI is at or below `oversold` (the indicator says 'price has fallen too far, expect a bounce'), DOWN when it's at or above `overbought` (the inverse), abstains when RSI sits in the neutral band between the two. RSI is computed with Wilder smoothing — the canonical formula TradingView and most charting tools use.",
   configSchema,
@@ -46,10 +46,10 @@ export const rsiMeanRev: Filter<Config> = {
 registerFilter({
   filter: rsiMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":7,"oversold":15,"overbought":85},
-    {"length":7,"oversold":20,"overbought":80},
-    {"length":21,"oversold":15,"overbought":85},
-    {"length":14,"oversold":20,"overbought":80},
-    {"length":14,"oversold":15,"overbought":85},
+    { length: 7, oversold: 15, overbought: 85 },
+    { length: 7, oversold: 20, overbought: 80 },
+    { length: 21, oversold: 15, overbought: 85 },
+    { length: 14, oversold: 20, overbought: 80 },
+    { length: 14, oversold: 15, overbought: 85 },
   ],
 });

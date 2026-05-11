@@ -1,4 +1,4 @@
-import type { Regime } from "@alea/lib/filters/types";
+import type { FilterFamily } from "@alea/lib/filters/types";
 import type { CandleTimeframe } from "@alea/types/candles";
 
 /**
@@ -10,7 +10,7 @@ import type { CandleTimeframe } from "@alea/types/candles";
  */
 export type FilterPeerOverlap = {
   readonly otherFilterId: string;
-  readonly otherRegime: Regime;
+  readonly otherFamily: FilterFamily;
   readonly jaccard: number;
 };
 
@@ -68,10 +68,10 @@ export type ExplorationCandidateRow = {
   readonly quarterWinRateMin: number | null;
   readonly quarterWinRateMax: number | null;
   /**
-   * Which strategy regime this filter belongs to. Used by the
-   * dashboard to group cards under a regime header.
+   * Which strategy family this filter belongs to. This is distinct
+   * from market regime.
    */
-  readonly regime: Regime;
+  readonly family: FilterFamily;
   /**
    * Top other filter families this filter fires alongside, sorted
    * by Jaccard descending. Computed per-period so we can spot

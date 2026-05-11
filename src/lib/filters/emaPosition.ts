@@ -22,7 +22,7 @@ import { computeEmaSeries } from "@alea/lib/indicators/ema";
 export const emaPosition: Filter<MovingAveragePositionConfig> = {
   id: "ema_position",
   version: 1,
-  regime: "ma_position",
+  family: "ma_position",
   description:
     "Fires on the close's position relative to an N-bar EMA. Same decision tree as `sma_position`; only the baseline differs (EMA weights recent bars more heavily).",
   configSchema: movingAveragePositionConfigSchema,

@@ -1,6 +1,6 @@
 import {
-  scanPolymarketLifetimePnl,
   type LifetimePnlScanProgress,
+  scanPolymarketLifetimePnl,
 } from "@alea/lib/trading/vendor/polymarket/scanLifetimePnl";
 import type { DataApiFetch } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
 import { describe, expect, it } from "bun:test";

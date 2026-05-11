@@ -3,7 +3,7 @@ import type {
   ExplorationPayload,
   ExplorationQuarter,
 } from "@alea/lib/exploration/types";
-import type { Regime } from "@alea/lib/filters/types";
+import type { FilterFamily } from "@alea/lib/filters/types";
 import {
   aleaBrandMark,
   aleaDesignSystemHead,
@@ -94,9 +94,9 @@ export function renderExplorationHtml({
 
 /**
  * Single flat stack of filter cards sorted by group avg WR. Each
- * filter's regime is shown as a small tag in its card header (still
+ * filter's family is shown as a small tag in its card header (still
  * structured data for future committee tooling), but the dashboard
- * doesn't break the stack into loud regime sections.
+ * doesn't break the stack into loud family sections.
  */
 function renderFilterStack({
   rows,
@@ -107,8 +107,8 @@ function renderFilterStack({
   return groups.map((g) => renderFilterCard({ group: g })).join("");
 }
 
-function regimeLabel({ regime }: { readonly regime: Regime }): string {
-  switch (regime) {
+function familyLabel({ family }: { readonly family: FilterFamily }): string {
+  switch (family) {
     case "band_reversion":
       return "band reversion";
     case "oscillator_reversion":
@@ -126,7 +126,7 @@ function regimeLabel({ regime }: { readonly regime: Regime }): string {
 
 type FilterGroup = {
   readonly filterId: string;
-  readonly regime: Regime;
+  readonly family: FilterFamily;
   readonly rows: readonly ExplorationCandidateRow[];
   readonly avgWinRate: number | null;
   readonly totalFires: number;
@@ -167,13 +167,15 @@ function groupRowsByFilter({
     const sorted = [...list].sort((a, b) => {
       const aRate = a.winRate ?? -1;
       const bRate = b.winRate ?? -1;
-      if (bRate !== aRate) return bRate - aRate;
+      if (bRate !== aRate) {
+        return bRate - aRate;
+      }
       return b.nFires - a.nFires;
     });
     const first = sorted[0]!;
     groups.push({
       filterId,
-      regime: first.regime,
+      family: first.family,
       rows: sorted,
       avgWinRate,
       totalFires,
@@ -182,7 +184,9 @@ function groupRowsByFilter({
   groups.sort((a, b) => {
     const aAvg = a.avgWinRate ?? -1;
     const bAvg = b.avgWinRate ?? -1;
-    if (bAvg !== aAvg) return bAvg - aAvg;
+    if (bAvg !== aAvg) {
+      return bAvg - aAvg;
+    }
     return b.totalFires - a.totalFires;
   });
   return groups;
@@ -190,7 +194,9 @@ function groupRowsByFilter({
 
 function renderFilterCard({ group }: { readonly group: FilterGroup }): string {
   const avg =
-    group.avgWinRate === null ? "—" : formatPercent({ value: group.avgWinRate });
+    group.avgWinRate === null
+      ? "—"
+      : formatPercent({ value: group.avgWinRate });
   const tone = toneForWr({ value: group.avgWinRate });
   const toneClass =
     tone === "positive"
@@ -203,7 +209,7 @@ function renderFilterCard({ group }: { readonly group: FilterGroup }): string {
       <header class="filter-card-header" role="button" tabindex="0" aria-expanded="true">
         <div class="filter-card-id-row">
           <h2 class="filter-card-id">${escapeHtml({ value: group.filterId })}</h2>
-          <span class="filter-card-regime">${escapeHtml({ value: regimeLabel({ regime: group.regime }) })}</span>
+          <span class="filter-card-family">${escapeHtml({ value: familyLabel({ family: group.family }) })}</span>
         </div>
         <div class="filter-card-right-group">
           <div class="filter-card-meta">
@@ -252,7 +258,11 @@ function renderFilterCard({ group }: { readonly group: FilterGroup }): string {
   `;
 }
 
-function renderSubRow({ row }: { readonly row: ExplorationCandidateRow }): string {
+function renderSubRow({
+  row,
+}: {
+  readonly row: ExplorationCandidateRow;
+}): string {
   const minCell =
     row.quarterWinRateMin === null
       ? '<span class="alea-muted">—</span>'
@@ -274,8 +284,12 @@ function renderSubRow({ row }: { readonly row: ExplorationCandidateRow }): strin
 }
 
 function minMaxTone({ value }: { readonly value: number }): string {
-  if (value >= 0.52) return " alea-num-positive";
-  if (value < 0.48) return " alea-num-negative";
+  if (value >= 0.52) {
+    return " alea-num-positive";
+  }
+  if (value < 0.48) {
+    return " alea-num-negative";
+  }
   return "";
 }
 
@@ -304,7 +318,8 @@ function renderQuarterStrip({
 }
 
 function renderQuarterBar({ q }: { readonly q: ExplorationQuarter }): string {
-  const wrLabel = q.winRate === null ? "—" : formatPercent({ value: q.winRate });
+  const wrLabel =
+    q.winRate === null ? "—" : formatPercent({ value: q.winRate });
   const title = `${q.label}: ${wrLabel} (${q.nWins.toLocaleString()}/${q.nFires.toLocaleString()})`;
   const titleAttr = escapeHtml({ value: title });
   if (q.winRate === null || q.nFires === 0) {
@@ -435,8 +450,7 @@ const TIPS = {
     "Percent of triggers where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
   minQwr:
     "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
-  maxQwr:
-    "The best quarter this config had — a robustness ceiling.",
+  maxQwr: "The best quarter this config had — a robustness ceiling.",
   quarters:
     "Quarter-by-quarter win rate, oldest left to newest right. Bars above the midline = winning quarter (green), below = losing (red); taller = bigger deviation from 50 %. Hover a bar for the exact number.",
 };

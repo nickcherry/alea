@@ -1,10 +1,9 @@
-import { describe, expect, it } from "bun:test";
-
 import { selectCommitteeCandidates } from "@alea/lib/committee/selection/selectCandidates";
 import type {
   CandidateRegimeStats,
   CommitteeSelectionRules,
 } from "@alea/lib/committee/selection/types";
+import { describe, expect, it } from "bun:test";
 
 const RULES: CommitteeSelectionRules = {
   minFires: 20,
@@ -36,7 +35,9 @@ function stats(
 describe("selectCommitteeCandidates", () => {
   it("drops candidates below the fire minimum", () => {
     const result = selectCommitteeCandidates({
-      stats: [stats({ filterId: "a", nFires: 19, winRate: 0.9, wilsonLow: 0.7 })],
+      stats: [
+        stats({ filterId: "a", nFires: 19, winRate: 0.9, wilsonLow: 0.7 }),
+      ],
       rules: RULES,
     });
     expect(result).toEqual([]);
@@ -44,7 +45,9 @@ describe("selectCommitteeCandidates", () => {
 
   it("drops candidates below the aggregate WR floor", () => {
     const result = selectCommitteeCandidates({
-      stats: [stats({ filterId: "a", nFires: 500, winRate: 0.52, wilsonLow: 0.5 })],
+      stats: [
+        stats({ filterId: "a", nFires: 500, winRate: 0.52, wilsonLow: 0.5 }),
+      ],
       rules: RULES,
     });
     expect(result).toEqual([]);
@@ -86,9 +89,24 @@ describe("selectCommitteeCandidates", () => {
   it("ranks by Wilson lower bound desc, ties broken by nFires desc", () => {
     const result = selectCommitteeCandidates({
       stats: [
-        stats({ filterId: "small_lucky", nFires: 25, winRate: 0.8, wilsonLow: 0.55 }),
-        stats({ filterId: "big_solid", nFires: 1000, winRate: 0.6, wilsonLow: 0.57 }),
-        stats({ filterId: "tie_smaller", nFires: 100, winRate: 0.6, wilsonLow: 0.55 }),
+        stats({
+          filterId: "small_lucky",
+          nFires: 25,
+          winRate: 0.8,
+          wilsonLow: 0.55,
+        }),
+        stats({
+          filterId: "big_solid",
+          nFires: 1000,
+          winRate: 0.6,
+          wilsonLow: 0.57,
+        }),
+        stats({
+          filterId: "tie_smaller",
+          nFires: 100,
+          winRate: 0.6,
+          wilsonLow: 0.55,
+        }),
       ],
       rules: RULES,
     });

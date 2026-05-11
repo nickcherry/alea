@@ -17,7 +17,7 @@ type Config = z.infer<typeof configSchema>;
 export const donchianReversion: Filter<Config> = {
   id: "donchian_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Fires UP when the latest close is at or below the trailing N-bar low, DOWN when at or above the trailing N-bar high. Pure raw-extreme channel reversion, no volatility scaling.",
   configSchema,
@@ -25,18 +25,32 @@ export const donchianReversion: Filter<Config> = {
   predict: (config, bars) => {
     const i = bars.length - 1;
     const close = bars[i]?.close;
-    if (close === undefined) return null;
+    if (close === undefined) {
+      return null;
+    }
     let hi = -Infinity;
     let lo = Infinity;
     for (let k = i - config.period + 1; k <= i; k += 1) {
       const b = bars[k];
-      if (b === undefined) return null;
-      if (b.high > hi) hi = b.high;
-      if (b.low < lo) lo = b.low;
+      if (b === undefined) {
+        return null;
+      }
+      if (b.high > hi) {
+        hi = b.high;
+      }
+      if (b.low < lo) {
+        lo = b.low;
+      }
     }
-    if (!Number.isFinite(hi) || !Number.isFinite(lo)) return null;
-    if (close <= lo) return "up";
-    if (close >= hi) return "down";
+    if (!Number.isFinite(hi) || !Number.isFinite(lo)) {
+      return null;
+    }
+    if (close <= lo) {
+      return "up";
+    }
+    if (close >= hi) {
+      return "down";
+    }
     return null;
   },
 };
@@ -44,10 +58,10 @@ export const donchianReversion: Filter<Config> = {
 registerFilter({
   filter: donchianReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"period":30},
-    {"period":20},
-    {"period":14},
-    {"period":50},
-    {"period":10},
+    { period: 30 },
+    { period: 20 },
+    { period: 14 },
+    { period: 50 },
+    { period: 10 },
   ],
 });

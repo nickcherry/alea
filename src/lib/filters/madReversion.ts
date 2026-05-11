@@ -22,7 +22,9 @@ type Config = z.infer<typeof configSchema>;
 
 function median(sorted: readonly number[]): number {
   const n = sorted.length;
-  if (n === 0) return 0;
+  if (n === 0) {
+    return 0;
+  }
   const mid = Math.floor(n / 2);
   return n % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
 }
@@ -30,7 +32,7 @@ function median(sorted: readonly number[]): number {
 export const madReversion: Filter<Config> = {
   id: "mad_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Robust z-score reversion using median + median-absolute-deviation. Sibling of `zscore_reversion` but resistant to outlier bars that would inflate std-dev.",
   configSchema,
@@ -38,22 +40,32 @@ export const madReversion: Filter<Config> = {
   predict: (config, bars) => {
     const n = bars.length;
     const N = config.length;
-    if (n < N) return null;
+    if (n < N) {
+      return null;
+    }
     const closes: number[] = [];
     for (let k = n - N; k <= n - 1; k += 1) {
       const c = bars[k]?.close;
-      if (c === undefined) return null;
+      if (c === undefined) {
+        return null;
+      }
       closes.push(c);
     }
     const sorted = [...closes].sort((a, b) => a - b);
     const med = median(sorted);
     const devs = closes.map((c) => Math.abs(c - med)).sort((a, b) => a - b);
     const mad = median(devs);
-    if (mad <= 0) return null;
+    if (mad <= 0) {
+      return null;
+    }
     const current = closes[closes.length - 1]!;
     const z = (current - med) / mad;
-    if (z >= config.threshold) return "down";
-    if (z <= -config.threshold) return "up";
+    if (z >= config.threshold) {
+      return "down";
+    }
+    if (z <= -config.threshold) {
+      return "up";
+    }
     return null;
   },
 };
@@ -61,10 +73,10 @@ export const madReversion: Filter<Config> = {
 registerFilter({
   filter: madReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":20,"threshold":4},
-    {"length":20,"threshold":3},
-    {"length":20,"threshold":2.5},
-    {"length":14,"threshold":2},
-    {"length":20,"threshold":2},
+    { length: 20, threshold: 4 },
+    { length: 20, threshold: 3 },
+    { length: 20, threshold: 2.5 },
+    { length: 14, threshold: 2 },
+    { length: 20, threshold: 2 },
   ],
 });

@@ -1,5 +1,5 @@
-import type { DatabaseClient } from "@alea/lib/db/types";
 import type { SelectedCandidate } from "@alea/lib/committee/selection/types";
+import type { DatabaseClient } from "@alea/lib/db/types";
 
 /**
  * Wipes `committee_selections` and rewrites it with the supplied
@@ -21,7 +21,9 @@ export async function persistCommitteeSelections({
 }): Promise<void> {
   await db.transaction().execute(async (tx) => {
     await tx.deleteFrom("committee_selections").execute();
-    if (selections.length === 0) return;
+    if (selections.length === 0) {
+      return;
+    }
     await tx
       .insertInto("committee_selections")
       .values(

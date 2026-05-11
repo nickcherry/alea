@@ -35,7 +35,7 @@ type Config = z.infer<typeof configSchema>;
 export const heikinAshiReversion: Filter<Config> = {
   id: "heikin_ashi_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Bollinger reversion on Heikin-Ashi candles. Identical decision tree to `bollinger_reversion` but the entire OHLC series is first transformed into HA candles, dampening single-bar noise. Head-to-head with the basic Bollinger reversion says whether smoothing the input is a net win.",
   configSchema,
@@ -82,10 +82,10 @@ export const heikinAshiReversion: Filter<Config> = {
 registerFilter({
   filter: heikinAshiReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":14,"multiplier":3},
-    {"length":20,"multiplier":3},
-    {"length":14,"multiplier":2.5},
-    {"length":20,"multiplier":2.5},
-    {"length":14,"multiplier":2},
+    { length: 14, multiplier: 3 },
+    { length: 20, multiplier: 3 },
+    { length: 14, multiplier: 2.5 },
+    { length: 20, multiplier: 2.5 },
+    { length: 14, multiplier: 2 },
   ],
 });

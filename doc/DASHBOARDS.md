@@ -29,12 +29,12 @@ bikeshedding.
 
 ```
 tmp/
-  training-distributions_2026-05-06T17-58-31-143Z.html
-  training-distributions_2026-05-06T17-58-31-143Z.json
-  training-distributions_2026-05-06T17-58-31-143Z.assets/
+  latency_2026-05-06T17-58-31-143Z.html
+  latency_2026-05-06T17-58-31-143Z.json
+  latency_2026-05-06T17-58-31-143Z.assets/
     alea.css                      ← shared design system
-    training-distributions.css    ← page-specific layout
-    training-distributions.js     ← page-specific behavior
+    latency.css                   ← page-specific layout
+    latency.js                    ← page-specific behavior
 ```
 
 The HTML uses **relative** `<link>` and `<script>` hrefs into the
@@ -81,7 +81,7 @@ when we change a CSS rule.
    `<script type="application/json" id="<page>-payload">…</script>`,
    then emit a `<script src>` tag for each entry in `assets.scripts`.
 4. The `write*Artifacts` wrapper calls `copyDashboardAssets({ htmlPath,
-   pageAssets: ["<page>.css", "<page>.js"] })`, then passes the
+pageAssets: ["<page>.css", "<page>.js"] })`, then passes the
    returned hrefs into the renderer.
 5. The page-side JS reads bootstrap data from
    `document.getElementById("<page>-payload").textContent`. Don't
@@ -153,7 +153,7 @@ under `colorByExchange`:
 | Spot VWAP (marble)     | `#e8dec4` | Volume-weighted spot consensus, dashed         |
 | Perp VWAP (gold)       | `#d7aa45` | Volume-weighted perp consensus, dashed         |
 
-For non-venue series (e.g. body vs. wick on the training distributions
+For non-venue series (e.g. consensus vs. Chainlink on the reliability
 chart), use the chart accents from
 [`aleaChartTokens`](../src/lib/ui/aleaDesignSystem.ts):
 `bodyColor` (`#5b95ff`, "the move") and `wickColor` (`#ffa566`, "the
@@ -166,7 +166,7 @@ dashboards feel like the same product.
 2. The domain layer returns a structured payload (a typed object).
 3. The CLI hands the payload to `write<Page>Artifacts`, which:
    a. Calls `copyDashboardAssets` to lay down the sibling `.assets/`
-      folder.
+   folder.
    b. Renders the HTML via `render<Page>Html({ payload, assets })`.
    c. Writes the HTML and JSON sidecar.
 4. The HTML is auto-opened on macOS.
@@ -185,11 +185,11 @@ serves a single multi-page dashboard. Each page is still a standalone
 static HTML asset following the contract above; the worker just
 arranges them under one host and one shared top nav.
 
-| Route           | Page                | Source                                                                                              |
-| --------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `/`             | Live trading PnL    | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
-| `/exploration/` | Filter exploration  | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
-| `/dryrun/`      | Dry-run committee   | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
+| Route           | Page               | Source                                                                                              |
+| --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
+| `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -241,8 +241,8 @@ The actual `wrangler deploy` shellout lives in
 
 `tmp/<command>_<UTC-iso>.html` plus `tmp/<command>_<UTC-iso>.json` plus
 `tmp/<command>_<UTC-iso>.assets/`. The prefix matches the CLI verb
-(`latency_*`, `training-distributions_*`) so a `ls tmp/` listing
-groups runs by analysis. The timestamp uses the standard
+(`latency_*`, `reliability_*`) so a `ls tmp/` listing groups runs by
+analysis. The timestamp uses the standard
 `Date#toISOString().replace(/[:.]/g, "-")` form so it sorts lexically.
 
 ## When something doesn't fit

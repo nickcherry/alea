@@ -25,7 +25,7 @@ type Config = z.infer<typeof configSchema>;
 export const stdevChannelReversion: Filter<Config> = {
   id: "stdev_channel_reversion",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Linear-regression-channel reversion. Fits OLS to trailing closes, computes residual std-dev; fires when the latest close clears `multiplier`σ of residuals. Trend-aware analog of Bollinger.",
   configSchema,
@@ -33,14 +33,18 @@ export const stdevChannelReversion: Filter<Config> = {
   predict: (config, bars) => {
     const n = bars.length;
     const N = config.length;
-    if (n < N) return null;
+    if (n < N) {
+      return null;
+    }
     let sumX = 0;
     let sumY = 0;
     let sumXY = 0;
     let sumXX = 0;
     for (let k = 0; k < N; k += 1) {
       const y = bars[n - N + k]?.close;
-      if (y === undefined) return null;
+      if (y === undefined) {
+        return null;
+      }
       const x = k;
       sumX += x;
       sumY += y;
@@ -48,7 +52,9 @@ export const stdevChannelReversion: Filter<Config> = {
       sumXX += x * x;
     }
     const denom = N * sumXX - sumX * sumX;
-    if (denom <= 0) return null;
+    if (denom <= 0) {
+      return null;
+    }
     const slope = (N * sumXY - sumX * sumY) / denom;
     const intercept = (sumY - slope * sumX) / N;
     let sumSqRes = 0;
@@ -59,12 +65,18 @@ export const stdevChannelReversion: Filter<Config> = {
       sumSqRes += r * r;
     }
     const stddev = Math.sqrt(sumSqRes / N);
-    if (stddev <= 0) return null;
+    if (stddev <= 0) {
+      return null;
+    }
     const close = bars[n - 1]!.close;
     const lineAtLatest = intercept + slope * (N - 1);
     const dev = (close - lineAtLatest) / stddev;
-    if (dev >= config.multiplier) return "down";
-    if (dev <= -config.multiplier) return "up";
+    if (dev >= config.multiplier) {
+      return "down";
+    }
+    if (dev <= -config.multiplier) {
+      return "up";
+    }
     return null;
   },
 };
@@ -72,10 +84,10 @@ export const stdevChannelReversion: Filter<Config> = {
 registerFilter({
   filter: stdevChannelReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":20,"multiplier":3},
-    {"length":20,"multiplier":2.5},
-    {"length":50,"multiplier":2.5},
-    {"length":14,"multiplier":2},
-    {"length":20,"multiplier":2},
+    { length: 20, multiplier: 3 },
+    { length: 20, multiplier: 2.5 },
+    { length: 50, multiplier: 2.5 },
+    { length: 14, multiplier: 2 },
+    { length: 20, multiplier: 2 },
   ],
 });

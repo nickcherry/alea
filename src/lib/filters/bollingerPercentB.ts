@@ -33,7 +33,7 @@ type Config = z.infer<typeof configSchema>;
 export const bollingerPercentB: Filter<Config> = {
   id: "bollinger_percent_b",
   version: 1,
-  regime: "band_reversion",
+  family: "band_reversion",
   description:
     "Bollinger %B reversion. %B reads as 0 at the lower band, 1 at the upper band, negative below the lower band, > 1 above the upper band. Fires UP when %B ≤ `lowerEnter`, DOWN when %B ≥ `upperEnter`. Continuous-threshold sibling of `bollinger_reversion`: that one fires the instant the close crosses; this one lets you tune 'how far past' the band counts as a signal.",
   configSchema,
@@ -73,10 +73,10 @@ export const bollingerPercentB: Filter<Config> = {
 registerFilter({
   filter: bollingerPercentB as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":20,"lowerEnter":-0.2,"multiplier":2,"upperEnter":1.2},
-    {"length":20,"lowerEnter":-0.1,"multiplier":2.5,"upperEnter":1.1},
-    {"length":20,"lowerEnter":-0.15,"multiplier":2,"upperEnter":1.15},
-    {"length":20,"lowerEnter":0,"multiplier":2.5,"upperEnter":1},
-    {"length":20,"lowerEnter":-0.1,"multiplier":2,"upperEnter":1.1},
+    { length: 20, lowerEnter: -0.2, multiplier: 2, upperEnter: 1.2 },
+    { length: 20, lowerEnter: -0.1, multiplier: 2.5, upperEnter: 1.1 },
+    { length: 20, lowerEnter: -0.15, multiplier: 2, upperEnter: 1.15 },
+    { length: 20, lowerEnter: 0, multiplier: 2.5, upperEnter: 1 },
+    { length: 20, lowerEnter: -0.1, multiplier: 2, upperEnter: 1.1 },
   ],
 });

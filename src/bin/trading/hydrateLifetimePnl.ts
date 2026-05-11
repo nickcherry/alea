@@ -2,11 +2,11 @@ import { env } from "@alea/constants/env";
 import { CliUsageError } from "@alea/lib/cli/CliUsageError";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
+import { formatUsd } from "@alea/lib/trading/format";
 import {
   DEFAULT_LIFETIME_PNL_PATH,
   persistLifetimePnl,
 } from "@alea/lib/trading/state/lifetimePnlStore";
-import { formatUsd } from "@alea/lib/trading/format";
 import { scanPolymarketLifetimePnl } from "@alea/lib/trading/vendor/polymarket/scanLifetimePnl";
 import pc from "picocolors";
 

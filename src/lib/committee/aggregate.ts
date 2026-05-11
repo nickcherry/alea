@@ -27,12 +27,19 @@ export function aggregateCommittee({
   let down = 0;
   let abstain = 0;
   for (const v of votes) {
-    if (v.prediction === "up") up += 1;
-    else if (v.prediction === "down") down += 1;
-    else abstain += 1;
+    if (v.prediction === "up") {
+      up += 1;
+    } else if (v.prediction === "down") {
+      down += 1;
+    } else {
+      abstain += 1;
+    }
   }
   let prediction: FilterPrediction = null;
-  if (up > down) prediction = "up";
-  else if (down > up) prediction = "down";
+  if (up > down) {
+    prediction = "up";
+  } else if (down > up) {
+    prediction = "down";
+  }
   return { prediction, up, down, abstain };
 }

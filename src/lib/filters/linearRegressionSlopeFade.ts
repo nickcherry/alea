@@ -22,7 +22,7 @@ type Config = z.infer<typeof configSchema>;
 export const linearRegressionSlopeFade: Filter<Config> = {
   id: "linear_regression_slope_fade",
   version: 1,
-  regime: "velocity_fade",
+  family: "velocity_fade",
   description:
     "Fades strong linear-regression slopes. Fits an OLS line to the last N closes; if |slope| / mean_close exceeds the threshold, predict the opposite direction. Tests whether sustained 'trendiness' captured by a regression line mean-reverts.",
   configSchema,
@@ -30,14 +30,18 @@ export const linearRegressionSlopeFade: Filter<Config> = {
   predict: (config, bars) => {
     const n = bars.length;
     const N = config.length;
-    if (n < N) return null;
+    if (n < N) {
+      return null;
+    }
     let sumX = 0;
     let sumY = 0;
     let sumXY = 0;
     let sumXX = 0;
     for (let k = 0; k < N; k += 1) {
       const y = bars[n - N + k]?.close;
-      if (y === undefined) return null;
+      if (y === undefined) {
+        return null;
+      }
       const x = k;
       sumX += x;
       sumY += y;
@@ -45,13 +49,21 @@ export const linearRegressionSlopeFade: Filter<Config> = {
       sumXX += x * x;
     }
     const denom = N * sumXX - sumX * sumX;
-    if (denom <= 0) return null;
+    if (denom <= 0) {
+      return null;
+    }
     const slope = (N * sumXY - sumX * sumY) / denom;
     const meanClose = sumY / N;
-    if (meanClose <= 0) return null;
+    if (meanClose <= 0) {
+      return null;
+    }
     const normSlope = slope / meanClose;
-    if (normSlope >= config.threshold) return "down";
-    if (normSlope <= -config.threshold) return "up";
+    if (normSlope >= config.threshold) {
+      return "down";
+    }
+    if (normSlope <= -config.threshold) {
+      return "up";
+    }
     return null;
   },
 };
@@ -59,10 +71,10 @@ export const linearRegressionSlopeFade: Filter<Config> = {
 registerFilter({
   filter: linearRegressionSlopeFade as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":10,"threshold":0.0005},
-    {"length":20,"threshold":0.001},
-    {"length":20,"threshold":0.0005},
-    {"length":20,"threshold":0.002},
-    {"length":50,"threshold":0.0005},
+    { length: 10, threshold: 0.0005 },
+    { length: 20, threshold: 0.001 },
+    { length: 20, threshold: 0.0005 },
+    { length: 20, threshold: 0.002 },
+    { length: 50, threshold: 0.0005 },
   ],
 });

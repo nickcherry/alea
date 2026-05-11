@@ -44,7 +44,7 @@ type Config = z.infer<typeof configSchema>;
 export const engulfingReversal: Filter<Config> = {
   id: "engulfing_reversal",
   version: 1,
-  regime: "pattern",
+  family: "pattern",
   description:
     "Two-bar engulfing pattern. Fires UP when the current green bar's body fully covers the prior red bar's body (and current body ≥ `minBodyRatio` × prior body); DOWN on the symmetric bearish case. Pure shape signal — no levels, no oscillators — testing whether a single decisive reversal bar predicts continued reversal at bar+1.",
   configSchema,
@@ -99,9 +99,9 @@ export const engulfingReversal: Filter<Config> = {
 registerFilter({
   filter: engulfingReversal as Filter<unknown>,
   defaultConfigs: () => [
-    {"minBodyRatio":1},
-    {"minBodyRatio":0.5},
-    {"minBodyRatio":1.5},
-    {"minBodyRatio":2},
+    { minBodyRatio: 1 },
+    { minBodyRatio: 0.5 },
+    { minBodyRatio: 1.5 },
+    { minBodyRatio: 2 },
   ],
 });

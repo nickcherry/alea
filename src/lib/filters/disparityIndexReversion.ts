@@ -25,7 +25,7 @@ type Config = z.infer<typeof configSchema>;
 export const disparityIndexReversion: Filter<Config> = {
   id: "disparity_index_reversion",
   version: 1,
-  regime: "ma_position",
+  family: "ma_position",
   description:
     "Mean reversion on the Disparity Index — percent distance between close and its EMA. Continuous-threshold formulation of the same hypothesis as `ema_position` revert mode.",
   configSchema,
@@ -36,10 +36,16 @@ export const disparityIndexReversion: Filter<Config> = {
     const i = closes.length - 1;
     const c = closes[i];
     const e = ema[i];
-    if (c === undefined || e === null || e === undefined || e <= 0) return null;
+    if (c === undefined || e === null || e === undefined || e <= 0) {
+      return null;
+    }
     const di = (100 * (c - e)) / e;
-    if (di >= config.threshold) return "down";
-    if (di <= -config.threshold) return "up";
+    if (di >= config.threshold) {
+      return "down";
+    }
+    if (di <= -config.threshold) {
+      return "up";
+    }
     return null;
   },
 };
@@ -47,10 +53,10 @@ export const disparityIndexReversion: Filter<Config> = {
 registerFilter({
   filter: disparityIndexReversion as Filter<unknown>,
   defaultConfigs: () => [
-    {"length":14,"threshold":1},
-    {"length":20,"threshold":2},
-    {"length":14,"threshold":0.5},
-    {"length":20,"threshold":1},
-    {"length":20,"threshold":0.5},
+    { length: 14, threshold: 1 },
+    { length: 20, threshold: 2 },
+    { length: 14, threshold: 0.5 },
+    { length: 20, threshold: 1 },
+    { length: 20, threshold: 0.5 },
   ],
 });

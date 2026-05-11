@@ -60,20 +60,34 @@
   // .alea-info-tip ⓘ icon. Keep in sync with TIPS in
   // renderExplorationHtml.ts (SSR) so server + client tooltips match.
   var TIPS = {
-    familyAvg: "Win rate across all of this filter's configs in the current period and regime, weighted by engagement count. Higher = the filter idea works.",
-    familyConfigs: "Number of distinct parameter settings (knob values) we backtested for this filter family.",
-    familyEngagements: "Total times any config in this filter family triggered an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
-    config: "The specific parameter values for this row of the family — the exact knobs that produced the win rate to the right.",
-    engagements: "How many times this exact config triggered a prediction across the backtest history.",
-    winRate: "Percent of triggers where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
-    minQwr: "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
+    familyAvg:
+      "Win rate across all of this filter's configs in the current period and regime, weighted by engagement count. Higher = the filter idea works.",
+    familyConfigs:
+      "Number of distinct parameter settings (knob values) we backtested for this filter family.",
+    familyEngagements:
+      "Total times any config in this filter family triggered an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
+    config:
+      "The specific parameter values for this row of the family — the exact knobs that produced the win rate to the right.",
+    engagements:
+      "How many times this exact config triggered a prediction across the backtest history.",
+    winRate:
+      "Percent of triggers where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
+    minQwr:
+      "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
     maxQwr: "The best quarter this config had — a robustness ceiling.",
-    quarters: "Quarter-by-quarter win rate, oldest left to newest right. Bars above the midline = winning quarter (green), below = losing (red); taller = bigger deviation from 50 %. Hover a bar for the exact number.",
+    quarters:
+      "Quarter-by-quarter win rate, oldest left to newest right. Bars above the midline = winning quarter (green), below = losing (red); taller = bigger deviation from 50 %. Hover a bar for the exact number.",
   };
 
   function infoTip(text) {
     var safe = escapeHtml(text);
-    return ' <span class="alea-info-tip" tabindex="0" data-tip="' + safe + '" aria-label="' + safe + '"></span>';
+    return (
+      ' <span class="alea-info-tip" tabindex="0" data-tip="' +
+      safe +
+      '" aria-label="' +
+      safe +
+      '"></span>'
+    );
   }
 
   Array.prototype.forEach.call(periodTabs, function (tab) {
@@ -159,8 +173,10 @@
       nWinsDown: by.nWinsDown,
       winRateDown: by.winRateDown,
       quarters: by.quarters || [],
-      quarterWinRateMin: by.quarterWinRateMin === undefined ? null : by.quarterWinRateMin,
-      quarterWinRateMax: by.quarterWinRateMax === undefined ? null : by.quarterWinRateMax,
+      quarterWinRateMin:
+        by.quarterWinRateMin === undefined ? null : by.quarterWinRateMin,
+      quarterWinRateMax:
+        by.quarterWinRateMax === undefined ? null : by.quarterWinRateMax,
     });
   }
 
@@ -175,24 +191,21 @@
     if (!id) return;
     collapsed[id] = !collapsed[id];
     card.classList.toggle("is-collapsed", !!collapsed[id]);
-    header.setAttribute(
-      "aria-expanded",
-      collapsed[id] ? "false" : "true",
-    );
+    header.setAttribute("aria-expanded", collapsed[id] ? "false" : "true");
   }
   if (stack) {
     stack.addEventListener("click", function (e) {
-      var header = e.target && (e.target.closest
-        ? e.target.closest(".filter-card-header")
-        : null);
+      var header =
+        e.target &&
+        (e.target.closest ? e.target.closest(".filter-card-header") : null);
       if (!header) return;
       toggleCardForHeader(header);
     });
     stack.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" && e.key !== " ") return;
-      var header = e.target && (e.target.closest
-        ? e.target.closest(".filter-card-header")
-        : null);
+      var header =
+        e.target &&
+        (e.target.closest ? e.target.closest(".filter-card-header") : null);
       if (!header) return;
       e.preventDefault();
       toggleCardForHeader(header);
@@ -215,7 +228,7 @@
       if (!byId[r.filterId]) {
         byId[r.filterId] = {
           filterId: r.filterId,
-          regime: r.regime,
+          family: r.family,
           rows: [],
         };
         order.push(r.filterId);
@@ -224,11 +237,13 @@
     }
     var groups = order.map(function (id) {
       var g = byId[id];
-      g.totalFires = g.rows.reduce(function (s, r) { return s + r.nFires; }, 0);
-      g.totalWins = g.rows.reduce(function (s, r) { return s + r.nWins; }, 0);
-      g.avgWinRate = g.totalFires === 0
-        ? null
-        : g.totalWins / g.totalFires;
+      g.totalFires = g.rows.reduce(function (s, r) {
+        return s + r.nFires;
+      }, 0);
+      g.totalWins = g.rows.reduce(function (s, r) {
+        return s + r.nWins;
+      }, 0);
+      g.avgWinRate = g.totalFires === 0 ? null : g.totalWins / g.totalFires;
       g.rows = g.rows.slice().sort(function (a, b) {
         var aRate = a.winRate === null ? -1 : a.winRate;
         var bRate = b.winRate === null ? -1 : b.winRate;
@@ -250,71 +265,123 @@
     var avg = g.avgWinRate === null ? "&mdash;" : percent(g.avgWinRate);
     var tone = toneClass(g.avgWinRate);
     var body = g.rows.map(renderSubRow).join("");
-    var familyLabel = FAMILY_LABELS[g.regime] || g.regime;
+    var familyLabel = FAMILY_LABELS[g.family] || g.family;
     var isCollapsed = !!collapsed[g.filterId];
     var collapsedCls = isCollapsed ? " is-collapsed" : "";
     var ariaExpanded = isCollapsed ? "false" : "true";
     return (
-      '<section class="filter-card' + collapsedCls + '" data-filter-id="' + escapeHtml(g.filterId) + '">' +
-        '<header class="filter-card-header" role="button" tabindex="0" aria-expanded="' + ariaExpanded + '">' +
-          '<div class="filter-card-id-row">' +
-            '<h2 class="filter-card-id">' + escapeHtml(g.filterId) + '</h2>' +
-            '<span class="filter-card-regime">' + escapeHtml(familyLabel) + '</span>' +
-          '</div>' +
-          '<div class="filter-card-right-group">' +
-            '<div class="filter-card-meta">' +
-              '<span class="filter-card-meta-item is-avg">' +
-                '<span class="filter-card-meta-label">avg' + infoTip(TIPS.familyAvg) + '</span>' +
-                '<span class="filter-card-meta-value' + tone + '">' + avg + '</span>' +
-              '</span>' +
-              '<span class="filter-card-meta-item is-configs">' +
-                '<span class="filter-card-meta-label">configs' + infoTip(TIPS.familyConfigs) + '</span>' +
-                '<span class="filter-card-meta-value">' + g.rows.length + '</span>' +
-              '</span>' +
-              '<span class="filter-card-meta-item is-fires">' +
-                '<span class="filter-card-meta-label">engagements' + infoTip(TIPS.familyEngagements) + '</span>' +
-                '<span class="filter-card-meta-value">' + g.totalFires.toLocaleString() + '</span>' +
-              '</span>' +
-            '</div>' +
-            '<span class="filter-card-chevron" aria-hidden="true">▸</span>' +
-          '</div>' +
-        '</header>' +
-        '<div class="filter-card-table-wrap">' +
-          '<table class="filter-card-table">' +
-            '<colgroup>' +
-              '<col style="width: 28%" />' +
-              '<col style="width: 11%" />' +
-              '<col style="width: 17%" />' +
-              '<col style="width: 11%" />' +
-              '<col style="width: 11%" />' +
-              '<col style="width: 22%" />' +
-            '</colgroup>' +
-            '<thead>' +
-              '<tr>' +
-                '<th class="config-col">Config' + infoTip(TIPS.config) + '</th>' +
-                '<th class="num-col">Engagements' + infoTip(TIPS.engagements) + '</th>' +
-                '<th class="wr-col">Win Rate' + infoTip(TIPS.winRate) + '</th>' +
-                '<th class="num-col">Min Q WR' + infoTip(TIPS.minQwr) + '</th>' +
-                '<th class="num-col">Max Q WR' + infoTip(TIPS.maxQwr) + '</th>' +
-                '<th class="quarters-col">Quarters' + infoTip(TIPS.quarters) + '</th>' +
-              '</tr>' +
-            '</thead>' +
-            '<tbody>' + body + '</tbody>' +
-          '</table>' +
-        '</div>' +
-      '</section>'
+      '<section class="filter-card' +
+      collapsedCls +
+      '" data-filter-id="' +
+      escapeHtml(g.filterId) +
+      '">' +
+      '<header class="filter-card-header" role="button" tabindex="0" aria-expanded="' +
+      ariaExpanded +
+      '">' +
+      '<div class="filter-card-id-row">' +
+      '<h2 class="filter-card-id">' +
+      escapeHtml(g.filterId) +
+      "</h2>" +
+      '<span class="filter-card-family">' +
+      escapeHtml(familyLabel) +
+      "</span>" +
+      "</div>" +
+      '<div class="filter-card-right-group">' +
+      '<div class="filter-card-meta">' +
+      '<span class="filter-card-meta-item is-avg">' +
+      '<span class="filter-card-meta-label">avg' +
+      infoTip(TIPS.familyAvg) +
+      "</span>" +
+      '<span class="filter-card-meta-value' +
+      tone +
+      '">' +
+      avg +
+      "</span>" +
+      "</span>" +
+      '<span class="filter-card-meta-item is-configs">' +
+      '<span class="filter-card-meta-label">configs' +
+      infoTip(TIPS.familyConfigs) +
+      "</span>" +
+      '<span class="filter-card-meta-value">' +
+      g.rows.length +
+      "</span>" +
+      "</span>" +
+      '<span class="filter-card-meta-item is-fires">' +
+      '<span class="filter-card-meta-label">engagements' +
+      infoTip(TIPS.familyEngagements) +
+      "</span>" +
+      '<span class="filter-card-meta-value">' +
+      g.totalFires.toLocaleString() +
+      "</span>" +
+      "</span>" +
+      "</div>" +
+      '<span class="filter-card-chevron" aria-hidden="true">▸</span>' +
+      "</div>" +
+      "</header>" +
+      '<div class="filter-card-table-wrap">' +
+      '<table class="filter-card-table">' +
+      "<colgroup>" +
+      '<col style="width: 28%" />' +
+      '<col style="width: 11%" />' +
+      '<col style="width: 17%" />' +
+      '<col style="width: 11%" />' +
+      '<col style="width: 11%" />' +
+      '<col style="width: 22%" />' +
+      "</colgroup>" +
+      "<thead>" +
+      "<tr>" +
+      '<th class="config-col">Config' +
+      infoTip(TIPS.config) +
+      "</th>" +
+      '<th class="num-col">Engagements' +
+      infoTip(TIPS.engagements) +
+      "</th>" +
+      '<th class="wr-col">Win Rate' +
+      infoTip(TIPS.winRate) +
+      "</th>" +
+      '<th class="num-col">Min Q WR' +
+      infoTip(TIPS.minQwr) +
+      "</th>" +
+      '<th class="num-col">Max Q WR' +
+      infoTip(TIPS.maxQwr) +
+      "</th>" +
+      '<th class="quarters-col">Quarters' +
+      infoTip(TIPS.quarters) +
+      "</th>" +
+      "</tr>" +
+      "</thead>" +
+      "<tbody>" +
+      body +
+      "</tbody>" +
+      "</table>" +
+      "</div>" +
+      "</section>"
     );
   }
 
   function renderSubRow(r) {
     return (
       "<tr>" +
-        "<td class=\"config-col\"><span class=\"alea-mono config-text\" title=\"" + escapeHtml(r.configCanon) + "\">" + escapeHtml(r.configCanon) + "</span></td>" +
-        "<td class=\"num-col alea-mono\">" + r.nFires.toLocaleString() + "</td>" +
-        "<td class=\"wr-col\">" + renderWrCell(r) + "</td>" +
-        "<td class=\"num-col\">" + renderMinMaxCell(r.quarterWinRateMin) + "</td>" +
-        "<td class=\"num-col\">" + renderMinMaxCell(r.quarterWinRateMax) + "</td>" +
-        "<td class=\"quarters-col\">" + renderQuarterStrip(r) + "</td>" +
+      '<td class="config-col"><span class="alea-mono config-text" title="' +
+      escapeHtml(r.configCanon) +
+      '">' +
+      escapeHtml(r.configCanon) +
+      "</span></td>" +
+      '<td class="num-col alea-mono">' +
+      r.nFires.toLocaleString() +
+      "</td>" +
+      '<td class="wr-col">' +
+      renderWrCell(r) +
+      "</td>" +
+      '<td class="num-col">' +
+      renderMinMaxCell(r.quarterWinRateMin) +
+      "</td>" +
+      '<td class="num-col">' +
+      renderMinMaxCell(r.quarterWinRateMax) +
+      "</td>" +
+      '<td class="quarters-col">' +
+      renderQuarterStrip(r) +
+      "</td>" +
       "</tr>"
     );
   }
@@ -323,7 +390,9 @@
     if (v === null || v === undefined) {
       return '<span class="alea-muted">&mdash;</span>';
     }
-    return '<span class="alea-mono' + toneClass(v) + '">' + percent(v) + '</span>';
+    return (
+      '<span class="alea-mono' + toneClass(v) + '">' + percent(v) + "</span>"
+    );
   }
 
   function renderQuarterStrip(r) {
@@ -332,14 +401,24 @@
       return '<span class="alea-muted">&mdash;</span>';
     }
     var bars = qs.map(renderQuarterBar).join("");
-    return '<div class="q-strip-wrap"><div class="q-strip" role="img" aria-label="Per-quarter win rate">' + bars + '</div></div>';
+    return (
+      '<div class="q-strip-wrap"><div class="q-strip" role="img" aria-label="Per-quarter win rate">' +
+      bars +
+      "</div></div>"
+    );
   }
 
   function renderQuarterBar(q) {
     var wrLabel = q.winRate === null ? "—" : percent(q.winRate);
     var title =
-      q.label + ": " + wrLabel +
-      " (" + q.nWins.toLocaleString() + "/" + q.nFires.toLocaleString() + ")";
+      q.label +
+      ": " +
+      wrLabel +
+      " (" +
+      q.nWins.toLocaleString() +
+      "/" +
+      q.nFires.toLocaleString() +
+      ")";
     var titleAttr = escapeHtml(title);
     if (q.winRate === null || q.nFires === 0) {
       return '<span class="q-bar" title="' + titleAttr + '"></span>';
@@ -347,12 +426,23 @@
     var deviation = q.winRate - 0.5;
     var absDev = Math.abs(deviation);
     if (absDev < 0.005) {
-      return '<span class="q-bar" title="' + titleAttr + '"><span class="q-bar-fill q-bar-fill-flat"></span></span>';
+      return (
+        '<span class="q-bar" title="' +
+        titleAttr +
+        '"><span class="q-bar-fill q-bar-fill-flat"></span></span>'
+      );
     }
     var height = Math.max(1, Math.min(12, absDev * 120));
     var cls = deviation > 0 ? "q-bar-fill-pos" : "q-bar-fill-neg";
-    return '<span class="q-bar" title="' + titleAttr + '"><span class="q-bar-fill ' + cls +
-      '" style="height:' + height.toFixed(1) + 'px"></span></span>';
+    return (
+      '<span class="q-bar" title="' +
+      titleAttr +
+      '"><span class="q-bar-fill ' +
+      cls +
+      '" style="height:' +
+      height.toFixed(1) +
+      'px"></span></span>'
+    );
   }
 
   function renderWrCell(r) {
@@ -364,12 +454,20 @@
     var down = bare(r.winRateDown);
     return (
       '<div class="wr-cell">' +
-        '<span class="wr-value' + tone + '">' + percent(r.winRate) + '</span>' +
-        '<span class="wr-dir">' +
-          '<span class="wr-dir-leg">▲ ' + up + '</span>' +
-          '<span class="wr-dir-leg">▼ ' + down + '</span>' +
-        '</span>' +
-      '</div>'
+      '<span class="wr-value' +
+      tone +
+      '">' +
+      percent(r.winRate) +
+      "</span>" +
+      '<span class="wr-dir">' +
+      '<span class="wr-dir-leg">▲ ' +
+      up +
+      "</span>" +
+      '<span class="wr-dir-leg">▼ ' +
+      down +
+      "</span>" +
+      "</span>" +
+      "</div>"
     );
   }
 

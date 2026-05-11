@@ -53,7 +53,7 @@ type FetchPythCandlesParams = {
  * Cboe, Wintermute, Virtu, etc) — architecturally similar to Chainlink
  * Data Streams' reporter model, and a candidate proxy for the Streams
  * price Polymarket settles 5-minute markets on. See
- * scripts/source_vs_chainlink.ts for the comparison numbers.
+ * doc/RELIABILITY_EXPERIMENT.md for the comparison context.
  *
  * `volume` is always 0: Pyth is an oracle median, not a venue-level
  * trade tape.
