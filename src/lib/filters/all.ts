@@ -18,7 +18,9 @@
  * first full run: volume-dependent filters remain as implementations
  * but are unregistered until the training source carries volume, and
  * consistently sub-50 continuation/trend families were retired from
- * default backtests.
+ * default backtests. A same-day follow-up operator prune also retired
+ * squeeze_breakout_follow, alternation_range_flip, and
+ * choppiness_range_edge_fade from active registration.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -28,7 +30,6 @@
  * filter registry, is responsible for assembling confluence across
  * independent signals.
  */
-import "@alea/lib/filters/alternationRangeFlip";
 import "@alea/lib/filters/aroonReversion";
 import "@alea/lib/filters/atrBurstFade";
 import "@alea/lib/filters/balanceOfPowerMeanrev";
@@ -37,7 +38,6 @@ import "@alea/lib/filters/bollingerRecovery";
 import "@alea/lib/filters/bollingerReversion";
 import "@alea/lib/filters/candleDirectionImbalanceFade";
 import "@alea/lib/filters/cciMeanRev";
-import "@alea/lib/filters/choppinessRangeEdgeFade";
 import "@alea/lib/filters/cmoMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
 import "@alea/lib/filters/disparityIndexReversion";
@@ -60,7 +60,6 @@ import "@alea/lib/filters/rsiDivergence";
 import "@alea/lib/filters/rsiMeanRev";
 import "@alea/lib/filters/rsiVelocity";
 import "@alea/lib/filters/smaPosition";
-import "@alea/lib/filters/squeezeBreakoutFollow";
 import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochRsiMeanRev";
 import "@alea/lib/filters/stochasticMeanRev";

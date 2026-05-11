@@ -22,9 +22,15 @@ Continuation/trend candidates retired because both 5m and 15m aggregate results 
 - `parabolic_sar_flip_follow`: 48.98% on 5m, 47.49% on 15m
 - `supertrend_flip_follow`: 45.96% on 5m, 42.56% on 15m
 
-## Trimmed But Kept
+## Retired In Follow-Up
 
-`squeeze_breakout_follow` is still registered, but only the config selected by the 5m `high_vol_trending` committee remains active:
+Follow-up operator prune removed three more active registrations. `alteration_range_flip` in the request maps to the registered `alternation_range_flip` id.
+
+- `squeeze_breakout_follow`
+- `alternation_range_flip`
+- `choppiness_range_edge_fade`
+
+The retired `squeeze_breakout_follow` config was:
 
 ```json
 {
@@ -36,15 +42,13 @@ Continuation/trend candidates retired because both 5m and 15m aggregate results 
 }
 ```
 
-The other four default configs were removed from the active candidate set.
-
 ## Loader Guard
 
 Dashboard and committee loaders now gate rows by the current active `(filter_id, filter_version, config_canon)` registry. This keeps stale `filter_runs` rows from resurfacing after a filter/config is pruned.
 
 ## Post-Prune Validation
 
-- Active registry: 41 filters, 200 default candidates.
-- Active backtest cache: 2,000 `filter_runs` rows, matching 200 candidates x 2 periods x 5 assets.
-- Deployed exploration payload: 400 aggregate rows, 0 retired-filter rows.
-- Deployed committee payload: 80 rows, 18 filters, 0 retired-filter rows.
+- Active registry after follow-up: 38 filters, 189 default candidates.
+- Active backtest cache after follow-up: 1,890 `filter_runs` rows, matching 189 candidates x 2 periods x 5 assets.
+- Deployed exploration payload after follow-up: 378 aggregate rows, 0 retired-filter rows.
+- Deployed committee payload after follow-up: 80 rows, 17 filters, 0 retired-filter rows.
