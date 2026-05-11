@@ -331,30 +331,25 @@ function renderMetric({
  */
 const DR_TIPS = {
   winRate:
-    "Of the bars whose outcome we know, how often the committee's UP/DOWN call matched the actual move. Higher = the bot is winning more than losing.",
+    "Of settled dry-run calls, how often the committee picked the right direction.",
   decisions:
-    "Total committee decisions made since the dry-run loop started (settled + still pending). Pending = the target bar hasn't closed yet.",
-  candidates:
-    "How many (filter, config) entries are registered in the committee. Each one independently votes UP, DOWN, or abstain on every bar.",
+    "All dry-run calls made. Pending calls are waiting for the target bar to close.",
+  candidates: "Committee filter configs available to vote.",
   avgEngagement:
-    "Across decisions where the committee made an actionable prediction, the average number of candidates that didn't abstain (i.e. actually voted UP or DOWN). Higher = broader agreement.",
+    "Average number of candidates that actually voted on an actionable call.",
   regimeName:
-    "Classified market state at decision time: vol level (low/high) × directionality (trending/ranging).",
-  callsRegime:
-    "Settled committee decisions made while the market was in this regime.",
-  callsAsset: "Settled committee decisions on this crypto.",
-  callsWr: "Win rate of the settled committee decisions in this row.",
-  recentTime:
-    "Time the bar opened (the bar the committee was predicting). UTC.",
-  recentAsset: "Which crypto the committee was predicting.",
-  recentPrediction:
-    "Direction the committee predicted for the next 5-minute bar.",
-  recentRegime: "Market regime classified at the moment the committee decided.",
-  recentSynthOpen:
-    "Pyth spot price snapshotted ~5 s before the boundary. Used as the bar's synthetic open in the absence of real market data.",
-  recentActualClose: "Actual closing price of the bar once it finished.",
+    "Market state at decision time: volatility plus trending/ranging.",
+  callsRegime: "Settled calls made in this regime.",
+  callsAsset: "Settled calls for this asset.",
+  callsWr: "Win rate for this row's settled calls.",
+  recentTime: "Opening time of the bar being predicted, in UTC.",
+  recentAsset: "Crypto being predicted.",
+  recentPrediction: "Committee's UP or DOWN call.",
+  recentRegime: "Market state when the call was made.",
+  recentSynthOpen: "Price used as the bar open.",
+  recentActualClose: "Final price after the bar closed.",
   recentOutcome:
-    "WIN if the committee's prediction matched the bar's actual direction; LOSS otherwise. Ties (open = close) settle UP.",
+    "WIN if the call matched the actual direction; otherwise LOSS.",
 };
 
 function infoTip({ text }: { readonly text: string }): string {

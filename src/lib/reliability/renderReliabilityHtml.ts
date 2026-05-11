@@ -53,18 +53,21 @@ export function renderReliabilityHtml({
           value: payload.summary.sources
             .reduce((acc, item) => acc + item.comparableWindows, 0)
             .toLocaleString(),
+          tip: REL_TIPS.comparableWindows,
         })}
         ${renderMetric({
           label: "Agreement rate",
           value: formatPercent({
             value: weightedAgreementRate({ payload }),
           }),
+          tip: REL_TIPS.agreementRate,
         })}
         ${renderMetric({
           label: "Disagreements",
           value: payload.summary.sources
             .reduce((acc, item) => acc + item.disagreements, 0)
             .toLocaleString(),
+          tip: REL_TIPS.disagreements,
         })}
       </section>
 
@@ -74,13 +77,13 @@ export function renderReliabilityHtml({
           <table class="alea-table">
             <thead>
               <tr>
-                <th>Source</th>
-                <th>Agreement</th>
-                <th>Comparable</th>
-                <th>OK</th>
-                <th>Diff</th>
-                <th>Unavailable</th>
-                <th>Near-zero diff</th>
+                <th>Source${infoTip({ text: REL_TIPS.source })}</th>
+                <th>Agreement${infoTip({ text: REL_TIPS.agreement })}</th>
+                <th>Comparable${infoTip({ text: REL_TIPS.comparable })}</th>
+                <th>OK${infoTip({ text: REL_TIPS.ok })}</th>
+                <th>Diff${infoTip({ text: REL_TIPS.diff })}</th>
+                <th>Unavailable${infoTip({ text: REL_TIPS.unavailable })}</th>
+                <th>Near-zero diff${infoTip({ text: REL_TIPS.nearZeroDiff })}</th>
               </tr>
             </thead>
             <tbody>${payload.summary.sources.map(renderSourceSummaryRow).join("")}</tbody>
@@ -94,12 +97,12 @@ export function renderReliabilityHtml({
           <table class="alea-table">
             <thead>
               <tr>
-                <th>Asset / Source</th>
-                <th>Agreement</th>
-                <th>Comparable</th>
-                <th>OK</th>
-                <th>Diff</th>
-                <th>Unavailable</th>
+                <th>Asset / Source${infoTip({ text: REL_TIPS.assetSource })}</th>
+                <th>Agreement${infoTip({ text: REL_TIPS.agreement })}</th>
+                <th>Comparable${infoTip({ text: REL_TIPS.comparable })}</th>
+                <th>OK${infoTip({ text: REL_TIPS.ok })}</th>
+                <th>Diff${infoTip({ text: REL_TIPS.diff })}</th>
+                <th>Unavailable${infoTip({ text: REL_TIPS.unavailable })}</th>
               </tr>
             </thead>
             <tbody>${payload.summary.byAsset.map(renderAssetSummaryRow).join("")}</tbody>
@@ -113,13 +116,13 @@ export function renderReliabilityHtml({
           <table class="alea-table">
             <thead>
               <tr>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Ticks</th>
-                <th>Connects</th>
-                <th>Disconnects</th>
-                <th>Errors</th>
-                <th>Last Tick</th>
+                <th>Source${infoTip({ text: REL_TIPS.healthSource })}</th>
+                <th>Status${infoTip({ text: REL_TIPS.status })}</th>
+                <th>Ticks${infoTip({ text: REL_TIPS.ticks })}</th>
+                <th>Connects${infoTip({ text: REL_TIPS.connects })}</th>
+                <th>Disconnects${infoTip({ text: REL_TIPS.disconnects })}</th>
+                <th>Errors${infoTip({ text: REL_TIPS.errors })}</th>
+                <th>Last Tick${infoTip({ text: REL_TIPS.lastTick })}</th>
               </tr>
             </thead>
             <tbody>${payload.sourceHealth.map(renderHealthRow).join("")}</tbody>
@@ -133,13 +136,13 @@ export function renderReliabilityHtml({
           <table class="alea-table">
             <thead>
               <tr>
-                <th>Window</th>
-                <th>Asset</th>
-                <th>Polymarket</th>
-                <th>Coinbase spot</th>
-                <th>Coinbase perp</th>
-                <th>Binance spot</th>
-                <th>Binance perp</th>
+                <th>Window${infoTip({ text: REL_TIPS.window })}</th>
+                <th>Asset${infoTip({ text: REL_TIPS.asset })}</th>
+                <th>Polymarket${infoTip({ text: REL_TIPS.polymarket })}</th>
+                <th>Coinbase spot${infoTip({ text: REL_TIPS.coinbaseSpot })}</th>
+                <th>Coinbase perp${infoTip({ text: REL_TIPS.coinbasePerp })}</th>
+                <th>Binance spot${infoTip({ text: REL_TIPS.binanceSpot })}</th>
+                <th>Binance perp${infoTip({ text: REL_TIPS.binancePerp })}</th>
               </tr>
             </thead>
             <tbody>${payload.completedWindows
@@ -163,11 +166,13 @@ export function renderReliabilityHtml({
 function renderMetric({
   label,
   value,
+  tip,
 }: {
   readonly label: string;
   readonly value: string;
+  readonly tip?: string;
 }): string {
-  return `<div class="alea-metric"><p class="alea-metric-label">${escapeHtml(label)}</p><p class="alea-metric-value">${escapeHtml(value)}</p></div>`;
+  return `<div class="alea-metric"><p class="alea-metric-label">${escapeHtml(label)}${tip === undefined ? "" : infoTip({ text: tip })}</p><p class="alea-metric-value">${escapeHtml(value)}</p></div>`;
 }
 
 function renderSourceSummaryRow(
@@ -392,6 +397,47 @@ function formatDuration({ ms }: { readonly ms: number }): string {
     return `${minutes / 60}h`;
   }
   return `${minutes}m`;
+}
+
+const REL_TIPS = {
+  comparableWindows:
+    "Windows where Polymarket and at least one other source both had enough data to compare.",
+  agreementRate:
+    "Share of comparable windows where another source matched Polymarket's direction.",
+  disagreements:
+    "Comparable windows where another source moved the opposite way from Polymarket.",
+  source: "Feed or exchange being checked against Polymarket Chainlink.",
+  agreement:
+    "Percent of comparable windows that matched Polymarket's direction.",
+  comparable: "Windows where both sources had enough data to compare.",
+  ok: "Comparable windows that matched Polymarket's direction.",
+  diff: "Comparable windows that disagreed with Polymarket.",
+  unavailable: "Windows missing enough data from this source.",
+  nearZeroDiff:
+    "Disagreements where Polymarket barely moved, so the call is less meaningful.",
+  assetSource: "Asset plus feed being summarized.",
+  healthSource: "Feed connection being monitored.",
+  status: "Whether the WebSocket is currently open.",
+  ticks: "Price updates received during the capture.",
+  connects: "Successful WebSocket connects.",
+  disconnects: "WebSocket closes or reconnects.",
+  errors: "Errors seen from this feed.",
+  lastTick: "Most recent price update time.",
+  window: "Start time of the 5-minute market window.",
+  asset: "Crypto asset for the window.",
+  polymarket: "Polymarket Chainlink direction and move. This is the baseline.",
+  coinbaseSpot: "Coinbase spot direction and move, compared with Polymarket.",
+  coinbasePerp:
+    "Coinbase perpetual direction and move, compared with Polymarket.",
+  binanceSpot: "Binance spot direction and move, compared with Polymarket.",
+  binancePerp:
+    "Binance perpetual direction and move, compared with Polymarket.",
+};
+
+function infoTip({ text }: { readonly text: string }): string {
+  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml(
+    text,
+  )}" aria-label="${escapeHtml(text)}"></span>`;
 }
 
 function escapeHtml(value: string): string {

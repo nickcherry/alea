@@ -61,22 +61,19 @@
   // renderExplorationHtml.ts (SSR) so server + client tooltips match.
   var TIPS = {
     familyAvg:
-      "Win rate across all of this filter's configs in the current period and regime, weighted by engagement count. Higher = the filter idea works.",
-    familyConfigs:
-      "Number of distinct parameter settings (knob values) we backtested for this filter family.",
+      "Overall win rate for this filter family in the current scope, weighted by how often each config fired.",
+    familyConfigs: "How many knob combinations were tested for this filter.",
     familyEngagements:
-      "Total times any config in this filter family engaged with an UP or DOWN prediction. Big numbers = lots of opportunities to verify the edge.",
-    config:
-      "The specific parameter values for this row of the family — the exact knobs that produced the win rate to the right.",
-    engagements:
-      "How many times this exact config engaged with a prediction across the backtest history.",
+      "Total times this filter family made an UP or DOWN call.",
+    config: "Exact knob values for this candidate.",
+    engagements: "How many times this config made a call.",
     winRate:
-      "Percent of engagements where the predicted direction matched the next bar's actual move. ▲ N is the win rate on UP calls, ▼ N on DOWN calls.",
+      "How often this config's call matched the next bar. ▲ = UP calls, ▼ = DOWN calls.",
     minQwr:
-      "The worst quarter this config had — a robustness floor. Low = the edge collapsed in at least one quarter.",
-    maxQwr: "The best quarter this config had — a robustness ceiling.",
+      "Worst quarterly win rate. Helps spot edges that only worked briefly.",
+    maxQwr: "Best quarterly win rate.",
     quarters:
-      "Quarter-by-quarter win rate, oldest left to newest right. Bars above the midline = winning quarter (green), below = losing (red); taller = bigger deviation from 50 %. Hover a bar for the exact number.",
+      "Quarter-by-quarter win rate, oldest to newest. Green is above 50%, red below 50%.",
   };
 
   function infoTip(text) {

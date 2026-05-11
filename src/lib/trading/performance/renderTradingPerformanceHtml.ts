@@ -58,22 +58,26 @@ export function renderTradingPerformanceHtml({
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
           tone: toneForNumber({ value: payload.summary.lifetimePnlUsd }),
           sub: `realized + mark-to-market across ${payload.summary.marketCount.toLocaleString()} markets`,
+          tip: TP_TIPS.lifetimePnl,
         })}
         ${renderMetric({
           label: "Total Fees",
           value: formatUnsignedUsd({ value: payload.summary.totalFeesUsd }),
           tone: "negative",
           sub: `${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} maker rebates earned`,
+          tip: TP_TIPS.totalFees,
         })}
         ${renderMetric({
           label: "Win / Loss",
           value: `${payload.summary.winningMarketCount.toLocaleString()} / ${payload.summary.losingMarketCount.toLocaleString()}`,
           sub: `${payload.summary.openPositionCount.toLocaleString()} open · ${payload.summary.flatMarketCount.toLocaleString()} flat`,
+          tip: TP_TIPS.winLoss,
         })}
         ${renderMetric({
           label: "Open Positions",
           value: payload.summary.openPositionCount.toLocaleString(),
           sub: `${payload.summary.redeemablePositionCount.toLocaleString()} redeemable`,
+          tip: TP_TIPS.openPositions,
         })}
       </section>
 
@@ -97,13 +101,13 @@ export function renderTradingPerformanceHtml({
           <table class="alea-table trading-performance-table">
             <thead>
               <tr>
-                <th>Symbol</th>
-                <th class="market-col">Market</th>
-                <th>Role</th>
-                <th>Fees</th>
-                <th>Invested</th>
-                <th>PnL</th>
-                <th>Status</th>
+                <th>Symbol${infoTip({ text: TP_TIPS.symbol })}</th>
+                <th class="market-col">Market${infoTip({ text: TP_TIPS.market })}</th>
+                <th>Role${infoTip({ text: TP_TIPS.role })}</th>
+                <th>Fees${infoTip({ text: TP_TIPS.fees })}</th>
+                <th>Invested${infoTip({ text: TP_TIPS.invested })}</th>
+                <th>PnL${infoTip({ text: TP_TIPS.pnl })}</th>
+                <th>Status${infoTip({ text: TP_TIPS.status })}</th>
               </tr>
             </thead>
             <tbody>${visibleMarkets.map(renderMarketRow).join("")}</tbody>
@@ -124,16 +128,18 @@ function renderMetric({
   value,
   sub,
   tone = "neutral",
+  tip,
 }: {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
   readonly tone?: "positive" | "negative" | "neutral";
+  readonly tip?: string;
 }): string {
   const toneClass = tone === "neutral" ? "" : ` ${tone}`;
   return `
     <div class="alea-metric">
-      <p class="alea-metric-label">${escapeHtml({ value: label })}</p>
+      <p class="alea-metric-label">${escapeHtml({ value: label })}${tip === undefined ? "" : infoTip({ text: tip })}</p>
       <p class="alea-metric-value${toneClass}">${escapeHtml({ value })}</p>
       <p class="alea-metric-sub">${escapeHtml({ value: sub })}</p>
     </div>
@@ -253,4 +259,25 @@ function escapeHtml({ value }: { readonly value: string }): string {
 
 function escapeJsonForHtml({ value }: { readonly value: string }): string {
   return value.replaceAll("<", "\\u003c");
+}
+
+const TP_TIPS = {
+  lifetimePnl:
+    "Net value across all Polymarket markets: realized results plus current open value.",
+  totalFees: "Total trading fees paid, with maker rebates shown underneath.",
+  winLoss: "Markets currently profitable vs losing.",
+  openPositions: "Markets where we still hold unresolved shares.",
+  symbol: "Short market ticker, usually the asset.",
+  market: "The Polymarket question or slug this row belongs to.",
+  role: "How our fills happened: maker, taker, or mixed.",
+  fees: "Estimated trading fees for this market.",
+  invested: "Total dollars put into positions on this market.",
+  pnl: "Profit or loss for this market, including current value if still open.",
+  status: "Current settlement or position state.",
+};
+
+function infoTip({ text }: { readonly text: string }): string {
+  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({
+    value: text,
+  })}" aria-label="${escapeHtml({ value: text })}"></span>`;
 }

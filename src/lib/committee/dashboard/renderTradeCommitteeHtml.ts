@@ -379,22 +379,18 @@ function infoTip({ text }: { readonly text: string }): string {
 
 const TIPS = {
   candidates:
-    "Rows currently persisted in committee_selections. Each row is one filter config admitted to one period/regime bucket.",
+    "Selected committee rows. Each row is one filter config admitted to one timeframe/regime bucket.",
   activeBuckets:
-    "There are eight possible rosters: 5m and 15m across four market regimes.",
-  selectedAt:
-    "Timestamp written by the latest committee:select run. The dry-run loop only sees this roster after restart.",
-  bucketCap:
-    "The selector takes at most this many ranked candidates in each period/regime bucket.",
-  rank: "One-based rank inside the selected period/regime bucket.",
-  regime: "Market state bucket the candidate is allowed to vote in.",
-  filter: "Registered filter implementation and strategy family.",
-  config: "Exact parameter values for this selected filter candidate.",
-  engagements:
-    "Backtest predictions inside this regime. This is the sample that qualified the candidate.",
-  winRate: "Wins divided by engagements inside this regime at selection time.",
+    "How many of the 8 possible rosters have candidates: 2 timeframes x 4 regimes.",
+  selectedAt: "When the committee roster was last selected.",
+  bucketCap: "Maximum selected candidates per timeframe/regime bucket.",
+  rank: "Rank within this timeframe and regime. #1 is the strongest selected candidate.",
+  regime: "Market state where this candidate is allowed to vote.",
+  filter: "Signal rule and its strategy family.",
+  config: "Exact knob values selected for this filter.",
+  engagements: "How many backtest calls this candidate made in this regime.",
+  winRate: "Share of those calls that were correct.",
   wilson:
-    "Wilson 95 percent lower bound used for ranking after eligibility gates pass.",
-  worstQuarter:
-    "Lowest quarter win rate among quarters with enough engagements to count.",
+    "Conservative win-rate estimate used for ranking; rewards high WR with enough sample.",
+  worstQuarter: "Lowest quarter win rate among quarters with enough data.",
 };
