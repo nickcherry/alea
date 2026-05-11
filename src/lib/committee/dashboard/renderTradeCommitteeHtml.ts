@@ -113,7 +113,6 @@ export function renderTradeCommitteeHtml({
         <header class="committee-roster-header">
           <div>
             <div class="alea-section-rule"><h2>Roster</h2></div>
-            <p id="committee-roster-meta" class="committee-roster-meta"></p>
           </div>
           <div class="committee-controls" aria-label="Roster filters">
             <div class="alea-pill-tabs" role="tablist" aria-label="Market regime">

@@ -17,7 +17,6 @@
 
   var rows = (payload && payload.rows) || [];
   var tbody = document.getElementById("committee-rows");
-  var meta = document.getElementById("committee-roster-meta");
   var periodTabs = document.querySelectorAll(".committee-period-tab");
   var regimeTabs = document.querySelectorAll(".committee-regime-tab");
 
@@ -61,19 +60,6 @@
       return r.period === currentPeriod && r.marketRegime === currentRegime;
     });
     tbody.innerHTML = renderRows(visible);
-    if (meta) {
-      meta.textContent = rosterMeta(visible);
-    }
-  }
-
-  function rosterMeta(visible) {
-    return (
-      visible.length.toLocaleString() +
-      " " +
-      currentPeriod +
-      " · " +
-      marketRegime(currentRegime)
-    );
   }
 
   function renderRows(visible) {

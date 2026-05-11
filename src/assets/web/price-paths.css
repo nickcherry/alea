@@ -220,12 +220,17 @@
   fill: var(--alea-green);
 }
 
+/* Cap the crossings table at a compact width — the data is four
+   narrow columns (`T-X:XX`, two 3-digit ints, a 4-char percent) and
+   doesn't need to span the full page. */
 .price-path-crossings-table-wrap {
   margin-top: 14px;
+  max-width: 560px;
 }
 
 .price-path-crossings-table {
-  min-width: 460px;
+  width: 100%;
+  min-width: 0;
 }
 
 .price-path-crossings-table th,

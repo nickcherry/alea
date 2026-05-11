@@ -38,12 +38,6 @@
   margin: 0;
 }
 
-.committee-roster-meta {
-  margin: 8px 0 0;
-  color: var(--alea-text-muted);
-  font-size: 13px;
-}
-
 .committee-table-wrap {
   overflow-x: auto;
 }
