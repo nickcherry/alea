@@ -4,6 +4,8 @@ import { resolve as resolvePath } from "node:path";
 import { env } from "@alea/constants/env";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
+import { loadTradeCommitteePayload } from "@alea/lib/committee/dashboard/loadTradeCommitteePayload";
+import { writeTradeCommitteeArtifacts } from "@alea/lib/committee/dashboard/writeTradeCommitteeArtifacts";
 import { runWranglerDeploy } from "@alea/lib/dashboards/runWranglerDeploy";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
@@ -22,6 +24,7 @@ const repoRoot = resolvePath(import.meta.dir, "../../..");
 const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
 const explorationDir = resolvePath(webDir, "exploration");
+const committeeDir = resolvePath(webDir, "committee");
 const dryRunDir = resolvePath(webDir, "dryrun");
 
 /**
@@ -35,18 +38,20 @@ const dryRunDir = resolvePath(webDir, "dryrun");
  *   tmp/web/exploration/index.html   ← filter exploration ("/exploration/")
  *   tmp/web/exploration/index.assets/
  *   tmp/web/exploration/data.json
+ *   tmp/web/committee/index.html     ← trade committee ("/committee/")
+ *   tmp/web/committee/index.assets/
+ *   tmp/web/committee/data.json
  *
  * Trading page needs Polymarket auth (POLYMARKET_PRIVATE_KEY +
  * POLYMARKET_FUNDER_ADDRESS); when those aren't set we skip it with
- * a warning rather than failing. The exploration page reads only the
- * `filter_runs` table, so it builds in any environment with DB
- * access.
+ * a warning rather than failing. The research/runtime pages read only
+ * local dashboard tables, so they do not need trading credentials.
  */
 export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/) and the filter exploration page (/exploration/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), filter exploration page (/exploration/), trade committee page (/committee/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -63,17 +68,20 @@ export const dashboardsBuildCommand = defineCommand({
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
-    "Reads the Polymarket CLOB + the `filter_runs` table. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
+    "Reads the Polymarket CLOB plus dashboard tables including `filter_runs`, `committee_selections`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
   async run({ io, options }) {
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
     await mkdir(webDir, { recursive: true });
     await mkdir(explorationDir, { recursive: true });
+    await mkdir(committeeDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
 
     await buildTradingDashboard({ io });
     io.writeStdout("\n");
     await buildExplorationDashboard({ io });
+    io.writeStdout("\n");
+    await buildTradeCommitteeDashboard({ io });
     io.writeStdout("\n");
     await buildDryRunDashboard({ io });
 
@@ -174,6 +182,35 @@ async function buildExplorationDashboard({
       `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
         `  ${pc.dim("engagements=")}${totalEngagements.toLocaleString()}` +
         `  ${pc.dim("top=")}${topLabel}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
+}
+
+async function buildTradeCommitteeDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("trade committee")} ${pc.dim("(/committee/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadTradeCommitteePayload({ db });
+    const htmlPath = resolvePath(committeeDir, "index.html");
+    const jsonPath = resolvePath(committeeDir, "data.json");
+    await writeTradeCommitteeArtifacts({ payload, htmlPath, jsonPath });
+    const selectedAt =
+      payload.selectedAtMs === null
+        ? "none"
+        : new Date(payload.selectedAtMs).toISOString().slice(0, 16);
+    io.writeStdout(
+      `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
+        `  ${pc.dim("filters=")}${payload.uniqueFilterCount.toLocaleString()}` +
+        `  ${pc.dim("buckets=")}${payload.activeBucketCount}/8` +
+        `  ${pc.dim("selected_at=")}${selectedAt}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {

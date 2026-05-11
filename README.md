@@ -38,8 +38,9 @@ edge.
    [DRY_RUN.md](./doc/DRY_RUN.md).
 6. **Dashboards** are static HTML pages built from the same data
    and deployed to a Cloudflare Worker. The exploration page
-   surfaces regime-stratified filter performance; the dry-run
-   page surfaces the live committee's hit rate. See
+   surfaces regime-stratified filter performance; the trade committee
+   page surfaces the selected voter roster and selection gates; the
+   dry-run page surfaces the live committee's hit rate. See
    [DASHBOARDS.md](./doc/DASHBOARDS.md).
 
 ## Docs

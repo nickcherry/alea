@@ -35,7 +35,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `dry:*`
   `dry:run` — long-running process that streams live Pyth ticks, classifies the current regime, runs the rostered committee at every 5m boundary, and persists decisions to `dry_run_decisions`. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
-  `dashboards:build` — generates the static `/`, `/exploration/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
+  `dashboards:build` — generates the static `/`, `/exploration/`, `/committee/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`

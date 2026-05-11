@@ -5,9 +5,8 @@
  * though each page is a standalone HTML asset served by Wrangler.
  *
  * Hrefs target the layout produced by `dashboards:build`: trading
- * performance is the worker's index (`/`); filter exploration lives
- * under `/exploration/`. The committee + dry-run pages are placeholders
- * until those pipelines come online.
+ * performance is the worker's index (`/`); the research and runtime
+ * dashboards live under their own route folders.
  */
 
 type TopNavPage = {
@@ -18,6 +17,7 @@ type TopNavPage = {
 
 const TOP_NAV_PAGES: readonly TopNavPage[] = [
   { id: "exploration", label: "Exploration", href: "/exploration/" },
+  { id: "committee", label: "Trade committee", href: "/committee/" },
   { id: "dryrun", label: "Dry run", href: "/dryrun/" },
   { id: "live", label: "Live trading", href: "/" },
 ];

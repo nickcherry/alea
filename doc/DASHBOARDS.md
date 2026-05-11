@@ -189,6 +189,7 @@ arranges them under one host and one shared top nav.
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
 | `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
+| `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
 | `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
@@ -218,6 +219,10 @@ tmp/web/
     index.html             ← filter exploration (served at /exploration/)
     index.assets/
     data.json
+  committee/
+    index.html             ← trade committee (served at /committee/)
+    index.assets/
+    data.json
   dryrun/
     index.html             ← dry-run committee (served at /dryrun/)
     index.assets/
@@ -229,9 +234,9 @@ points its `[assets].directory` at `tmp/web/`. The trading page
 needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
 `POLYMARKET_FUNDER_ADDRESS`); when those aren't set the build skips
 it with a warning so the rest of the site can still rebuild. The
-exploration page builds from `filter_runs` + `bar_regimes` and the
-dry-run page builds from `dry_run_decisions` — both work without
-trading creds.
+exploration page builds from `filter_runs` + `bar_regimes`, the trade
+committee page builds from `committee_selections`, and the dry-run page
+builds from `dry_run_decisions` — all three work without trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
