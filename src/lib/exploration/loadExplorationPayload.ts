@@ -13,6 +13,10 @@ import type {
   FilterPeerOverlap,
 } from "@alea/lib/exploration/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
+import {
+  activeCandidateKeys,
+  candidateRegistryKey,
+} from "@alea/lib/filters/activeCandidates";
 import { getFilter } from "@alea/lib/filters/registry";
 import type { FilterFamily } from "@alea/lib/filters/types";
 
@@ -38,7 +42,7 @@ export async function loadExplorationPayload({
   readonly db: DatabaseClient;
   readonly now?: () => number;
 }): Promise<ExplorationPayload> {
-  const [perAssetRows, quarterRows, peerOverlapRows, regimeRows] =
+  const [rawPerAssetRows, quarterRows, peerOverlapRows, regimeRows] =
     await Promise.all([
       db
         .selectFrom("filter_runs")
@@ -62,6 +66,16 @@ export async function loadExplorationPayload({
       loadFilterPeerOverlaps({ db }),
       loadRegimeAggregates({ db }),
     ]);
+  const activeKeys = activeCandidateKeys();
+  const perAssetRows = rawPerAssetRows.filter((r) =>
+    activeKeys.has(
+      candidateRegistryKey({
+        filterId: r.filter_id,
+        filterVersion: r.filter_version,
+        configCanon: r.config_canon,
+      }),
+    ),
+  );
 
   // Index the peer-overlap table by (period, filterId) so we can
   // tack the top-K peers onto each row's payload below.

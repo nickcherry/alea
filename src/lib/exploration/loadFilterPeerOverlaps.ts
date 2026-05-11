@@ -1,5 +1,6 @@
 import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import { activeCandidateRows } from "@alea/lib/filters/activeCandidates";
 import { sql } from "kysely";
 
 export type FilterPeerOverlapRow = {
@@ -24,6 +25,16 @@ export async function loadFilterPeerOverlaps({
 }: {
   readonly db: DatabaseClient;
 }): Promise<readonly FilterPeerOverlapRow[]> {
+  const activeRows = activeCandidateRows();
+  if (activeRows.length === 0) {
+    return [];
+  }
+  const activeCandidateValues = sql.join(
+    activeRows.map(
+      (candidate) =>
+        sql`(${candidate.filterId}::text, ${candidate.filterVersion}::integer, ${candidate.configCanon}::text)`,
+    ),
+  );
   const rows = await sql<{
     period: string;
     filter_a: string;
@@ -32,13 +43,20 @@ export async function loadFilterPeerOverlaps({
     total_a: string;
     total_b: string;
   }>`
-    with filter_engagement_bars as (
+    with active_candidates(filter_id, filter_version, config_canon) as (
+      values ${activeCandidateValues}
+    ),
+    filter_engagement_bars as (
       select distinct
         fr.filter_id,
         fr.period,
         fr.asset,
         fe.ts_ms
       from filter_runs fr
+      join active_candidates ac
+        on ac.filter_id = fr.filter_id
+        and ac.filter_version = fr.filter_version
+        and ac.config_canon = fr.config_canon
       join filter_engagements fe on fe.run_hash = fr.run_hash
       where fr.training_profile = ${TRAINING_OUTCOME_PROFILE_ID}
     ),

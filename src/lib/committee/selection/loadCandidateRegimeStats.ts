@@ -2,6 +2,10 @@ import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { CandidateRegimeStats } from "@alea/lib/committee/selection/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
+import {
+  activeCandidateKeys,
+  candidateRegistryKey,
+} from "@alea/lib/filters/activeCandidates";
 import { sql } from "kysely";
 
 /**
@@ -57,6 +61,7 @@ export async function loadCandidateRegimeStats({
              br.market_regime, year, quarter
   `.execute(db);
 
+  const activeKeys = activeCandidateKeys();
   type Bucket = {
     filterId: string;
     filterVersion: number;
@@ -70,9 +75,17 @@ export async function loadCandidateRegimeStats({
   };
   const byKey = new Map<string, Bucket>();
   for (const r of rows.rows) {
+    const activeKey = candidateRegistryKey({
+      filterId: r.filter_id,
+      filterVersion: r.filter_version,
+      configCanon: r.config_canon,
+    });
+    if (!activeKeys.has(activeKey)) {
+      continue;
+    }
     const nEngagements = Number(r.n_engagements);
     const nWins = Number(r.n_wins);
-    const key = `${r.filter_id}|${r.filter_version}|${r.config_canon}|${r.period}|${r.market_regime}`;
+    const key = JSON.stringify([activeKey, r.period, r.market_regime]);
     let b = byKey.get(key);
     if (b === undefined) {
       b = {

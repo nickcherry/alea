@@ -14,7 +14,11 @@
  * settled below 50% aggregate win rate on both 5m and 15m bars and
  * were removed. Later research intentionally reintroduced more
  * selective trend/continuation tests alongside the reversion-heavy
- * registry.
+ * registry. The first May 2026 expansion pass was pruned after its
+ * first full run: volume-dependent filters remain as implementations
+ * but are unregistered until the training source carries volume, and
+ * consistently sub-50 continuation/trend families were retired from
+ * default backtests.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -24,7 +28,6 @@
  * filter registry, is responsible for assembling confluence across
  * independent signals.
  */
-import "@alea/lib/filters/adxDiTrendFollow";
 import "@alea/lib/filters/alternationRangeFlip";
 import "@alea/lib/filters/aroonReversion";
 import "@alea/lib/filters/atrBurstFade";
@@ -39,23 +42,16 @@ import "@alea/lib/filters/cmoMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
 import "@alea/lib/filters/disparityIndexReversion";
 import "@alea/lib/filters/donchianReversion";
-import "@alea/lib/filters/efficiencyRatioContinuation";
 import "@alea/lib/filters/emaPosition";
 import "@alea/lib/filters/engulfingReversal";
 import "@alea/lib/filters/failedCloseBreakoutFade";
 import "@alea/lib/filters/heikinAshiReversion";
 import "@alea/lib/filters/hullMaPosition";
-import "@alea/lib/filters/insideBarBreakoutFollow";
 import "@alea/lib/filters/keltnerReversion";
 import "@alea/lib/filters/linearRegressionSlopeFade";
 import "@alea/lib/filters/liquiditySweepReversal";
-import "@alea/lib/filters/lowVolumeBreakoutFade";
 import "@alea/lib/filters/madReversion";
-import "@alea/lib/filters/mfiMeanRev";
 import "@alea/lib/filters/multiBarReturnFade";
-import "@alea/lib/filters/narrowRangeBreakoutFollow";
-import "@alea/lib/filters/obvDivergenceReversal";
-import "@alea/lib/filters/parabolicSarFlipFollow";
 import "@alea/lib/filters/percentRankMeanRev";
 import "@alea/lib/filters/pinBarReversal";
 import "@alea/lib/filters/qstickBodyBiasFade";
@@ -69,11 +65,7 @@ import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochRsiMeanRev";
 import "@alea/lib/filters/stochasticMeanRev";
 import "@alea/lib/filters/streakFade";
-import "@alea/lib/filters/supertrendFlipFollow";
 import "@alea/lib/filters/tsiMeanRev";
 import "@alea/lib/filters/volatilityBurstFade";
-import "@alea/lib/filters/volumeClimaxFade";
-import "@alea/lib/filters/vwapBandReclaim";
-import "@alea/lib/filters/vwapZscoreReversion";
 import "@alea/lib/filters/williamsRMeanRev";
 import "@alea/lib/filters/zscoreReversion";
