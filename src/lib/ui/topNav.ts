@@ -16,10 +16,10 @@ type TopNavPage = {
 };
 
 const TOP_NAV_PAGES: readonly TopNavPage[] = [
+  { id: "proxy", label: "Proxy accuracy", href: "/proxy/" },
   { id: "exploration", label: "Exploration", href: "/exploration/" },
   { id: "committee", label: "Trade committee", href: "/committee/" },
   { id: "dryrun", label: "Dry run", href: "/dryrun/" },
-  { id: "proxy", label: "Proxy accuracy", href: "/proxy/" },
   { id: "live", label: "Live trading", href: "/" },
 ];
 
