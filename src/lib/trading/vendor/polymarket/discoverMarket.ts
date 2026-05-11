@@ -1,12 +1,14 @@
 import { polymarket } from "@alea/constants/polymarket";
 import type { TradableMarket } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
+import type { ResolutionTimeframe } from "@alea/types/resolutions";
 import { z } from "zod";
 
 /**
- * Polymarket "up/down 5m" market lookup via the public gamma-api.
- * Slug is fixed by the venue: `<asset>-updown-5m-<unixSeconds>`,
- * where `unixSeconds` is the window *start* (UTC, aligned to 5min).
+ * Polymarket "up/down" market lookup via the public gamma-api.
+ * Slug is fixed by the venue: `<asset>-updown-<5m|15m>-<unixSeconds>`,
+ * where `unixSeconds` is the window *start* (UTC, aligned to the
+ * timeframe grid).
  *
  * Returns `null` when the slug doesn't resolve to anything that
  * matches the expected up/down shape (degenerate outcomes, missing
@@ -20,22 +22,25 @@ import { z } from "zod";
  */
 export async function discoverPolymarketMarket({
   asset,
+  timeframe = "5m",
   windowStartUnixSeconds,
   signal,
 }: {
   readonly asset: Asset;
+  readonly timeframe?: ResolutionTimeframe;
   readonly windowStartUnixSeconds: number;
   readonly signal?: AbortSignal;
 }): Promise<TradableMarket | null> {
-  const slug = `${asset}-updown-5m-${windowStartUnixSeconds}`;
+  const slug = `${asset}-updown-${timeframe}-${windowStartUnixSeconds}`;
   const url = `${polymarket.gammaApiUrl}/events?slug=${slug}`;
   const response = await fetch(url, {
     headers: { "User-Agent": "alea/1.0" },
     signal,
   });
   if (!response.ok) {
+    const body = await response.text();
     throw new Error(
-      `gamma-api /events?slug=${slug} failed: ${response.status} ${await response.text()}`,
+      `gamma-api /events?slug=${slug} failed: ${response.status} ${previewBody(body)}`,
     );
   }
   const parsed = eventListSchema.safeParse(await response.json());
@@ -107,3 +112,11 @@ const eventSchema = z
   .passthrough();
 
 const eventListSchema = z.array(eventSchema);
+
+function previewBody(body: string): string {
+  const collapsed = body.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= 300) {
+    return collapsed;
+  }
+  return `${collapsed.slice(0, 300)}...`;
+}

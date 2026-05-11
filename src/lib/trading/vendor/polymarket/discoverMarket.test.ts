@@ -104,4 +104,22 @@ describe("discoverPolymarketMarket", () => {
       }),
     ).rejects.toThrow(/429 rate limited/);
   });
+
+  it("uses 15m slugs when requested", async () => {
+    const seenUrls: string[] = [];
+    installFetch((input) => {
+      seenUrls.push(inputUrl(input));
+      return Response.json([]);
+    });
+
+    await discoverPolymarketMarket({
+      asset: "eth",
+      timeframe: "15m",
+      windowStartUnixSeconds: 1_777_900_200,
+    });
+
+    expect(seenUrls).toEqual([
+      `${polymarket.gammaApiUrl}/events?slug=eth-updown-15m-1777900200`,
+    ]);
+  });
 });
