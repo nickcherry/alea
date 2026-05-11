@@ -15,7 +15,7 @@ export async function writeProxyAccuracyArtifacts({
 }): Promise<void> {
   const assets = await copyDashboardAssets({
     htmlPath,
-    pageAssets: ["proxy-accuracy.css"],
+    pageAssets: ["proxy-accuracy.css", "proxy-accuracy.js"],
   });
   const html = renderProxyAccuracyHtml({ payload, assets });
   await Promise.all([

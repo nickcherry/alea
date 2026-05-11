@@ -70,6 +70,31 @@ when we change a CSS rule.
 - **No CSS preprocessor**. The shared sheet is plain CSS authored as a
   file. Page CSS is plain CSS authored as a file.
 
+## Config references must read the actual constant
+
+Any setting, threshold, or config knob surfaced on a dashboard page —
+training thresholds, vote floors, hydrate counts, supported periods, the
+trade-decision period, etc. — must come from the same exported
+constant the rest of the codebase reads, not a hard-coded literal in the
+renderer or loader. The loader threads the value onto the payload, the
+renderer reads it from the payload, and the test asserts the rendered
+output reflects the live constant. If you change the constant, the
+dashboard updates with no second edit. Examples:
+
+- [`TRAINING_OUTCOME_MIN_ABS_MOVE_PCT`](../src/constants/training.ts)
+  → `payload.trainingThresholdPct` on the proxy accuracy page and
+  `selectionConfig.trainingOutcomeMinAbsMovePct` on the trade committee
+  page.
+- [`TRADE_DECISION_PERIOD`](../src/constants/tradeDecision.ts) and
+  [`TRADE_DECISION_SUPPORTED_PERIODS`](../src/constants/tradeDecision.ts)
+  → `decisionConfig.period` and `decisionConfig.supportedPeriods` on the
+  dry-run page. The page-level period toggle reads `supportedPeriods` so
+  the option set matches the schema's `dry_run_period` CHECK constraint.
+
+If a value appears on a page and there is no constant for it, add the
+constant under `src/constants/` first; do not inline it into the
+renderer.
+
 ## Authoring a new dashboard page
 
 1. Add `src/assets/web/<page>.css` for page-specific layout.

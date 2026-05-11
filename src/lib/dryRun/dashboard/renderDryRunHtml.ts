@@ -37,16 +37,19 @@ export function renderDryRunHtml({
     readonly scripts: readonly string[];
   };
 }): string {
-  const summary = payload.summary;
-  const wr =
-    summary.winRate === null ? "—" : formatPercent({ value: summary.winRate });
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
-  const wrToneClass = winRateToneClass({ value: summary.winRate });
-  const recentRows = payload.recent.slice(0, RECENT_TABLE_LIMIT);
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const chartTokensJson = escapeJsonForHtml({
     value: JSON.stringify(aleaChartTokens),
   });
+
+  const initialPeriod = payload.decisionConfig.period;
+  const initialSlice =
+    payload.byPeriod[initialPeriod] ??
+    payload.byPeriod[payload.decisionConfig.supportedPeriods[0] ?? "5m"]!;
+  const recentRows = payload.recent
+    .filter((r) => r.period === initialPeriod)
+    .slice(0, RECENT_TABLE_LIMIT);
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -67,47 +70,20 @@ export function renderDryRunHtml({
     </header>
     ${renderTopNav({ activeId: "dryrun" })}
     <main class="alea-main">
-      <section class="alea-summary-grid cols-4">
-        ${renderMetric({
-          label: "Win Rate",
-          value: wr,
-          sub: `${summary.totalWins.toLocaleString()} of ${summary.settledDecisions.toLocaleString()} settled · ${summary.upDecisions.toLocaleString()}↑ / ${summary.downDecisions.toLocaleString()}↓`,
-          toneClass: wrToneClass,
-          tip: DR_TIPS.winRate,
-        })}
-        ${renderMetric({
-          label: "Decisions",
-          value: summary.totalDecisions.toLocaleString(),
-          sub: `${summary.pendingDecisions.toLocaleString()} pending settlement`,
-          tip: DR_TIPS.decisions,
-        })}
-        ${renderMetric({
-          label: "Committee Candidates",
-          value: summary.candidateCount.toLocaleString(),
-          sub: "registered (filter, config) entries",
-          tip: DR_TIPS.candidates,
-        })}
-        ${renderMetric({
-          label: "Avg Engagement / Trade",
-          value:
-            summary.avgEngagement === null
-              ? "—"
-              : summary.avgEngagement.toLocaleString(undefined, {
-                  maximumFractionDigits: 1,
-                }),
-          sub: "filter-collapsed votes per actionable decision",
-          tip: DR_TIPS.avgEngagement,
-        })}
-      </section>
+      <div class="dry-run-period-row">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          ${payload.decisionConfig.supportedPeriods
+            .map(
+              (p) =>
+                `<button class="alea-pill-tab is-prominent dry-run-period-tab" role="tab" data-period="${escapeHtml({ value: p })}" aria-selected="${p === initialPeriod ? "true" : "false"}">${escapeHtml({ value: p })}</button>`,
+            )
+            .join("\n          ")}
+        </div>
+      </div>
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
         <div class="dry-run-config-grid">
-          ${renderConfigItem({
-            label: "Period",
-            value: payload.decisionConfig.period,
-            sub: "committee roster bucket",
-          })}
           ${renderConfigItem({
             label: "Decision Lead",
             value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
@@ -145,11 +121,15 @@ export function renderDryRunHtml({
         </div>
       </section>
 
+      <section class="alea-summary-grid cols-4" id="dry-run-summary-grid">
+        ${renderSummaryMetrics({ summary: initialSlice.summary })}
+      </section>
+
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Cumulative Win Rate</h2></div>
         <div class="dry-run-chart-frame">
           <div id="dry-run-chart" class="dry-run-chart-host"></div>
-          <div id="dry-run-chart-empty" class="dry-run-empty"${payload.cumulative.length === 0 ? "" : ' style="display:none"'}>
+          <div id="dry-run-chart-empty" class="dry-run-empty"${initialSlice.cumulative.length === 0 ? "" : ' style="display:none"'}>
             No settled decisions yet — the chart will populate as the dry-run loop finalizes bars.
           </div>
           <div id="dry-run-tooltip" class="alea-tooltip"></div>
@@ -168,27 +148,8 @@ export function renderDryRunHtml({
                 <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
               </tr>
             </thead>
-            <tbody>
-              ${
-                payload.perRegime.length === 0
-                  ? `<tr><td colspan="4"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>`
-                  : payload.perRegime
-                      .map((r) => {
-                        const wrStr =
-                          r.winRate === null
-                            ? '<span class="alea-muted">—</span>'
-                            : formatPercent({ value: r.winRate });
-                        const cls = winRateToneClass({ value: r.winRate });
-                        return `
-                          <tr>
-                            <td><span class="asset-pill">${escapeHtml({ value: formatMarketRegime(r.marketRegime) })}</span></td>
-                            <td class="num-col alea-mono">${r.calls.toLocaleString()}</td>
-                            <td class="num-col alea-mono${cls}">${wrStr}</td>
-                            <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
-                          </tr>`;
-                      })
-                      .join("")
-              }
+            <tbody id="dry-run-regime-body">
+              ${renderRegimeRows({ rows: initialSlice.perRegime })}
             </tbody>
           </table>
         </div>
@@ -206,24 +167,8 @@ export function renderDryRunHtml({
                 <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
               </tr>
             </thead>
-            <tbody>
-              ${payload.perAsset
-                .map((r) => {
-                  const wrStr =
-                    r.winRate === null
-                      ? '<span class="alea-muted">—</span>'
-                      : formatPercent({ value: r.winRate });
-                  const cls = winRateToneClass({ value: r.winRate });
-                  return `
-                <tr>
-                  <td><span class="asset-pill">${escapeHtml({ value: r.asset })}</span></td>
-                  <td class="num-col alea-mono">${r.settled.toLocaleString()}</td>
-                  <td class="num-col alea-mono${cls}">${wrStr}</td>
-                  <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
-                </tr>
-              `;
-                })
-                .join("")}
+            <tbody id="dry-run-asset-body">
+              ${renderAssetRows({ rows: initialSlice.perAsset })}
             </tbody>
           </table>
         </div>
@@ -231,7 +176,7 @@ export function renderDryRunHtml({
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Recent Decisions</h2></div>
-        <p class="dry-run-recent-meta">Showing the latest ${recentRows.length} of ${payload.recent.length.toLocaleString()} decisions (most recent first).</p>
+        <p class="dry-run-recent-meta" id="dry-run-recent-meta">${recentMetaLabel({ shown: recentRows.length, totalForPeriod: payload.recent.filter((r) => r.period === initialPeriod).length })}</p>
         <div class="alea-table-wrap">
           <table class="alea-table dry-run-recent-table">
             <thead>
@@ -246,7 +191,7 @@ export function renderDryRunHtml({
                 <th>Outcome${infoTip({ text: DR_TIPS.recentOutcome })}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="dry-run-recent-body">
               ${recentRows.map(renderRecentRow).join("")}
             </tbody>
           </table>
@@ -259,6 +204,110 @@ export function renderDryRunHtml({
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
+}
+
+function renderSummaryMetrics({
+  summary,
+}: {
+  readonly summary: DryRunDashboardPayload["byPeriod"][string]["summary"];
+}): string {
+  const wr =
+    summary.winRate === null ? "—" : formatPercent({ value: summary.winRate });
+  const wrToneClass = winRateToneClass({ value: summary.winRate });
+  return `
+    ${renderMetric({
+      label: "Win Rate",
+      value: wr,
+      sub: `${summary.totalWins.toLocaleString()} of ${summary.settledDecisions.toLocaleString()} settled · ${summary.upDecisions.toLocaleString()}↑ / ${summary.downDecisions.toLocaleString()}↓`,
+      toneClass: wrToneClass,
+      tip: DR_TIPS.winRate,
+    })}
+    ${renderMetric({
+      label: "Decisions",
+      value: summary.totalDecisions.toLocaleString(),
+      sub: `${summary.pendingDecisions.toLocaleString()} pending settlement`,
+      tip: DR_TIPS.decisions,
+    })}
+    ${renderMetric({
+      label: "Committee Candidates",
+      value: summary.candidateCount.toLocaleString(),
+      sub: "registered (filter, config) entries",
+      tip: DR_TIPS.candidates,
+    })}
+    ${renderMetric({
+      label: "Avg Engagement / Trade",
+      value:
+        summary.avgEngagement === null
+          ? "—"
+          : summary.avgEngagement.toLocaleString(undefined, {
+              maximumFractionDigits: 1,
+            }),
+      sub: "filter-collapsed votes per actionable decision",
+      tip: DR_TIPS.avgEngagement,
+    })}
+  `;
+}
+
+function renderRegimeRows({
+  rows,
+}: {
+  readonly rows: DryRunDashboardPayload["byPeriod"][string]["perRegime"];
+}): string {
+  if (rows.length === 0) {
+    return `<tr><td colspan="4"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>`;
+  }
+  return rows
+    .map((r) => {
+      const wrStr =
+        r.winRate === null
+          ? '<span class="alea-muted">—</span>'
+          : formatPercent({ value: r.winRate });
+      const cls = winRateToneClass({ value: r.winRate });
+      return `
+        <tr>
+          <td><span class="asset-pill">${escapeHtml({ value: formatMarketRegime(r.marketRegime) })}</span></td>
+          <td class="num-col alea-mono">${r.calls.toLocaleString()}</td>
+          <td class="num-col alea-mono${cls}">${wrStr}</td>
+          <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
+        </tr>`;
+    })
+    .join("");
+}
+
+function renderAssetRows({
+  rows,
+}: {
+  readonly rows: DryRunDashboardPayload["byPeriod"][string]["perAsset"];
+}): string {
+  if (rows.length === 0) {
+    return `<tr><td colspan="4"><span class="alea-muted">No decisions yet for this period.</span></td></tr>`;
+  }
+  return rows
+    .map((r) => {
+      const wrStr =
+        r.winRate === null
+          ? '<span class="alea-muted">—</span>'
+          : formatPercent({ value: r.winRate });
+      const cls = winRateToneClass({ value: r.winRate });
+      return `
+        <tr>
+          <td><span class="asset-pill">${escapeHtml({ value: r.asset })}</span></td>
+          <td class="num-col alea-mono">${r.settled.toLocaleString()}</td>
+          <td class="num-col alea-mono${cls}">${wrStr}</td>
+          <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
+        </tr>`;
+    })
+    .join("");
+}
+
+function recentMetaLabel({
+  shown,
+  totalForPeriod,
+}: {
+  readonly shown: number;
+  readonly totalForPeriod: number;
+}): string {
+  return `Showing the latest ${shown} of ${totalForPeriod.toLocaleString()} decisions (most recent first).`;
 }
 
 function renderRecentRow(row: DryRunDashboardRecentRow): string {

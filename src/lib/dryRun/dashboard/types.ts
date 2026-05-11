@@ -27,6 +27,12 @@ export type DryRunDashboardSummary = {
 
 export type DryRunDecisionConfig = {
   readonly period: string;
+  /**
+   * Every candle period the dry-run table can hold a decision for.
+   * Drives the page-level period toggle so the UI shows the same set
+   * of options the schema allows, not whatever happens to have rows.
+   */
+  readonly supportedPeriods: readonly string[];
   readonly leadTimeMs: number;
   readonly hydratedBars: number;
   readonly maxVotesPerFilter: number;
@@ -52,6 +58,7 @@ export type DryRunDashboardRecentRow = {
   readonly tsMs: number;
   readonly decidedAtMs: number;
   readonly asset: string;
+  readonly period: string;
   readonly prediction: "u" | "d";
   readonly synthOpen: number;
   readonly actualClose: number | null;
@@ -80,12 +87,30 @@ export type DryRunDashboardCumulativeRow = {
   readonly cumWinRate: number;
 };
 
-export type DryRunDashboardPayload = {
-  readonly generatedAtMs: number;
-  readonly decisionConfig: DryRunDecisionConfig;
+/**
+ * Aggregates split out per candle period. The client renders one slice
+ * at a time as the user flips the 5m/15m toggle; the SSR pass shows the
+ * `decisionConfig.period` slice (currently the live runner's period).
+ */
+export type DryRunDashboardPeriodSlice = {
   readonly summary: DryRunDashboardSummary;
   readonly perAsset: readonly DryRunDashboardAssetRow[];
   readonly perRegime: readonly DryRunDashboardRegimeAggregate[];
-  readonly recent: readonly DryRunDashboardRecentRow[];
   readonly cumulative: readonly DryRunDashboardCumulativeRow[];
+};
+
+export type DryRunDashboardPayload = {
+  readonly generatedAtMs: number;
+  readonly decisionConfig: DryRunDecisionConfig;
+  /**
+   * One entry per supported candle period. Always populated for every
+   * period in `decisionConfig.supportedPeriods`, even if there are no
+   * decisions yet — empty slices render as "no data" panels.
+   */
+  readonly byPeriod: { readonly [period: string]: DryRunDashboardPeriodSlice };
+  /**
+   * Newest-first list of settled decisions across every period. The
+   * page renders this client-side filtered by the active period tab.
+   */
+  readonly recent: readonly DryRunDashboardRecentRow[];
 };

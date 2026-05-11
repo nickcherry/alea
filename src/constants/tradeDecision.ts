@@ -9,6 +9,17 @@
 export const TRADE_DECISION_PERIOD = "5m";
 
 /**
+ * Every candle period the dry-run table is allowed to hold a decision
+ * for. Matches the `dry_run_period` CHECK constraint on
+ * `dry_run_decisions.period` so the dashboard period toggle and the
+ * schema agree on the option set.
+ */
+export const TRADE_DECISION_SUPPORTED_PERIODS: readonly string[] = [
+  "5m",
+  "15m",
+];
+
+/**
  * How long before the target candle opens the loop snapshots the
  * live price and makes its decision.
  */

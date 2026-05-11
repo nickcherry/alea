@@ -4,6 +4,12 @@
  * disagreement-table look.
  */
 
+.proxy-period-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .proxy-muted {
   margin: -4px 0 12px;
   color: var(--alea-text-subtle);

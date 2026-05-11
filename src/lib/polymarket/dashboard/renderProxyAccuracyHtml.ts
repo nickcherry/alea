@@ -10,6 +10,7 @@ import {
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
 import { renderTopNav } from "@alea/lib/ui/topNav";
+import type { ResolutionTimeframe } from "@alea/types/resolutions";
 
 /** Renders the proxy-accuracy dashboard. */
 export function renderProxyAccuracyHtml({
@@ -24,7 +25,9 @@ export function renderProxyAccuracyHtml({
 }): string {
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
-  const coverage = payload.coverage;
+
+  const initialTimeframe: ResolutionTimeframe =
+    payload.breakdowns[0]?.timeframe ?? "5m";
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -43,48 +46,39 @@ export function renderProxyAccuracyHtml({
     </header>
     ${renderTopNav({ activeId: "proxy" })}
     <main class="alea-main">
-      <section class="alea-summary-grid cols-4">
-        ${renderMetric({
-          label: "Polymarket Rows",
-          value: coverage.polymarketRows.toLocaleString(),
-          sub: `${coverage.voidRows.toLocaleString()} void / refund`,
-          tip: PA_TIPS.coveragePoly,
-        })}
-        ${renderMetric({
-          label: "Joined With Pyth",
-          value: coverage.joinedRows.toLocaleString(),
-          sub: `${coverage.missingPythRows.toLocaleString()} missing Pyth bar`,
-          tip: PA_TIPS.coverageJoined,
-        })}
-        ${renderMetric({
-          label: "Training Threshold",
-          value: `${formatBp({ pct: payload.trainingThresholdPct })}`,
-          sub: "min |move%| for training outcome",
-          tip: PA_TIPS.thresholdMetric,
-        })}
-        ${renderMetric({
-          label: "Window Range",
-          value: formatWindowRange({
-            firstMs: coverage.firstWindowMs,
-            lastMs: coverage.lastWindowMs,
-          }),
-          sub: "earliest → latest Polymarket window",
-          tip: PA_TIPS.coverageWindow,
-        })}
-      </section>
+      <div class="proxy-period-row">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          ${["5m", "15m"]
+            .map(
+              (tf) =>
+                `<button class="alea-pill-tab is-prominent proxy-period-tab" role="tab" data-period="${tf}" aria-selected="${tf === initialTimeframe ? "true" : "false"}">${tf}</button>`,
+            )
+            .join("\n          ")}
+        </div>
+      </div>
 
-      ${payload.breakdowns.map(renderTimeframeSection).join("\n")}
+      ${payload.breakdowns
+        .map((b) =>
+          renderTimeframeSection({
+            breakdown: b,
+            isActive: b.timeframe === initialTimeframe,
+          }),
+        )
+        .join("\n")}
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Top Disagreements</h2></div>
         <p class="proxy-muted">
-          The ${payload.extremeDisagreements.length.toLocaleString()} biggest
-          |move%| Pyth bars where Polymarket settled the other way.
-          These are the audit cases — if a row's move% is well above
+          The biggest |move%| Pyth bars where Polymarket settled the other
+          way. These are the audit cases — if a row's move% is well above
           the training threshold, Pyth would have trained or traded
           opposite the actual settled side for that window.
         </p>
-        ${renderExtremeTable({ rows: payload.extremeDisagreements })}
+        <div id="proxy-extreme-host">${renderExtremeTable({
+          rows: payload.extremeDisagreements.filter(
+            (d) => d.timeframe === initialTimeframe,
+          ),
+        })}</div>
       </section>
     </main>
   </div>
@@ -94,12 +88,17 @@ export function renderProxyAccuracyHtml({
 </html>`;
 }
 
-function renderTimeframeSection(
-  breakdown: ProxyAccuracyTimeframeBreakdown,
-): string {
+function renderTimeframeSection({
+  breakdown,
+  isActive,
+}: {
+  readonly breakdown: ProxyAccuracyTimeframeBreakdown;
+  readonly isActive: boolean;
+}): string {
   const totalLabel = breakdown.aggregate.total.toLocaleString();
+  const hidden = isActive ? "" : ' hidden="hidden"';
   return `
-      <section class="alea-card with-corners">
+      <section class="alea-card with-corners proxy-timeframe-section" data-period="${breakdown.timeframe}"${hidden}>
         <div class="alea-section-rule"><h2>${breakdown.timeframe.toUpperCase()} Markets</h2></div>
         <p class="proxy-muted">Joined windows: ${totalLabel}.</p>
         <div class="proxy-aggregate-grid">
@@ -307,7 +306,6 @@ function renderExtremeTable({
           <tr>
             <th>Time${tip({ text: PA_TIPS.windowTime })}</th>
             <th>Asset${tip({ text: PA_TIPS.asset })}</th>
-            <th>Timeframe${tip({ text: PA_TIPS.timeframe })}</th>
             <th>Polymarket${tip({ text: PA_TIPS.polyOutcome })}</th>
             <th>Pyth${tip({ text: PA_TIPS.pythOutcome })}</th>
             <th class="num-col">Open${tip({ text: PA_TIPS.pythOpen })}</th>
@@ -322,7 +320,6 @@ function renderExtremeTable({
                 <tr>
                   <td class="alea-mono">${escapeHtml({ value: formatWindowStart({ ms: row.windowStartTsMs }) })}</td>
                   <td><span class="asset-pill">${escapeHtml({ value: row.asset })}</span></td>
-                  <td><span class="asset-pill">${row.timeframe.toUpperCase()}</span></td>
                   <td>${outcomeBadge({ outcome: row.polyOutcome })}</td>
                   <td>${outcomeBadge({ outcome: row.pythOutcome })}</td>
                   <td class="num-col alea-mono">${row.pythOpen.toFixed(4)}</td>
@@ -347,26 +344,6 @@ function outcomeBadge({
     return '<span class="alea-num-positive">UP</span>';
   }
   return '<span class="alea-num-negative">DOWN</span>';
-}
-
-function renderMetric({
-  label,
-  value,
-  sub,
-  tip: tipText,
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly sub: string;
-  readonly tip: string;
-}): string {
-  return `
-    <div class="alea-metric">
-      <p class="alea-metric-label">${escapeHtml({ value: label })}${tip({ text: tipText })}</p>
-      <p class="alea-metric-value">${escapeHtml({ value })}</p>
-      <p class="alea-metric-sub">${escapeHtml({ value: sub })}</p>
-    </div>
-  `;
 }
 
 function tip({ text }: { readonly text: string }): string {
@@ -420,20 +397,6 @@ function formatWindowStart({ ms }: { readonly ms: number }): string {
   return new Date(ms).toISOString().slice(0, 16).replace("T", " ");
 }
 
-function formatWindowRange({
-  firstMs,
-  lastMs,
-}: {
-  readonly firstMs: number | null;
-  readonly lastMs: number | null;
-}): string {
-  if (firstMs === null || lastMs === null) {
-    return "—";
-  }
-  const days = Math.max(1, Math.round((lastMs - firstMs) / 86_400_000));
-  return `${days} d`;
-}
-
 function escapeHtml({ value }: { readonly value: string }): string {
   return value
     .replaceAll("&", "&amp;")
@@ -448,14 +411,6 @@ function escapeJsonForHtml({ value }: { readonly value: string }): string {
 }
 
 const PA_TIPS = {
-  coveragePoly:
-    "Polymarket-settled markets fetched into polymarket_resolutions.",
-  coverageJoined:
-    "Polymarket rows we could compare against a Pyth bar at the same window. Everything below is computed over these rows.",
-  coverageWindow:
-    "Span between the earliest and latest Polymarket window in the joined data.",
-  thresholdMetric:
-    "Training pipeline's minimum absolute Pyth move% required before a bar becomes a labeled outcome. Disagreements below this size shouldn't reach training.",
   bucketsDisagree:
     "Disagreements only, bucketed by the size of the Pyth open→close move that landed opposite Polymarket. Tiny moves = boundary noise; larger moves = potential proxy drift.",
   bucketsAll:
@@ -477,7 +432,6 @@ const PA_TIPS = {
     "90th-percentile absolute Pyth move% across this group's disagreements.",
   windowTime:
     "Window start time (UTC), aligned to the timeframe's bar boundary.",
-  timeframe: "5m or 15m Polymarket market.",
   polyOutcome:
     "Polymarket's Chainlink-derived settled side (Up = settled flat-or-up, Down = settled below).",
   pythOutcome:

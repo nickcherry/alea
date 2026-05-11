@@ -4,6 +4,12 @@
  * num-positive/negative, muted) come from alea.css.
  */
 
+.dry-run-period-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 /* uPlot-hosted cumulative WR chart. The frame mirrors the trading
    page's `.chart-frame` so the two dashboards feel like the same
    product. */

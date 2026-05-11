@@ -21,8 +21,10 @@ describe("renderTradeCommitteeHtml", () => {
     // The JSON payload script tag carries the row data verbatim.
     expect(html).toContain("rsi_mean_rev");
     expect(html).toContain('data-period="15m"');
-    expect(html).toContain("Median WR");
-    expect(html).toContain("Roster Fill");
+    // Top metric cards were removed — period toggle is now the page-level
+    // control, and the buckets/roster derive their period from it.
+    expect(html).not.toContain("Median WR");
+    expect(html).not.toContain("Roster Fill");
     expect(html).not.toContain("Selected At");
     expect(html).not.toContain("Active Buckets");
     expect(html).toContain("Bucket Cap");

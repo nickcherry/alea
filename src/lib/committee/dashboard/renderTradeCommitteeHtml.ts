@@ -29,14 +29,6 @@ export function renderTradeCommitteeHtml({
 }): string {
   const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
-  const medianWinRate = median({
-    values: payload.rows.map((row) => row.winRate),
-  });
-  const bestWinRate = max({
-    values: payload.rows.map((row) => row.winRate),
-  });
-  const cap = payload.selectionConfig.topN;
-  const maxRosterSize = cap * 8;
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -55,32 +47,12 @@ export function renderTradeCommitteeHtml({
     </header>
     ${renderTopNav({ activeId: "committee" })}
     <main class="alea-main">
-      <section class="alea-summary-grid">
-        ${renderMetric({
-          label: "Candidates",
-          value: payload.rowCount.toLocaleString(),
-          sub: `${payload.uniqueFilterCount.toLocaleString()} unique filters`,
-          tip: TIPS.candidates,
-        })}
-        ${renderMetric({
-          label: "Median WR",
-          value:
-            medianWinRate === null
-              ? "&mdash;"
-              : formatPercent({ value: medianWinRate }),
-          sub:
-            bestWinRate === null
-              ? "no selected candidates"
-              : `best selected: ${formatPercent({ value: bestWinRate })}`,
-          tip: TIPS.medianWinRate,
-        })}
-        ${renderMetric({
-          label: "Roster Fill",
-          value: `${payload.rowCount.toLocaleString()} / ${maxRosterSize.toLocaleString()}`,
-          sub: `${payload.activeBucketCount}/8 buckets · cap ${cap.toLocaleString()} each`,
-          tip: TIPS.rosterFill,
-        })}
-      </section>
+      <div class="committee-period-row">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
+          <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
+        </div>
+      </div>
 
       <section class="alea-card with-corners">
         <div class="alea-section-rule"><h2>Selection Config</h2></div>
@@ -143,10 +115,6 @@ export function renderTradeCommitteeHtml({
             <p id="committee-roster-meta" class="committee-roster-meta"></p>
           </div>
           <div class="committee-controls" aria-label="Roster filters">
-            <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
-              <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
-              <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
-            </div>
             <div class="alea-pill-tabs" role="tablist" aria-label="Market regime">
               <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="low_vol_ranging" aria-selected="true">Low vol ranging</button>
               <button class="alea-pill-tab committee-regime-tab" role="tab" data-regime="low_vol_trending" aria-selected="false">Low vol trending</button>
@@ -189,25 +157,6 @@ export function renderTradeCommitteeHtml({
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
-}
-
-function renderMetric({
-  label,
-  value,
-  sub,
-  tip,
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly sub: string;
-  readonly tip: string;
-}): string {
-  return `
-    <div class="alea-metric">
-      <div class="alea-metric-label">${escapeHtml({ value: label })}${infoTip({ text: tip })}</div>
-      <div class="alea-metric-value">${value}</div>
-      <div class="alea-metric-sub">${escapeHtml({ value: sub })}</div>
-    </div>`;
 }
 
 function renderConfigItem({
@@ -256,10 +205,10 @@ function renderBucketTile({
   const wrCls = winRateToneClass({ value: bucket.topWinRate });
   const filterLabel = bucket.topFilterId ?? "—";
   const isEmpty = bucket.candidateCount === 0;
+  const hidden = bucket.period === "5m" ? "" : ' hidden="hidden"';
   return `
-    <div class="committee-bucket-tile${isEmpty ? " is-empty" : ""}" role="listitem">
+    <div class="committee-bucket-tile${isEmpty ? " is-empty" : ""}" role="listitem" data-period="${bucket.period}"${hidden}>
       <div class="committee-bucket-head">
-        <span class="committee-bucket-period">${escapeHtml({ value: bucket.period })}</span>
         <span class="committee-bucket-regime">${escapeHtml({ value: formatMarketRegime({ value: bucket.marketRegime }) })}</span>
       </div>
       <div class="committee-bucket-stat">
@@ -270,40 +219,7 @@ function renderBucketTile({
     </div>`;
 }
 
-function median({
-  values,
-}: {
-  readonly values: readonly number[];
-}): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  if (sorted.length % 2 === 1) {
-    return sorted[mid]!;
-  }
-  return (sorted[mid - 1]! + sorted[mid]!) / 2;
-}
-
-function max({
-  values,
-}: {
-  readonly values: readonly number[];
-}): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-  return Math.max(...values);
-}
-
 const TIPS = {
-  candidates:
-    "Selected committee rows. Each row is one filter config admitted to one timeframe/regime bucket.",
-  medianWinRate:
-    "Middle win rate across selected candidates. Useful as a quick roster-quality check.",
-  rosterFill:
-    "How full the roster is. Each (timeframe, regime) bucket caps at the per-bucket limit; a low fill means few candidates met the floors.",
   rank: "Rank within this timeframe and regime. #1 is the strongest selected candidate.",
   regime: "Market state where this candidate is allowed to vote.",
   filter: "Signal rule and its strategy family.",

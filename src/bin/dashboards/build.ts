@@ -238,13 +238,20 @@ async function buildDryRunDashboard({
     const htmlPath = resolvePath(dryRunDir, "index.html");
     const jsonPath = resolvePath(dryRunDir, "data.json");
     await writeDryRunArtifacts({ payload, htmlPath, jsonPath });
-    const s = payload.summary;
-    const wr = s.winRate === null ? "—" : `${(s.winRate * 100).toFixed(1)}%`;
+    const s = payload.byPeriod[payload.decisionConfig.period]?.summary;
+    const wr =
+      s === undefined || s.winRate === null
+        ? "—"
+        : `${(s.winRate * 100).toFixed(1)}%`;
+    const totalDecisions = s?.totalDecisions ?? 0;
+    const settled = s?.settledDecisions ?? 0;
+    const pending = s?.pendingDecisions ?? 0;
     io.writeStdout(
-      `  ${pc.green("decisions =")} ${s.totalDecisions.toLocaleString()}` +
-        `  ${pc.dim("settled=")}${s.settledDecisions.toLocaleString()}` +
-        `  ${pc.dim("pending=")}${s.pendingDecisions.toLocaleString()}` +
-        `  ${pc.dim("wr=")}${wr}\n` +
+      `  ${pc.green("decisions =")} ${totalDecisions.toLocaleString()}` +
+        `  ${pc.dim("settled=")}${settled.toLocaleString()}` +
+        `  ${pc.dim("pending=")}${pending.toLocaleString()}` +
+        `  ${pc.dim("wr=")}${wr}` +
+        `  ${pc.dim("period=")}${payload.decisionConfig.period}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {
