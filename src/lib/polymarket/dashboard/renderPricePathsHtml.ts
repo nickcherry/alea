@@ -71,12 +71,18 @@ export function renderPricePathsHtml({
 
       <section class="price-path-section">
         <div class="alea-section-rule"><h2>Band Decay</h2></div>
-        <div id="price-path-band-chart" class="price-path-band-chart"></div>
+        <div class="price-path-band-chart-wrap">
+          <div id="price-path-band-chart" class="price-path-band-chart"></div>
+          <div id="price-path-band-tooltip" class="alea-tooltip"></div>
+        </div>
       </section>
 
       <section class="price-path-section">
         <div class="alea-section-rule"><h2>50c Crossings</h2></div>
-        <div id="price-path-crossings-chart" class="price-path-crossings-chart"></div>
+        <div class="price-path-crossings-chart-wrap">
+          <div id="price-path-crossings-chart" class="price-path-crossings-chart"></div>
+          <div id="price-path-crossings-tooltip" class="alea-tooltip"></div>
+        </div>
         <div id="price-path-crossings-table-host"></div>
       </section>
     </main>

@@ -81,6 +81,11 @@
   font-size: 12px;
 }
 
+.price-path-band-chart-wrap,
+.price-path-crossings-chart-wrap {
+  position: relative;
+}
+
 .price-path-band-chart {
   min-height: 320px;
   border: 1px solid var(--alea-border-muted);
@@ -186,6 +191,33 @@
   stroke-width: 2.25;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Hover hairline + data-point dots overlaid on the band-decay and
+   crossings line charts. Hidden until JS positions them on mousemove. */
+.price-path-hover-line {
+  stroke: rgba(215, 170, 69, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+.price-path-hover-dot {
+  pointer-events: none;
+  stroke: var(--alea-bg);
+  stroke-width: 1.5;
+}
+
+.price-path-hover-dot.band-one {
+  fill: var(--alea-gold);
+}
+
+.price-path-hover-dot.band-two {
+  fill: var(--alea-blue);
+}
+
+.price-path-hover-dot.band-five {
+  fill: var(--alea-green);
 }
 
 .price-path-crossings-table-wrap {

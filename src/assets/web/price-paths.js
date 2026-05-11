@@ -28,9 +28,11 @@
   var tooltip = document.getElementById("price-path-tooltip");
   var empty = document.getElementById("price-path-empty");
   var bandHost = document.getElementById("price-path-band-chart");
+  var bandTooltip = document.getElementById("price-path-band-tooltip");
   var crossingsChartHost = document.getElementById(
     "price-path-crossings-chart",
   );
+  var crossingsTooltip = document.getElementById("price-path-crossings-tooltip");
   var crossingsTableHost = document.getElementById(
     "price-path-crossings-table-host",
   );
@@ -40,6 +42,8 @@
     asset: "all",
     slice: null,
     heatmapLayout: null,
+    bandLayout: null,
+    crossingsLayout: null,
   };
 
   Array.prototype.forEach.call(tabs, function (tab) {
@@ -63,6 +67,16 @@
   if (canvas) {
     canvas.addEventListener("mousemove", handleHeatmapMove);
     canvas.addEventListener("mouseleave", hideTooltip);
+  }
+
+  if (bandHost) {
+    bandHost.addEventListener("mousemove", handleBandMove);
+    bandHost.addEventListener("mouseleave", hideBandHover);
+  }
+
+  if (crossingsChartHost) {
+    crossingsChartHost.addEventListener("mousemove", handleCrossingsMove);
+    crossingsChartHost.addEventListener("mouseleave", hideCrossingsHover);
   }
 
   window.addEventListener("resize", function () {
@@ -348,8 +362,197 @@
     if (tooltip) tooltip.classList.remove("visible");
   }
 
+  /**
+   * Map a clientX over a chart host to the index of the closest data
+   * point. `layout.svgWidth` + `layout.pad` define the SVG viewBox
+   * coordinate system; the chart host's bounding rect scales those
+   * viewBox units to pixel space.
+   */
+  function bucketIndexFor(host, clientX, layout, count) {
+    var rect = host.getBoundingClientRect();
+    if (rect.width === 0 || count === 0) return -1;
+    var svgX = ((clientX - rect.left) / rect.width) * layout.svgWidth;
+    var t = (svgX - layout.pad.left) / layout.plotW;
+    if (t < 0 || t > 1) return -1;
+    var idx = Math.round(t * (count - 1));
+    if (idx < 0) idx = 0;
+    if (idx > count - 1) idx = count - 1;
+    return idx;
+  }
+
+  function pointToSvgX(point, layout) {
+    return (
+      layout.pad.left +
+      ((layout.duration - Number(point.timeRemainingMs || 0)) /
+        layout.duration) *
+        layout.plotW
+    );
+  }
+
+  function shareToSvgY(value, layout, scaleMax) {
+    var max = scaleMax || 1;
+    return layout.pad.top + (1 - value / max) * layout.plotH;
+  }
+
+  function handleBandMove(event) {
+    var layout = state.bandLayout;
+    if (!bandHost || !bandTooltip || !layout) return;
+    var points = layout.points || [];
+    var idx = bucketIndexFor(bandHost, event.clientX, layout, points.length);
+    if (idx < 0) {
+      hideBandHover();
+      return;
+    }
+    var point = points[idx];
+    if (!point) {
+      hideBandHover();
+      return;
+    }
+    var svg = bandHost.querySelector("svg");
+    if (!svg) return;
+    var x = pointToSvgX(point, layout);
+    var hoverLine = svg.querySelector('[data-hover="band-line"]');
+    if (hoverLine) {
+      hoverLine.setAttribute("x1", x.toFixed(1));
+      hoverLine.setAttribute("x2", x.toFixed(1));
+      hoverLine.style.display = "";
+    }
+    [
+      { key: "withinOneCentShare", cls: "band-one" },
+      { key: "withinTwoCentShare", cls: "band-two" },
+      { key: "withinFiveCentShare", cls: "band-five" },
+    ].forEach(function (band) {
+      var dot = svg.querySelector('[data-hover="' + band.cls + '"]');
+      if (!dot) return;
+      var value = point[band.key];
+      if (value === null || value === undefined || !point.sampleCount) {
+        dot.style.display = "none";
+        return;
+      }
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute("cy", shareToSvgY(value, layout, 1).toFixed(1));
+      dot.style.display = "";
+    });
+
+    bandTooltip.innerHTML =
+      '<div class="alea-tooltip-head">' +
+      escapeHtml(formatRemaining(point.timeRemainingMs)) +
+      "</div>" +
+      bandTooltipRow("band-one", "49-51", point.withinOneCentShare) +
+      bandTooltipRow("band-two", "48-52", point.withinTwoCentShare) +
+      bandTooltipRow("band-five", "45-55", point.withinFiveCentShare) +
+      tooltipRow("Samples", Number(point.sampleCount || 0).toLocaleString());
+    positionTooltip(bandTooltip, bandHost, event);
+    bandTooltip.classList.add("visible");
+  }
+
+  function hideBandHover() {
+    if (!bandHost) return;
+    if (bandTooltip) bandTooltip.classList.remove("visible");
+    var svg = bandHost.querySelector("svg");
+    if (!svg) return;
+    svg
+      .querySelectorAll("[data-hover]")
+      .forEach(function (el) {
+        el.style.display = "none";
+      });
+  }
+
+  function handleCrossingsMove(event) {
+    var layout = state.crossingsLayout;
+    if (!crossingsChartHost || !crossingsTooltip || !layout) return;
+    var buckets = layout.buckets || [];
+    var idx = bucketIndexFor(
+      crossingsChartHost,
+      event.clientX,
+      layout,
+      buckets.length,
+    );
+    if (idx < 0) {
+      hideCrossingsHover();
+      return;
+    }
+    var bucket = buckets[idx];
+    if (!bucket) {
+      hideCrossingsHover();
+      return;
+    }
+    var svg = crossingsChartHost.querySelector("svg");
+    if (!svg) return;
+    var x = pointToSvgX(bucket, layout);
+    var obs = Number(bucket.windowsObserved || 0);
+    var share = obs > 0 ? Number(bucket.windowsWithCrossing || 0) / obs : null;
+
+    var hoverLine = svg.querySelector('[data-hover="crossings-line"]');
+    if (hoverLine) {
+      hoverLine.setAttribute("x1", x.toFixed(1));
+      hoverLine.setAttribute("x2", x.toFixed(1));
+      hoverLine.style.display = "";
+    }
+    var dot = svg.querySelector('[data-hover="crossings-dot"]');
+    if (dot) {
+      if (share === null) {
+        dot.style.display = "none";
+      } else {
+        dot.setAttribute("cx", x.toFixed(1));
+        dot.setAttribute(
+          "cy",
+          shareToSvgY(share, layout, layout.yMax || 1).toFixed(1),
+        );
+        dot.style.display = "";
+      }
+    }
+
+    crossingsTooltip.innerHTML =
+      '<div class="alea-tooltip-head">' +
+      escapeHtml(formatRemaining(bucket.timeRemainingMs)) +
+      "</div>" +
+      tooltipRow("Windows", obs.toLocaleString()) +
+      tooltipRow(
+        "Crossings",
+        Number(bucket.crossingCount || 0).toLocaleString(),
+      ) +
+      tooltipRow("Share", formatShare(share));
+    positionTooltip(crossingsTooltip, crossingsChartHost, event);
+    crossingsTooltip.classList.add("visible");
+  }
+
+  function hideCrossingsHover() {
+    if (!crossingsChartHost) return;
+    if (crossingsTooltip) crossingsTooltip.classList.remove("visible");
+    var svg = crossingsChartHost.querySelector("svg");
+    if (!svg) return;
+    svg
+      .querySelectorAll("[data-hover]")
+      .forEach(function (el) {
+        el.style.display = "none";
+      });
+  }
+
+  function bandTooltipRow(swatchCls, label, value) {
+    return (
+      '<div class="alea-tooltip-row"><span class="price-path-band-swatch ' +
+      swatchCls +
+      '"></span><span class="name">' +
+      escapeHtml(label) +
+      '</span><span class="value">' +
+      escapeHtml(formatShare(value)) +
+      "</span></div>"
+    );
+  }
+
+  function positionTooltip(el, host, event) {
+    var rect = host.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    var maxX = Math.max(0, rect.width - 220);
+    el.style.left = Math.min(maxX, x + 14) + "px";
+    el.style.top = Math.max(8, y - 24) + "px";
+  }
+
   function renderBandChart() {
     if (!bandHost) return;
+    state.bandLayout = null;
     var slice = state.slice;
     if (!slice || !slice.sampleCount) {
       bandHost.innerHTML =
@@ -452,8 +655,29 @@
         plotW,
         plotH,
       ) +
+      // Hover-only overlay: vertical hairline + one dot per band line,
+      // hidden until the mousemove handler positions them.
+      '<line class="price-path-hover-line" data-hover="band-line"' +
+      ' x1="0" x2="0" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '" style="display:none"></line>' +
+      '<circle class="price-path-hover-dot band-one" data-hover="band-one" r="3.5" cx="0" cy="0" style="display:none"></circle>' +
+      '<circle class="price-path-hover-dot band-two" data-hover="band-two" r="3.5" cx="0" cy="0" style="display:none"></circle>' +
+      '<circle class="price-path-hover-dot band-five" data-hover="band-five" r="3.5" cx="0" cy="0" style="display:none"></circle>' +
       "</svg>";
     bandHost.innerHTML = svg;
+
+    state.bandLayout = {
+      svgWidth: width,
+      svgHeight: height,
+      pad: pad,
+      plotW: plotW,
+      plotH: plotH,
+      duration: duration,
+      points: points,
+    };
   }
 
   function key(cls, label) {
@@ -492,6 +716,7 @@
    */
   function renderCrossingsChart() {
     if (!crossingsChartHost) return;
+    state.crossingsLayout = null;
     var slice = state.slice;
     var breakdown = activeBreakdown();
     if (!breakdown || !slice || !slice.crossings) {
@@ -594,8 +819,30 @@
         '<path class="price-path-crossings-line" d="' + d + '"></path>';
     }
 
+    // Hover-only overlay: vertical hairline + one dot, hidden until
+    // the mousemove handler positions them.
+    svg +=
+      '<line class="price-path-hover-line" data-hover="crossings-line"' +
+      ' x1="0" x2="0" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '" style="display:none"></line>' +
+      '<circle class="price-path-hover-dot band-one" data-hover="crossings-dot" r="3.5" cx="0" cy="0" style="display:none"></circle>';
+
     svg += "</svg>";
     crossingsChartHost.innerHTML = svg;
+
+    state.crossingsLayout = {
+      svgWidth: width,
+      svgHeight: height,
+      pad: pad,
+      plotW: plotW,
+      plotH: plotH,
+      duration: duration,
+      buckets: buckets,
+      yMax: yMax,
+    };
   }
 
   /**
