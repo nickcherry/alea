@@ -113,7 +113,6 @@
     rgba(215, 170, 69, 0)
   );
   cursor: pointer;
-  user-select: none;
 }
 
 .filter-card-header:hover {
