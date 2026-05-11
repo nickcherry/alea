@@ -439,7 +439,6 @@ function formatDateTime({ ms }: { readonly ms: number }): string {
     return "unknown";
   }
   return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",

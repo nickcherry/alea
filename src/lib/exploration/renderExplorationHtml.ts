@@ -218,10 +218,6 @@ function renderFilterCard({ group }: { readonly group: FilterGroup }): string {
               <span class="filter-card-meta-label">avg${infoTip({ text: TIPS.familyAvg })}</span>
               <span class="filter-card-meta-value${toneClass}">${avg}</span>
             </span>
-            <span class="filter-card-meta-item is-configs">
-              <span class="filter-card-meta-label">configs${infoTip({ text: TIPS.familyConfigs })}</span>
-              <span class="filter-card-meta-value">${group.rows.length}</span>
-            </span>
             <span class="filter-card-meta-item is-engagements">
               <span class="filter-card-meta-label">engagements${infoTip({ text: TIPS.familyEngagements })}</span>
               <span class="filter-card-meta-value">${group.totalEngagements.toLocaleString()}</span>
@@ -410,7 +406,6 @@ function formatDateTime({ ms }: { readonly ms: number }): string {
     return "unknown";
   }
   return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",
@@ -439,7 +434,6 @@ function escapeJsonForHtml({ value }: { readonly value: string }): string {
 const TIPS = {
   familyAvg:
     "Overall win rate for this filter family in the current scope, weighted by how often each config fired.",
-  familyConfigs: "How many knob combinations were tested for this filter.",
   familyEngagements: "Total times this filter family made an UP or DOWN call.",
   config: "Exact knob values for this candidate.",
   engagements: "How many times this config made a call.",

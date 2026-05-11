@@ -67,6 +67,13 @@
 html, body {
   background: var(--alea-bg);
   color: var(--alea-text);
+  /* Page itself never scrolls horizontally. Wide elements (tables,
+     code blocks, the topnav) own their own horizontal scroll via a
+     wrapping `overflow-x: auto` container. Anything that would push
+     past the viewport gets clipped here rather than dragging the
+     whole body sideways on mobile. */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -410,6 +417,10 @@ body {
   text-align: right;
   border-bottom: 1px solid var(--alea-border);
   background: rgba(215, 170, 69, 0.035);
+  /* Column headers stay on one line so an adjacent column's info tip
+     never overlaps this header's text. The table-wrap container owns
+     the horizontal scroll if everything together exceeds its width. */
+  white-space: nowrap;
 }
 
 .alea-table thead th:first-child {

@@ -21,10 +21,7 @@ export function renderTradeCommitteeHtml({
     readonly scripts: readonly string[];
   };
 }): string {
-  const subtitle = [
-    `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
-    `${payload.rowCount.toLocaleString()} committee candidates`,
-  ].join('<span class="sep">&middot;</span>');
+  const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const defaultRows = payload.rows.filter((r) => r.period === DEFAULT_PERIOD);
   const medianWinRate = median({
@@ -379,7 +376,6 @@ function formatDateTime({ ms }: { readonly ms: number }): string {
     return "unknown";
   }
   return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",
