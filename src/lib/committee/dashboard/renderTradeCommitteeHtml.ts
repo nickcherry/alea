@@ -27,6 +27,12 @@ export function renderTradeCommitteeHtml({
   ].join('<span class="sep">&middot;</span>');
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const defaultRows = payload.rows.filter((r) => r.period === DEFAULT_PERIOD);
+  const medianWinRate = median({
+    values: payload.rows.map((row) => row.winRate),
+  });
+  const bestWinRate = max({
+    values: payload.rows.map((row) => row.winRate),
+  });
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -45,7 +51,7 @@ export function renderTradeCommitteeHtml({
     </header>
     ${renderTopNav({ activeId: "committee" })}
     <main class="alea-main">
-      <section class="alea-summary-grid cols-4">
+      <section class="alea-summary-grid">
         ${renderMetric({
           label: "Candidates",
           value: payload.rowCount.toLocaleString(),
@@ -53,10 +59,16 @@ export function renderTradeCommitteeHtml({
           tip: TIPS.candidates,
         })}
         ${renderMetric({
-          label: "Active Buckets",
-          value: `${payload.activeBucketCount}/8`,
-          sub: "period x regime rosters",
-          tip: TIPS.activeBuckets,
+          label: "Median WR",
+          value:
+            medianWinRate === null
+              ? "&mdash;"
+              : formatPercent({ value: medianWinRate }),
+          sub:
+            bestWinRate === null
+              ? "no selected candidates"
+              : `best selected: ${formatPercent({ value: bestWinRate })}`,
+          tip: TIPS.medianWinRate,
         })}
         ${renderMetric({
           label: "Selected At",
@@ -66,12 +78,6 @@ export function renderTradeCommitteeHtml({
               : formatShortDateTime({ ms: payload.selectedAtMs }),
           sub: "latest roster snapshot",
           tip: TIPS.selectedAt,
-        })}
-        ${renderMetric({
-          label: "Bucket Cap",
-          value: payload.selectionConfig.topN.toLocaleString(),
-          sub: "max candidates per period/regime",
-          tip: TIPS.bucketCap,
         })}
       </section>
 
@@ -97,6 +103,11 @@ export function renderTradeCommitteeHtml({
             label: "Worst-Quarter Sample",
             value: `>= ${payload.selectionConfig.worstQuarterMinEngagements.toLocaleString()}`,
             sub: "engagements before quarter counts",
+          })}
+          ${renderConfigItem({
+            label: "Bucket Cap",
+            value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
+            sub: "selected per timeframe/regime",
           })}
           ${renderConfigItem({
             label: "Ranking",
@@ -336,6 +347,33 @@ function formatPercent({ value }: { readonly value: number }): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function median({
+  values,
+}: {
+  readonly values: readonly number[];
+}): number | null {
+  if (values.length === 0) {
+    return null;
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[mid]!;
+  }
+  return (sorted[mid - 1]! + sorted[mid]!) / 2;
+}
+
+function max({
+  values,
+}: {
+  readonly values: readonly number[];
+}): number | null {
+  if (values.length === 0) {
+    return null;
+  }
+  return Math.max(...values);
+}
+
 function formatDateTime({ ms }: { readonly ms: number }): string {
   if (!Number.isFinite(ms) || ms <= 0) {
     return "unknown";
@@ -380,10 +418,9 @@ function infoTip({ text }: { readonly text: string }): string {
 const TIPS = {
   candidates:
     "Selected committee rows. Each row is one filter config admitted to one timeframe/regime bucket.",
-  activeBuckets:
-    "How many of the 8 possible rosters have candidates: 2 timeframes x 4 regimes.",
+  medianWinRate:
+    "Middle win rate across selected candidates. Useful as a quick roster-quality check.",
   selectedAt: "When the committee roster was last selected.",
-  bucketCap: "Maximum selected candidates per timeframe/regime bucket.",
   rank: "Rank within this timeframe and regime. #1 is the strongest selected candidate.",
   regime: "Market state where this candidate is allowed to vote.",
   filter: "Signal rule and its strategy family.",

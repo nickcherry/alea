@@ -14,6 +14,9 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).toContain("low vol ranging");
     expect(html).toContain("rsi_mean_rev");
     expect(html).toContain('data-period="15m"');
+    expect(html).toContain("Median WR");
+    expect(html).not.toContain("Active Buckets");
+    expect(html).toContain("Bucket Cap");
     expect(html).toContain("Aggregate WR Floor");
     expect(html).toContain("Wilson low desc");
     expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.01");
