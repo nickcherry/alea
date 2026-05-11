@@ -1,14 +1,9 @@
 /*
  * Proxy-accuracy dashboard — per-page layout. Generic primitives come
  * from alea.css; this file owns the aggregate-card / bucket-bar /
- * disagreement-table look.
+ * disagreement-table look. The page-level period toggle uses
+ * `.alea-page-controls` from alea.css.
  */
-
-.proxy-period-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
 
 .proxy-muted {
   margin: -4px 0 12px;
@@ -31,51 +26,9 @@
   }
 }
 
+/* Compact stat grid replacing the old hero "Overall" card. Two columns
+   of label-over-value cells; no card chrome, no headline number. */
 .proxy-aggregate {
-  padding: 16px 18px;
-  background: linear-gradient(
-    180deg,
-    rgba(15, 27, 18, 0.55),
-    rgba(7, 9, 10, 0.4)
-  );
-  border: 1px solid var(--alea-border-muted);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.proxy-aggregate-title {
-  margin: 0 0 6px 0;
-  font-family: var(--alea-font-sans);
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--alea-gold);
-}
-
-.proxy-headline {
-  font-family: var(--alea-font-display);
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--alea-text);
-}
-
-.proxy-headline.alea-num-positive {
-  color: var(--alea-green);
-}
-
-.proxy-headline.alea-num-negative {
-  color: var(--alea-red);
-}
-
-.proxy-headline-sub {
-  margin: 4px 0 14px 0;
-  color: var(--alea-text-subtle);
-  font-size: 11.5px;
-}
-
-.proxy-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 16px;
@@ -83,13 +36,13 @@
   margin: 0;
 }
 
-.proxy-stats > div {
+.proxy-aggregate > div {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.proxy-stats dt {
+.proxy-aggregate dt {
   font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -97,10 +50,15 @@
   margin: 0;
 }
 
-.proxy-stats dd {
+.proxy-aggregate dd {
   margin: 0;
   font-size: 13px;
   color: var(--alea-text);
+}
+
+.proxy-aggregate-sub {
+  font-size: 11px;
+  color: var(--alea-text-subtle);
 }
 
 .proxy-buckets {

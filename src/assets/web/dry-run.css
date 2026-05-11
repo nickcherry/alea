@@ -1,14 +1,9 @@
 /*
  * Dry-run dashboard — per-page layout. Generic primitives (alea
- * shell, header, summary-grid, metric, card, table, mono,
- * num-positive/negative, muted) come from alea.css.
+ * shell, header, table, mono, num-positive/negative, muted) come from
+ * alea.css. The page-level period toggle uses `.alea-page-controls`
+ * from alea.css.
  */
-
-.dry-run-period-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
 
 /* uPlot-hosted cumulative WR chart. The frame mirrors the trading
    page's `.chart-frame` so the two dashboards feel like the same

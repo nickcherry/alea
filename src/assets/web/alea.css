@@ -344,6 +344,37 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* Page-scope controls (5m/15m period toggle + auxiliary filters).    */
+/* Sits as the first child of `.alea-main`, above the cards, so every */
+/* dashboard parks its page-wide filters in the same spot. Auxiliary  */
+/* controls (regime tabs, asset select) flow onto the same row to the */
+/* right of the toggle. Wraps on narrow viewports.                    */
+/* ------------------------------------------------------------------ */
+
+.alea-page-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+/* Auxiliary controls slot — sits to the right of the period toggle on
+   wide screens, wraps below it on narrow ones. */
+.alea-page-controls-right {
+  margin-left: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .alea-page-controls-right {
+    margin-left: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Pill tabs — segmented control with rounded background.            */
 /* Used by every page-level period / regime selector. Container is   */
 /* a pill-shaped frame, tabs are pill-shaped buttons inside it.      */

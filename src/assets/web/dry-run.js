@@ -42,7 +42,6 @@
 
   var currentPeriod = decisionConfig.period || supportedPeriods[0] || "5m";
 
-  var summaryGrid = document.getElementById("dry-run-summary-grid");
   var regimeBody = document.getElementById("dry-run-regime-body");
   var assetBody = document.getElementById("dry-run-asset-body");
   var recentBody = document.getElementById("dry-run-recent-body");
@@ -74,7 +73,6 @@
   function activeSlice() {
     return (
       byPeriod[currentPeriod] || {
-        summary: emptySummary(),
         perAsset: [],
         perRegime: [],
         cumulative: [],
@@ -82,91 +80,12 @@
     );
   }
 
-  function emptySummary() {
-    return {
-      totalDecisions: 0,
-      settledDecisions: 0,
-      pendingDecisions: 0,
-      totalWins: 0,
-      winRate: null,
-      upDecisions: 0,
-      downDecisions: 0,
-      upWins: 0,
-      downWins: 0,
-      firstDecisionAtMs: null,
-      lastDecisionAtMs: null,
-      candidateCount: 0,
-      avgEngagement: null,
-    };
-  }
-
   function renderAll() {
     var slice = activeSlice();
-    renderSummary(slice.summary);
     renderRegime(slice.perRegime);
     renderAssets(slice.perAsset);
     renderRecent();
     renderChart();
-  }
-
-  function renderSummary(summary) {
-    if (!summaryGrid) return;
-    var wr = summary.winRate === null ? "—" : percent(summary.winRate);
-    var wrCls = toneClass(summary.winRate);
-    summaryGrid.innerHTML =
-      metric({
-        label: "Win Rate",
-        value: wr,
-        sub:
-          summary.totalWins.toLocaleString() +
-          " of " +
-          summary.settledDecisions.toLocaleString() +
-          " settled · " +
-          summary.upDecisions.toLocaleString() +
-          "↑ / " +
-          summary.downDecisions.toLocaleString() +
-          "↓",
-        toneClass: wrCls,
-      }) +
-      metric({
-        label: "Decisions",
-        value: summary.totalDecisions.toLocaleString(),
-        sub: summary.pendingDecisions.toLocaleString() + " pending settlement",
-      }) +
-      metric({
-        label: "Committee Candidates",
-        value: summary.candidateCount.toLocaleString(),
-        sub: "registered (filter, config) entries",
-      }) +
-      metric({
-        label: "Avg Engagement / Trade",
-        value:
-          summary.avgEngagement === null
-            ? "—"
-            : Number(summary.avgEngagement).toLocaleString(undefined, {
-                maximumFractionDigits: 1,
-              }),
-        sub: "filter-collapsed votes per actionable decision",
-      });
-  }
-
-  function metric(opts) {
-    var tone = opts.toneClass || "";
-    return (
-      '<div class="alea-metric">' +
-      '<p class="alea-metric-label">' +
-      escapeHtml(opts.label) +
-      "</p>" +
-      '<p class="alea-metric-value' +
-      tone +
-      '">' +
-      escapeHtml(String(opts.value)) +
-      "</p>" +
-      '<p class="alea-metric-sub">' +
-      escapeHtml(opts.sub) +
-      "</p>" +
-      "</div>"
-    );
   }
 
   function renderRegime(rows) {
@@ -268,11 +187,10 @@
     var rows = rowsForPeriod.slice(0, RECENT_TABLE_LIMIT);
     if (recentMeta) {
       recentMeta.textContent =
-        "Showing the latest " +
-        rows.length +
+        "latest " +
+        rows.length.toLocaleString() +
         " of " +
-        rowsForPeriod.length.toLocaleString() +
-        " decisions (most recent first).";
+        rowsForPeriod.length.toLocaleString();
     }
     if (rows.length === 0) {
       recentBody.innerHTML =

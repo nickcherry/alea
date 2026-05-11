@@ -12,7 +12,6 @@ import {
   formatDateTime,
   formatMarketRegime,
   formatPercent,
-  infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
@@ -47,14 +46,14 @@ export function renderTradeCommitteeHtml({
     </header>
     ${renderTopNav({ activeId: "committee" })}
     <main class="alea-main">
-      <div class="committee-period-row">
+      <div class="alea-page-controls">
         <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
           <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
           <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
         </div>
       </div>
 
-      <section class="alea-card with-corners">
+      <section class="committee-section">
         <div class="alea-section-rule"><h2>Selection Config</h2></div>
         <div class="committee-config-grid">
           ${renderConfigItem({
@@ -101,14 +100,14 @@ export function renderTradeCommitteeHtml({
         </div>
       </section>
 
-      <section class="alea-card with-corners">
+      <section class="committee-section">
         <div class="alea-section-rule"><h2>Buckets</h2></div>
         <div class="committee-buckets-grid" role="list">
           ${renderBuckets({ payload })}
         </div>
       </section>
 
-      <section class="alea-panel committee-roster-card">
+      <section class="committee-section committee-roster-card">
         <header class="committee-roster-header">
           <div>
             <div class="alea-section-rule"><h2>Roster</h2></div>
@@ -137,14 +136,14 @@ export function renderTradeCommitteeHtml({
             </colgroup>
             <thead>
               <tr>
-                <th class="num-col">Rank${infoTip({ text: TIPS.rank })}</th>
-                <th>Regime${infoTip({ text: TIPS.regime })}</th>
-                <th>Filter${infoTip({ text: TIPS.filter })}</th>
-                <th>Config${infoTip({ text: TIPS.config })}</th>
-                <th class="num-col">Engagements${infoTip({ text: TIPS.engagements })}</th>
-                <th class="num-col">Win Rate${infoTip({ text: TIPS.winRate })}</th>
-                <th class="num-col">Wilson Low${infoTip({ text: TIPS.wilson })}</th>
-                <th class="num-col">Worst Q WR${infoTip({ text: TIPS.worstQuarter })}</th>
+                <th class="num-col">Rank</th>
+                <th>Regime</th>
+                <th>Filter</th>
+                <th>Config</th>
+                <th class="num-col">Engagements</th>
+                <th class="num-col">Win Rate</th>
+                <th class="num-col">Wilson Low</th>
+                <th class="num-col">Worst Q WR</th>
               </tr>
             </thead>
             <tbody id="committee-rows" aria-live="polite"></tbody>
@@ -219,14 +218,3 @@ function renderBucketTile({
     </div>`;
 }
 
-const TIPS = {
-  rank: "Rank within this timeframe and regime. #1 is the strongest selected candidate.",
-  regime: "Market state where this candidate is allowed to vote.",
-  filter: "Signal rule and its strategy family.",
-  config: "Exact knob values selected for this filter.",
-  engagements: "How many training calls this candidate made in this regime.",
-  winRate: "Share of those calls that were correct.",
-  wilson:
-    "Conservative win-rate estimate used for ranking; rewards high WR with enough sample.",
-  worstQuarter: "Lowest quarter win rate among quarters with enough data.",
-};

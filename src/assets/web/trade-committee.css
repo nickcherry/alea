@@ -12,16 +12,9 @@
   gap: 12px;
 }
 
-/* Page-level period toggle, sits above the first card and matches the
-   layout used by the proxy + exploration dashboards. */
-.committee-period-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
-/* Pill tabs themselves come from alea.css via `.alea-pill-tabs` +
-   `.alea-pill-tab.is-prominent`. Page-local hooks live on the
+/* Page-level period toggle layout comes from `.alea-page-controls` in
+   alea.css. Pill tabs themselves come from alea.css via `.alea-pill-tabs`
+   + `.alea-pill-tab.is-prominent`. Page-local hooks live on the
    `.committee-period-tab` / `.committee-regime-tab` classes the JS
    uses to scope its selectors. */
 

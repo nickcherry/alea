@@ -63,6 +63,10 @@ edge.
 ### Operator workflows
 
 - [CLI](./doc/CLI.md) — command structure, families, side effects.
+- [Polymarket Price Paths](./doc/POLYMARKET.md) —
+  `bun alea polymarket:price-sample` records live 5m/15m UP price
+  paths so we can calibrate how quickly prices move away from 50¢;
+  the Price Paths dashboard page visualizes that behavior.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape
   recorder for Polymarket market data, Pyth spot ticks, and
   Polymarket Chainlink reference events.

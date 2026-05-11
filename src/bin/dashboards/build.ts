@@ -13,7 +13,9 @@ import { loadDryRunPayload } from "@alea/lib/dryRun/dashboard/loadDryRunPayload"
 import { writeDryRunArtifacts } from "@alea/lib/dryRun/dashboard/writeDryRunArtifacts";
 import { loadExplorationPayload } from "@alea/lib/exploration/loadExplorationPayload";
 import { writeExplorationArtifacts } from "@alea/lib/exploration/writeExplorationArtifacts";
+import { loadPricePathsPayload } from "@alea/lib/polymarket/dashboard/loadPricePathsPayload";
 import { loadProxyAccuracyPayload } from "@alea/lib/polymarket/dashboard/loadProxyAccuracyPayload";
+import { writePricePathsArtifacts } from "@alea/lib/polymarket/dashboard/writePricePathsArtifacts";
 import { writeProxyAccuracyArtifacts } from "@alea/lib/polymarket/dashboard/writeProxyAccuracyArtifacts";
 import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
 import { formatUsd } from "@alea/lib/trading/format";
@@ -29,6 +31,7 @@ const explorationDir = resolvePath(webDir, "exploration");
 const committeeDir = resolvePath(webDir, "committee");
 const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
+const pricePathsDir = resolvePath(webDir, "price-paths");
 
 /**
  * Builds every static dashboard the alea Cloudflare worker serves
@@ -38,6 +41,9 @@ const proxyDir = resolvePath(webDir, "proxy");
  *   tmp/web/index.html               ← live trading PnL ("/")
  *   tmp/web/index.assets/            ← its frozen CSS+JS
  *   tmp/web/data.json                ← raw payload for the trading page
+ *   tmp/web/price-paths/index.html   ← price-path calibration ("/price-paths/")
+ *   tmp/web/price-paths/index.assets/
+ *   tmp/web/price-paths/data.json
  *   tmp/web/exploration/index.html   ← filter exploration ("/exploration/")
  *   tmp/web/exploration/index.assets/
  *   tmp/web/exploration/data.json
@@ -54,7 +60,7 @@ export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), filter exploration page (/exploration/), trade committee page (/committee/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), filter exploration page (/exploration/), trade committee page (/committee/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -71,7 +77,7 @@ export const dashboardsBuildCommand = defineCommand({
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
-    "Reads the Polymarket CLOB plus dashboard tables including `filter_runs`, `committee_selections`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
+    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `filter_runs`, `committee_selections`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
   async run({ io, options }) {
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
@@ -80,8 +86,11 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(committeeDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
+    await mkdir(pricePathsDir, { recursive: true });
 
     await buildTradingDashboard({ io });
+    io.writeStdout("\n");
+    await buildPricePathsDashboard({ io });
     io.writeStdout("\n");
     await buildExplorationDashboard({ io });
     io.writeStdout("\n");
@@ -154,6 +163,35 @@ async function buildTradingDashboard({
       `  ${pc.dim("current=")}${formatUsd({ value: payload.summary.currentValueUsd })}\n` +
       `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
   );
+}
+
+async function buildPricePathsDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("price paths")} ${pc.dim("(/price-paths/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadPricePathsPayload({ db });
+    const htmlPath = resolvePath(pricePathsDir, "index.html");
+    const jsonPath = resolvePath(pricePathsDir, "data.json");
+    await writePricePathsArtifacts({ payload, htmlPath, jsonPath });
+    const firstWindow =
+      payload.firstWindowMs === null
+        ? "none"
+        : new Date(payload.firstWindowMs).toISOString().slice(0, 10);
+    io.writeStdout(
+      `  ${pc.green("samples =")} ${payload.sampleCount.toLocaleString()}` +
+        `  ${pc.dim("windows=")}${payload.windowCount.toLocaleString()}` +
+        `  ${pc.dim("lookback=")}${payload.lookbackDays}d` +
+        `  ${pc.dim("first=")}${firstWindow}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
 }
 
 async function buildExplorationDashboard({

@@ -14,16 +14,19 @@
 /* Period tabs                                                         */
 /* ------------------------------------------------------------------ */
 
-/* Sticky filter strip — keeps period / regime toggles in view as the
-   12,000-px filter stack scrolls beneath the header. Sticking to
-   `top: 0` means it parks where the topnav used to live once both
-   have scrolled past the page header. */
+/* Layout for the page-scope controls strip comes from `.alea-page-controls`
+   in alea.css. The exploration page adds sticky chrome on top of it so the
+   period + regime toggles stay in view as the long filter stack scrolls
+   beneath the header. The negative side margin + matching padding bleeds
+   the strip to the edges of `.alea-main`'s 36px padding so it reads as a
+   real control bar instead of a floating row.
+
+   Pill tabs themselves come from alea.css via `.alea-pill-tabs` +
+   `.alea-pill-tab.is-prominent`. Page-local hooks live on the
+   `.period-tab` / `.regime-tab` classes the JS uses to wire up
+   filter state. */
 .exploration-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin: 0 -36px 16px;
+  margin: 0 -36px;
   padding: 10px 36px;
   position: sticky;
   top: 0;
@@ -36,11 +39,6 @@
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--alea-border-faint);
 }
-
-/* Pill tabs themselves come from alea.css via `.alea-pill-tabs` +
-   `.alea-pill-tab.is-prominent`. Page-local hooks live on the
-   `.period-tab` / `.regime-tab` classes the JS uses to wire up
-   filter state. */
 
 /* ------------------------------------------------------------------ */
 /* Filter stack                                                        */

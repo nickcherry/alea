@@ -56,12 +56,12 @@ export function renderExplorationHtml({
     </header>
     ${renderTopNav({ activeId: "exploration" })}
     <main class="alea-main">
-      <div class="exploration-filters">
+      <div class="alea-page-controls exploration-filters">
         <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
           <button class="alea-pill-tab is-prominent period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
           <button class="alea-pill-tab is-prominent period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
         </div>
-        <div class="alea-pill-tabs" role="tablist" aria-label="Market regime">
+        <div class="alea-pill-tabs alea-page-controls-right" role="tablist" aria-label="Market regime">
           <button class="alea-pill-tab regime-tab" role="tab" data-regime="all" aria-selected="true">All</button>
           <button class="alea-pill-tab regime-tab" role="tab" data-regime="low_vol_ranging" aria-selected="false">Low vol ranging</button>
           <button class="alea-pill-tab regime-tab" role="tab" data-regime="low_vol_trending" aria-selected="false">Low vol trending</button>

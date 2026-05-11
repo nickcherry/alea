@@ -131,3 +131,112 @@ export type ProxyAccuracyPayload = {
    */
   readonly extremeDisagreements: readonly ProxyAccuracyDisagreement[];
 };
+
+export type PricePathHeatmapColumn = {
+  /**
+   * Center of this elapsed-time bucket, expressed as milliseconds before
+   * market close. The dashboard renders this as labels like `T-4:30`.
+   */
+  readonly timeRemainingMs: number;
+  readonly sampleCount: number;
+  /**
+   * Counts by rounded UP price cents, index 0..100.
+   */
+  readonly counts: readonly number[];
+};
+
+export type PricePathBandPoint = {
+  readonly timeRemainingMs: number;
+  readonly sampleCount: number;
+  readonly withinOneCentShare: number | null;
+  readonly withinTwoCentShare: number | null;
+  readonly withinFiveCentShare: number | null;
+  readonly p50DistanceCents: number | null;
+  readonly p75DistanceCents: number | null;
+  readonly p90DistanceCents: number | null;
+};
+
+export type PricePathMarkerShare = {
+  readonly timeRemainingMs: number;
+  readonly label: string;
+  readonly sampleCount: number;
+  readonly withinOneCentShare: number | null;
+};
+
+/**
+ * Per-time-bucket count of 50c-crossings. A "crossing" is a consecutive
+ * pair of samples within the same window where one is at or above 50c
+ * and the other strictly below; we bucket the event by the
+ * `timeRemainingMs` of the second sample. `windowsObserved` is the
+ * count of windows that had any sample in this bucket — the natural
+ * denominator for `windowsWithCrossing / windowsObserved`.
+ */
+export type PricePathCrossingBucket = {
+  readonly timeRemainingMs: number;
+  readonly windowsObserved: number;
+  readonly windowsWithCrossing: number;
+  readonly crossingCount: number;
+};
+
+/**
+ * Row in the per-marker crossings table. Same shape as a bucket but
+ * pre-resolved to a fixed marker time, with a display label and the
+ * second sample sitting in the bucket containing that marker.
+ */
+export type PricePathCrossingMarker = {
+  readonly timeRemainingMs: number;
+  readonly label: string;
+  readonly windowsObserved: number;
+  readonly windowsWithCrossing: number;
+  readonly crossingCount: number;
+};
+
+export type PricePathCrossings = {
+  readonly totalWindows: number;
+  readonly windowsWithAnyCrossing: number;
+  readonly totalCrossings: number;
+  readonly meanCrossingsPerWindow: number | null;
+  readonly buckets: readonly PricePathCrossingBucket[];
+  readonly markers: readonly PricePathCrossingMarker[];
+};
+
+export type PricePathAggregateSlice = {
+  readonly asset: string | null;
+  readonly label: string;
+  readonly windowCount: number;
+  readonly sampleCount: number;
+  readonly firstWindowMs: number | null;
+  readonly lastWindowMs: number | null;
+  readonly overallWithinOneCentShare: number | null;
+  readonly overallWithinTwoCentShare: number | null;
+  readonly overallWithinFiveCentShare: number | null;
+  readonly medianDistanceCents: number | null;
+  readonly p90DistanceCents: number | null;
+  readonly heatmap: {
+    readonly priceBucketsCents: readonly number[];
+    readonly columns: readonly PricePathHeatmapColumn[];
+    readonly maxColumnShare: number;
+  };
+  readonly bandSeries: readonly PricePathBandPoint[];
+  readonly markerShares: readonly PricePathMarkerShare[];
+  readonly crossings: PricePathCrossings;
+};
+
+export type PricePathTimeframeBreakdown = {
+  readonly timeframe: ResolutionTimeframe;
+  readonly durationMs: number;
+  readonly timeBucketMs: number;
+  readonly tableMarkersMs: readonly number[];
+  readonly slices: readonly PricePathAggregateSlice[];
+};
+
+export type PricePathsPayload = {
+  readonly generatedAtMs: number;
+  readonly lookbackDays: number;
+  readonly cutoffMs: number;
+  readonly windowCount: number;
+  readonly sampleCount: number;
+  readonly firstWindowMs: number | null;
+  readonly lastWindowMs: number | null;
+  readonly breakdowns: readonly PricePathTimeframeBreakdown[];
+};

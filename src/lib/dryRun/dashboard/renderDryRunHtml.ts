@@ -13,7 +13,6 @@ import {
   formatDateTime,
   formatMarketRegime as formatMarketRegimeRaw,
   formatPercent,
-  infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
@@ -70,7 +69,7 @@ export function renderDryRunHtml({
     </header>
     ${renderTopNav({ activeId: "dryrun" })}
     <main class="alea-main">
-      <div class="dry-run-period-row">
+      <div class="alea-page-controls">
         <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
           ${payload.decisionConfig.supportedPeriods
             .map(
@@ -81,7 +80,7 @@ export function renderDryRunHtml({
         </div>
       </div>
 
-      <section class="alea-card with-corners">
+      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
         <div class="dry-run-config-grid">
           ${renderConfigItem({
@@ -121,31 +120,27 @@ export function renderDryRunHtml({
         </div>
       </section>
 
-      <section class="alea-summary-grid cols-4" id="dry-run-summary-grid">
-        ${renderSummaryMetrics({ summary: initialSlice.summary })}
-      </section>
-
-      <section class="alea-card with-corners">
+      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Cumulative Win Rate</h2></div>
         <div class="dry-run-chart-frame">
           <div id="dry-run-chart" class="dry-run-chart-host"></div>
           <div id="dry-run-chart-empty" class="dry-run-empty"${initialSlice.cumulative.length === 0 ? "" : ' style="display:none"'}>
-            No settled decisions yet — the chart will populate as the dry-run loop finalizes bars.
+            No settled decisions yet.
           </div>
           <div id="dry-run-tooltip" class="alea-tooltip"></div>
         </div>
       </section>
 
-      <section class="alea-card with-corners">
+      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Per Market Regime</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table dry-run-table">
             <thead>
               <tr>
-                <th>Regime${infoTip({ text: DR_TIPS.regimeName })}</th>
-                <th class="num-col">Calls${infoTip({ text: DR_TIPS.callsRegime })}</th>
-                <th class="num-col">Win Rate${infoTip({ text: DR_TIPS.callsWr })}</th>
-                <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
+                <th>Regime</th>
+                <th class="num-col">Calls</th>
+                <th class="num-col">Win Rate</th>
+                <th class="num-col">U / D</th>
               </tr>
             </thead>
             <tbody id="dry-run-regime-body">
@@ -155,16 +150,16 @@ export function renderDryRunHtml({
         </div>
       </section>
 
-      <section class="alea-card with-corners">
+      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Per Asset</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table dry-run-table">
             <thead>
               <tr>
-                <th>Asset${infoTip({ text: DR_TIPS.recentAsset })}</th>
-                <th class="num-col">Calls${infoTip({ text: DR_TIPS.callsAsset })}</th>
-                <th class="num-col">Win Rate${infoTip({ text: DR_TIPS.callsWr })}</th>
-                <th class="num-col">U / D${infoTip({ text: DR_TIPS.directionSplit })}</th>
+                <th>Asset</th>
+                <th class="num-col">Calls</th>
+                <th class="num-col">Win Rate</th>
+                <th class="num-col">U / D</th>
               </tr>
             </thead>
             <tbody id="dry-run-asset-body">
@@ -174,21 +169,21 @@ export function renderDryRunHtml({
         </div>
       </section>
 
-      <section class="alea-card with-corners">
+      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Recent Decisions</h2></div>
         <p class="dry-run-recent-meta" id="dry-run-recent-meta">${recentMetaLabel({ shown: recentRows.length, totalForPeriod: payload.recent.filter((r) => r.period === initialPeriod).length })}</p>
         <div class="alea-table-wrap">
           <table class="alea-table dry-run-recent-table">
             <thead>
               <tr>
-                <th>Time${infoTip({ text: DR_TIPS.recentTime })}</th>
-                <th>Asset${infoTip({ text: DR_TIPS.recentAsset })}</th>
-                <th>Prediction${infoTip({ text: DR_TIPS.recentPrediction })}</th>
-                <th>Market Regime${infoTip({ text: DR_TIPS.recentRegime })}</th>
-                <th class="num-col">Synth Open${infoTip({ text: DR_TIPS.recentSynthOpen })}</th>
-                <th class="num-col">Actual Close${infoTip({ text: DR_TIPS.recentActualClose })}</th>
-                <th class="num-col">Move${infoTip({ text: DR_TIPS.recentMove })}</th>
-                <th>Outcome${infoTip({ text: DR_TIPS.recentOutcome })}</th>
+                <th>Time</th>
+                <th>Asset</th>
+                <th>Prediction</th>
+                <th>Market Regime</th>
+                <th class="num-col">Synth Open</th>
+                <th class="num-col">Actual Close</th>
+                <th class="num-col">Move</th>
+                <th>Outcome</th>
               </tr>
             </thead>
             <tbody id="dry-run-recent-body">
@@ -204,48 +199,6 @@ export function renderDryRunHtml({
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
-}
-
-function renderSummaryMetrics({
-  summary,
-}: {
-  readonly summary: DryRunDashboardPayload["byPeriod"][string]["summary"];
-}): string {
-  const wr =
-    summary.winRate === null ? "—" : formatPercent({ value: summary.winRate });
-  const wrToneClass = winRateToneClass({ value: summary.winRate });
-  return `
-    ${renderMetric({
-      label: "Win Rate",
-      value: wr,
-      sub: `${summary.totalWins.toLocaleString()} of ${summary.settledDecisions.toLocaleString()} settled · ${summary.upDecisions.toLocaleString()}↑ / ${summary.downDecisions.toLocaleString()}↓`,
-      toneClass: wrToneClass,
-      tip: DR_TIPS.winRate,
-    })}
-    ${renderMetric({
-      label: "Decisions",
-      value: summary.totalDecisions.toLocaleString(),
-      sub: `${summary.pendingDecisions.toLocaleString()} pending settlement`,
-      tip: DR_TIPS.decisions,
-    })}
-    ${renderMetric({
-      label: "Committee Candidates",
-      value: summary.candidateCount.toLocaleString(),
-      sub: "registered (filter, config) entries",
-      tip: DR_TIPS.candidates,
-    })}
-    ${renderMetric({
-      label: "Avg Engagement / Trade",
-      value:
-        summary.avgEngagement === null
-          ? "—"
-          : summary.avgEngagement.toLocaleString(undefined, {
-              maximumFractionDigits: 1,
-            }),
-      sub: "filter-collapsed votes per actionable decision",
-      tip: DR_TIPS.avgEngagement,
-    })}
-  `;
 }
 
 function renderRegimeRows({
@@ -307,7 +260,7 @@ function recentMetaLabel({
   readonly shown: number;
   readonly totalForPeriod: number;
 }): string {
-  return `Showing the latest ${shown} of ${totalForPeriod.toLocaleString()} decisions (most recent first).`;
+  return `latest ${shown.toLocaleString()} of ${totalForPeriod.toLocaleString()}`;
 }
 
 function renderRecentRow(row: DryRunDashboardRecentRow): string {
@@ -394,28 +347,6 @@ function renderDirectionSplit({
   return `<span class="alea-mono"><span class="${upCls.trim()}">↑${up.toLocaleString()}</span> / <span class="${downCls.trim()}">↓${down.toLocaleString()}</span></span>`;
 }
 
-function renderMetric({
-  label,
-  value,
-  sub,
-  toneClass = "",
-  tip = "",
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly sub: string;
-  readonly toneClass?: string;
-  readonly tip?: string;
-}): string {
-  return `
-    <div class="alea-metric">
-      <p class="alea-metric-label">${escapeHtml({ value: label })}${tip === "" ? "" : infoTip({ text: tip })}</p>
-      <p class="alea-metric-value${toneClass}">${escapeHtml({ value })}</p>
-      <p class="alea-metric-sub">${escapeHtml({ value: sub })}</p>
-    </div>
-  `;
-}
-
 function renderConfigItem({
   label,
   value,
@@ -440,35 +371,3 @@ function formatFilterTieBreak({ value }: { readonly value: string }): string {
   return value;
 }
 
-/**
- * Plain-English tooltips for the dry-run dashboard. Surface every
- * table column header and metric label so a non-author landing on
- * the page can read what each number means without spelunking the
- * code.
- */
-const DR_TIPS = {
-  winRate:
-    "Of settled dry-run calls, how often the committee picked the right direction.",
-  decisions:
-    "All dry-run calls made. Pending calls are waiting for the target bar to close.",
-  candidates: "Committee filter configs available to vote.",
-  avgEngagement:
-    "Average number of filter-collapsed votes on an actionable call.",
-  regimeName:
-    "Market state at decision time: volatility plus trending/ranging.",
-  callsRegime: "Settled calls made in this regime.",
-  callsAsset: "Settled calls for this asset.",
-  callsWr: "Win rate for this row's settled calls.",
-  recentTime: "Opening time of the bar being predicted, in UTC.",
-  recentAsset: "Crypto being predicted.",
-  recentPrediction: "Committee's UP or DOWN call.",
-  recentRegime: "Market state when the call was made.",
-  recentSynthOpen: "Price used as the bar open.",
-  recentActualClose: "Final price after the bar closed.",
-  recentMove:
-    "Open-to-close percent move. Positive = up, negative = down. The committee wins when this matches its UP/DOWN call.",
-  recentOutcome:
-    "WIN if the call matched the actual direction; otherwise LOSS.",
-  directionSplit:
-    "How the committee's settled calls split between UP (↑) and DOWN (↓) in this slice. A heavy lean hints at a one-way bias.",
-};

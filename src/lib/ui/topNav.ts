@@ -17,6 +17,7 @@ type TopNavPage = {
 
 const TOP_NAV_PAGES: readonly TopNavPage[] = [
   { id: "proxy", label: "Proxy accuracy", href: "/proxy/" },
+  { id: "price-paths", label: "Price paths", href: "/price-paths/" },
   { id: "exploration", label: "Exploration", href: "/exploration/" },
   { id: "committee", label: "Trade committee", href: "/committee/" },
   { id: "dryrun", label: "Dry run", href: "/dryrun/" },

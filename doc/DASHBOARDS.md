@@ -95,6 +95,29 @@ If a value appears on a page and there is no constant for it, add the
 constant under `src/constants/` first; do not inline it into the
 renderer.
 
+## No marketing chrome
+
+These pages exist to surface data the operator can act on. They are not
+product marketing surfaces. When you author or edit a page, **do not**
+add:
+
+- Hero / summary metric cards above the real content. The big-number
+  tile-row at the top of a SaaS landing page is exactly what we do not
+  want. Numbers belong inside the tables and charts that contextualize
+  them, not floating in a decorative strip.
+- Editorial blurbs or narrative descriptions under section headers
+  ("This card shows X, which helps you Y…"). The section heading plus
+  the data is enough. If a number needs a one-line clarification, use
+  the existing tooltip pattern (`infoTip`) on the column header — not a
+  paragraph.
+- "About this dashboard" copy, subtitle prose beyond the timestamp +
+  sample count, or any other framing text.
+- Tooltip text that just restates the column name.
+
+Default new copy to **off**. If a description seems necessary, the bar
+is "could a literate operator not figure this out from the column name
+and the number." Most of the time the answer is yes; skip it.
+
 ## Authoring a new dashboard page
 
 1. Add `src/assets/web/<page>.css` for page-specific layout.
@@ -213,10 +236,11 @@ arranges them under one host and one shared top nav.
 | Route           | Page               | Source                                                                                              |
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/proxy/`       | Proxy accuracy     | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
+| `/price-paths/` | Price paths        | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
 | `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
 | `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
 | `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
-| `/proxy/`       | Proxy accuracy     | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -241,6 +265,14 @@ tmp/web/
   index.html               ← live trading PnL (served at /)
   index.assets/            ← its frozen CSS+JS
   data.json                ← raw payload for the trading page
+  proxy/
+    index.html             ← proxy accuracy (served at /proxy/)
+    index.assets/
+    data.json
+  price-paths/
+    index.html             ← price-path calibration (served at /price-paths/)
+    index.assets/
+    data.json
   exploration/
     index.html             ← filter exploration (served at /exploration/)
     index.assets/
@@ -253,10 +285,6 @@ tmp/web/
     index.html             ← dry-run committee (served at /dryrun/)
     index.assets/
     data.json
-  proxy/
-    index.html             ← proxy accuracy (served at /proxy/)
-    index.assets/
-    data.json
 ```
 
 Wrangler config lives at [`wrangler.toml`](../wrangler.toml) and
@@ -264,10 +292,12 @@ points its `[assets].directory` at `tmp/web/`. The trading page
 needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
 `POLYMARKET_FUNDER_ADDRESS`); when those aren't set the build skips
 it with a warning so the rest of the site can still rebuild. The
-exploration page builds from `filter_runs` + `bar_regimes`, the trade
-committee page builds from `committee_selections`, and the dry-run page
-builds from `dry_run_decisions` plus the shared trade-decision constants
-shown on the page — all three work without trading creds.
+price-path page builds from `polymarket_price_samples`, the proxy page builds
+from `polymarket_resolutions` + Pyth candles, the exploration page builds from
+`filter_runs` + `bar_regimes`, the trade committee page builds from
+`committee_selections`, and the dry-run page builds from `dry_run_decisions`
+plus the shared trade-decision constants shown on the page — all five work
+without trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);

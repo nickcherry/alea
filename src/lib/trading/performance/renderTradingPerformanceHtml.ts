@@ -8,7 +8,6 @@ import {
   escapeHtml,
   escapeJsonForHtml,
   formatDateTime,
-  infoTip,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
@@ -63,57 +62,49 @@ export function renderTradingPerformanceHtml({
           label: "Lifetime PnL",
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
           tone: toneForNumber({ value: payload.summary.lifetimePnlUsd }),
-          sub: `realized + mark-to-market across ${payload.summary.marketCount.toLocaleString()} markets`,
-          tip: TP_TIPS.lifetimePnl,
+          sub: `${payload.summary.marketCount.toLocaleString()} markets`,
         })}
         ${renderMetric({
           label: "Total Fees",
           value: formatUnsignedUsd({ value: payload.summary.totalFeesUsd }),
           tone: "negative",
-          sub: `${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} maker rebates earned`,
-          tip: TP_TIPS.totalFees,
+          sub: `${formatUnsignedUsd({ value: payload.summary.makerRebateUsd })} rebates`,
         })}
         ${renderMetric({
           label: "Win / Loss",
           value: `${payload.summary.winningMarketCount.toLocaleString()} / ${payload.summary.losingMarketCount.toLocaleString()}`,
           sub: `${payload.summary.openPositionCount.toLocaleString()} open · ${payload.summary.flatMarketCount.toLocaleString()} flat`,
-          tip: TP_TIPS.winLoss,
         })}
         ${renderMetric({
           label: "Open Positions",
           value: payload.summary.openPositionCount.toLocaleString(),
           sub: `${payload.summary.redeemablePositionCount.toLocaleString()} redeemable`,
-          tip: TP_TIPS.openPositions,
         })}
       </section>
 
-      <section class="alea-card with-corners">
-        <div class="alea-card-header">
-          <h2 class="alea-card-title">Cumulative PnL</h2>
-          <p class="alea-card-meta">Each step = one position's mark-to-market PnL, ordered by settlement date.</p>
-        </div>
+      <section class="trading-section">
+        <div class="alea-section-rule"><h2>Cumulative PnL</h2></div>
         <div class="chart-frame">
           <div id="pnl-chart" class="chart-host"></div>
           <div id="pnl-empty" class="chart-empty">No positions to chart yet.</div>
           <div id="pnl-tooltip" class="alea-tooltip"></div>
         </div>
-        <p class="source-line">Source: ${escapeHtml({ value: payload.source.activity })}; ${escapeHtml({ value: payload.source.positions })}.</p>
       </section>
 
-      <section class="alea-card with-corners">
+      <section class="trading-section">
         <div class="alea-section-rule"><h2>Markets</h2></div>
         ${renderTableMeta({ shown: visibleMarkets.length, total: payload.markets.length })}
         <div class="alea-table-wrap">
           <table class="alea-table trading-performance-table">
             <thead>
               <tr>
-                <th>Symbol${infoTip({ text: TP_TIPS.symbol })}</th>
-                <th class="market-col">Market${infoTip({ text: TP_TIPS.market })}</th>
-                <th>Role${infoTip({ text: TP_TIPS.role })}</th>
-                <th>Fees${infoTip({ text: TP_TIPS.fees })}</th>
-                <th>Invested${infoTip({ text: TP_TIPS.invested })}</th>
-                <th>PnL${infoTip({ text: TP_TIPS.pnl })}</th>
-                <th>Status${infoTip({ text: TP_TIPS.status })}</th>
+                <th>Symbol</th>
+                <th class="market-col">Market</th>
+                <th>Role</th>
+                <th>Fees</th>
+                <th>Invested</th>
+                <th>PnL</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>${visibleMarkets.map(renderMarketRow).join("")}</tbody>
@@ -134,18 +125,16 @@ function renderMetric({
   value,
   sub,
   tone = "neutral",
-  tip,
 }: {
   readonly label: string;
   readonly value: string;
   readonly sub: string;
   readonly tone?: "positive" | "negative" | "neutral";
-  readonly tip?: string;
 }): string {
   const toneClass = tone === "neutral" ? "" : ` ${tone}`;
   return `
     <div class="alea-metric">
-      <p class="alea-metric-label">${escapeHtml({ value: label })}${tip === undefined ? "" : infoTip({ text: tip })}</p>
+      <p class="alea-metric-label">${escapeHtml({ value: label })}</p>
       <p class="alea-metric-value${toneClass}">${escapeHtml({ value })}</p>
       <p class="alea-metric-sub">${escapeHtml({ value: sub })}</p>
     </div>
@@ -189,7 +178,7 @@ function renderTableMeta({
   if (total <= shown) {
     return "";
   }
-  return `<p class="markets-table-meta">Below are the most recent ${shown.toLocaleString()} of ${total.toLocaleString()} trades.</p>`;
+  return `<p class="markets-table-meta">latest ${shown.toLocaleString()} of ${total.toLocaleString()}</p>`;
 }
 
 function renderRolePill({
@@ -241,18 +230,4 @@ function shortId({ value }: { readonly value: string }): string {
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }
 
-const TP_TIPS = {
-  lifetimePnl:
-    "Net value across all Polymarket markets: realized results plus current open value.",
-  totalFees: "Total trading fees paid, with maker rebates shown underneath.",
-  winLoss: "Markets currently profitable vs losing.",
-  openPositions: "Markets where we still hold unresolved shares.",
-  symbol: "Short market ticker, usually the asset.",
-  market: "The Polymarket question or slug this row belongs to.",
-  role: "How our fills happened: maker, taker, or mixed.",
-  fees: "Estimated trading fees for this market.",
-  invested: "Total dollars put into positions on this market.",
-  pnl: "Profit or loss for this market, including current value if still open.",
-  status: "Current settlement or position state.",
-};
 

@@ -46,7 +46,7 @@ export function renderProxyAccuracyHtml({
     </header>
     ${renderTopNav({ activeId: "proxy" })}
     <main class="alea-main">
-      <div class="proxy-period-row">
+      <div class="alea-page-controls">
         <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
           ${["5m", "15m"]
             .map(
@@ -66,14 +66,8 @@ export function renderProxyAccuracyHtml({
         )
         .join("\n")}
 
-      <section class="alea-card with-corners">
+      <section class="proxy-section">
         <div class="alea-section-rule"><h2>Top Disagreements</h2></div>
-        <p class="proxy-muted">
-          The biggest |move%| Pyth bars where Polymarket settled the other
-          way. These are the audit cases — if a row's move% is well above
-          the training threshold, Pyth would have trained or traded
-          opposite the actual settled side for that window.
-        </p>
         <div id="proxy-extreme-host">${renderExtremeTable({
           rows: payload.extremeDisagreements.filter(
             (d) => d.timeframe === initialTimeframe,
@@ -95,31 +89,23 @@ function renderTimeframeSection({
   readonly breakdown: ProxyAccuracyTimeframeBreakdown;
   readonly isActive: boolean;
 }): string {
-  const totalLabel = breakdown.aggregate.total.toLocaleString();
   const hidden = isActive ? "" : ' hidden="hidden"';
   return `
-      <section class="alea-card with-corners proxy-timeframe-section" data-period="${breakdown.timeframe}"${hidden}>
+      <section class="proxy-section proxy-timeframe-section" data-period="${breakdown.timeframe}"${hidden}>
         <div class="alea-section-rule"><h2>${breakdown.timeframe.toUpperCase()} Markets</h2></div>
-        <p class="proxy-muted">Joined windows: ${totalLabel}.</p>
         <div class="proxy-aggregate-grid">
-          ${renderAggregateCard({
-            title: "Overall",
-            aggregate: breakdown.aggregate,
-          })}
+          ${renderAggregate({ aggregate: breakdown.aggregate })}
           <div class="proxy-buckets">
             ${renderBucketBlock({
               title: "Disagreements by Pyth move size",
               buckets: breakdown.aggregate.moveBucketsDisagree,
               total: breakdown.aggregate.disagreed,
-              tip: PA_TIPS.bucketsDisagree,
-              empty:
-                "No disagreements in this timeframe — Pyth matches Polymarket on every joined window.",
+              empty: "No disagreements — Pyth matches Polymarket on every window.",
             })}
             ${renderBucketBlock({
               title: "All windows by Pyth move size",
               buckets: breakdown.moveBucketsAll,
               total: breakdown.aggregate.total,
-              tip: PA_TIPS.bucketsAll,
             })}
           </div>
         </div>
@@ -128,11 +114,9 @@ function renderTimeframeSection({
   `;
 }
 
-function renderAggregateCard({
-  title,
+function renderAggregate({
   aggregate,
 }: {
-  readonly title: string;
   readonly aggregate: ProxyAccuracyAggregate;
 }): string {
   const rate =
@@ -146,44 +130,39 @@ function renderAggregateCard({
       : tone === "negative"
         ? " alea-num-negative"
         : "";
-  const meanPct = aggregate.disagreeMeanMovePct;
-  const medianPct = aggregate.disagreeMedianMovePct;
-  const p90Pct = aggregate.disagreeP90MovePct;
   const belowClearShare = aggregate.disagreeBelowClearShare;
   return `
-    <div class="proxy-aggregate alea-card">
-      <p class="proxy-aggregate-title">${escapeHtml({ value: title })}</p>
-      <div class="proxy-headline${toneClass}">${rate}</div>
-      <p class="proxy-headline-sub">
-        ${aggregate.agreed.toLocaleString()} of ${aggregate.total.toLocaleString()} agreed
-      </p>
-      <dl class="proxy-stats">
-        <div>
-          <dt>Disagreements${tip({ text: PA_TIPS.disagreeTotal })}</dt>
-          <dd class="alea-mono">${aggregate.disagreed.toLocaleString()}</dd>
-        </div>
-        <div>
-          <dt>Clear-move disagreements${tip({ text: PA_TIPS.clearDisagree })}</dt>
-          <dd class="alea-mono">${aggregate.clearDisagreements.toLocaleString()}</dd>
-        </div>
-        <div>
-          <dt>Below threshold share${tip({ text: PA_TIPS.belowClear })}</dt>
-          <dd class="alea-mono">${belowClearShare === null ? "—" : `${(belowClearShare * 100).toFixed(1)}%`}</dd>
-        </div>
-        <div>
-          <dt>Disagree mean${tip({ text: PA_TIPS.disagreeMean })}</dt>
-          <dd class="alea-mono">${formatBp({ pct: meanPct })}</dd>
-        </div>
-        <div>
-          <dt>Disagree median${tip({ text: PA_TIPS.disagreeMedian })}</dt>
-          <dd class="alea-mono">${formatBp({ pct: medianPct })}</dd>
-        </div>
-        <div>
-          <dt>Disagree p90${tip({ text: PA_TIPS.disagreeP90 })}</dt>
-          <dd class="alea-mono">${formatBp({ pct: p90Pct })}</dd>
-        </div>
-      </dl>
-    </div>
+    <dl class="proxy-aggregate">
+      <div>
+        <dt>Agreement</dt>
+        <dd class="alea-mono${toneClass}">${rate}</dd>
+        <dd class="proxy-aggregate-sub">${aggregate.agreed.toLocaleString()} / ${aggregate.total.toLocaleString()}</dd>
+      </div>
+      <div>
+        <dt>Disagreements</dt>
+        <dd class="alea-mono">${aggregate.disagreed.toLocaleString()}</dd>
+      </div>
+      <div>
+        <dt>Clear-move disagreements</dt>
+        <dd class="alea-mono">${aggregate.clearDisagreements.toLocaleString()}</dd>
+      </div>
+      <div>
+        <dt>Below threshold share</dt>
+        <dd class="alea-mono">${belowClearShare === null ? "—" : `${(belowClearShare * 100).toFixed(1)}%`}</dd>
+      </div>
+      <div>
+        <dt>Disagree mean</dt>
+        <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeMeanMovePct })}</dd>
+      </div>
+      <div>
+        <dt>Disagree median</dt>
+        <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeMedianMovePct })}</dd>
+      </div>
+      <div>
+        <dt>Disagree p90</dt>
+        <dd class="alea-mono">${formatBp({ pct: aggregate.disagreeP90MovePct })}</dd>
+      </div>
+    </dl>
   `;
 }
 
@@ -191,19 +170,17 @@ function renderBucketBlock({
   title,
   buckets,
   total,
-  tip: tipText,
   empty,
 }: {
   readonly title: string;
   readonly buckets: readonly ProxyMoveBucket[];
   readonly total: number;
-  readonly tip: string;
   readonly empty?: string;
 }): string {
   if (total === 0 && empty !== undefined) {
     return `
       <div class="proxy-bucket-block">
-        <p class="proxy-bucket-title">${escapeHtml({ value: title })}${tip({ text: tipText })}</p>
+        <p class="proxy-bucket-title">${escapeHtml({ value: title })}</p>
         <p class="proxy-muted">${escapeHtml({ value: empty })}</p>
       </div>
     `;
@@ -211,7 +188,7 @@ function renderBucketBlock({
   const max = Math.max(1, ...buckets.map((b) => b.count));
   return `
     <div class="proxy-bucket-block">
-      <p class="proxy-bucket-title">${escapeHtml({ value: title })}${tip({ text: tipText })}</p>
+      <p class="proxy-bucket-title">${escapeHtml({ value: title })}</p>
       <div class="proxy-bucket-list">
         ${buckets
           .map((bucket) => {
@@ -247,14 +224,14 @@ function renderPerAssetTable({
       <table class="alea-table proxy-asset-table">
         <thead>
           <tr>
-            <th>Asset${tip({ text: PA_TIPS.asset })}</th>
-            <th class="num-col">Windows${tip({ text: PA_TIPS.windows })}</th>
-            <th class="num-col">Agreement${tip({ text: PA_TIPS.agreement })}</th>
-            <th class="num-col">Disagreements${tip({ text: PA_TIPS.disagreeTotal })}</th>
-            <th class="num-col">Clear-move${tip({ text: PA_TIPS.clearDisagree })}</th>
-            <th class="num-col">Below threshold${tip({ text: PA_TIPS.belowClear })}</th>
-            <th class="num-col">Median |move%|${tip({ text: PA_TIPS.disagreeMedian })}</th>
-            <th class="num-col">P90 |move%|${tip({ text: PA_TIPS.disagreeP90 })}</th>
+            <th>Asset</th>
+            <th class="num-col">Windows</th>
+            <th class="num-col">Agreement</th>
+            <th class="num-col">Disagreements</th>
+            <th class="num-col">Clear-move</th>
+            <th class="num-col">Below threshold</th>
+            <th class="num-col">Median |move%|</th>
+            <th class="num-col">P90 |move%|</th>
           </tr>
         </thead>
         <tbody>
@@ -304,13 +281,13 @@ function renderExtremeTable({
       <table class="alea-table proxy-extreme-table">
         <thead>
           <tr>
-            <th>Time${tip({ text: PA_TIPS.windowTime })}</th>
-            <th>Asset${tip({ text: PA_TIPS.asset })}</th>
-            <th>Polymarket${tip({ text: PA_TIPS.polyOutcome })}</th>
-            <th>Pyth${tip({ text: PA_TIPS.pythOutcome })}</th>
-            <th class="num-col">Open${tip({ text: PA_TIPS.pythOpen })}</th>
-            <th class="num-col">Close${tip({ text: PA_TIPS.pythClose })}</th>
-            <th class="num-col">|move%|${tip({ text: PA_TIPS.absMove })}</th>
+            <th>Time</th>
+            <th>Asset</th>
+            <th>Polymarket</th>
+            <th>Pyth</th>
+            <th class="num-col">Open</th>
+            <th class="num-col">Close</th>
+            <th class="num-col">|move%|</th>
           </tr>
         </thead>
         <tbody>
@@ -344,10 +321,6 @@ function outcomeBadge({
     return '<span class="alea-num-positive">UP</span>';
   }
   return '<span class="alea-num-negative">DOWN</span>';
-}
-
-function tip({ text }: { readonly text: string }): string {
-  return ` <span class="alea-info-tip" tabindex="0" data-tip="${escapeHtml({ value: text })}" aria-label="${escapeHtml({ value: text })}"></span>`;
 }
 
 function agreementTone({
@@ -410,33 +383,3 @@ function escapeJsonForHtml({ value }: { readonly value: string }): string {
   return value.replaceAll("<", "\\u003c");
 }
 
-const PA_TIPS = {
-  bucketsDisagree:
-    "Disagreements only, bucketed by the size of the Pyth open→close move that landed opposite Polymarket. Tiny moves = boundary noise; larger moves = potential proxy drift.",
-  bucketsAll:
-    "Every joined window, bucketed by Pyth move size. Compare against the disagreement histogram to see whether disagreements over-represent any move bucket.",
-  asset: "Crypto asset.",
-  windows: "Joined windows for this asset in this timeframe.",
-  agreement:
-    "Share of joined windows where Pyth open→close matched Polymarket's settled side.",
-  disagreeTotal:
-    "Windows where Pyth's directional read landed on the opposite side from Polymarket.",
-  clearDisagree:
-    "Disagreements whose Pyth move% is at or above the training threshold. Each one is a window where the proxy would have given training or live trading the wrong side.",
-  belowClear:
-    "Share of disagreements whose Pyth move% is below the training threshold. High share = disagreements are mostly noise the training pipeline already filters out.",
-  disagreeMean: "Mean absolute Pyth move% across this group's disagreements.",
-  disagreeMedian:
-    "Median absolute Pyth move% across this group's disagreements.",
-  disagreeP90:
-    "90th-percentile absolute Pyth move% across this group's disagreements.",
-  windowTime:
-    "Window start time (UTC), aligned to the timeframe's bar boundary.",
-  polyOutcome:
-    "Polymarket's Chainlink-derived settled side (Up = settled flat-or-up, Down = settled below).",
-  pythOutcome:
-    "Pyth open→close direction for the same window (≥ open = Up, < open = Down).",
-  pythOpen: "Pyth open for the window.",
-  pythClose: "Pyth close for the window.",
-  absMove: "Absolute Pyth move% for the bar (|close - open| / open * 100).",
-} as const;

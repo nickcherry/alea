@@ -47,7 +47,10 @@ The canonical URL set lives in
   `(asset, timeframe, window_start)` in `polymarket_price_samples`. The row's
   `samples` JSONB is a compact array of `[offset_ms, up_price_bps, quality]`
   tuples; `up_price_bps / 10000` recovers the 0..1 UP contract price and
-  `window_start_ts_ms + offset_ms` recovers the sample timestamp.
+  `window_start_ts_ms + offset_ms` recovers the sample timestamp. The purpose
+  is to calibrate expectations for how long 50c prices remain available; the
+  `/price-paths/` dashboard renders the distribution heatmap, 50c band-decay
+  chart, and 50c-crossings chart + marker table from these rows.
 - The TypeScript integration uses `@polymarket/clob-client-v2`. Live order
   creation must stay on the V2 signed-order shape: no submitted order nonce and
   no embedded `feeRateBps`; fee fields are read from venue market metadata and
