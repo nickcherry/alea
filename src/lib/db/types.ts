@@ -182,6 +182,53 @@ export interface PolymarketResolutionTable {
   >;
 }
 
+/**
+ * One compact price path per completed live Polymarket up/down market.
+ * `samples` is JSONB containing tuples of:
+ *
+ *   [offset_ms, up_price_bps, quality_code]
+ *
+ * The timestamp for each sample is `window_start_ts_ms + offset_ms`, and
+ * `up_price_bps / 10000` recovers the 0..1 UP contract price.
+ */
+export interface PolymarketPriceSampleTable {
+  readonly asset: string;
+  readonly timeframe: "5m" | "15m";
+  readonly window_start_ts_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly window_end_ts_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly condition_id: string;
+  readonly up_token_id: string;
+  readonly down_token_id: string;
+  readonly schema_version: number;
+  readonly sample_interval_ms: number;
+  readonly first_sample_ts_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly last_sample_ts_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly finalized_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly sample_count: number;
+  readonly missing_sample_count: number;
+  readonly samples: unknown;
+}
+
 export interface CommitteeSelectionTable {
   readonly market_regime: string;
   readonly period: string;
@@ -210,6 +257,7 @@ export interface Database {
   readonly bar_regimes: BarRegimeTable;
   readonly committee_selections: CommitteeSelectionTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
+  readonly polymarket_price_samples: PolymarketPriceSampleTable;
 }
 
 export type DatabaseClient = Kysely<Database>;

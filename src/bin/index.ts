@@ -11,6 +11,7 @@ import { dryRunCommand } from "@alea/bin/dry/run";
 import { latencyCaptureCommand } from "@alea/bin/latency/capture";
 import { latencyChartCommand } from "@alea/bin/latency/chart";
 import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
+import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
 import { regimesBackfillCommand } from "@alea/bin/regimes/backfill";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
@@ -40,6 +41,7 @@ const cli = createCli({
     regimesBackfillCommand,
     telegramTestCommand,
     polymarketAuthCheckCommand,
+    polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,

@@ -49,6 +49,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `telegram:test`
 - `polymarket:*`
   `polymarket:auth-check`
+  `polymarket:price-sample` — long-running sampler that records compact live 5m/15m Polymarket UP price paths into `polymarket_price_samples`.
   `polymarket:resolutions-sync` — backfills settled Polymarket up/down crypto market outcomes into `polymarket_resolutions`. Pair with Pyth candles to drive the proxy-accuracy dashboard. See [PROXY.md](./PROXY.md).
 - `trading:*`
   `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
