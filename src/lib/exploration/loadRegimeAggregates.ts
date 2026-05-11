@@ -1,3 +1,4 @@
+import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { sql } from "kysely";
 
@@ -46,6 +47,7 @@ export async function loadRegimeAggregates({
       and br.period = fr.period
       and br.ts_ms = fe.ts_ms
     where br.market_regime is not null
+      and fr.training_profile = ${TRAINING_OUTCOME_PROFILE_ID}
     group by fe.run_hash, br.market_regime, fe.direction, year, quarter
   `.execute(db);
 

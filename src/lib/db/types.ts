@@ -55,12 +55,14 @@ export interface MarketEventTable {
  * rationale. Per-prediction detail lives in the relational
  * `filter_engagements` table.
  * The columns left here exist purely to support fast leaderboard
- * queries without scanning engagements.
+ * queries without scanning engagements. `training_profile` identifies
+ * the outcome-labeling rule used to produce the derived row.
  */
 export interface FilterRunTable {
   readonly run_hash: string;
   readonly filter_id: string;
   readonly filter_version: number;
+  readonly training_profile: string;
   readonly config: unknown;
   readonly config_canon: string;
   readonly period: string;

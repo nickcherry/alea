@@ -1,3 +1,4 @@
+import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { CandidateRegimeStats } from "@alea/lib/committee/selection/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
@@ -51,6 +52,7 @@ export async function loadCandidateRegimeStats({
       and br.period = fr.period
       and br.ts_ms = fe.ts_ms
     where br.market_regime is not null
+      and fr.training_profile = ${TRAINING_OUTCOME_PROFILE_ID}
     group by fr.filter_id, fr.filter_version, fr.config_canon, fr.period,
              br.market_regime, year, quarter
   `.execute(db);

@@ -85,12 +85,15 @@ A filter must not reach outside its `bars` argument. That includes:
 The framework only checks the window length; deterministic purity
 is a code-review obligation.
 
-## Tie rule
+## Training outcome threshold
 
-Flat candles where `close === open` count as `"up"`. This is the
-trader-side convention "0 rounds up" — it matches how Polymarket's
-up/down contracts settle. Filters never see this rule directly; the
-walker applies it when scoring `filter_engagements.won`.
+Filters never see the target candle directly. After a prediction is
+locked in, the backtest labels that next candle from its Pyth
+open-to-close move. If the absolute move is less than or equal to
+`TRAINING_OUTCOME_MIN_ABS_MOVE_PCT` in
+[`src/constants/training.ts`](../src/constants/training.ts), the
+outcome is ambiguous and does not contribute a win or loss. The walker
+applies this when deciding whether to write `filter_engagements`.
 
 ## Registry
 

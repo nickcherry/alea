@@ -1,5 +1,6 @@
 import "@alea/lib/filters/all";
 
+import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadFilterPeerOverlaps } from "@alea/lib/exploration/loadFilterPeerOverlaps";
 import { loadQuarterAggregates } from "@alea/lib/exploration/loadQuarterAggregates";
@@ -18,8 +19,8 @@ import type { FilterFamily } from "@alea/lib/filters/types";
 const TOP_PEERS_PER_FILTER = 5;
 
 /**
- * Loads every row in `filter_runs`, then collapses across `asset` so
- * the dashboard shows one row per (filter, version, config, period).
+ * Loads every active-profile row in `filter_runs`, then collapses across
+ * `asset` so the dashboard shows one row per (filter, version, config, period).
  * A filter that crushes one asset but tanks the rest doesn't get to
  * cherry-pick — its aggregate WR reflects every asset it ran on.
  *
@@ -55,6 +56,7 @@ export async function loadExplorationPayload({
           "n_engagements_down",
           "n_wins_down",
         ])
+        .where("training_profile", "=", TRAINING_OUTCOME_PROFILE_ID)
         .execute(),
       loadQuarterAggregates({ db }),
       loadFilterPeerOverlaps({ db }),

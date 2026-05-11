@@ -43,15 +43,21 @@ in:
 const window = bars.slice(i - requiredBars + 1, i + 1); // exclusive of i+1
 const pred = predict(window); // sees only past + current closed bar
 const next = bars[i + 1]!; // ONLY used to score
-const actual = next.close >= next.open ? "up" : "down"; // tie rounds up
+const actual = resolveTrainingOutcomeDirection(next); // null if move is too small
+if (actual === null) continue;
 ```
 
 If you add a new filter, your `predict` is handed `window` and that's
 the only data you get. Don't grab anything from outer scope.
 
-Flat candles (`close === open`) count as `"up"` per the trader rule
-"0 rounds up" — this matches how Polymarket's up/down contracts
-settle.
+Training outcomes use
+`TRAINING_OUTCOME_MIN_ABS_MOVE_PCT` in
+[`src/constants/training.ts`](../src/constants/training.ts). If the
+Pyth candle closes inside that percent band around its open, the
+prediction is treated as ambiguous and does not create a
+`filter_engagements` row. This keeps barely-moved Pyth candles from
+contributing wins or losses when Polymarket settlement is based on a
+different reference feed.
 
 ## Storage
 
@@ -65,7 +71,7 @@ just the counters (`n_engagements_up`, `n_wins_up`, `n_engagements_down`,
 window the row summarises. The leaderboard query reads from here.
 
 `filter_engagements` — append-only per-prediction tape. One row per
-non-abstain engagement:
+non-abstain engagement with a non-ambiguous target outcome:
 
 | column      | type     | meaning                                             |
 | ----------- | -------- | --------------------------------------------------- |
@@ -87,6 +93,10 @@ The aggregate counts on `filter_runs` and the engagements on
 `filter_engagements` are written inside the same transaction in
 `runBacktestForCandidate`, so a reader never sees a torn write
 ("old aggregates + new engagements" or vice versa).
+
+Each `filter_runs` row also carries `training_profile`, so cached rows
+from older outcome-label rules are ignored until `backtest:run`
+recomputes them under the active profile.
 
 ## Regime stratification
 
@@ -138,6 +148,10 @@ live committee.
 
 - [`src/lib/backtest/runBacktest.ts`](../src/lib/backtest/runBacktest.ts) —
   the walker + cache logic.
+- [`src/constants/training.ts`](../src/constants/training.ts) — training
+  outcome threshold + profile id.
+- [`src/lib/training/resolveTrainingOutcomeDirection.ts`](../src/lib/training/resolveTrainingOutcomeDirection.ts) —
+  maps target candles to `up`, `down`, or ambiguous.
 - [`src/lib/filters/`](../src/lib/filters/) — types, registry, hash
   helpers, and every registered filter.
 - [`src/lib/indicators/`](../src/lib/indicators/) — pure numeric

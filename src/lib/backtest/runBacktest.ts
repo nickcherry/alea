@@ -1,7 +1,9 @@
+import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { runHash } from "@alea/lib/filters/hash";
 import { getFilter } from "@alea/lib/filters/registry";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
 import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
 
@@ -19,8 +21,9 @@ export type BacktestStats = {
  *
  * `tsMs` is the open-time of the candle being PREDICTED (bar i+1),
  * NOT the candle the filter last saw. `direction` is the vote;
- * `won` is 1 iff the realised direction matched (close >= open
- * counts as 'u' — see walkBars).
+ * `won` is 1 iff the realised training direction matched. Tiny
+ * open-to-close moves inside the configured ambiguity band do not
+ * produce engagement rows.
  */
 export type BacktestEngagement = {
   readonly tsMs: number;
@@ -60,9 +63,10 @@ const ENGAGEMENT_INSERT_CHUNK = 5000;
  * only read AFTER the prediction is locked in. Filters never see
  * the bar they're voting on.
  *
- * **Tie handling**: a flat candle (close == open) counts as 'u'
- * (green), per the trader rule "0 rounds up". This matches how
- * Polymarket would settle the equivalent prediction market.
+ * **Ambiguous outcomes**: Pyth is not the Polymarket settlement feed,
+ * so target bars whose open-to-close move is inside the configured
+ * training threshold are ignored. The prediction still happened, but
+ * it does not contribute a win or loss to the training stats.
  *
  * The last bar in the series can't be a prediction subject (no
  * next bar to score against), so the loop stops at
@@ -101,9 +105,10 @@ export async function runBacktestForCandidate({
     asset,
   });
 
-  // Cache check. `filter_runs` is the authority — if it covers the
-  // requested range, we trust that `filter_engagements` is in sync
-  // (the write path below atomically replaces both together).
+  // Cache check. `filter_runs` is the authority when it covers the
+  // requested range and was produced by the active training profile.
+  // If either changes, the write path below atomically replaces the
+  // aggregate row and its `filter_engagements`.
   const existing = await db
     .selectFrom("filter_runs")
     .selectAll()
@@ -111,7 +116,10 @@ export async function runBacktestForCandidate({
     .executeTakeFirst();
   if (existing !== undefined) {
     const cachedLast = Number(existing.range_last_ms);
-    if (cachedLast >= rangeLastMs) {
+    if (
+      cachedLast >= rangeLastMs &&
+      existing.training_profile === TRAINING_OUTCOME_PROFILE_ID
+    ) {
       return {
         runHash: rh,
         candidateHash: candidate.candidateHash,
@@ -186,6 +194,7 @@ export async function runBacktestForCandidate({
         run_hash: rh,
         filter_id: candidate.filterId,
         filter_version: candidate.version,
+        training_profile: TRAINING_OUTCOME_PROFILE_ID,
         config: candidate.config as never,
         config_canon: candidate.configCanon,
         period,
@@ -202,6 +211,7 @@ export async function runBacktestForCandidate({
       .onConflict((oc) =>
         oc.column("run_hash").doUpdateSet({
           config: candidate.config as never,
+          training_profile: TRAINING_OUTCOME_PROFILE_ID,
           config_canon: candidate.configCanon,
           range_first_ms: rangeFirstMs,
           range_last_ms: rangeLastMs,
@@ -238,10 +248,9 @@ export async function runBacktestForCandidate({
  * runs `predict` on the trailing window (which ends at and includes
  * bar `i` — never bar `i + 1`), and records the outcome.
  *
- * Flat candles (`close == open`) count as 'u'. The strict version
- * (`close > open`) would mis-score the ~few-per-thousand flat
- * candles as losses for every "up" prediction; Polymarket settles
- * the equivalent contract the other way.
+ * Target bars whose close is inside the configured percent threshold
+ * around open are treated as ambiguous and skipped. That keeps tiny
+ * Pyth-only moves from becoming false precision in the training set.
  */
 function walkBars({
   bars,
@@ -269,7 +278,13 @@ function walkBars({
       continue;
     }
     const next = bars[i + 1]!;
-    const actual: "up" | "down" = next.close >= next.open ? "up" : "down";
+    const actual = resolveTrainingOutcomeDirection({
+      open: next.open,
+      close: next.close,
+    });
+    if (actual === null) {
+      continue;
+    }
     const won: 0 | 1 = pred === actual ? 1 : 0;
     engagements.push({
       tsMs: next.openTimeMs,
