@@ -191,6 +191,7 @@ arranges them under one host and one shared top nav.
 | `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
 | `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
 | `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
+| `/proxy/`       | Proxy accuracy     | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -225,6 +226,10 @@ tmp/web/
     data.json
   dryrun/
     index.html             ← dry-run committee (served at /dryrun/)
+    index.assets/
+    data.json
+  proxy/
+    index.html             ← proxy accuracy (served at /proxy/)
     index.assets/
     data.json
 ```

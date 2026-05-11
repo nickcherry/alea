@@ -150,6 +150,36 @@ export interface BarRegimeTable {
   readonly market_regime: string | null;
 }
 
+/**
+ * One row per resolved Polymarket up/down market we've fetched from the
+ * gamma-api. The (asset, timeframe, window_start_ts_ms) key is the same
+ * shape Alea uses for slug discovery, so a missing row means "haven't
+ * looked yet" and a stored row is the venue's final say. See migration
+ * `202605120700_create_polymarket_resolutions.ts`.
+ */
+export interface PolymarketResolutionTable {
+  readonly asset: string;
+  readonly timeframe: "5m" | "15m";
+  readonly window_start_ts_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly condition_id: string;
+  readonly outcome: "up" | "down" | "void";
+  readonly uma_status: string;
+  readonly resolved_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly fetched_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+}
+
 export interface CommitteeSelectionTable {
   readonly market_regime: string;
   readonly period: string;
@@ -177,6 +207,7 @@ export interface Database {
   readonly dry_run_decisions: DryRunDecisionTable;
   readonly bar_regimes: BarRegimeTable;
   readonly committee_selections: CommitteeSelectionTable;
+  readonly polymarket_resolutions: PolymarketResolutionTable;
 }
 
 export type DatabaseClient = Kysely<Database>;

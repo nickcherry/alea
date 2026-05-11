@@ -13,6 +13,8 @@ import { loadDryRunPayload } from "@alea/lib/dryRun/dashboard/loadDryRunPayload"
 import { writeDryRunArtifacts } from "@alea/lib/dryRun/dashboard/writeDryRunArtifacts";
 import { loadExplorationPayload } from "@alea/lib/exploration/loadExplorationPayload";
 import { writeExplorationArtifacts } from "@alea/lib/exploration/writeExplorationArtifacts";
+import { loadProxyAccuracyPayload } from "@alea/lib/polymarket/dashboard/loadProxyAccuracyPayload";
+import { writeProxyAccuracyArtifacts } from "@alea/lib/polymarket/dashboard/writeProxyAccuracyArtifacts";
 import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
 import { formatUsd } from "@alea/lib/trading/format";
 import { writeTradingPerformanceArtifacts } from "@alea/lib/trading/performance/writeTradingPerformanceArtifacts";
@@ -26,6 +28,7 @@ const webDir = resolvePath(tmpDir, "web");
 const explorationDir = resolvePath(webDir, "exploration");
 const committeeDir = resolvePath(webDir, "committee");
 const dryRunDir = resolvePath(webDir, "dryrun");
+const proxyDir = resolvePath(webDir, "proxy");
 
 /**
  * Builds every static dashboard the alea Cloudflare worker serves
@@ -76,6 +79,7 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(explorationDir, { recursive: true });
     await mkdir(committeeDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
+    await mkdir(proxyDir, { recursive: true });
 
     await buildTradingDashboard({ io });
     io.writeStdout("\n");
@@ -84,6 +88,8 @@ export const dashboardsBuildCommand = defineCommand({
     await buildTradeCommitteeDashboard({ io });
     io.writeStdout("\n");
     await buildDryRunDashboard({ io });
+    io.writeStdout("\n");
+    await buildProxyAccuracyDashboard({ io });
 
     if (options.deploy) {
       io.writeStdout(`\n${pc.bold("deploying")} ${pc.dim("to alea worker")}\n`);
@@ -238,6 +244,46 @@ async function buildDryRunDashboard({
         `  ${pc.dim("settled=")}${s.settledDecisions.toLocaleString()}` +
         `  ${pc.dim("pending=")}${s.pendingDecisions.toLocaleString()}` +
         `  ${pc.dim("wr=")}${wr}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
+}
+
+async function buildProxyAccuracyDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("proxy accuracy")} ${pc.dim("(/proxy/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadProxyAccuracyPayload({ db });
+    if (payload.coverage.polymarketRows === 0) {
+      io.writeStdout(
+        `  ${pc.yellow("skipped:")} no rows in polymarket_resolutions — run \`bun alea polymarket:resolutions-sync\` first.\n`,
+      );
+      return;
+    }
+    const htmlPath = resolvePath(proxyDir, "index.html");
+    const jsonPath = resolvePath(proxyDir, "data.json");
+    await writeProxyAccuracyArtifacts({ payload, htmlPath, jsonPath });
+    const summaryLines = payload.breakdowns
+      .map((b) => {
+        const rate =
+          b.aggregate.agreementRate === null
+            ? "—"
+            : `${(b.aggregate.agreementRate * 100).toFixed(2)}%`;
+        return `${b.timeframe}=${rate}(${b.aggregate.total.toLocaleString()})`;
+      })
+      .join("  ");
+    io.writeStdout(
+      `  ${pc.green("joined =")} ${payload.coverage.joinedRows.toLocaleString()}` +
+        `  ${pc.dim("poly=")}${payload.coverage.polymarketRows.toLocaleString()}` +
+        `  ${pc.dim("void=")}${payload.coverage.voidRows.toLocaleString()}` +
+        `  ${pc.dim(summaryLines)}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {
