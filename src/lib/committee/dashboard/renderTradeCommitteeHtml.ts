@@ -27,10 +27,7 @@ export function renderTradeCommitteeHtml({
     readonly scripts: readonly string[];
   };
 }): string {
-  const subtitle = [
-    `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
-    `${payload.rowCount.toLocaleString()} committee candidates`,
-  ].join('<span class="sep">&middot;</span>');
+  const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const medianWinRate = median({
     values: payload.rows.map((row) => row.winRate),

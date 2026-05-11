@@ -50,13 +50,17 @@ export function formatPercent({ value }: { readonly value: number }): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-/** Pretty long-form datetime used in dashboard subtitles. */
+/**
+ * Pretty short-form datetime used in dashboard subtitles ("May 11,
+ * 02:34 PM"). The year is intentionally omitted — dashboards are
+ * read in the moment, never compared across years, and the year
+ * eats subtitle width on narrow viewports.
+ */
 export function formatDateTime({ ms }: { readonly ms: number }): string {
   if (!Number.isFinite(ms) || ms <= 0) {
     return "unknown";
   }
   return new Date(ms).toLocaleString("en-US", {
-    year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",

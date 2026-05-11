@@ -118,12 +118,23 @@
   display: inline-flex;
   align-items: center;
   gap: 18px;
+  min-width: 0;
 }
 
 .filter-card-chevron {
-  display: inline-block;
+  /* Fixed box + flex-centered glyph so the rotated ▸ visually centers
+     inside its own slot. Without the explicit box the rotated glyph
+     shifts off-center, which on mobile produces a chevron that looks
+     misaligned with the header's first line. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
   color: var(--alea-text-subtle);
   font-size: 12px;
+  line-height: 1;
   transition:
     transform 0.12s ease,
     color 0.12s ease;
@@ -479,9 +490,32 @@
 @media (max-width: 720px) {
   .filter-card-header {
     padding: 12px 14px;
+    /* Keep the chevron paired with the id row by pinning it to the far
+       right via order/margin auto. The meta strip then wraps below
+       both, where it has room to breathe. */
+    align-items: flex-start;
+  }
+  .filter-card-id-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .filter-card-right-group {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px 18px;
   }
   .filter-card-meta {
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    /* Push the meta strip onto its own wrap-row so the chevron stays
+       on the id-row line. */
+    flex: 1 0 100%;
+    order: 2;
+  }
+  .filter-card-chevron {
+    order: 1;
+    margin-left: auto;
   }
   .filter-card-id {
     font-size: 14px;

@@ -71,6 +71,9 @@ edge.
 - [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) —
   checking whether fast exchange-feed proxies are reliable enough
   for Polymarket-side training.
+- [Proxy Accuracy](./doc/PROXY.md) — historical agreement between
+  Pyth open/close and Polymarket's Chainlink-derived settlement,
+  used to calibrate the training threshold.
 
 ### Engineering
 

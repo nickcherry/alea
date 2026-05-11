@@ -54,7 +54,6 @@
   var TIPS = {
     familyAvg:
       "Overall win rate for this filter family in the current scope, weighted by how often each config fired.",
-    familyConfigs: "How many knob combinations were tested for this filter.",
     familyEngagements:
       "Total times this filter family made an UP or DOWN call.",
     config: "Exact knob values for this candidate.",
@@ -277,14 +276,6 @@
       tone +
       '">' +
       avg +
-      "</span>" +
-      "</span>" +
-      '<span class="filter-card-meta-item is-configs">' +
-      '<span class="filter-card-meta-label">configs' +
-      infoTip(TIPS.familyConfigs) +
-      "</span>" +
-      '<span class="filter-card-meta-value">' +
-      g.rows.length +
       "</span>" +
       "</span>" +
       '<span class="filter-card-meta-item is-engagements">' +
