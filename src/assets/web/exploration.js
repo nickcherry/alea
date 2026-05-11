@@ -110,7 +110,19 @@
       });
     }
     var groups = groupByFilter(filtered);
-    stack.innerHTML = groups.map(renderFilterCard).join("");
+    stack.innerHTML =
+      groups.length === 0
+        ? renderEmptyState()
+        : groups.map(renderFilterCard).join("");
+  }
+
+  function renderEmptyState() {
+    return (
+      '<section class="alea-panel exploration-empty-state">' +
+      "<h2>No Exploration Rows</h2>" +
+      "<p>No filter-run rows exist for the active training profile.</p>" +
+      "</section>"
+    );
   }
 
   // Returns a shallow-copied row where every engagement/win field comes

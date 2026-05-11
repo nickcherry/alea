@@ -166,15 +166,16 @@ async function buildExplorationDashboard({
   const db = createDatabase();
   try {
     const payload = await loadExplorationPayload({ db });
-    if (payload.rows.length === 0) {
-      io.writeStdout(
-        `  ${pc.yellow("skipped:")} no rows in filter_runs — run \`bun alea backtest:run\` first.\n`,
-      );
-      return;
-    }
     const htmlPath = resolvePath(explorationDir, "index.html");
     const jsonPath = resolvePath(explorationDir, "data.json");
     await writeExplorationArtifacts({ payload, htmlPath, jsonPath });
+    if (payload.rows.length === 0) {
+      io.writeStdout(
+        `  ${pc.yellow("empty:")} no rows in filter_runs for the active training profile\n` +
+          `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+      );
+      return;
+    }
     const totalEngagements = payload.rows.reduce(
       (s, r) => s + r.nEngagements,
       0,

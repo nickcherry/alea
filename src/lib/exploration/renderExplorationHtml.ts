@@ -3,10 +3,7 @@ import {
   aleaBrandMark,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
-import {
-  escapeJsonForHtml,
-  formatDateTime,
-} from "@alea/lib/ui/aleaFormat";
+import { escapeJsonForHtml, formatDateTime } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
 /**
@@ -39,6 +36,8 @@ export function renderExplorationHtml({
   ].join('<span class="sep">&middot;</span>');
 
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
+  const initialStackHtml =
+    payload.rows.length === 0 ? renderExplorationEmptyState() : "";
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -70,7 +69,7 @@ export function renderExplorationHtml({
           <button class="alea-pill-tab regime-tab" role="tab" data-regime="high_vol_trending" aria-selected="false">High vol trending</button>
         </div>
       </div>
-      <div id="filter-stack" class="filter-stack" aria-live="polite"></div>
+      <div id="filter-stack" class="filter-stack" aria-live="polite">${initialStackHtml}</div>
     </main>
   </div>
   <script id="exploration-payload" type="application/json">${payloadJson}</script>
@@ -79,4 +78,9 @@ export function renderExplorationHtml({
 </html>`;
 }
 
-
+function renderExplorationEmptyState(): string {
+  return `<section class="alea-panel exploration-empty-state">
+    <h2>No Exploration Rows</h2>
+    <p>No filter-run rows exist for the active training profile.</p>
+  </section>`;
+}
