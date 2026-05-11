@@ -26,6 +26,16 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync`
   `candles:fill-gaps`
+- `backtest:*`
+  `backtest:run` — runs every registered filter × default config × (period × asset) against the cached pyth/spot candles and upserts results into `filter_runs` + per-fire rows into `filter_engagements`.
+- `regimes:*`
+  `regimes:backfill` — classifies every bar in `candles` into a market regime and writes the tags to `bar_regimes`. See [REGIMES.md](./REGIMES.md).
+- `committee:*`
+  `committee:select` — picks the top-N candidates per `(market_regime, period)` from regime-stratified backtest stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
+- `dry:*`
+  `dry:run` — long-running process that streams live Pyth ticks, classifies the current regime, runs the rostered committee at every 5m boundary, and persists decisions to `dry_run_decisions`. See [DRY_RUN.md](./DRY_RUN.md).
+- `dashboards:*`
+  `dashboards:build` — generates the static `/`, `/exploration/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`
@@ -35,25 +45,17 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `reliability:*`
   `reliability:capture`
   `reliability:chart`
-- `training:*`
-  `training:distributions`
 - `telegram:*`
   `telegram:test`
 - `polymarket:*`
   `polymarket:auth-check`
 - `trading:*`
-  `trading:gen-probability-table`
-  `trading:dry-run`
-  `trading:dry-run-report`
-  `trading:live`
-  `trading:hydrate-lifetime-pnl`
-  `trading:performance`
-  `trading:replay`
-  `trading:replay-report`
+  `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
+  `trading:performance` — print the latest lifetime PnL summary scanned from Polymarket data-api.
 - `help`
   Built-in. `alea help <command>` prints detailed help; `alea help` is equivalent to `alea` with no arguments.
 
-This list is expected to grow as the simplification progresses. Update this section whenever a new family or command is registered in `src/bin/index.ts`.
+Update this section whenever a new family or command is registered in `src/bin/index.ts`.
 
 ## Adding A Command
 

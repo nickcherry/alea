@@ -1,10 +1,9 @@
 /**
  * Money + percent formatters shared across the trading CLI commands
- * (`trading:dry-run-report`, `trading:replay`, `trading:replay-report`,
- * `trading:performance`, `trading:hydrate-lifetime-pnl`). Lives here
- * rather than under `src/lib/cli/` because the conventions are
- * trading-specific (signed PnL, percent with one decimal); other
- * domains can have their own.
+ * (`trading:performance`, `trading:hydrate-lifetime-pnl`) and the
+ * trading-performance dashboard. Lives here rather than under
+ * `src/lib/cli/` because the conventions are trading-specific (signed
+ * PnL, percent with one decimal); other domains can have their own.
  */
 
 /**

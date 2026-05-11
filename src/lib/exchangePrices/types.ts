@@ -28,9 +28,9 @@ export type ClosedBarTick = {
  * `assets` is the set of crypto assets the caller wants subscribed
  * on this WS. Defaults to `["btc"]` for backward compatibility with
  * the original latency:capture experiments — long-running consumers
- * (data:capture, the live trader) should always pass an explicit
- * list. Stream-starters whose venue doesn't support a given asset
- * surface that via `onError`.
+ * (`data:capture`, `reliability:capture`) should always pass an
+ * explicit list. Stream-starters whose venue doesn't support a given
+ * asset surface that via `onError`.
  *
  * `onBarClose` is an optional callback for streams that also emit
  * closed price bars (Binance perp/spot, currently). Most starters

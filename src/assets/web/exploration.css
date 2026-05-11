@@ -1,0 +1,473 @@
+/*
+ * Filter Exploration dashboard — per-page layout.
+ *
+ * Page is a vertical stack of filter-family cards. Each card carries
+ * one filter id, the group's aggregate stats, and a small table of
+ * its configs. Cards stack top-to-bottom by group average WR.
+ *
+ * Generic primitives (mono, num-positive/negative, muted, alea
+ * colors/fonts) come from alea.css. Everything here is exploration-
+ * specific.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Period tabs                                                         */
+/* ------------------------------------------------------------------ */
+
+.exploration-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.exploration-period-tabs,
+.exploration-regime-tabs {
+  display: inline-flex;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 999px;
+  background: var(--alea-bg-soft);
+}
+
+.regime-tab {
+  appearance: none;
+  background: transparent;
+  color: var(--alea-text-muted);
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--alea-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.regime-tab:hover {
+  color: var(--alea-text);
+}
+
+.regime-tab[aria-selected="true"] {
+  background: linear-gradient(180deg, rgba(215, 170, 69, 0.18), rgba(215, 170, 69, 0.08));
+  color: var(--alea-text);
+  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
+}
+
+.period-tab {
+  appearance: none;
+  background: transparent;
+  color: var(--alea-text-muted);
+  border: 0;
+  padding: 6px 22px;
+  border-radius: 999px;
+  font-family: var(--alea-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.period-tab:hover {
+  color: var(--alea-text);
+}
+
+.period-tab[aria-selected="true"] {
+  background: linear-gradient(180deg, rgba(215, 170, 69, 0.18), rgba(215, 170, 69, 0.08));
+  color: var(--alea-text);
+  box-shadow: inset 0 0 0 1px rgba(215, 170, 69, 0.35);
+}
+
+/* ------------------------------------------------------------------ */
+/* Filter stack                                                        */
+/* ------------------------------------------------------------------ */
+
+.filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Filter card                                                         */
+/* ------------------------------------------------------------------ */
+/* One card per filter family. The header carries the filter id and a
+   right-aligned strip of aggregate stats; the body is a slim table
+   of the family's configs. */
+
+.filter-card {
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--alea-panel-2), var(--alea-bg-soft));
+  box-shadow: var(--alea-shadow-soft);
+  /* No `overflow: hidden` — that clipped the .alea-info-tip tooltip
+     bubble when it extended above the card boundary. Instead, give
+     the first/last child their own corner-rounded radii so the
+     header gradient and table edges still hug the card's rounded
+     border. */
+}
+
+.filter-card .filter-card-header {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.filter-card .filter-card-table-wrap {
+  /* No overflow: hidden — keeping the wrap transparent lets
+     column-header tooltips extend up beyond the table chrome. The
+     card's own border-radius takes care of the rounded look at the
+     bottom edge since the table itself has no background. */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--alea-border-faint);
+  background: linear-gradient(
+    180deg,
+    rgba(215, 170, 69, 0.06),
+    rgba(215, 170, 69, 0)
+  );
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-card-header:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(215, 170, 69, 0.1),
+    rgba(215, 170, 69, 0.02)
+  );
+}
+
+.filter-card-header:focus-visible {
+  outline: 1px solid var(--alea-gold);
+  outline-offset: -1px;
+}
+
+.filter-card-right-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.filter-card-chevron {
+  display: inline-block;
+  color: var(--alea-text-subtle);
+  font-size: 12px;
+  transition: transform 0.12s ease, color 0.12s ease;
+  transform: rotate(90deg);
+}
+
+.filter-card.is-collapsed .filter-card-chevron {
+  transform: rotate(0deg);
+}
+
+.filter-card-header:hover .filter-card-chevron {
+  color: var(--alea-gold);
+}
+
+.filter-card.is-collapsed .filter-card-header {
+  border-bottom-color: transparent;
+}
+
+.filter-card.is-collapsed .filter-card-table-wrap {
+  display: none;
+}
+
+.filter-card-id-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-card-id {
+  margin: 0;
+  font-family: var(--alea-font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--alea-text);
+}
+
+.filter-card-regime {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--alea-font-sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--alea-text-subtle);
+  background: rgba(215, 170, 69, 0.06);
+  border: 1px solid var(--alea-border-faint);
+}
+
+/* Right-aligned strip of stat chips. Each chip is "label value"; the
+   value sits immediately next to its label (no fixed-width slot) so
+   the label-and-value group reads as one unit. The chip-to-chip gap
+   is large enough that you can't confuse adjacent (label, value)
+   pairs. The avg chip is the headline so its value gets a slightly
+   bigger font and the directional tone tint. */
+.filter-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 32px;
+}
+
+.filter-card-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.filter-card-meta-label {
+  font-family: var(--alea-font-sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--alea-text-subtle);
+}
+
+.filter-card-meta-value {
+  display: inline-block;
+  font-family: var(--alea-font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--alea-text);
+  text-align: left;
+}
+
+.filter-card-meta-item.is-avg .filter-card-meta-value {
+  font-size: 15px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Filter card table                                                   */
+/* ------------------------------------------------------------------ */
+/* The wrap div is the horizontal-scroll container. Keeping the
+   scroll on the wrap (not the <table>) means the <table> can stay a
+   proper table element with `table-layout: fixed` + colgroup widths
+   honored.
+
+   Column widths are percentages so the table fills the card on
+   wide laptops (and the WR / Quarters cells get room to breathe)
+   while still degrading to a horizontal scroll under the 740 px
+   readability floor. */
+
+.filter-card-table-wrap {
+  overflow-x: auto;
+}
+
+.filter-card-table {
+  width: 100%;
+  min-width: 740px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-card-table thead th {
+  padding: 10px 12px 6px;
+  font-family: var(--alea-font-sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--alea-text-subtle);
+  border-bottom: 1px solid var(--alea-border-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.filter-card-table thead th.num-col,
+.filter-card-table thead th.wr-col,
+.filter-card-table thead th.quarters-col {
+  text-align: right;
+}
+
+.filter-card-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--alea-border-faint);
+  vertical-align: middle;
+}
+
+.filter-card-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.filter-card-table tbody tr:hover td {
+  background: rgba(215, 170, 69, 0.04);
+}
+
+.filter-card-table .num-col,
+.filter-card-table .wr-col,
+.filter-card-table .quarters-col {
+  text-align: right;
+}
+
+.config-text {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--alea-text-muted);
+  word-break: break-all;
+  white-space: normal;
+}
+
+/* ------------------------------------------------------------------ */
+/* Win-rate cell                                                       */
+/* ------------------------------------------------------------------ */
+/* Two stacked lines, both right-aligned to share the column's right
+   edge. Top: bold aggregate WR + a small "▲ 58.2  ▼ 57.5" trailer
+   that breaks out the up/down split (no % — the headline carries the
+   unit). Bottom: Wilson 95% CI with a single trailing %.
+*/
+
+.wr-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.wr-value {
+  font-family: var(--alea-font-mono);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.wr-dir {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--alea-text-subtle);
+  font-family: var(--alea-font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wr-dir-leg {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Quarterly stability — mini bar chart                                */
+/* ------------------------------------------------------------------ */
+
+.filter-card-table .quarters-col {
+  white-space: nowrap;
+}
+
+.q-strip-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.q-strip {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 2px;
+  background: linear-gradient(180deg, rgba(15, 27, 18, 0.4), rgba(7, 9, 10, 0.2));
+  border: 1px solid var(--alea-border-faint);
+  border-radius: 4px;
+}
+
+.q-bar {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 28px;
+  cursor: default;
+}
+
+.q-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(215, 170, 69, 0.35);
+  transform: translateY(-0.5px);
+}
+
+.q-bar-fill {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: 1.5px;
+  pointer-events: none;
+}
+
+.q-bar-fill-pos {
+  bottom: 50%;
+  background: var(--alea-green);
+  box-shadow: 0 0 4px rgba(70, 195, 123, 0.35);
+}
+
+.q-bar-fill-neg {
+  top: 50%;
+  background: var(--alea-red);
+  box-shadow: 0 0 4px rgba(216, 90, 79, 0.3);
+}
+
+.q-bar-fill-flat {
+  top: 50%;
+  height: 2px;
+  transform: translateY(-1px);
+  background: var(--alea-gold-soft);
+}
+
+.q-range {
+  color: var(--alea-text-subtle);
+  font-size: 10.5px;
+  font-family: var(--alea-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tablet + mobile                                                     */
+/* ------------------------------------------------------------------ */
+/* On narrow viewports, the card stays full-width and the inner
+   table is the one that scrolls horizontally. Header meta drops
+   below the filter id when it wraps. */
+
+@media (max-width: 720px) {
+  .filter-card-header {
+    padding: 12px 14px;
+  }
+  .filter-card-meta {
+    gap: 12px;
+  }
+  .filter-card-id {
+    font-size: 14px;
+  }
+  .filter-card-table tbody td {
+    padding: 7px 10px;
+  }
+}

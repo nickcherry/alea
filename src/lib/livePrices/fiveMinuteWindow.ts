@@ -1,9 +1,9 @@
 /**
- * UTC 5-minute window arithmetic used everywhere in the live trader.
- * Both Polymarket's up/down markets and our training pipeline align to
- * `floor(unixSeconds / 300) * 300`, so a single helper covers both
- * boundary conventions. Pure, deterministic, no implicit "now" — every
- * call site must pass the timestamp in.
+ * UTC 5-minute window arithmetic. Polymarket's up/down markets, our
+ * market-capture pipeline, and reliability tracking all align to
+ * `floor(unixSeconds / 300) * 300`, so a single helper covers every
+ * call site. Pure, deterministic, no implicit "now" — every call must
+ * pass the timestamp in.
  */
 
 export const ONE_MINUTE_MS = 60 * 1000;

@@ -1,11 +1,12 @@
 # Dashboards
 
 This is the design contract for the standalone HTML pages we drop into
-`alea/tmp/` from CLI commands like `latency:capture` and
-`training:distributions`. These pages are not product surfaces and are
-not shipped anywhere — they exist for one operator (or one agent) to
-read a particular analysis result quickly. The contract below exists so
-each new page slots into the same visual language without bikeshedding.
+`alea/tmp/` from CLI commands like `latency:capture`,
+`reliability:capture`, and `dashboards:build`. Pages built by
+`dashboards:build` ship to the alea Cloudflare Worker when invoked
+with `--deploy`; everything else is operator-local. The contract below
+exists so each new page slots into the same visual language without
+bikeshedding.
 
 ## What "temp dashboard" means
 
@@ -184,10 +185,11 @@ serves a single multi-page dashboard. Each page is still a standalone
 static HTML asset following the contract above; the worker just
 arranges them under one host and one shared top nav.
 
-| Route        | Page                  | Source                                                                        |
-| ------------ | --------------------- | ----------------------------------------------------------------------------- |
-| `/`          | Live trading PnL      | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
-| `/training/` | Training distributions| [`renderTrainingDistributionsHtml.ts`](../src/lib/training/renderTrainingDistributionsHtml.ts)     |
+| Route           | Page                | Source                                                                                              |
+| --------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| `/`             | Live trading PnL    | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/exploration/` | Filter exploration  | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
+| `/dryrun/`      | Dry-run committee   | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -209,44 +211,31 @@ expects:
 
 ```
 tmp/web/
-  index.html              ← live trading PnL (served at /)
-  index.assets/           ← its frozen CSS+JS
-  data.json               ← raw payload for the trading page
-  training/
-    index.html            ← training distributions (served at /training/)
+  index.html               ← live trading PnL (served at /)
+  index.assets/            ← its frozen CSS+JS
+  data.json                ← raw payload for the trading page
+  exploration/
+    index.html             ← filter exploration (served at /exploration/)
+    index.assets/
+    data.json
+  dryrun/
+    index.html             ← dry-run committee (served at /dryrun/)
     index.assets/
     data.json
 ```
 
 Wrangler config lives at [`wrangler.toml`](../wrangler.toml) and
-points its `[assets].directory` at `tmp/web/`. The trading page needs
-Polymarket auth (`POLYMARKET_PRIVATE_KEY` + `POLYMARKET_FUNDER_ADDRESS`);
-when those aren't set the build skips it with a warning so local devs
-without trading creds can still rebuild the training page.
+points its `[assets].directory` at `tmp/web/`. The trading page
+needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
+`POLYMARKET_FUNDER_ADDRESS`); when those aren't set the build skips
+it with a warning so the rest of the site can still rebuild. The
+exploration page builds from `filter_runs` + `bar_regimes` and the
+dry-run page builds from `dry_run_decisions` — both work without
+trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
 `dashboards:build --deploy` is the only caller.
-
-### Auto-rebuild loop
-
-A macOS LaunchAgent re-runs `dashboards:build --deploy` every five
-minutes so the deployed page tracks the live wallet without manual
-pushes. The wrapper script is checked into the repo at
-[`scripts/dashboards-build-cron.sh`](../scripts/dashboards-build-cron.sh);
-the operator-specific plist lives at
-`~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist`
-and isn't tracked. To install or reload:
-
-```
-launchctl unload ~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist 2>/dev/null
-launchctl load   ~/Library/LaunchAgents/com.nickcherry.alea.dashboards-build.plist
-launchctl list | grep alea.dashboards-build      # verify it's loaded
-```
-
-Logs go to `tmp/cron-dashboards-build.log` (with matching `.stdout`
-and `.stderr` files alongside). launchd auto-skips overlapping
-ticks, so a slow build can't double-fire.
 
 ## File-naming convention
 

@@ -1,35 +1,99 @@
 # Alea
 
-Probabilistic tooling for Polymarket's 5-minute crypto up/down markets.
-Alea studies live exchange feeds, trains settlement-side probability
-surfaces from historical candles, and runs the gated trader that only acts
-when the modeled edge clears the market.
+Filter-committee research toolkit for Polymarket's crypto up/down
+markets. We backtest dozens of small predictive filters against
+three years of Pyth/spot candles across every traded asset,
+classify each historical bar by market regime, select the
+best-performing candidates per regime, and run the resulting
+committee against live Pyth ticks in a dry-run loop.
+
+The strategy: pre-window directional prediction (will the next 5m
+or 15m candle close green or red?) paired with Polymarket maker
+orders at ~50¢. Zero fees, ~1:1 risk-reward, so the win rate IS the
+edge.
+
+## How the pieces fit
+
+1. **Filters** are tiny deterministic predictors that emit
+   `"up" | "down" | null` from a trailing bar window. See
+   [FILTERS.md](./doc/FILTERS.md).
+2. **Backtest** evaluates every `(filter, config, period, asset)`
+   candidate against the cached candles, persisting per-fire rows
+   to `filter_engagements` and aggregates to `filter_runs`. See
+   [BACKTEST.md](./doc/BACKTEST.md).
+3. **Market regimes** classify every historical bar into one of
+   `{low_vol, high_vol} × {trending, ranging}`. The classifier and
+   the `bar_regimes` table let us stratify backtest stats by
+   regime. See [REGIMES.md](./doc/REGIMES.md).
+4. **Trading committee** picks the top-N candidates per regime
+   using regime-stratified backtest stats, persisting the voter
+   roster to `committee_selections`. At decision time only the
+   roster for the current regime gets to vote. See
+   [COMMITTEE.md](./doc/COMMITTEE.md).
+5. **Dry-run loop** streams live Pyth ticks, classifies the
+   current regime, asks the regime's committee to predict the next
+   5-minute bar, persists every decision to `dry_run_decisions`,
+   and scores it once the bar closes. No orders are placed today;
+   live trading will share this exact code path. See
+   [DRY_RUN.md](./doc/DRY_RUN.md).
+6. **Dashboards** are static HTML pages built from the same data
+   and deployed to a Cloudflare Worker. The exploration page
+   surfaces regime-stratified filter performance; the dry-run
+   page surfaces the live committee's hit rate. See
+   [DASHBOARDS.md](./doc/DASHBOARDS.md).
 
 ## Docs
 
-### Operator Workflows
+### Subsystems
 
-- [CLI](./doc/CLI.md) — command structure, examples, and side effects.
-- [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — finding the fastest useful leading-indicator feeds.
-- [Directional Agreement Experiment](./doc/RELIABILITY_EXPERIMENT.md) — checking whether fast exchange-feed proxies are reliable enough for Polymarket-side training and live trading.
-- [Training Domain](./doc/TRAINING_DOMAIN.md) — historical candle analysis and threshold discovery.
-- [Regimes](./doc/REGIMES.md) — multi-class partitions of 5m windows that drive the live probability table.
-- [Trading Domain](./doc/TRADING.md) — the live money-touching runner and failure modes.
-- [Dry Trading](./doc/DRY_TRADING.md) — dry-run fill simulation, JSONL sessions, and report interpretation.
-- [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape recorder for Polymarket + Binance + Coinbase + Chainlink reference events across all five assets, to disk and Postgres for offline replay/research.
-- [Replay](./doc/REPLAY.md) — offline replay of the live decision + fill-simulation pipeline against captured market data, for fast threshold/regime iteration.
-- [Dashboards](./doc/DASHBOARDS.md) — design system and authoring contract for the HTML reports in `tmp/`, plus the deployed pages on the alea Cloudflare Worker and how to build & deploy them.
-- [Production](./doc/PRODUCTION.md) — operator playbook for the live-trading box: connect, sync, start/stop the `alea-prod-live` tmux session, single-process rule.
+- [Filters](./doc/FILTERS.md) — the filter framework + the no-leak
+  invariant + the registry.
+- [Backtest](./doc/BACKTEST.md) — walker, cache, storage schema,
+  quarter buckets.
+- [Regimes](./doc/REGIMES.md) — market regime classifier + the
+  `bar_regimes` table + backfill.
+- [Trading Committee](./doc/COMMITTEE.md) — selection eligibility,
+  ranking, regime-scoped voting.
+- [Dry Run](./doc/DRY_RUN.md) — live Pyth loop, synthetic bars,
+  decision persistence.
+- [Dashboards](./doc/DASHBOARDS.md) — design contract + Cloudflare
+  Worker deployment.
+
+### Operator workflows
+
+- [CLI](./doc/CLI.md) — command structure, families, side effects.
+- [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape
+  recorder for Polymarket + Binance + Coinbase + Chainlink
+  reference events.
+- [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — finding the
+  fastest useful leading-indicator feeds.
+- [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) —
+  checking whether fast exchange-feed proxies are reliable enough
+  for Polymarket-side training.
 
 ### Engineering
 
-- [Polymarket Integration](./doc/POLYMARKET.md) — endpoint contracts and external docs we rely on.
-- [Coding Conventions](./doc/CODING_CONVENTIONS.md) — repo structure, TypeScript style, and testing expectations.
-- [Documentation](./doc/DOCUMENTATION.md) — how project docs should be written and maintained.
-- [How To Work With Nick](./doc/HOW_TO_WORK_WITH_NICK.md) — collaboration preferences.
+- [Polymarket Integration](./doc/POLYMARKET.md) — endpoint
+  contracts.
+- [Coding Conventions](./doc/CODING_CONVENTIONS.md) — repo
+  structure, TypeScript style, testing expectations.
+- [Documentation](./doc/DOCUMENTATION.md) — how docs are written
+  and maintained.
+- [How To Work With Nick](./doc/HOW_TO_WORK_WITH_NICK.md) —
+  collaboration preferences.
 
-### Research
+## Typical workflow
 
-- [Research notes](./doc/research/) — dated findings, methodology
-  changes, and per-regime intuition from offline-analysis sessions.
-  Long-term memory for what we've tried and why.
+After adding a new filter or refreshing candles:
+
+```sh
+bun alea db:migrate              # ensure schema is current
+bun alea candles:sync            # refresh pyth-spot candles (if needed)
+bun alea backtest:run            # re-score every (filter, config, period, asset)
+bun alea regimes:backfill        # re-classify every bar (if classifier changed)
+bun alea committee:select        # rebuild the regime-scoped voter roster
+bun alea dashboards:build --deploy
+# restart any running `bun alea dry:run` to pick up the new roster
+```
+
+Each step is idempotent and skips work that's already current.

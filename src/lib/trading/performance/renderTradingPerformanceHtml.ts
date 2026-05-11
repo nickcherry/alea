@@ -26,11 +26,7 @@ export function renderTradingPerformanceHtml({
     readonly scripts: readonly string[];
   };
 }): string {
-  const subtitle = [
-    `wallet ${shortAddress({ value: payload.walletAddress })}`,
-    `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
-    `${payload.summary.marketCount.toLocaleString()} markets`,
-  ].join('<span class="sep">&middot;</span>');
+  const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const visibleMarkets = payload.markets.slice(0, MARKETS_TABLE_LIMIT);
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
   const chartTokensJson = escapeJsonForHtml({
@@ -237,13 +233,6 @@ function toneForNumber({
     return "negative";
   }
   return "neutral";
-}
-
-function shortAddress({ value }: { readonly value: string }): string {
-  if (value.length <= 12) {
-    return value;
-  }
-  return `${value.slice(0, 6)}...${value.slice(-4)}`;
 }
 
 function shortId({ value }: { readonly value: string }): string {

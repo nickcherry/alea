@@ -1,0 +1,302 @@
+import type { DatabaseClient } from "@alea/lib/db/types";
+import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import { getFilter } from "@alea/lib/filters/registry";
+import { runHash } from "@alea/lib/filters/hash";
+import type { Asset } from "@alea/types/assets";
+import type { CandleTimeframe } from "@alea/types/candles";
+
+export type BacktestStats = {
+  readonly nBars: number;
+  readonly nFiresUp: number;
+  readonly nWinsUp: number;
+  readonly nFiresDown: number;
+  readonly nWinsDown: number;
+};
+
+/**
+ * One row to insert into `filter_engagements`. Kept separate from
+ * the aggregate counts so we can chunk these into the DB.
+ *
+ * `tsMs` is the open-time of the candle being PREDICTED (bar i+1),
+ * NOT the candle the filter last saw. `direction` is the vote;
+ * `won` is 1 iff the realised direction matched (close >= open
+ * counts as 'u' — see walkBars).
+ */
+export type BacktestEngagement = {
+  readonly tsMs: number;
+  readonly direction: "u" | "d";
+  readonly won: 0 | 1;
+};
+
+export type RunBacktestResult = {
+  readonly runHash: string;
+  readonly candidateHash: string;
+  readonly filterId: string;
+  readonly version: number;
+  readonly config: unknown;
+  readonly configCanon: string;
+  readonly period: CandleTimeframe;
+  readonly asset: Asset;
+  readonly rangeFirstMs: number;
+  readonly rangeLastMs: number;
+  readonly stats: BacktestStats;
+  readonly fromCache: boolean;
+};
+
+// Postgres caps each statement at 65535 bind parameters. Four
+// columns per engagement row leaves a hard ceiling at 16383 rows
+// per INSERT; 5000 is a safe round number that keeps each
+// statement small enough to be canceled cheaply if needed.
+const ENGAGEMENT_INSERT_CHUNK = 5000;
+
+/**
+ * Walks a series of CLOSED bars and asks one candidate's filter to
+ * predict at each bar boundary. At bar `i` (after it has closed),
+ * the filter sees `bars[i - N + 1 .. i]` (length N = requiredBars)
+ * and predicts the direction of `bars[i + 1]`'s open→close move.
+ *
+ * **No data leakage**: the prediction window is sliced *exclusive*
+ * of `bars[i + 1]`, and the outcome (next bar's close vs open) is
+ * only read AFTER the prediction is locked in. Filters never see
+ * the bar they're voting on.
+ *
+ * **Tie handling**: a flat candle (close == open) counts as 'u'
+ * (green), per the trader rule "0 rounds up". This matches how
+ * Polymarket would settle the equivalent prediction market.
+ *
+ * The last bar in the series can't be a prediction subject (no
+ * next bar to score against), so the loop stops at
+ * `bars.length - 1`.
+ *
+ * Caching: the row in `filter_runs` keyed by `runHash` is the
+ * authoritative cache. If a row exists whose `range_last_ms` is
+ * at least the latest bar's `openTimeMs`, the function returns
+ * the cached stats unchanged. Otherwise it recomputes from
+ * scratch and replaces both the aggregate row and the per-fire
+ * rows in `filter_engagements` atomically (per-run).
+ */
+export async function runBacktestForCandidate({
+  db,
+  candidate,
+  period,
+  asset,
+  bars,
+}: {
+  readonly db: DatabaseClient;
+  readonly candidate: Candidate;
+  readonly period: CandleTimeframe;
+  readonly asset: Asset;
+  readonly bars: readonly FilterBar[];
+}): Promise<RunBacktestResult> {
+  if (bars.length < 2) {
+    throw new Error(
+      `backtest needs at least 2 bars, got ${bars.length} for ${candidate.filterId}/${period}/${asset}`,
+    );
+  }
+  const rangeFirstMs = bars[0]!.openTimeMs;
+  const rangeLastMs = bars[bars.length - 1]!.openTimeMs;
+  const rh = runHash({
+    candidateHash: candidate.candidateHash,
+    period,
+    asset,
+  });
+
+  // Cache check. `filter_runs` is the authority — if it covers the
+  // requested range, we trust that `filter_engagements` is in sync
+  // (the write path below atomically replaces both together).
+  const existing = await db
+    .selectFrom("filter_runs")
+    .selectAll()
+    .where("run_hash", "=", rh)
+    .executeTakeFirst();
+  if (existing !== undefined) {
+    const cachedLast = Number(existing.range_last_ms);
+    if (cachedLast >= rangeLastMs) {
+      return {
+        runHash: rh,
+        candidateHash: candidate.candidateHash,
+        filterId: candidate.filterId,
+        version: candidate.version,
+        config: candidate.config,
+        configCanon: candidate.configCanon,
+        period,
+        asset,
+        rangeFirstMs: Number(existing.range_first_ms),
+        rangeLastMs: cachedLast,
+        stats: {
+          nBars: existing.n_bars,
+          nFiresUp: existing.n_fires_up,
+          nWinsUp: existing.n_wins_up,
+          nFiresDown: existing.n_fires_down,
+          nWinsDown: existing.n_wins_down,
+        },
+        fromCache: true,
+      };
+    }
+  }
+
+  // Compute fresh.
+  const entry = getFilter(candidate.filterId);
+  if (entry === undefined) {
+    throw new Error(`unknown filter id ${candidate.filterId}`);
+  }
+  const requiredBars = entry.filter.requiredBars(candidate.config);
+  const { stats, engagements } = walkBars({
+    bars,
+    requiredBars,
+    predict: (window) =>
+      entry.filter.predict(candidate.config as never, window),
+  });
+
+  // Replace the engagement set + upsert the aggregate row inside a
+  // single transaction so a reader never sees the "old aggregates +
+  // new engagements" or vice versa.
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .deleteFrom("filter_engagements")
+      .where("run_hash", "=", rh)
+      .execute();
+
+    if (engagements.length > 0) {
+      for (
+        let offset = 0;
+        offset < engagements.length;
+        offset += ENGAGEMENT_INSERT_CHUNK
+      ) {
+        const chunk = engagements.slice(
+          offset,
+          offset + ENGAGEMENT_INSERT_CHUNK,
+        );
+        await trx
+          .insertInto("filter_engagements")
+          .values(
+            chunk.map((e) => ({
+              run_hash: rh,
+              ts_ms: e.tsMs,
+              direction: e.direction,
+              won: e.won,
+            })),
+          )
+          .execute();
+      }
+    }
+
+    await trx
+      .insertInto("filter_runs")
+      .values({
+        run_hash: rh,
+        filter_id: candidate.filterId,
+        filter_version: candidate.version,
+        config: candidate.config as never,
+        config_canon: candidate.configCanon,
+        period,
+        asset,
+        range_first_ms: rangeFirstMs,
+        range_last_ms: rangeLastMs,
+        n_bars: stats.nBars,
+        n_fires_up: stats.nFiresUp,
+        n_wins_up: stats.nWinsUp,
+        n_fires_down: stats.nFiresDown,
+        n_wins_down: stats.nWinsDown,
+        computed_at_ms: Date.now(),
+      })
+      .onConflict((oc) =>
+        oc.column("run_hash").doUpdateSet({
+          config: candidate.config as never,
+          config_canon: candidate.configCanon,
+          range_first_ms: rangeFirstMs,
+          range_last_ms: rangeLastMs,
+          n_bars: stats.nBars,
+          n_fires_up: stats.nFiresUp,
+          n_wins_up: stats.nWinsUp,
+          n_fires_down: stats.nFiresDown,
+          n_wins_down: stats.nWinsDown,
+          computed_at_ms: Date.now(),
+        }),
+      )
+      .execute();
+  });
+
+  return {
+    runHash: rh,
+    candidateHash: candidate.candidateHash,
+    filterId: candidate.filterId,
+    version: candidate.version,
+    config: candidate.config,
+    configCanon: candidate.configCanon,
+    period,
+    asset,
+    rangeFirstMs,
+    rangeLastMs,
+    stats,
+    fromCache: false,
+  };
+}
+
+/**
+ * Pure walker. Iterates `bars` from index `requiredBars - 1` to
+ * `bars.length - 2` (each step needs a "next bar" to score against),
+ * runs `predict` on the trailing window (which ends at and includes
+ * bar `i` — never bar `i + 1`), and records the outcome.
+ *
+ * Flat candles (`close == open`) count as 'u'. The strict version
+ * (`close > open`) would mis-score the ~few-per-thousand flat
+ * candles as losses for every "up" prediction; Polymarket settles
+ * the equivalent contract the other way.
+ */
+function walkBars({
+  bars,
+  requiredBars,
+  predict,
+}: {
+  readonly bars: readonly FilterBar[];
+  readonly requiredBars: number;
+  readonly predict: (window: readonly FilterBar[]) => "up" | "down" | null;
+}): {
+  readonly stats: BacktestStats;
+  readonly engagements: readonly BacktestEngagement[];
+} {
+  let nFiresUp = 0;
+  let nWinsUp = 0;
+  let nFiresDown = 0;
+  let nWinsDown = 0;
+  const engagements: BacktestEngagement[] = [];
+  const start = Math.max(requiredBars - 1, 0);
+  const end = bars.length - 2; // need bar[i+1] for outcome
+  for (let i = start; i <= end; i += 1) {
+    const window = bars.slice(i - requiredBars + 1, i + 1);
+    const pred = predict(window);
+    if (pred === null) {
+      continue;
+    }
+    const next = bars[i + 1]!;
+    const actual: "up" | "down" = next.close >= next.open ? "up" : "down";
+    const won: 0 | 1 = pred === actual ? 1 : 0;
+    engagements.push({
+      tsMs: next.openTimeMs,
+      direction: pred === "up" ? "u" : "d",
+      won,
+    });
+    if (pred === "up") {
+      nFiresUp += 1;
+      if (won === 1) {
+        nWinsUp += 1;
+      }
+    } else {
+      nFiresDown += 1;
+      if (won === 1) {
+        nWinsDown += 1;
+      }
+    }
+  }
+  return {
+    stats: {
+      nBars: bars.length,
+      nFiresUp,
+      nWinsUp,
+      nFiresDown,
+      nWinsDown,
+    },
+    engagements,
+  };
+}

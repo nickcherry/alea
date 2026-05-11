@@ -57,8 +57,8 @@ export async function scanPolymarketTradingPerformance({
    * Optional authenticated CLOB client. When provided, the scan also
    * fetches `/trades` and enriches each market row with the wallet's
    * fill role (maker / taker / mixed) and fees paid. The dashboard
-   * builder passes this; the live runner doesn't (it only needs the
-   * lifetime PnL scalar).
+   * builder passes this; `trading:hydrate-lifetime-pnl` doesn't (it
+   * only needs the lifetime PnL scalar).
    */
   readonly clobClient?: ClobClient;
 }): Promise<TradingPerformancePayload> {

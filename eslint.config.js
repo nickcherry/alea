@@ -17,6 +17,7 @@ export default [
       "**/.bun/**",
       "**/.claude/worktrees/**",
       "**/tmp/**",
+      "src/assets/web/**/*.js",
       "eslint.config.js",
     ],
   },

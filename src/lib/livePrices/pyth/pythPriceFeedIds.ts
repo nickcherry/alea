@@ -1,9 +1,10 @@
 import type { Asset } from "@alea/types/assets";
 
 /**
- * Pyth Network price-feed IDs for the assets the live trader subscribes
- * to. The IDs are stable across networks (Solana, EVM chains, Hermes)
- * and uniquely identify a `Crypto.<asset>/USD` aggregate. Looked up via
+ * Pyth Network price-feed IDs for every asset in the universe. Used by
+ * the Hermes SSE stream (data:capture, reliability:capture). The IDs
+ * are stable across networks (Solana, EVM chains, Hermes) and uniquely
+ * identify a `Crypto.<asset>/USD` aggregate. Looked up via
  * `https://hermes.pyth.network/v2/price_feeds?asset_type=crypto`.
  *
  * Hermes accepts the IDs with or without a `0x` prefix; we keep the

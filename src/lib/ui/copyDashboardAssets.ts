@@ -15,20 +15,22 @@ const ASSET_SOURCE_DIR = resolve(
 );
 
 /**
- * Copies the shared design-system CSS plus a page's own assets into a
- * sibling `<htmlPath without extension>.assets/` folder, and returns the
- * relative hrefs the HTML should reference (in the order given).
+ * Copies the shared design-system CSS/JS plus a page's own assets into
+ * a sibling `<htmlPath without extension>.assets/` folder, and returns
+ * the relative hrefs the HTML should reference (in the order given).
  *
  * The shared `alea.css` is always copied first, before any page assets,
- * so its tokens and base styles cascade beneath page overrides.
+ * so its tokens and base styles cascade beneath page overrides. The
+ * shared info-tooltip script is copied before page scripts so every
+ * dashboard gets the same overlay behavior.
  *
  * @example
  *   const { stylesheets, scripts } = await copyDashboardAssets({
- *     htmlPath: "/.../tmp/training-distributions_2026-05-06T17-55Z.html",
- *     pageAssets: ["training-distributions.css", "training-distributions.js"],
+ *     htmlPath: "/.../tmp/web/exploration/index.html",
+ *     pageAssets: ["exploration.css", "exploration.js"],
  *   });
- *   // stylesheets = ["training-distributions_..._.assets/alea.css", "..."]
- *   // scripts     = ["training-distributions_..._.assets/training-distributions.js"]
+ *   // stylesheets = ["index.assets/alea.css", "index.assets/exploration.css"]
+ *   // scripts     = ["index.assets/alea-info-tooltips.js", "index.assets/exploration.js"]
  */
 export async function copyDashboardAssets({
   htmlPath,
@@ -48,7 +50,7 @@ export async function copyDashboardAssets({
   const assetsDir = assetsDirFor(htmlPath);
   await mkdir(assetsDir, { recursive: true });
 
-  const allAssets = ["alea.css", ...pageAssets];
+  const allAssets = ["alea.css", "alea-info-tooltips.js", ...pageAssets];
   await Promise.all(
     allAssets.map((name) =>
       copyFile(resolve(ASSET_SOURCE_DIR, name), resolve(assetsDir, name)),

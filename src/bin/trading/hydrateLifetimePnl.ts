@@ -1,20 +1,20 @@
 import { env } from "@alea/constants/env";
 import { CliUsageError } from "@alea/lib/cli/CliUsageError";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
+import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
 import {
   DEFAULT_LIFETIME_PNL_PATH,
   persistLifetimePnl,
 } from "@alea/lib/trading/state/lifetimePnlStore";
 import { formatUsd } from "@alea/lib/trading/format";
-import { createPolymarketVendor } from "@alea/lib/trading/vendor/polymarket/createPolymarketVendor";
+import { scanPolymarketLifetimePnl } from "@alea/lib/trading/vendor/polymarket/scanLifetimePnl";
 import pc from "picocolors";
 
 /**
  * Manually rescans the wallet's lifetime PnL via the same Polymarket
  * data-api scan that backs the live trading dashboard, and overwrites
- * the on-disk checkpoint. The live runner refreshes this number on
- * every window wrap-up; this command is the operator's escape hatch
- * for an out-of-band refresh.
+ * the on-disk checkpoint. Used when the checkpoint was deleted or the
+ * operator wants an out-of-band refresh.
  *
  * Read-only against the venue. Does not place or cancel any orders.
  */
@@ -23,7 +23,7 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
   summary:
     "Rescan the wallet's Polymarket lifetime PnL and refresh the on-disk checkpoint",
   description:
-    "Calls the same data-api `/activity` + `/positions` scan the live trading dashboard uses, and writes the resulting lifetime PnL to tmp/lifetime-pnl.json. Required when the on-disk checkpoint was deleted, became corrupt, or the operator wants an out-of-band refresh outside the live runner's per-window cycle.",
+    "Calls the same data-api `/activity` + `/positions` scan the live trading dashboard uses, and writes the resulting lifetime PnL to tmp/lifetime-pnl.json. Required when the on-disk checkpoint was deleted, became corrupt, or the operator wants an out-of-band refresh.",
   options: [],
   examples: ["bun alea trading:hydrate-lifetime-pnl"],
   output:
@@ -39,11 +39,12 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
         "POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS must be set.",
       );
     }
-    const vendor = await createPolymarketVendor();
+    const auth = await getPolymarketAuthState();
     io.writeStdout(
-      `${pc.bold("trading:hydrate-lifetime-pnl")} ${pc.dim(`(vendor=${vendor.id} wallet=`)}${vendor.walletAddress.slice(0, 10)}…${pc.dim(")")}\n`,
+      `${pc.bold("trading:hydrate-lifetime-pnl")} ${pc.dim(`(wallet=`)}${auth.walletAddress.slice(0, 10)}…${pc.dim(")")}\n`,
     );
-    const scan = await vendor.scanLifetimePnl({
+    const scan = await scanPolymarketLifetimePnl({
+      funderAddress: auth.funderAddress,
       onProgress: (event) => {
         if (event.kind === "activity-page") {
           io.writeStdout(
@@ -57,7 +58,7 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
       },
     });
     await persistLifetimePnl({
-      walletAddress: vendor.walletAddress,
+      walletAddress: auth.walletAddress,
       lifetimePnlUsd: scan.lifetimePnlUsd,
     });
     io.writeStdout(
@@ -68,4 +69,3 @@ export const tradingHydrateLifetimePnlCommand = defineCommand({
     );
   },
 });
-

@@ -375,7 +375,7 @@ async function discoverMarketForWindow({
       schedulePersist();
       return;
     }
-    activeWindow.conditionId = market.market.vendorRef;
+    activeWindow.conditionId = market.vendorRef;
     activeWindow.marketStatus = "active";
     schedulePersist();
   } catch (error) {

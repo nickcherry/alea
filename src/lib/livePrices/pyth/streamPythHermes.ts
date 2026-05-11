@@ -38,8 +38,8 @@ export type PythTick = {
   readonly conf: number;
   /**
    * Publisher-side publish time in ms. Pyth's SSE payload reports
-   * this in seconds; we multiply for parity with the rest of the
-   * `LivePriceTick.exchangeTimeMs` contract.
+   * this in seconds; we multiply so all tick timestamps in the codebase
+   * are in the same ms unit.
    */
   readonly publishTimeMs: number;
   readonly receivedAtMs: number;

@@ -1,180 +1,125 @@
-# Regimes
+# Market Regimes
 
-## Purpose
+Every bar in the canonical pyth-spot candle series is tagged with a
+**market regime** — the classifier's read of "what kind of market
+were we in when this bar closed". Regime tags drive two things:
 
-A **regime** is a multi-class partition of 5m windows by current market
-context — trend, volatility, momentum, or short-term carry. The training
-side computes a separate hold-rate surface per regime; the live trading
-side looks up which regime each algo classifies the current snapshot
-into and trades on the highest-edge `(algo, regime)` read available.
+- The exploration dashboard stratifies filter performance by regime
+  so we can see "this config is 56% overall but 70% in `low_vol_ranging`".
+- The committee picks a different voter roster per regime; the
+  dry-run loop classifies the current bar and only lets relevant
+  candidates vote. See [COMMITTEE.md](./COMMITTEE.md).
 
-Regimes replaced the earlier binary survival-filter framework as the
-primary live decision axis. Filters still compute on the dashboard for
-diagnostic comparison (without a LIVE badge), but they no longer feed
-the persisted probability table — see
-[Relationship to filters](#relationship-to-filters).
+A regime is **about the market state**, not about a filter's
+strategy family. The `regime` field on a `Filter` object is unrelated
+(it tags the filter family — see [FILTERS.md](./FILTERS.md)).
 
-## Anatomy of a regime algo
+## Tag set
 
-A `RegimeAlgo` is a pure classifier: same input shape used by both the
-offline snapshot pipeline and the live decision path, so the two paths
-can never silently desync. The contract is in
-[`regimeAlgos/types.ts`](../src/lib/training/regimeAlgos/types.ts). Each
-algo declares:
+A 2×2 of volatility × directionality:
 
-- **`id`** — stable snake_case identifier persisted into the probability
-  table and cache keys. Don't rename once live.
-- **`displayName`** / **`description`** — dashboard labels.
-- **`version`** — bump when `classify` produces materially different
-  output for the same input. Cache invalidates per-algo on this.
-- **`regimes`** — the exhaustive ordered list of labels the classifier
-  can emit. The dashboard renders columns in this order; the
-  probability-table generator allocates one surface per label.
-- **`classify(input) → label | null`** — pure function. Returns `null`
-  during warmup or on degenerate inputs (e.g. `atr14 <= 0`); the
-  framework counts that as a skip rather than a default bucket.
-- **`params`** — free-form parameter snapshot for display.
+```
+low_vol_trending     low_vol_ranging
+high_vol_trending    high_vol_ranging
+```
 
-### Inputs
+Defined in
+[`src/lib/regime/types.ts`](../src/lib/regime/types.ts). Adding a
+fifth tag means a migration update on `bar_regimes.market_regime`
+and `committee_selections.market_regime` check constraints — both
+in [`src/lib/db/migrations/`](../src/lib/db/migrations/).
 
-The same `RegimeClassifierInput` is computed offline (per snapshot
-context) and live (from a rolling 5m bars buffer). Adding a new algo
-that consumes any of these costs zero per-input wiring:
+## Classifier
 
-| Field             | Source                                        |
-| ----------------- | --------------------------------------------- |
-| `leadingSide`     | `up` if snapshot price ≥ window open, else `down` |
-| `ema20` / `ema50` | EMAs of 5m closes                             |
-| `atr14` / `atr50` | Wilder ATR of 5m bars (current vol / baseline) |
-| `atr3`            | Wilder ATR of 5m bars — fast vol shock signal |
-| `rsi14`           | 14-period RSI on 5m closes                    |
-| `prev5mDirection` | Direction of the most recent completed 5m bar |
+[`classifyMarketRegime`](../src/lib/regime/classify.ts) takes a
+trailing bar window and returns a `MarketRegime | null`. Two cheap
+computations, both gated on having at least 100 prior bars:
 
-`null` on any field signals "not seeded yet"; algos that need a missing
-input return `null` from `classify` and the snapshot is skipped.
+**Volatility axis** — log-return realised vol of the last 20 bars
+vs the median realised vol across the last 100 bars (rolling 20-bar
+windows). Ratio > 1.3 → `high_vol`; otherwise `low_vol`. A wider
+band keeps the regime from whipping every couple bars.
 
-### Skip semantics
+**Directionality axis** — `|linreg slope × 20| / ATR(20)` — i.e.
+how many ATRs the regression line travels over the 20-bar window. >
+1.2 → `trending`; otherwise `ranging`.
 
-A skipped snapshot counts toward `snapshotsSkipped` but never toward
-any regime's surface — coverage stays honest. This matches the binary
-filter framework's `"skip"` branch.
+When the window is shorter than 100 bars the classifier returns
+`null`. Downstream consumers treat `null` as "don't know" — the
+exploration loader drops those bars, the dry-run loop abstains.
 
-## Active algo set
+Thresholds (`HIGH_VOL_RATIO=1.3`, `TREND_THRESHOLD=1.2`,
+`BASELINE_BARS=100`, `RECENT_BARS=20`) live as named constants at
+the top of the file. Tuning them invalidates downstream selections
+— after a change, run `regimes:backfill` and `committee:select`
+before the next dry-run.
 
-The dashboard's active set is the array exported from
-[`regimeAlgos/registry.ts`](../src/lib/training/regimeAlgos/registry.ts).
-Adding a new algo is one file under `regimeAlgos/` plus one line in the
-registry — it auto-joins live trading at the next probability-table
-generation if any of its regimes lead.
+## Persistence: `bar_regimes`
 
-| Algo id            | Buckets                                     | What it splits on |
-| ------------------ | ------------------------------------------- | ----------------- |
-| `vol_only_3`       | `low_vol`, `mid_vol`, `high_vol`            | ATR-14 ÷ ATR-50, cuts at 0.7 / 1.3 |
-| `vol_quartiles_4`  | `vol_q1_lowest` … `vol_q4_highest`          | ATR-14 ÷ ATR-50, quartile-style cuts (0.6 / 1.0 / 1.5) |
-| `trend_x_vol_6`    | `{no/with/against}_trend_{low/high}_vol`    | Trend (EMA20−EMA50 ÷ ATR14) × vol |
+A first-class table, **not** computed on the fly. One row per
+`(asset, period, ts_ms)`:
 
-## Auto-promotion to live
+```
+asset          text
+period         text         5m or 15m
+ts_ms          bigint       bar open-time
+market_regime  text | null  one of 4 tags, or null at series start
+```
 
-The probability-table generator
-([`bin/trading/genProbabilityTable.ts`](../src/bin/trading/genProbabilityTable.ts))
-walks every algo in `LIVE_TRADING_REGIME_ALGOS`, partitions snapshots
-by regime, computes each regime's average hold-rate lead vs the
-unconditional baseline, and persists a `LeadingRegimeTable` for any
-regime whose lead clears `LEADING_REGIME_MIN_LEAD_PP` (1.0pp today).
+Schema:
+[`202605120300_bar_regimes`](../src/lib/db/migrations/202605120300_bar_regimes.ts).
+The exploration dashboard's per-regime aggregator joins
+`filter_engagements` against this table on
+`(asset, period, ts_ms)` to bucket fires. The committee selection
+command does the same.
 
-- **Lagging or tied regimes are excluded entirely.** The decision
-  evaluator skips an algo's contribution when the snapshot's regime
-  under that algo isn't in the persisted table.
-- **Per-cell sample floor** is `REGIME_CELL_MIN_SAMPLES` (400 today).
-  Buckets thinner than that are dropped before the lead-PP averaging
-  step. This is a single shared floor across chart visibility,
-  `avgLeadPp` aggregation, gen-table determination, and the live
-  table — so the dashboard, gen-time filter, and persisted artifact
-  all agree on which cells are trustworthy.
-- **Sweet-spot restriction** — each persisted surface is restricted to
-  the bp range that captures most of the regime's information gain
-  (same algorithm as the legacy filter framework's sweet spot). The
-  rationale and threshold tuning is in
-  [the sweet-spot research note](./research/2026-05-04-sweet-spot.md).
+Backfilling is a one-shot CLI:
 
-Both constants live in
-[`src/constants/trading.ts`](../src/constants/trading.ts) and are
-worth A/B'ing if early live results suggest too-many or too-few
-regimes are clearing the bar.
+```sh
+bun alea regimes:backfill
+```
 
-## Live decision path
+It walks each `(asset, period)` series in chronological order,
+calls `classifyMarketRegime` on a 100-bar trailing window, and
+upserts into `bar_regimes`. Idempotent — re-running after a
+classifier change overwrites every existing row.
 
-At decision time the runner classifies the current snapshot under
-every live algo, then calls
-[`lookupAllProbabilities`](../src/lib/trading/lookupProbability.ts) with
-a `regimesByAlgoId` map. The function iterates every persisted
-`(algo, regime)` table and returns one `ProbabilityLookup` per entry
-where the classified regime matches and `(remaining, distanceBp)`
-resolves to a populated bucket. The decision evaluator then picks the
-side with the largest edge across all `(lookup, side)` tuples — the
-"any algo gives me actionable signal → trade" greedy strategy.
+Current distribution on 5m + 15m combined (~1.36M bars total):
 
-Concretely: a single snapshot can produce up to N reads (one per live
-algo) and trade on whichever shows the strongest probability vs
-market-implied. Algos that don't classify the snapshot (warmup, null
-input) silently contribute nothing.
+| Regime | Share |
+|---|---|
+| `low_vol_trending` | 54% |
+| `low_vol_ranging` | 24% |
+| `high_vol_trending` | 17% |
+| `high_vol_ranging` | 5% |
+| `null` (early-history) | 0.07% |
 
-## Adding a new algo
+That's a real asymmetry in the data, not a calibration accident.
+Crypto on 5m bars is mostly "low vol drifting somewhere" with rare
+high-vol ranging windows.
 
-1. Create `src/lib/training/regimeAlgos/<name>.ts` exporting a
-   `RegimeAlgo` object satisfying the contract.
-2. Pick `version: 1` (bump only when `classify` behaviour changes for
-   the same input — the cache invalidates per-algo on this).
-3. Co-locate `<name>.test.ts` covering the per-label and `null` skip
-   branches.
-4. Append the algo to the array in
-   [`regimeAlgos/registry.ts`](../src/lib/training/regimeAlgos/registry.ts).
-5. Run `bun alea training:distributions --assets btc` to regenerate the
-   dashboard and confirm the new section renders. Eyeball the
-   per-regime lead-PP — if one or more regimes clear 1.0pp, the algo
-   will auto-join live at the next `trading:gen-probability-table`.
+## Live classification
 
-If the algo needs a new input (e.g. a longer-period EMA), add the
-field to `RegimeClassifierInput` in
-[`types.ts`](../src/lib/training/regimeAlgos/types.ts), wire the
-offline snapshot context to compute it, and wire the live
-`RegimeTrackers` to compute the same value from the rolling buffer.
-The two paths must stay locked in step.
+The dry-run loop calls the same `classifyMarketRegime` function at
+decision time — see
+[`runDryRun.ts`](../src/lib/dryRun/runDryRun.ts). The 150-bar
+hydration buffer on startup is wider than the classifier's 100-bar
+window, so the first decision always classifies. If the buffer is
+ever shorter than 100 bars (only possible in an unrealistic edge
+case), the loop logs an abstain and skips the decision.
 
-## Relationship to filters
-
-The earlier binary-filter framework
-([survivalFilters/](../src/lib/training/survivalFilters/)) still
-computes on the dashboard but no longer feeds the persisted
-probability table. Treat it as a benchmarking and research tool:
-
-- Filters answer **yes/no per snapshot** ("is the price > 1.5 ATR from
-  the line?"); regimes answer **which-of-N per window**.
-- Filters are scored via `calibrationScore` against the unconditional
-  baseline; regimes are evaluated by per-cell lead-PP and the
-  leading-regime threshold.
-- The dashboard renders filter sections for cross-checking, without
-  the LIVE badge that marks production-relevant regime sections. The
-  methodology is documented in
-  [TRAINING_DOMAIN.md](./TRAINING_DOMAIN.md#filters-legacy-benchmarking-only).
-
-Why the switch: regimes give a multi-class partition that scales
-naturally to N algos run in parallel, where the live evaluator picks
-the highest-edge read per snapshot. The single binary-filter axis
-forced an a-priori "champion filter" choice and couldn't combine
-multiple orthogonal signals at decision time without compounding (which
-restricts the kept population and, empirically, scored worse than the
-parent — see the
-[filter scoring overhaul note](./research/2026-05-04-filter-scoring-overhaul.md)).
+The result is stored on every `dry_run_decisions` row as
+`market_regime`. The dashboard slices win rate by that column so we
+can see "we hit 62% in low_vol_ranging but only 49% in
+high_vol_trending overnight."
 
 ## Files
 
-- Algo contract: [src/lib/training/regimeAlgos/types.ts](../src/lib/training/regimeAlgos/types.ts)
-- Active set: [src/lib/training/regimeAlgos/registry.ts](../src/lib/training/regimeAlgos/registry.ts)
-- Per-algo classifiers: [src/lib/training/regimeAlgos/](../src/lib/training/regimeAlgos/)
-- Snapshot aggregator: [src/lib/training/regimeAlgos/applyRegimeAlgos.ts](../src/lib/training/regimeAlgos/applyRegimeAlgos.ts)
-- Result types: [src/lib/training/regimeAlgos/resultTypes.ts](../src/lib/training/regimeAlgos/resultTypes.ts)
-- Probability-table generator: [src/bin/trading/genProbabilityTable.ts](../src/bin/trading/genProbabilityTable.ts)
-- Live lookup: [src/lib/trading/lookupProbability.ts](../src/lib/trading/lookupProbability.ts)
-- Persisted shape: [src/lib/trading/types.ts](../src/lib/trading/types.ts) (`leadingRegimeTableSchema`)
-- Tunables: [src/constants/trading.ts](../src/constants/trading.ts) (`LEADING_REGIME_MIN_LEAD_PP`, `REGIME_CELL_MIN_SAMPLES`, `LIVE_TRADING_REGIME_ALGOS`)
+- [`src/lib/regime/types.ts`](../src/lib/regime/types.ts) — the
+  `MarketRegime` union.
+- [`src/lib/regime/classify.ts`](../src/lib/regime/classify.ts) —
+  the classifier.
+- [`src/lib/db/migrations/202605120300_bar_regimes.ts`](../src/lib/db/migrations/202605120300_bar_regimes.ts) —
+  schema.
+- [`src/bin/regimes/backfill.ts`](../src/bin/regimes/backfill.ts) —
+  the backfill CLI.

@@ -1,0 +1,52 @@
+/**
+ * Eligibility + ranking rules for `committee:select`. Tweakable
+ * defaults — passed into `runCommitteeSelection` so the CLI can
+ * surface them via flags later without touching the library.
+ *
+ * Rationale for the defaults lives in `doc/COMMITTEE.md`.
+ */
+export type CommitteeSelectionRules = {
+  /** Minimum aggregate engagements in a regime for the candidate to
+   * be considered eligible. Below this the WR is too noisy to act
+   * on. */
+  readonly minFires: number;
+  /** Floor on the (candidate, regime) aggregate win rate. */
+  readonly minAggregateWinRate: number;
+  /** Floor on the worst quarter's win rate within this regime. A
+   * quarter must have at least `worstQuarterMinFires` fires to enter
+   * the floor check; candidates with no quarter large enough skip
+   * the check entirely. */
+  readonly minWorstQuarterWinRate: number;
+  readonly worstQuarterMinFires: number;
+  /** Top-K cap per (regime, period). */
+  readonly topN: number;
+};
+
+export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
+  minFires: 20,
+  minAggregateWinRate: 0.53,
+  minWorstQuarterWinRate: 0.5,
+  worstQuarterMinFires: 10,
+  topN: 10,
+};
+
+/** Inputs the ranking sees about a single (candidate, regime). */
+export type CandidateRegimeStats = {
+  readonly filterId: string;
+  readonly filterVersion: number;
+  readonly configCanon: string;
+  readonly period: string;
+  readonly marketRegime: string;
+  readonly nFires: number;
+  readonly nWins: number;
+  readonly winRate: number;
+  readonly wilsonLow: number;
+  /** Lowest WR across quarters with `≥ worstQuarterMinFires` fires
+   * within this regime. `null` when no quarter clears the sample
+   * minimum — in that case the worst-quarter floor doesn't apply. */
+  readonly worstQuarterWinRate: number | null;
+};
+
+export type SelectedCandidate = CandidateRegimeStats & {
+  readonly rank: number;
+};

@@ -343,7 +343,7 @@ async function discoverWindow({
       signal,
     });
     if (discovered !== null) {
-      out.push(discovered.market);
+      out.push(discovered);
     }
   }
   return out;

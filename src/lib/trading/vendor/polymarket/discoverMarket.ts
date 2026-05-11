@@ -1,25 +1,7 @@
 import { polymarket } from "@alea/constants/polymarket";
-import {
-  mergePolymarketOrderConstraints,
-  parseClobMarketInfoConstraints,
-} from "@alea/lib/trading/vendor/polymarket/marketConstraints";
 import type { TradableMarket } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 import { z } from "zod";
-
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
-/**
- * What the gamma-api lookup returns when it finds the expected
- * up/down 5m market: the runner-facing `TradableMarket` plus the
- * vendor-internal flags the rest of the Polymarket adapter needs
- * (negRisk, primarily). The factory keeps these in a side-table
- * keyed by `vendorRef`/conditionId so the public type stays clean.
- */
-export type DiscoveredPolymarketMarket = {
-  readonly market: TradableMarket;
-  readonly negRisk: boolean;
-};
 
 /**
  * Polymarket "up/down 5m" market lookup via the public gamma-api.
@@ -28,8 +10,13 @@ export type DiscoveredPolymarketMarket = {
  *
  * Returns `null` when the slug doesn't resolve to anything that
  * matches the expected up/down shape (degenerate outcomes, missing
- * token ids, mismatched endDate). The runner treats `null` as
- * "skip this window".
+ * token ids). Callers treat `null` as "skip this window".
+ *
+ * The earlier draft also looked up venue tick/min-size constraints
+ * off the CLOB so the live trader could submit valid orders. That
+ * trader is gone; market discovery now only resolves the three opaque
+ * ids the capture/reliability pipelines need to subscribe to the
+ * stream.
  */
 export async function discoverPolymarketMarket({
   asset,
@@ -39,7 +26,7 @@ export async function discoverPolymarketMarket({
   readonly asset: Asset;
   readonly windowStartUnixSeconds: number;
   readonly signal?: AbortSignal;
-}): Promise<DiscoveredPolymarketMarket | null> {
+}): Promise<TradableMarket | null> {
   const slug = `${asset}-updown-5m-${windowStartUnixSeconds}`;
   const url = `${polymarket.gammaApiUrl}/events?slug=${slug}`;
   const response = await fetch(url, {
@@ -77,55 +64,12 @@ export async function discoverPolymarketMarket({
   if (upRef === undefined || downRef === undefined) {
     return null;
   }
-  const windowStartMs = windowStartUnixSeconds * 1000;
-  const clobConstraints = await fetchClobMarketInfoConstraints({
-    conditionId: market.conditionId,
-    fallbackNegRisk: market.negRisk ?? false,
-    signal,
-  }).catch(() => null);
   return {
-    market: {
-      asset,
-      windowStartUnixSeconds,
-      windowStartMs,
-      windowEndMs: windowStartMs + FIVE_MINUTES_MS,
-      vendorRef: market.conditionId,
-      upRef,
-      downRef,
-      acceptingOrders: market.acceptingOrders ?? false,
-      constraints:
-        clobConstraints === null
-          ? undefined
-          : mergePolymarketOrderConstraints(clobConstraints),
-      displayLabel: slug,
-    },
-    negRisk: market.negRisk ?? false,
+    asset,
+    vendorRef: market.conditionId,
+    upRef,
+    downRef,
   };
-}
-
-async function fetchClobMarketInfoConstraints({
-  conditionId,
-  fallbackNegRisk,
-  signal,
-}: {
-  readonly conditionId: string;
-  readonly fallbackNegRisk: boolean;
-  readonly signal?: AbortSignal;
-}) {
-  const url = `${polymarket.clobApiUrl}/clob-markets/${conditionId}`;
-  const response = await fetch(url, {
-    headers: { "User-Agent": "alea/1.0" },
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(
-      `CLOB /clob-markets/${conditionId} failed: ${response.status} ${await response.text()}`,
-    );
-  }
-  return parseClobMarketInfoConstraints({
-    raw: await response.json(),
-    fallbackNegRisk,
-  });
 }
 
 function parseStringArray(value: string | undefined): string[] | null {
@@ -155,8 +99,6 @@ const marketSchema = z
     conditionId: z.string(),
     outcomes: z.string().optional(),
     clobTokenIds: z.string().optional(),
-    negRisk: z.boolean().optional(),
-    acceptingOrders: z.boolean().optional(),
   })
   .passthrough();
 

@@ -10,8 +10,8 @@ import type {
 
 /**
  * Per-market trader role, sourced from CLOB /trades. Optional because
- * the live runner's lifetime-PnL refresh path doesn't fetch /trades
- * — only the dashboard build does.
+ * the `trading:hydrate-lifetime-pnl` checkpoint path doesn't fetch
+ * /trades — only the dashboard build does.
  *
  * Fees are NOT in this map. /trades reports `fee_rate_bps: "0"` even
  * for taker orders that were charged the venue's standard ~700bps,

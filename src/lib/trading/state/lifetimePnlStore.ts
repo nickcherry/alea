@@ -6,12 +6,11 @@ import { z } from "zod";
 const repoRoot = resolvePath(import.meta.dir, "../../../..");
 
 /**
- * Default location of the lifetime-PnL checkpoint file. The runtime
- * is DB-free by design, so a single small JSON file under `tmp/` is
- * the only persistent state the live trader maintains. Operators on a
- * production server can symlink `tmp/` somewhere they control if they
- * want this on durable storage; the default keeps it next to the
- * code without any setup.
+ * Default location of the lifetime-PnL checkpoint file used by the
+ * trading-performance dashboard. A single small JSON file under
+ * `tmp/` keeps the dashboard build DB-free and rsync-friendly.
+ * Operators can symlink `tmp/` somewhere they control if they want
+ * this on durable storage; the default keeps it next to the code.
  */
 export const DEFAULT_LIFETIME_PNL_PATH = resolvePath(
   repoRoot,
@@ -47,8 +46,8 @@ export type LifetimePnlLoadResult =
  * Loads the lifetime-PnL checkpoint from disk if it exists and matches
  * the running wallet. Cold-starts (returning 0) for these reasons:
  *
- *   - File doesn't exist → first time the live trader has ever run with
- *     this code on this host. Lifetime begins from this run.
+ *   - File doesn't exist → first time the dashboard has ever run with
+ *     this code on this host. Lifetime begins from this scan.
  *   - File exists but the wallet doesn't match → operator has rotated
  *     wallets; previous lifetime applied to a different funder, so we
  *     don't carry it over.

@@ -712,6 +712,102 @@ body {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Info tooltip — reusable column-header / label annotation.           */
+/* ------------------------------------------------------------------ */
+/* Drop a `<span class="alea-info-tip" data-tip="..." tabindex="0"></span>`
+   right next to any label and the user gets a small ⓘ icon they can
+   hover or keyboard-focus for a plain-English explanation. No JS:
+   the icon comes from `::before`, the bubble from `::after`, both
+   gated on hover/focus. */
+.alea-info-tip {
+  position: relative;
+  display: inline-block;
+  margin-left: 5px;
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+  line-height: 1;
+  font-style: normal;
+  cursor: help;
+  color: var(--alea-text-subtle);
+  outline: 0;
+}
+
+.alea-info-tip::before {
+  content: "ⓘ";
+  font-size: 13px;
+  font-family: var(--alea-font-sans);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.alea-info-tip:hover,
+.alea-info-tip:focus-visible {
+  color: var(--alea-gold);
+  z-index: 100;
+}
+
+.alea-info-tip[data-tip]:hover::after,
+.alea-info-tip[data-tip]:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  background: var(--alea-panel-2);
+  border: 1px solid var(--alea-border);
+  border-radius: 6px;
+  box-shadow: var(--alea-shadow-soft);
+  color: var(--alea-text);
+  font-family: var(--alea-font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-align: left;
+  line-height: 1.45;
+  white-space: normal;
+  pointer-events: none;
+  z-index: 101;
+}
+
+html.alea-js-info-tooltips .alea-info-tip[data-tip]:hover::after,
+html.alea-js-info-tooltips .alea-info-tip[data-tip]:focus-visible::after {
+  content: none;
+}
+
+.alea-info-tip-bubble {
+  position: fixed;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 10px;
+  background: var(--alea-panel-2);
+  border: 1px solid var(--alea-border);
+  border-radius: 6px;
+  box-shadow: var(--alea-shadow-soft);
+  color: var(--alea-text);
+  font-family: var(--alea-font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-align: left;
+  line-height: 1.45;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10000;
+}
+
+.alea-info-tip-bubble.visible {
+  opacity: 1;
+}
+
 .alea-error {
   color: var(--alea-red);
   background: rgba(216, 90, 79, 0.08);
