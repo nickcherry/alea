@@ -9,24 +9,42 @@
   var payload = JSON.parse(payloadEl.textContent || "{}");
   var tokens = JSON.parse(tokensEl.textContent || "{}");
   var alea = window.alea || {};
-  var tabs = document.querySelectorAll(".backtest-period-tab");
+  var stakeUsd = Number(payload.stakeUsd || 20);
+  var activeCandidateCount = Number(
+    (payload.summary && payload.summary.activeCandidateCount) || 1,
+  );
+
+  var periodTabs = document.querySelectorAll(".backtest-period-tab");
   var periodRows = document.querySelectorAll("[data-backtest-period]");
+  var assetSelect = document.getElementById("backtest-asset-select");
   var candidateEmpty = document.getElementById("backtest-candidate-empty");
+  var candidateBody = document.getElementById("backtest-candidate-body");
   var host = document.getElementById("backtest-pnl-chart");
   var empty = document.getElementById("backtest-pnl-empty");
   var tooltip = document.getElementById("backtest-pnl-tooltip");
+  var stakeBadge = document.getElementById("backtest-stake-usd");
+  if (stakeBadge) stakeBadge.textContent = formatStake(stakeUsd);
+
   var plot = null;
   var currentPeriod = initialPeriod();
+  var currentAsset = initialAsset();
 
-  Array.prototype.forEach.call(tabs, function (tab) {
+  Array.prototype.forEach.call(periodTabs, function (tab) {
     tab.addEventListener("click", function () {
       currentPeriod = tab.dataset.period || currentPeriod;
-      Array.prototype.forEach.call(tabs, function (t) {
+      Array.prototype.forEach.call(periodTabs, function (t) {
         t.setAttribute("aria-selected", t === tab ? "true" : "false");
       });
       renderAll();
     });
   });
+
+  if (assetSelect) {
+    assetSelect.addEventListener("change", function () {
+      currentAsset = assetSelect.value || "all";
+      renderAll();
+    });
+  }
 
   renderAll();
 
@@ -37,7 +55,7 @@
 
   function initialPeriod() {
     var selected = "5m";
-    Array.prototype.forEach.call(tabs, function (tab) {
+    Array.prototype.forEach.call(periodTabs, function (tab) {
       if (tab.getAttribute("aria-selected") === "true") {
         selected = tab.dataset.period || selected;
       }
@@ -45,53 +63,170 @@
     return selected;
   }
 
+  function initialAsset() {
+    if (assetSelect) return assetSelect.value || "all";
+    return "all";
+  }
+
   function renderAll() {
     renderPeriodRows();
+    renderAssetRows();
+    renderCandidates();
     renderProfile();
+    renderSectionContext();
     renderChart();
   }
 
   function renderPeriodRows() {
-    var visibleCandidates = 0;
     Array.prototype.forEach.call(periodRows, function (row) {
+      if (row.id === "backtest-candidate-empty") return;
+      if (row.closest && row.closest("#backtest-candidate-body")) return;
       var visible = row.dataset.backtestPeriod === currentPeriod;
       row.hidden = !visible;
-      if (visible && row.closest("#backtest-candidate-body")) {
-        visibleCandidates += 1;
-      }
     });
-    if (candidateEmpty) {
-      candidateEmpty.hidden = visibleCandidates > 0;
-    }
+  }
+
+  function renderAssetRows() {
+    var assetRows = document.querySelectorAll("[data-backtest-asset]");
+    Array.prototype.forEach.call(assetRows, function (row) {
+      var periodOk = row.dataset.backtestPeriod === currentPeriod;
+      var assetOk =
+        currentAsset === "all" || row.dataset.backtestAsset === currentAsset;
+      row.hidden = !(periodOk && assetOk);
+    });
+  }
+
+  function renderCandidates() {
+    if (!candidateBody) return;
+    var source =
+      currentAsset === "all"
+        ? payload.topCandidates || []
+        : (payload.topCandidatesByAsset || []).filter(function (row) {
+            return row.asset === currentAsset;
+          });
+    var matched = source.filter(function (row) {
+      return row.period === currentPeriod;
+    });
+    candidateBody.innerHTML = matched.length
+      ? matched.map(renderCandidateRow).join("")
+      : '<tr><td colspan="9"><span class="alea-muted">No active-profile backtest rows for this view.</span></td></tr>';
+    if (candidateEmpty) candidateEmpty.hidden = true;
+  }
+
+  function renderCandidateRow(row) {
+    var family = row.filterFamily === null || row.filterFamily === undefined
+      ? "unknown"
+      : familyLabel(row.filterFamily);
+    return (
+      '<tr data-backtest-period="' +
+      escapeHtml(row.period) +
+      '">' +
+      '<th><span class="backtest-filter-id">' +
+      escapeHtml(row.filterId) +
+      '</span><span class="backtest-filter-version">v' +
+      Number(row.filterVersion).toLocaleString() +
+      "</span></th>" +
+      "<td>" +
+      escapeHtml(row.period) +
+      "</td>" +
+      "<td>" +
+      escapeHtml(family) +
+      "</td>" +
+      "<td>" +
+      Number(row.assetCount).toLocaleString() +
+      "</td>" +
+      "<td>" +
+      Number(row.nEngagements).toLocaleString() +
+      "</td>" +
+      '<td class="' +
+      wrCellClass(row.winRate) +
+      '">' +
+      formatPercent(row.winRate) +
+      "</td>" +
+      '<td class="' +
+      wrCellClass(row.upWinRate) +
+      '">' +
+      formatPercent(row.upWinRate) +
+      "</td>" +
+      '<td class="' +
+      wrCellClass(row.downWinRate) +
+      '">' +
+      formatPercent(row.downWinRate) +
+      "</td>" +
+      '<td class="backtest-config">' +
+      escapeHtml(row.configCanon) +
+      "</td>" +
+      "</tr>"
+    );
   }
 
   function renderProfile() {
-    var row = periodSummary();
+    var stats = profileStats();
     setText("backtest-profile-period", currentPeriod);
+    setText("backtest-profile-asset", assetLabel(currentAsset));
     setText(
       "backtest-profile-coverage",
-      row ? formatCoverage(row.runCount, row.expectedRunCount) : "0 / 0",
+      formatCoverage(stats.runCount, stats.expectedRunCount),
     );
-    setText(
-      "backtest-profile-win-rate",
-      row && row.winRate !== null ? alea.formatPercent(row.winRate) : "—",
-    );
+    setText("backtest-profile-win-rate", formatPercent(stats.winRate));
     setText(
       "backtest-profile-engagements",
-      Number(row ? row.nEngagements : 0).toLocaleString(),
+      Number(stats.nEngagements).toLocaleString(),
     );
     setText(
       "backtest-profile-latest",
-      row && row.computedAtMaxMs !== null
-        ? new Date(row.computedAtMaxMs).toLocaleString()
+      stats.computedAtMaxMs !== null
+        ? new Date(stats.computedAtMaxMs).toLocaleString()
         : "—",
     );
     setText(
       "backtest-profile-candle-range",
-      row
-        ? formatDate(row.rangeFirstMs) + " to " + formatDate(row.rangeLastMs)
-        : "— to —",
+      formatDate(stats.rangeFirstMs) + " to " + formatDate(stats.rangeLastMs),
     );
+  }
+
+  function renderSectionContext() {
+    var label = assetLabel(currentAsset).toLowerCase();
+    setText("backtest-pnl-context", "/ " + label);
+    setText("backtest-profile-context", "/ " + label);
+    setText("backtest-candidates-context", "/ " + label);
+  }
+
+  function profileStats() {
+    if (currentAsset === "all") {
+      var periodRow = (payload.byPeriod || []).find(function (row) {
+        return row.period === currentPeriod;
+      });
+      if (periodRow) return periodRow;
+      return emptyStats();
+    }
+    var assetRow = (payload.byAsset || []).find(function (row) {
+      return row.period === currentPeriod && row.asset === currentAsset;
+    });
+    if (!assetRow) return emptyStats();
+    return {
+      runCount: assetRow.runCount,
+      expectedRunCount: assetRow.expectedRunCount,
+      nEngagements: assetRow.nEngagements,
+      nWins: assetRow.nWins,
+      winRate: assetRow.winRate,
+      computedAtMaxMs: assetRow.computedAtMaxMs,
+      rangeFirstMs: null,
+      rangeLastMs: null,
+    };
+  }
+
+  function emptyStats() {
+    return {
+      runCount: 0,
+      expectedRunCount: 0,
+      nEngagements: 0,
+      nWins: 0,
+      winRate: null,
+      computedAtMaxMs: null,
+      rangeFirstMs: null,
+      rangeLastMs: null,
+    };
   }
 
   function renderChart() {
@@ -102,8 +237,27 @@
     }
     host.innerHTML = "";
 
-    var points = (payload.pnlSeries || []).filter(function (point) {
-      return point.period === currentPeriod;
+    var dailyMap = new Map();
+    (payload.pnlSeries || []).forEach(function (point) {
+      if (point.period !== currentPeriod) return;
+      if (currentAsset !== "all" && point.asset !== currentAsset) return;
+      var existing = dailyMap.get(point.tsMs);
+      if (existing) {
+        existing.nWins += point.nWins;
+        existing.nLosses += point.nLosses;
+        existing.nEngagements += point.nEngagements;
+      } else {
+        dailyMap.set(point.tsMs, {
+          tsMs: point.tsMs,
+          nWins: point.nWins,
+          nLosses: point.nLosses,
+          nEngagements: point.nEngagements,
+        });
+      }
+    });
+
+    var points = Array.from(dailyMap.values()).sort(function (a, b) {
+      return a.tsMs - b.tsMs;
     });
     if (points.length === 0) {
       empty.style.display = "flex";
@@ -111,11 +265,18 @@
     }
     empty.style.display = "none";
 
+    var dollarPerUnit = stakeUsd / Math.max(activeCandidateCount, 1);
+    var cumulative = 0;
+    points.forEach(function (point) {
+      cumulative += (point.nWins - point.nLosses) * dollarPerUnit;
+      point.cumulativePnlUsd = cumulative;
+    });
+
     var xs = points.map(function (point) {
       return point.tsMs / 1000;
     });
     var ys = points.map(function (point) {
-      return point.cumulativePnlUnits;
+      return point.cumulativePnlUsd;
     });
     plot = new uPlot(
       {
@@ -125,11 +286,11 @@
         series: [
           {},
           {
-            label: "Cumulative PnL",
+            label: "Cumulative PnL ($)",
             stroke: "#d7aa45",
             width: 3,
             value: function (_self, raw) {
-              return raw == null ? "--" : formatUnits(raw);
+              return raw == null ? "--" : formatUsd(raw);
             },
           },
         ],
@@ -147,7 +308,7 @@
             font: tokens.axisFont,
             size: 74,
             values: function (_self, vals) {
-              return vals.map(formatUnits);
+              return vals.map(formatUsd);
             },
           },
         ],
@@ -165,7 +326,7 @@
                 new Date(point.tsMs).toISOString().slice(0, 10) +
                 "</div>" +
                 '<div class="alea-tooltip-row"><span></span><span class="name">PnL</span><span class="value">' +
-                formatUnits(point.cumulativePnlUnits) +
+                formatUsd(point.cumulativePnlUsd) +
                 "</span></div>" +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Wins / Losses</span><span class="value">' +
                 Number(point.nWins).toLocaleString() +
@@ -192,14 +353,6 @@
     if (tooltip) tooltip.classList.remove("visible");
   }
 
-  function periodSummary() {
-    var rows = payload.byPeriod || [];
-    for (var i = 0; i < rows.length; i += 1) {
-      if (rows[i].period === currentPeriod) return rows[i];
-    }
-    return null;
-  }
-
   function setText(id, value) {
     var el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -220,8 +373,56 @@
       : new Date(ms).toISOString().slice(0, 10);
   }
 
-  function formatUnits(value) {
-    if (value === 0) return "0";
-    return (value > 0 ? "+" : "") + Number(value).toLocaleString();
+  function formatPercent(value) {
+    if (value === null || value === undefined) return "—";
+    if (alea.formatPercent) return alea.formatPercent(value);
+    return (value * 100).toFixed(1) + "%";
+  }
+
+  function formatUsd(value) {
+    if (value === null || value === undefined) return "—";
+    var sign = value < 0 ? "-" : value > 0 ? "+" : "";
+    var abs = Math.abs(value);
+    var formatted;
+    if (abs >= 1000) {
+      formatted = "$" + Math.round(abs).toLocaleString();
+    } else if (abs >= 10) {
+      formatted = "$" + abs.toFixed(0);
+    } else {
+      formatted = "$" + abs.toFixed(2);
+    }
+    return sign + formatted;
+  }
+
+  function formatStake(value) {
+    var n = Number(value);
+    if (!isFinite(n)) return "20";
+    return n.toLocaleString();
+  }
+
+  function assetLabel(asset) {
+    if (asset === "all") return "All assets";
+    return String(asset).toUpperCase();
+  }
+
+  function familyLabel(family) {
+    if (!family) return "unknown";
+    return String(family).replace(/_/g, " ");
+  }
+
+  function wrCellClass(value) {
+    var base = "alea-mono";
+    if (value === null || value === undefined) return base;
+    if (value >= 0.55) return base + " alea-tone-pos";
+    if (value < 0.5) return base + " alea-tone-neg";
+    return base;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 })();

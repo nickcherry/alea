@@ -56,6 +56,7 @@ export type BacktestDashboardCandidateRow = {
   readonly filterVersion: number;
   readonly filterFamily: string | null;
   readonly period: string;
+  readonly asset: string | null;
   readonly configCanon: string;
   readonly assetCount: number;
   readonly nEngagements: number;
@@ -68,11 +69,11 @@ export type BacktestDashboardCandidateRow = {
 
 export type BacktestDashboardPnlPoint = {
   readonly period: string;
+  readonly asset: string;
   readonly tsMs: number;
   readonly nEngagements: number;
   readonly nWins: number;
   readonly nLosses: number;
-  readonly cumulativePnlUnits: number;
 };
 
 export type BacktestDashboardPayload = {
@@ -80,9 +81,11 @@ export type BacktestDashboardPayload = {
   readonly trainingProfileId: string;
   readonly supportedPeriods: readonly string[];
   readonly assets: readonly string[];
+  readonly stakeUsd: number;
   readonly summary: BacktestDashboardSummary;
   readonly byPeriod: readonly BacktestDashboardPeriodRow[];
   readonly byAsset: readonly BacktestDashboardAssetRow[];
   readonly topCandidates: readonly BacktestDashboardCandidateRow[];
+  readonly topCandidatesByAsset: readonly BacktestDashboardCandidateRow[];
   readonly pnlSeries: readonly BacktestDashboardPnlPoint[];
 };

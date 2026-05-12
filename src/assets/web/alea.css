@@ -540,6 +540,92 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* Select dropdown (paired with a small uppercase label). Used by     */
+/* page-level filters that benefit from a wider value set than pill  */
+/* tabs (e.g. per-asset filter on dashboards).                       */
+/* ------------------------------------------------------------------ */
+
+.alea-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--alea-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.alea-select-wrap select {
+  min-width: 150px;
+  appearance: none;
+  color: var(--alea-text);
+  background:
+    linear-gradient(180deg, rgba(215, 170, 69, 0.08), rgba(7, 9, 10, 0.7)),
+    var(--alea-bg-soft);
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 8px;
+  padding: 8px 34px 8px 12px;
+  font-family: var(--alea-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%23d7aa45' d='M2 4l4 4 4-4z'/></svg>"),
+    linear-gradient(180deg, rgba(215, 170, 69, 0.08), rgba(7, 9, 10, 0.7)),
+    var(--alea-bg-soft);
+  background-repeat: no-repeat;
+  background-position: right 12px center, 0 0, 0 0;
+  background-size: 10px 10px, auto, auto;
+}
+
+.alea-select-wrap select:focus-visible {
+  outline: 1px solid var(--alea-border-strong);
+  outline-offset: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Collapsible panel (details/summary) — shared toggle chrome for any */
+/* dashboard section that opens/closes (e.g. profile blocks).         */
+/* ------------------------------------------------------------------ */
+
+.alea-collapsible {
+  margin: 0;
+}
+
+.alea-collapsible > .alea-collapsible-summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  margin: 0;
+}
+
+.alea-collapsible > .alea-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.alea-collapsible > .alea-collapsible-summary > h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.alea-collapsible > .alea-collapsible-summary > h2::before {
+  content: "▸";
+  display: inline-block;
+  color: var(--alea-gold);
+  font-size: 0.82em;
+  transition: transform 120ms ease;
+}
+
+.alea-collapsible[open] > .alea-collapsible-summary > h2::before {
+  content: "▾";
+}
+
+/* ------------------------------------------------------------------ */
 /* Tabs                                                               */
 /* ------------------------------------------------------------------ */
 

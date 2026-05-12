@@ -20,6 +20,8 @@ import {
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
+const INITIAL_ASSET = "all";
+
 export function renderBacktestHtml({
   payload,
   assets,
@@ -56,12 +58,20 @@ export function renderBacktestHtml({
     </header>
     ${renderTopNav({ activeId: "backtest" })}
     <main class="alea-main backtest-main">
-      ${renderPeriodControls({ periods: payload.supportedPeriods, initialPeriod })}
-      ${renderPnlChart()}
+      ${renderTopControls({
+        periods: payload.supportedPeriods,
+        initialPeriod,
+        assets: payload.assets,
+        initialAsset: INITIAL_ASSET,
+      })}
       ${renderProfile({ payload, initialPeriod })}
+      ${renderPnlChart()}
       ${renderPeriodTable({ rows: payload.byPeriod, initialPeriod })}
       ${renderAssetTable({ rows: payload.byAsset, initialPeriod })}
-      ${renderTopCandidateTable({ rows: payload.topCandidates, initialPeriod })}
+      ${renderTopCandidateTable({
+        rows: payload.topCandidates,
+        initialPeriod,
+      })}
     </main>
   </div>
   <script id="backtest-payload" type="application/json">${payloadJson}</script>
@@ -71,12 +81,16 @@ export function renderBacktestHtml({
 </html>`;
 }
 
-function renderPeriodControls({
+function renderTopControls({
   periods,
   initialPeriod,
+  assets,
+  initialAsset,
 }: {
   readonly periods: readonly string[];
   readonly initialPeriod: string;
+  readonly assets: readonly string[];
+  readonly initialAsset: string;
 }): string {
   return `<div class="alea-page-controls backtest-controls">
     <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
@@ -87,12 +101,25 @@ function renderPeriodControls({
         )
         .join("")}
     </div>
+    <label class="alea-select-wrap alea-page-controls-right">
+      <span>Asset</span>
+      <select id="backtest-asset-select">
+        <option value="all"${initialAsset === "all" ? " selected" : ""}>All assets</option>
+        ${assets
+          .map(
+            (asset) =>
+              `<option value="${escapeHtml({ value: asset })}"${initialAsset === asset ? " selected" : ""}>${escapeHtml({ value: asset.toUpperCase() })}</option>`,
+          )
+          .join("\n        ")}
+      </select>
+    </label>
   </div>`;
 }
 
 function renderPnlChart(): string {
   return `<section class="alea-panel backtest-panel backtest-chart-panel">
-    <div class="alea-section-rule"><h2>Cumulative PnL</h2></div>
+    <div class="alea-section-rule"><h2>Cumulative PnL <span id="backtest-pnl-context" class="backtest-section-context"></span></h2></div>
+    <p class="backtest-chart-note">Per-strategy average: each active candidate trades the selected asset(s) at $<span id="backtest-stake-usd">20</span> notional, 1:1 RR. Aggregate dollar PnL is divided by the active-candidate count so the line shows what an average strategy would have earned.</p>
     <div class="backtest-chart-frame">
       <div id="backtest-pnl-chart" class="backtest-chart-host"></div>
       <div id="backtest-pnl-empty" class="backtest-chart-empty">No chart data.</div>
@@ -110,13 +137,20 @@ function renderProfile({
 }): string {
   const periodRow =
     payload.byPeriod.find((row) => row.period === initialPeriod) ?? null;
-  return `<section class="alea-panel backtest-profile">
-    <div class="alea-section-rule"><h2>Profile</h2></div>
+  return `<details class="alea-panel backtest-profile alea-collapsible">
+    <summary class="alea-collapsible-summary">
+      <h2>Profile <span id="backtest-profile-context" class="backtest-section-context"></span></h2>
+    </summary>
     <div class="backtest-profile-grid">
       ${profileItem({
         id: "backtest-profile-period",
         label: "Period",
         value: initialPeriod,
+      })}
+      ${profileItem({
+        id: "backtest-profile-asset",
+        label: "Asset",
+        value: "All assets",
       })}
       ${profileItem({
         id: "backtest-profile-coverage",
@@ -145,14 +179,14 @@ function renderProfile({
         value: formatDateTimeOrDash({ ms: periodRow?.computedAtMaxMs ?? null }),
       })}
       ${profileItem({ label: "Training profile", value: payload.trainingProfileId })}
-      ${profileItem({ label: "Assets", value: payload.assets.join(", ") })}
+      ${profileItem({ label: "Active candidates", value: payload.summary.activeCandidateCount.toLocaleString() })}
       ${profileItem({
         id: "backtest-profile-candle-range",
         label: "Candle range",
         value: `${formatDateOrDash({ ms: periodRow?.rangeFirstMs ?? null })} to ${formatDateOrDash({ ms: periodRow?.rangeLastMs ?? null })}`,
       })}
     </div>
-  </section>`;
+  </details>`;
 }
 
 function renderPeriodTable({
@@ -163,7 +197,7 @@ function renderPeriodTable({
   readonly initialPeriod: string;
 }): string {
   return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Periods</h2></div>
+    <div class="alea-section-rule"><h2>Periods <span class="backtest-section-context">all assets</span></h2></div>
     <div class="alea-table-wrap">
       <table class="alea-table backtest-table">
         <thead>
@@ -241,7 +275,7 @@ function renderAssetRow({
   readonly row: BacktestDashboardAssetRow;
   readonly initialPeriod: string;
 }): string {
-  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
+  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}" data-backtest-asset="${escapeHtml({ value: row.asset })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
     <th>${escapeHtml({ value: `${row.period} / ${row.asset}` })}</th>
     <td>${formatCoverage({ runCount: row.runCount, expectedRunCount: row.expectedRunCount })}</td>
     <td>${row.nEngagements.toLocaleString()}</td>
@@ -271,7 +305,7 @@ function renderTopCandidateTable({
           rows.some((row) => row.period === initialPeriod) ? " hidden" : ""
         }><td colspan="9"><span class="alea-muted">No active-profile backtest rows for this period.</span></td></tr>`;
   return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Top Candidates</h2></div>
+    <div class="alea-section-rule"><h2>Top Candidates <span id="backtest-candidates-context" class="backtest-section-context"></span></h2></div>
     <div class="alea-table-wrap">
       <table class="alea-table backtest-table backtest-candidates-table">
         <thead>

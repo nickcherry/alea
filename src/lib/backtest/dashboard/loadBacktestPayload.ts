@@ -2,6 +2,7 @@ import "@alea/lib/filters/all";
 
 import { assetValues } from "@alea/constants/assets";
 import { TRADE_DECISION_SUPPORTED_PERIODS } from "@alea/constants/tradeDecision";
+import { STAKE_USD } from "@alea/constants/trading";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type {
   BacktestDashboardAssetRow,
@@ -118,6 +119,7 @@ export async function loadBacktestPayload({
     trainingProfileId: TRAINING_PROFILE_ID,
     supportedPeriods: TRADE_DECISION_SUPPORTED_PERIODS,
     assets: assetValues,
+    stakeUsd: STAKE_USD,
     summary,
     byPeriod: buildPeriodRows({
       rows,
@@ -128,6 +130,7 @@ export async function loadBacktestPayload({
       activeCandidateCount: activeCandidates.length,
     }),
     topCandidates: buildTopCandidateRows({ rows }),
+    topCandidatesByAsset: buildTopCandidateRowsByAsset({ rows }),
     pnlSeries: await buildPnlSeries({ db, activeCandidates }),
   };
 }
@@ -151,6 +154,7 @@ async function buildPnlSeries({
   );
   const rows = await sql<{
     period: string;
+    asset: string;
     ts_ms: string;
     n_engagements: string;
     n_wins: string;
@@ -161,6 +165,7 @@ async function buildPnlSeries({
     engagement_days as (
       select
         fr.period,
+        fr.asset,
         date_trunc('day', to_timestamp(fe.ts_ms / 1000.0)) as bucket,
         count(*)::text as n_engagements,
         coalesce(sum(fe.won), 0)::text as n_wins
@@ -171,32 +176,28 @@ async function buildPnlSeries({
         and ac.config_canon = fr.config_canon
       join filter_engagements fe on fe.run_hash = fr.run_hash
       where fr.training_profile = ${TRAINING_PROFILE_ID}
-      group by fr.period, bucket
+      group by fr.period, fr.asset, bucket
     )
     select
       period,
+      asset,
       ((extract(epoch from bucket) * 1000)::bigint)::text as ts_ms,
       n_engagements,
       n_wins
     from engagement_days
-    order by period, ts_ms
+    order by period, asset, ts_ms
   `.execute(db);
 
-  const cumulativeByPeriod = new Map<string, number>();
   return rows.rows.map((row) => {
     const nEngagements = Number(row.n_engagements);
     const nWins = Number(row.n_wins);
-    const nLosses = nEngagements - nWins;
-    const cumulative =
-      (cumulativeByPeriod.get(row.period) ?? 0) + nWins - nLosses;
-    cumulativeByPeriod.set(row.period, cumulative);
     return {
       period: row.period,
+      asset: row.asset,
       tsMs: Number(row.ts_ms),
       nEngagements,
       nWins,
-      nLosses,
-      cumulativePnlUnits: cumulative,
+      nLosses: nEngagements - nWins,
     };
   });
 }
@@ -262,33 +263,100 @@ function buildTopCandidateRows({
 }: {
   readonly rows: readonly NormalizedRunRow[];
 }): readonly BacktestDashboardCandidateRow[] {
+  return collectTopCandidates({
+    rows,
+    keyFor: (row) =>
+      [row.period, row.filter_id, row.filter_version, row.config_canon].join(
+        "|",
+      ),
+    bucketSeed: (row) => ({
+      filterId: row.filter_id,
+      filterVersion: row.filter_version,
+      filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
+      period: row.period,
+      asset: null,
+      configCanon: row.config_canon,
+    }),
+    groupBy: (row) => row.period,
+    groupKeys: TRADE_DECISION_SUPPORTED_PERIODS,
+  });
+}
+
+function buildTopCandidateRowsByAsset({
+  rows,
+}: {
+  readonly rows: readonly NormalizedRunRow[];
+}): readonly BacktestDashboardCandidateRow[] {
+  const groupKeys: string[] = [];
+  for (const period of TRADE_DECISION_SUPPORTED_PERIODS) {
+    for (const asset of assetValues) {
+      groupKeys.push(`${period}|${asset}`);
+    }
+  }
+  return collectTopCandidates({
+    rows,
+    keyFor: (row) =>
+      [
+        row.period,
+        row.asset,
+        row.filter_id,
+        row.filter_version,
+        row.config_canon,
+      ].join("|"),
+    bucketSeed: (row) => ({
+      filterId: row.filter_id,
+      filterVersion: row.filter_version,
+      filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
+      period: row.period,
+      asset: row.asset,
+      configCanon: row.config_canon,
+    }),
+    groupBy: (row) => `${row.period}|${row.asset}`,
+    groupKeys,
+  });
+}
+
+function collectTopCandidates({
+  rows,
+  keyFor,
+  bucketSeed,
+  groupBy,
+  groupKeys,
+}: {
+  readonly rows: readonly NormalizedRunRow[];
+  readonly keyFor: (row: NormalizedRunRow) => string;
+  readonly bucketSeed: (row: NormalizedRunRow) => {
+    readonly filterId: string;
+    readonly filterVersion: number;
+    readonly filterFamily: string | null;
+    readonly period: string;
+    readonly asset: string | null;
+    readonly configCanon: string;
+  };
+  readonly groupBy: (row: NormalizedRunRow) => string;
+  readonly groupKeys: readonly string[];
+}): readonly BacktestDashboardCandidateRow[] {
   type CandidateBucket = Aggregate & {
     readonly id: string;
     readonly filterId: string;
     readonly filterVersion: number;
     readonly filterFamily: string | null;
     readonly period: string;
+    readonly asset: string | null;
     readonly configCanon: string;
     readonly assets: Set<string>;
+    readonly group: string;
   };
   const buckets = new Map<string, CandidateBucket>();
   for (const row of rows) {
-    const id = [
-      row.period,
-      row.filter_id,
-      row.filter_version,
-      row.config_canon,
-    ].join("|");
+    const id = keyFor(row);
     let bucket = buckets.get(id);
     if (bucket === undefined) {
       bucket = {
         id,
-        filterId: row.filter_id,
-        filterVersion: row.filter_version,
-        filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
-        period: row.period,
-        configCanon: row.config_canon,
+        ...bucketSeed(row),
         assets: new Set<string>(),
+        group: groupBy(row),
         ...emptyAggregate(),
       };
       buckets.set(id, bucket);
@@ -300,33 +368,38 @@ function buildTopCandidateRows({
   const rowsByCandidate = Array.from(buckets.values()).map((bucket) => {
     const projection = aggregateProjection(bucket);
     return {
-      id: bucket.id,
-      filterId: bucket.filterId,
-      filterVersion: bucket.filterVersion,
-      filterFamily: bucket.filterFamily,
-      period: bucket.period,
-      configCanon: bucket.configCanon,
-      assetCount: bucket.assets.size,
-      nEngagements: projection.nEngagements,
-      nWins: projection.nWins,
-      winRate: projection.winRate,
-      upWinRate: projection.upWinRate,
-      downWinRate: projection.downWinRate,
-      computedAtMaxMs: projection.computedAtMaxMs,
+      group: bucket.group,
+      row: {
+        id: bucket.id,
+        filterId: bucket.filterId,
+        filterVersion: bucket.filterVersion,
+        filterFamily: bucket.filterFamily,
+        period: bucket.period,
+        asset: bucket.asset,
+        configCanon: bucket.configCanon,
+        assetCount: bucket.assets.size,
+        nEngagements: projection.nEngagements,
+        nWins: projection.nWins,
+        winRate: projection.winRate,
+        upWinRate: projection.upWinRate,
+        downWinRate: projection.downWinRate,
+        computedAtMaxMs: projection.computedAtMaxMs,
+      } satisfies BacktestDashboardCandidateRow,
     };
   });
 
-  return TRADE_DECISION_SUPPORTED_PERIODS.flatMap((period) =>
+  return groupKeys.flatMap((group) =>
     rowsByCandidate
-      .filter((row) => row.period === period)
+      .filter((r) => r.group === group)
       .sort((a, b) => {
-        const wrDelta = (b.winRate ?? -1) - (a.winRate ?? -1);
+        const wrDelta = (b.row.winRate ?? -1) - (a.row.winRate ?? -1);
         if (wrDelta !== 0) {
           return wrDelta;
         }
-        return b.nEngagements - a.nEngagements;
+        return b.row.nEngagements - a.row.nEngagements;
       })
-      .slice(0, TOP_CANDIDATE_LIMIT),
+      .slice(0, TOP_CANDIDATE_LIMIT)
+      .map((r) => r.row),
   );
 }
 
