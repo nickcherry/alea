@@ -61,12 +61,12 @@ export const backtestSweepCommitteeCommand = defineCommand({
       key: "mode",
       long: "--mode",
       valueName: "MODE",
-      choices: ["broad", "focus", "fine", "ridge"],
+      choices: ["broad", "focus", "fine", "ridge", "macro"],
       schema: z
-        .enum(["broad", "focus", "fine", "ridge"])
+        .enum(["broad", "focus", "fine", "ridge", "macro"])
         .default("broad")
         .describe(
-          "Sweep grid to run: broad first pass, focused ridge search, fine ridge search, or strict/volume ridge search.",
+          "Sweep grid to run: broad first pass, focused ridge search, fine ridge search, strict/volume ridge search, or macro stress test.",
         ),
     }),
     defineValueOption({
@@ -128,6 +128,7 @@ export const backtestSweepCommitteeCommand = defineCommand({
     "bun alea backtest:sweep-committee --mode focus --telegram",
     "bun alea backtest:sweep-committee --mode fine --telegram",
     "bun alea backtest:sweep-committee --mode ridge --telegram",
+    "bun alea backtest:sweep-committee --mode macro",
   ],
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
@@ -235,8 +236,11 @@ export const backtestSweepCommitteeCommand = defineCommand({
 function buildSweepTrials({
   mode,
 }: {
-  readonly mode: "broad" | "focus" | "fine" | "ridge";
+  readonly mode: "broad" | "focus" | "fine" | "ridge" | "macro";
 }): readonly SweepTrial[] {
+  if (mode === "macro") {
+    return buildMacroSweepTrials();
+  }
   if (mode === "ridge") {
     return buildRidgeSweepTrials();
   }
@@ -528,6 +532,107 @@ function buildRidgeSweepTrials(): readonly SweepTrial[] {
             topN,
             hypothesis:
               "volume ridge: test whether a looser stability floor buys enough extra trades",
+          });
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
+function buildMacroSweepTrials(): readonly SweepTrial[] {
+  const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
+  const decision = DEFAULT_COMMITTEE_DECISION_RULES;
+  const out: SweepTrial[] = [];
+  const add = ({
+    id,
+    hypothesis,
+    selectionRules = selection,
+    decisionRules = decision,
+  }: {
+    readonly id: string;
+    readonly hypothesis: string;
+    readonly selectionRules?: CommitteeSelectionRules;
+    readonly decisionRules?: CommitteeDecisionRules;
+  }) => {
+    const trial = { id, hypothesis, selectionRules, decisionRules };
+    if (!out.some((existing) => sameTrial(existing, trial))) {
+      out.push(trial);
+    }
+  };
+
+  add({
+    id: "baseline",
+    hypothesis: "current production-style committee anchor",
+  });
+
+  for (const minVotesToTrade of [2, 3, 4, 5, 6, 8, 10]) {
+    for (const minConsensusFraction of [0.5, 0.8, 1]) {
+      add({
+        id: `current-v${minVotesToTrade}-c${pctId(minConsensusFraction)}`,
+        hypothesis:
+          "macro vote stress: require far more committee participation or agreement",
+        decisionRules: {
+          ...decision,
+          minVotesToTrade,
+          minConsensusFraction,
+        },
+      });
+    }
+  }
+
+  for (const minAggregateWinRate of [0.56, 0.58, 0.6, 0.62, 0.65]) {
+    for (const topN of [10, 40]) {
+      for (const minVotesToTrade of [1, 2]) {
+        add({
+          id: [
+            `strict-agg${pctId(minAggregateWinRate)}`,
+            `top${topN}`,
+            `v${minVotesToTrade}`,
+          ].join("-"),
+          hypothesis:
+            "macro quality stress: only allow very high historical WR candidates",
+          selectionRules: {
+            ...selection,
+            minAggregateWinRate,
+            minWorstQuarterWinRate: 0.5,
+            topN,
+          },
+          decisionRules: {
+            ...decision,
+            minVotesToTrade,
+            minConsensusFraction: 0.5,
+          },
+        });
+      }
+    }
+  }
+
+  for (const minAggregateWinRate of [0.48, 0.52]) {
+    for (const topN of [40, 80]) {
+      for (const minVotesToTrade of [4, 8, 10]) {
+        for (const minConsensusFraction of [0.5, 1]) {
+          add({
+            id: [
+              `wide-agg${pctId(minAggregateWinRate)}`,
+              `top${topN}`,
+              `v${minVotesToTrade}`,
+              `c${pctId(minConsensusFraction)}`,
+            ].join("-"),
+            hypothesis:
+              "macro breadth stress: broad roster plus high vote quorum",
+            selectionRules: {
+              ...selection,
+              minAggregateWinRate,
+              minWorstQuarterWinRate: 0.46,
+              topN,
+            },
+            decisionRules: {
+              ...decision,
+              minVotesToTrade,
+              minConsensusFraction,
+            },
           });
         }
       }
