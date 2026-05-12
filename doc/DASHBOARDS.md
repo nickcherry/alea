@@ -262,7 +262,7 @@ of interchangeable reports:
 | Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                             |
 | Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                    |
 | Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                      |
-| Backtest              | Backtest           | Latest committee holdout replay: decisions, scored trades, WR, PnL proxy, and period/asset/regime breakdowns.   |
+| Backtest              | Backtest           | Latest committee holdout replay: decisions, scored trades, notional size, WR, PnL proxy, PnL curve, and period/asset/regime breakdowns. |
 | Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.              |
 | Production            | Live trading PnL   | Track realized results from actual order placement.                                                             |
 

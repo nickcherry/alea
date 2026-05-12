@@ -52,6 +52,17 @@ type BacktestBucket = {
   readonly pnlUsd: number;
 };
 
+export type BacktestEquityPoint = {
+  readonly date: string;
+  readonly timestampMs: number;
+  readonly scoredTrades: number;
+  readonly wins: number;
+  readonly losses: number;
+  readonly winRate: number | null;
+  readonly pnlUsd: number;
+  readonly cumulativePnlUsd: number;
+};
+
 export type CommitteeBacktestSummary = {
   readonly schemaVersion: number;
   readonly runProfile: string;
@@ -81,6 +92,7 @@ export type CommitteeBacktestSummary = {
   readonly byAsset: readonly BacktestBucket[];
   readonly byRegime: readonly BacktestBucket[];
   readonly byPeriodAsset: readonly BacktestBucket[];
+  readonly equityCurve: readonly BacktestEquityPoint[];
 };
 
 type MutableBucket = {
@@ -97,11 +109,22 @@ type MutableBucket = {
   abstainMoments: number;
 };
 
+type MutableEquityPoint = {
+  date: string;
+  timestampMs: number;
+  scoredTrades: number;
+  wins: number;
+  losses: number;
+  pnlUsd: number;
+};
+
 type LoadedBars = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly bars: readonly FilterBar[];
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const periodMs: Record<TradeDecisionPeriod, number> = {
   "5m": 5 * 60 * 1000,
@@ -194,6 +217,11 @@ export async function runCommitteeBacktest({
     byAsset: finalizeBuckets(acc.byAsset),
     byRegime: finalizeBuckets(acc.byRegime),
     byPeriodAsset: finalizeBuckets(acc.byPeriodAsset),
+    equityCurve: finalizeEquityCurve({
+      byDay: acc.equityByDay,
+      windowStartMs: BACKTEST_WINDOW_START_MS,
+      windowEndExclusiveMs,
+    }),
   };
 }
 
@@ -343,11 +371,17 @@ function replaySeries({
       continue;
     }
     increment(regimeBuckets, "scoredTrades");
-    if (decision.prediction === actual) {
+    const isWin = decision.prediction === actual;
+    if (isWin) {
       increment(regimeBuckets, "wins");
     } else {
       increment(regimeBuckets, "losses");
     }
+    recordEquityPoint({
+      acc,
+      isWin,
+      timestampMs: target.openTimeMs,
+    });
   }
 }
 
@@ -357,6 +391,7 @@ function createAccumulator(): {
   readonly byAsset: Map<string, MutableBucket>;
   readonly byRegime: Map<string, MutableBucket>;
   readonly byPeriodAsset: Map<string, MutableBucket>;
+  readonly equityByDay: Map<string, MutableEquityPoint>;
 } {
   return {
     total: mutableBucket({ key: "all", label: "All" }),
@@ -364,6 +399,7 @@ function createAccumulator(): {
     byAsset: new Map(),
     byRegime: new Map(),
     byPeriodAsset: new Map(),
+    equityByDay: new Map(),
   };
 }
 
@@ -434,6 +470,39 @@ function increment(
   }
 }
 
+function recordEquityPoint({
+  acc,
+  isWin,
+  timestampMs,
+}: {
+  readonly acc: ReturnType<typeof createAccumulator>;
+  readonly isWin: boolean;
+  readonly timestampMs: number;
+}): void {
+  const dayStartMs = utcDayStartMs({ ms: timestampMs });
+  const date = dateKey({ dayStartMs });
+  let point = acc.equityByDay.get(date);
+  if (point === undefined) {
+    point = {
+      date,
+      timestampMs: dayStartMs,
+      scoredTrades: 0,
+      wins: 0,
+      losses: 0,
+      pnlUsd: 0,
+    };
+    acc.equityByDay.set(date, point);
+  }
+  point.scoredTrades += 1;
+  if (isWin) {
+    point.wins += 1;
+    point.pnlUsd += STAKE_USD;
+  } else {
+    point.losses += 1;
+    point.pnlUsd -= STAKE_USD;
+  }
+}
+
 function finalizeBuckets(
   map: ReadonlyMap<string, MutableBucket>,
 ): readonly BacktestBucket[] {
@@ -453,4 +522,59 @@ function finalizeBucket(bucket: MutableBucket): BacktestBucket {
     tradeRate,
     pnlUsd: (bucket.wins - bucket.losses) * STAKE_USD,
   };
+}
+
+function finalizeEquityCurve({
+  byDay,
+  windowStartMs,
+  windowEndExclusiveMs,
+}: {
+  readonly byDay: ReadonlyMap<string, MutableEquityPoint>;
+  readonly windowStartMs: number;
+  readonly windowEndExclusiveMs: number;
+}): readonly BacktestEquityPoint[] {
+  const out: BacktestEquityPoint[] = [];
+  let cumulativePnlUsd = 0;
+  const firstDayStartMs = utcDayStartMs({ ms: windowStartMs });
+  for (
+    let dayStartMs = firstDayStartMs;
+    dayStartMs < windowEndExclusiveMs;
+    dayStartMs += DAY_MS
+  ) {
+    const date = dateKey({ dayStartMs });
+    const point = byDay.get(date) ?? {
+      date,
+      timestampMs: dayStartMs,
+      scoredTrades: 0,
+      wins: 0,
+      losses: 0,
+      pnlUsd: 0,
+    };
+    cumulativePnlUsd += point.pnlUsd;
+    out.push({
+      date,
+      timestampMs: dayStartMs,
+      scoredTrades: point.scoredTrades,
+      wins: point.wins,
+      losses: point.losses,
+      winRate:
+        point.scoredTrades === 0 ? null : point.wins / point.scoredTrades,
+      pnlUsd: point.pnlUsd,
+      cumulativePnlUsd,
+    });
+  }
+  return out;
+}
+
+function utcDayStartMs({ ms }: { readonly ms: number }): number {
+  const date = new Date(ms);
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  );
+}
+
+function dateKey({ dayStartMs }: { readonly dayStartMs: number }): string {
+  return new Date(dayStartMs).toISOString().slice(0, 10);
 }

@@ -44,7 +44,10 @@ training. Ambiguous target candles are counted as committee decisions
 but excluded from win/loss and PnL proxy totals.
 
 PnL proxy is `(wins - losses) * STAKE_USD`, assuming 50c maker entries,
-zero fees, and 1:1 risk/reward. This is intentionally an execution-free
+zero fees, and 1:1 risk/reward. The dashboard shows the notional order
+size and scored notional next to the proxy so large totals are traceable
+to either order size or trade count. It also stores and renders a daily
+cumulative PnL curve for the latest run. This remains an execution-free
 quality measure; order placement belongs to dry-run/live.
 
 ## Files

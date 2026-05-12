@@ -37,6 +37,7 @@ export const backtestRunCommand = defineCommand({
           `${pc.dim("duration=")}${result.durationMs.toLocaleString()}ms ` +
           `${pc.dim("decisions=")}${result.totals.committeeDecisions.toLocaleString()} ` +
           `${pc.dim("scored=")}${result.totals.scoredTrades.toLocaleString()} ` +
+          `${pc.dim("stake=")}$${result.stakeUsd.toLocaleString()} ` +
           `${pc.dim("wr=")}${wr} ` +
           `${pc.dim("pnl=")}$${result.totals.pnlUsd.toLocaleString()}\n`,
       );

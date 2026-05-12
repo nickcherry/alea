@@ -384,6 +384,7 @@ async function buildBacktestDashboard({
       `  ${pc.green("run =")} ${latest.id}` +
         `  ${pc.dim("decisions=")}${latest.totals.committeeDecisions.toLocaleString()}` +
         `  ${pc.dim("scored=")}${latest.totals.scoredTrades.toLocaleString()}` +
+        `  ${pc.dim("stake=")}$${latest.stakeUsd.toLocaleString()}` +
         `  ${pc.dim("wr=")}${wr}` +
         `  ${pc.dim("pnl=")}$${latest.totals.pnlUsd.toLocaleString()}` +
         "\n" +

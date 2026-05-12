@@ -33,7 +33,7 @@ function payloadFixture(): BacktestDashboardPayload {
     generatedAtMs: Date.UTC(2026, 4, 12, 12),
     latestRun: {
       id: "42",
-      schemaVersion: 1,
+      schemaVersion: 2,
       runProfile: "committee-replay-v1",
       trainingProfile: "profile-v1",
       generatedAtMs: Date.UTC(2026, 4, 12, 12),
@@ -61,6 +61,28 @@ function payloadFixture(): BacktestDashboardPayload {
       byAsset: [bucket({ key: "btc", label: "BTC" })],
       byRegime: [bucket({ key: "low_vol_ranging", label: "low_vol_ranging" })],
       byPeriodAsset: [bucket({ key: "5m|btc", label: "5m BTC" })],
+      equityCurve: [
+        {
+          date: "2026-04-01",
+          timestampMs: Date.UTC(2026, 3, 1),
+          scoredTrades: 10,
+          wins: 6,
+          losses: 4,
+          winRate: 0.6,
+          pnlUsd: 40,
+          cumulativePnlUsd: 40,
+        },
+        {
+          date: "2026-04-02",
+          timestampMs: Date.UTC(2026, 3, 2),
+          scoredTrades: 20,
+          wins: 12,
+          losses: 8,
+          winRate: 0.6,
+          pnlUsd: 80,
+          cumulativePnlUsd: 120,
+        },
+      ],
     },
   };
 }
@@ -77,6 +99,10 @@ describe("renderBacktestHtml", () => {
 
     expect(html).toContain("Alea &middot; Backtest");
     expect(html).toContain("Latest Run");
+    expect(html).toContain("Notional order size");
+    expect(html).toContain("$20");
+    expect(html).toContain("PnL Over Time");
+    expect(html).toContain("backtest-equity-chart");
     expect(html).toContain("Committee decisions");
     expect(html).toContain("Scored trades");
     expect(html).toContain("By Period");

@@ -6,7 +6,7 @@ import {
 } from "@alea/constants/tradeDecision";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 
-export const COMMITTEE_BACKTEST_SCHEMA_VERSION = 1;
+export const COMMITTEE_BACKTEST_SCHEMA_VERSION = 2;
 
 export const COMMITTEE_BACKTEST_PROFILE_ID = [
   `committee-replay-v${COMMITTEE_BACKTEST_SCHEMA_VERSION}`,
