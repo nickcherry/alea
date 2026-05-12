@@ -14,7 +14,7 @@ import {
   TRADE_DECISION_FILTER_TIE_BREAK,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_LEAD_TIME_MS,
-  TRADE_DECISION_PERIOD,
+  TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
 } from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
@@ -164,7 +164,7 @@ export async function loadDryRunPayload({
   return {
     generatedAtMs: now(),
     decisionConfig: {
-      period: TRADE_DECISION_PERIOD,
+      period: TRADE_DECISION_PRIMARY_PERIOD,
       supportedPeriods: TRADE_DECISION_SUPPORTED_PERIODS,
       leadTimeMs: TRADE_DECISION_LEAD_TIME_MS,
       hydratedBars: TRADE_DECISION_HYDRATE_BARS,

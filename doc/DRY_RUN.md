@@ -14,31 +14,40 @@ Run it:
 bun alea dry:run
 ```
 
+By default the runner trades both `5m` and `15m`. Override the grid
+with a comma-separated list:
+
+```sh
+bun alea dry:run --periods 15m
+```
+
 Stays running until SIGINT / SIGTERM. The committee logic is
 identical to what live trading will use; see
 [COMMITTEE.md](./COMMITTEE.md).
 
-## What it does, per asset
+## What it does, per asset/period
 
-For each of the 5 supported assets (`btc`, `eth`, `sol`, `xrp`,
-`doge`):
+For each configured period, defaulting to `5m,15m`, and each of the
+5 supported assets (`btc`, `eth`, `sol`, `xrp`, `doge`):
 
 1. **Hydrate** — load the most recent
-   `TRADE_DECISION_HYDRATE_BARS` closed 5-minute bars from `candles`
-   (pyth-spot canonical series). The current value, 150, is wider
-   than the classifier's 100-bar window and the deepest filter's
-   `requiredBars`, so the first decision always has enough history.
+   `TRADE_DECISION_HYDRATE_BARS` closed bars for that period from
+   `candles` (pyth-spot canonical series). The current value, 150,
+   is wider than the classifier's 100-bar window and the deepest
+   filter's `requiredBars`, so the first decision always has enough
+   history.
 2. **Subscribe** — open one Pyth Hermes SSE stream for all 5 assets
    (multi-id query — one socket, all feeds). Ticks update an
-   in-memory bar accumulator: each tick's price advances `high` /
-   `low` / `close` of the current bar; crossing a 5-minute
-   boundary finalizes the just-closed bar and starts a new one.
+   in-memory bar accumulator per asset/period: each tick's price
+   advances `high` / `low` / `close` of the current bar; crossing
+   that period's boundary finalizes the just-closed bar and starts a
+   new one.
 3. **Predict** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
-   5-minute boundary, snapshot the current Pyth price as the
-   synthetic close of the about-to-finalize bar. Run the regime
-   classifier. Look up the committee roster for that regime. Apply
-   the shared trade decision policy. If non-abstain, persist the
-   decision; otherwise skip.
+   configured period boundary, snapshot the current Pyth price as
+   the synthetic close of the about-to-finalize bar. Run the regime
+   classifier. Look up the committee roster for that period and
+   regime. Apply the shared trade decision policy. If non-abstain,
+   persist the decision; otherwise skip.
 4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 3s`
    after the target Polymarket market opens, read the live UP/DOWN
    book/BBO market data for the predicted side. The runner
@@ -80,7 +89,7 @@ At T-5s of each boundary, for each asset:
    in-flight bar with Pyth's t-5s price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
-3. Look up the roster bucket for `(regime, "5m")` in
+3. Look up the roster bucket for `(regime, period)` in
    `committee_selections`. Empty bucket → abstain.
 4. Evaluate each rostered candidate's `predict` on the same bar
    window.
@@ -178,19 +187,19 @@ marked `order_status = 'untracked'`.
 The CLI streams one line per event:
 
 ```
-13:21:05 hydrated btc bars=150
-13:21:05 hydrated eth bars=150
+13:21:05 hydrated 5m/btc bars=150
+13:21:05 hydrated 15m/btc bars=150
 ...
 13:21:05 loaded committee roster: 8 buckets, 80 candidates (selected_at=2026-05-11 13:18)
 13:21:05 connected
-13:24:55 UP     eth   target=13:25 synth=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
-13:24:55 abstain btc   target=13:25 synth=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10
+13:24:55 UP     5m/eth   target=13:25 synth=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
+13:24:55 abstain 15m/btc   target=13:30 synth=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10
 ...
-13:25:01 WIN  eth   bar=13:20 pred=u open=2329.42 close=2330.27
+13:25:01 WIN  5m/eth   bar=13:20 pred=u open=2329.42 close=2330.27
 ```
 
-Five event kinds: `hydrated`, `roster`, `connected` / `disconnected`,
-`decision`, `outcome`, `error`. See
+Event kinds: `hydrated`, `roster`, `connected` / `disconnected`,
+`decision`, `order`, `outcome`, `error`. See
 [`bin/dry/run.ts`](../src/bin/dry/run.ts) for the styling
 contract.
 

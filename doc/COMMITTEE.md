@@ -17,10 +17,11 @@ writes the voter roster to a DB table tagged with that same profile.
 Selection is **manual** — operator runs it after a fresh `backtest:run`
 or a `regimes:backfill`.
 
-**Evaluation** runs every 5-minute boundary, inside the dry-run /
-live loop. Classify the bar's regime → look up the roster for
-`(regime, period)` → evaluate each candidate → apply the shared trade
-decision policy.
+**Evaluation** runs at each configured trade-decision boundary,
+inside the dry-run / live loop. Dry-run defaults to `5m,15m`, and
+the CLI can override that set. Classify the bar's regime → look up
+the roster for `(regime, period)` → evaluate each candidate → apply
+the shared trade decision policy.
 
 ## Selection: eligibility + ranking
 
@@ -95,13 +96,13 @@ The dry-run loop loads the table once at startup into an in-memory
 roster (`(regime, period) → selected candidate keys + stats`). See
 [`loadCommitteeRoster`](../src/lib/committee/selection/loadCommitteeRoster.ts).
 
-At each 5-minute boundary the loop:
+At each configured period boundary the loop:
 
 1. Builds the synthetic bar window (real history + the in-flight
    bar with Pyth's t-5s price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
-3. Looks up the roster bucket for `(marketRegime, "5m")`.
+3. Looks up the roster bucket for `(marketRegime, period)`.
    - Empty bucket → abstain entirely.
 4. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
    Each selected candidate config's `predict` runs; votes are
@@ -125,7 +126,8 @@ Critical decision settings live in
 
 | Constant                           |    Default | Meaning                                                                             |
 | ---------------------------------- | ---------: | ----------------------------------------------------------------------------------- |
-| `TRADE_DECISION_PERIOD`            |       `5m` | Roster period used by the current decision loop                                     |
+| `TRADE_DECISION_DEFAULT_PERIODS`   |  `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
+| `TRADE_DECISION_SUPPORTED_PERIODS` |  `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
 | `TRADE_DECISION_LEAD_TIME_MS`      |     `5000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |

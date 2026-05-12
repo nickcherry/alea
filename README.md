@@ -56,11 +56,11 @@ dry-run or live trading.
    [COMMITTEE.md](./doc/COMMITTEE.md).
 5. **Dry-run loop** streams live Pyth ticks, classifies the
    current regime, asks the regime's committee to predict the next
-   5-minute bar, persists every decision to `dry_run_decisions`,
-   simulates the configured post-open Polymarket order, and scores
-   the signal once the bar closes. No real orders are placed today;
-   live trading will share this exact decision path. See
-   [DRY_RUN.md](./doc/DRY_RUN.md).
+   5m and 15m bars by default, persists every decision to
+   `dry_run_decisions`, simulates the configured post-open
+   Polymarket order, and scores the signal once the bar closes. No
+   real orders are placed today; live trading will share this exact
+   decision path. See [DRY_RUN.md](./doc/DRY_RUN.md).
 6. **Dashboards** are static HTML pages built from the same data
    and deployed to a Cloudflare Worker. The exploration page
    surfaces regime-stratified filter performance; the trade committee

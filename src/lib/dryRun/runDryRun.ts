@@ -2,9 +2,10 @@ import "@alea/lib/filters/all";
 
 import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
 import {
+  TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_LEAD_TIME_MS,
-  TRADE_DECISION_PERIOD,
+  type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { selectEffectiveCommitteeVotes } from "@alea/lib/committee/aggregate";
 import {
@@ -28,12 +29,11 @@ import {
 import type { DryRunAssetState } from "@alea/lib/dryRun/types";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
+import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
-
-const FIVE_MIN_MS = 5 * 60 * 1000;
 
 export type DryRunHandle = {
   readonly stop: () => Promise<void>;
@@ -42,6 +42,7 @@ export type DryRunHandle = {
 export type DryRunOptions = {
   readonly db: DatabaseClient;
   readonly assets: readonly Asset[];
+  readonly periods?: readonly TradeDecisionPeriod[];
   readonly log: (event: DryRunLogEvent) => void;
 };
 
@@ -49,6 +50,7 @@ export type DryRunLogEvent =
   | {
       readonly kind: "hydrated";
       readonly asset: Asset;
+      readonly period: TradeDecisionPeriod;
       readonly barCount: number;
     }
   | { readonly kind: "connected" }
@@ -62,6 +64,7 @@ export type DryRunLogEvent =
   | {
       readonly kind: "decision";
       readonly asset: Asset;
+      readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d" | null;
       readonly synthClose: number;
@@ -74,6 +77,7 @@ export type DryRunLogEvent =
   | {
       readonly kind: "outcome";
       readonly asset: Asset;
+      readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d";
       readonly actualClose: number;
@@ -88,17 +92,16 @@ export type DryRunLogEvent =
  * unsubscribes the Pyth stream and stops the scheduler.
  *
  * Operations:
- *   1. Hydrate per-asset bar buffer from `candles` (most recent
- *      trade-decision history bars per asset).
+ *   1. Hydrate per-asset/per-period bar buffers from `candles` (most
+ *      recent trade-decision history bars).
  *   2. Subscribe to Pyth Hermes for the requested assets. Each
- *      tick updates the current-bar accumulator; tick boundary
- *      transitions finalize the just-closed bar AND score any
- *      pending decisions whose target was that bar.
- *   3. Schedule a tick that fires before each 5m
- *      boundary: snapshot the current Pyth price as the synthetic
- *      close of the about-to-finalize bar, build a synthetic bar
- *      object, run the committee, and persist the decision if it's
- *      not an abstain.
+ *      tick updates every configured period's current-bar accumulator;
+ *      tick boundary transitions finalize the just-closed bar AND
+ *      score any pending decisions whose target was that bar.
+ *   3. Schedule a tick that fires before each configured boundary:
+ *      snapshot the current Pyth price as the synthetic close of the
+ *      about-to-finalize bar, build a synthetic bar object, run the
+ *      committee, and persist the decision if it's not an abstain.
  *   4. For non-abstain decisions, simulate the configured post-open
  *      Polymarket order and track whether it fills before expiry.
  *
@@ -109,24 +112,44 @@ export type DryRunLogEvent =
 export async function runDryRun({
   db,
   assets,
+  periods = TRADE_DECISION_DEFAULT_PERIODS,
   log,
 }: DryRunOptions): Promise<DryRunHandle> {
-  const states = new Map<Asset, DryRunAssetState>();
+  const selectedPeriods: TradeDecisionPeriod[] =
+    periods.length === 0
+      ? [...TRADE_DECISION_DEFAULT_PERIODS]
+      : Array.from(new Set(periods));
+  const states = new Map<string, DryRunAssetState>();
+  const statesByAsset = new Map<Asset, DryRunAssetState[]>();
+  const statesByPeriod = new Map<TradeDecisionPeriod, DryRunAssetState[]>();
+  for (const asset of assets) {
+    statesByAsset.set(asset, []);
+  }
+  for (const period of selectedPeriods) {
+    statesByPeriod.set(period, []);
+  }
   // Hydrate.
   for (const asset of assets) {
-    const bars = await loadRecentBars({
-      db,
-      asset,
-      limit: TRADE_DECISION_HYDRATE_BARS,
-    });
-    states.set(asset, {
-      asset,
-      bars,
-      currentBar: null,
-      lastPredictedBoundary: 0,
-      lastFinalizedBoundary: 0,
-    });
-    log({ kind: "hydrated", asset, barCount: bars.length });
+    for (const period of selectedPeriods) {
+      const bars = await loadRecentBars({
+        db,
+        asset,
+        period,
+        limit: TRADE_DECISION_HYDRATE_BARS,
+      });
+      const state: DryRunAssetState = {
+        asset,
+        period,
+        periodMs: resolutionTimeframeStepMs({ timeframe: period }),
+        bars,
+        currentBar: null,
+        lastPredictedBoundary: 0,
+      };
+      states.set(dryRunStateKey({ asset, period }), state);
+      statesByAsset.get(asset)?.push(state);
+      statesByPeriod.get(period)?.push(state);
+      log({ kind: "hydrated", asset, period, barCount: bars.length });
+    }
   }
   const candidates = listCommitteeCandidates();
   const roster = await loadCommitteeRoster({ db });
@@ -156,10 +179,13 @@ export async function runDryRun({
   }
 
   let running = true;
-  // Track which decision rows are pending scoring. Map asset → ts_ms (target bar open) → decision id.
-  const pendingByAsset = new Map<Asset, Map<number, string>>();
-  for (const asset of assets) {
-    pendingByAsset.set(asset, new Map());
+  // Track decision rows pending scoring by asset/period state, then target bar open.
+  const pendingByState = new Map<string, Map<number, string>>();
+  for (const state of states.values()) {
+    pendingByState.set(
+      dryRunStateKey({ asset: state.asset, period: state.period }),
+      new Map(),
+    );
   }
   const marketDiscovery = createPolymarketMarketDiscoveryCache();
   const orderSimulator = createDryRunOrderSimulator({
@@ -171,54 +197,56 @@ export async function runDryRun({
   const handle = streamPythHermes({
     assets: [...assets],
     onTick: (tick) => {
-      const state = states.get(tick.asset);
-      if (state === undefined) {
+      const assetStates = statesByAsset.get(tick.asset);
+      if (assetStates === undefined) {
         return;
       }
-      // Boundary the tick belongs to.
-      const boundary =
-        Math.floor(tick.publishTimeMs / FIVE_MIN_MS) * FIVE_MIN_MS;
-      if (state.currentBar === null) {
-        state.currentBar = {
-          openTimeMs: boundary,
-          open: tick.price,
-          high: tick.price,
-          low: tick.price,
-          close: tick.price,
-        };
-        return;
+      for (const state of assetStates) {
+        // Boundary the tick belongs to for this period.
+        const boundary =
+          Math.floor(tick.publishTimeMs / state.periodMs) * state.periodMs;
+        if (state.currentBar === null) {
+          state.currentBar = {
+            openTimeMs: boundary,
+            open: tick.price,
+            high: tick.price,
+            low: tick.price,
+            close: tick.price,
+          };
+          continue;
+        }
+        if (state.currentBar.openTimeMs !== boundary) {
+          // Bar boundary crossed: finalize the just-closed bar.
+          finalizeAndScore({
+            db,
+            state,
+            closedBar: { ...state.currentBar, volume: 0 },
+            pendingByState,
+            log,
+          }).catch((e) =>
+            log({
+              kind: "error",
+              message: `finalize/score failed: ${String(e)}`,
+            }),
+          );
+          state.currentBar = {
+            openTimeMs: boundary,
+            open: tick.price,
+            high: tick.price,
+            low: tick.price,
+            close: tick.price,
+          };
+          continue;
+        }
+        // In-progress bar: update HL + latest close.
+        if (tick.price > state.currentBar.high) {
+          state.currentBar.high = tick.price;
+        }
+        if (tick.price < state.currentBar.low) {
+          state.currentBar.low = tick.price;
+        }
+        state.currentBar.close = tick.price;
       }
-      if (state.currentBar.openTimeMs !== boundary) {
-        // Bar boundary crossed → finalize the just-closed bar.
-        finalizeAndScore({
-          db,
-          state,
-          closedBar: { ...state.currentBar, volume: 0 },
-          pendingByAsset,
-          log,
-        }).catch((e) =>
-          log({
-            kind: "error",
-            message: `finalize/score failed: ${String(e)}`,
-          }),
-        );
-        state.currentBar = {
-          openTimeMs: boundary,
-          open: tick.price,
-          high: tick.price,
-          low: tick.price,
-          close: tick.price,
-        };
-        return;
-      }
-      // In-progress bar — update HL + latest close.
-      if (tick.price > state.currentBar.high) {
-        state.currentBar.high = tick.price;
-      }
-      if (tick.price < state.currentBar.low) {
-        state.currentBar.low = tick.price;
-      }
-      state.currentBar.close = tick.price;
     },
     onConnect: () => log({ kind: "connected" }),
     onDisconnect: (reason) => log({ kind: "disconnected", reason }),
@@ -233,32 +261,37 @@ export async function runDryRun({
         const now = Date.now();
         marketDiscovery.warm({
           assets,
-          timeframes: [TRADE_DECISION_PERIOD],
+          timeframes: selectedPeriods,
           nowMs: now,
           discoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
         });
         await orderSimulator.tick({ nowMs: now });
-        const nextBoundary = Math.ceil(now / FIVE_MIN_MS) * FIVE_MIN_MS;
-        const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
-        if (now >= fireTime) {
-          for (const state of states.values()) {
-            if (state.lastPredictedBoundary >= nextBoundary) {
-              continue;
+        let nextFireTime = now + 1000;
+        for (const period of selectedPeriods) {
+          const periodMs = resolutionTimeframeStepMs({ timeframe: period });
+          const nextBoundary = Math.ceil(now / periodMs) * periodMs;
+          const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
+          nextFireTime = Math.min(nextFireTime, fireTime);
+          if (now >= fireTime) {
+            for (const state of statesByPeriod.get(period) ?? []) {
+              if (state.lastPredictedBoundary >= nextBoundary) {
+                continue;
+              }
+              state.lastPredictedBoundary = nextBoundary;
+              await makePrediction({
+                db,
+                state,
+                targetTsMs: nextBoundary,
+                roster,
+                candidatesByKey,
+                pendingByState,
+                orderSimulator,
+                log,
+              });
             }
-            state.lastPredictedBoundary = nextBoundary;
-            await makePrediction({
-              db,
-              state,
-              targetTsMs: nextBoundary,
-              roster,
-              candidatesByKey,
-              pendingByAsset,
-              orderSimulator,
-              log,
-            });
           }
         }
-        const sleepMs = Math.max(250, Math.min(fireTime - now + 1, 1000));
+        const sleepMs = Math.max(250, Math.min(nextFireTime - now + 1, 1000));
         await new Promise((resolve) => setTimeout(resolve, sleepMs));
       } catch (e) {
         log({ kind: "error", message: `scheduler: ${String(e)}` });
@@ -283,7 +316,7 @@ async function makePrediction({
   targetTsMs,
   roster,
   candidatesByKey,
-  pendingByAsset,
+  pendingByState,
   orderSimulator,
   log,
 }: {
@@ -292,7 +325,7 @@ async function makePrediction({
   readonly targetTsMs: number;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
-  readonly pendingByAsset: Map<Asset, Map<number, string>>;
+  readonly pendingByState: Map<string, Map<number, string>>;
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
@@ -322,7 +355,7 @@ async function makePrediction({
   const rosterCandidates: CommitteeCandidate[] = [];
   if (marketRegime !== null) {
     const bucket = roster.byBucket.get(
-      rosterBucketKey({ marketRegime, period: TRADE_DECISION_PERIOD }),
+      rosterBucketKey({ marketRegime, period: state.period }),
     );
     if (bucket !== undefined) {
       for (const member of bucket) {
@@ -357,6 +390,7 @@ async function makePrediction({
   log({
     kind: "decision",
     asset: state.asset,
+    period: state.period,
     tsMs: targetTsMs,
     prediction:
       decision.prediction === null
@@ -376,10 +410,10 @@ async function makePrediction({
   }
   const prediction = decision.prediction === "up" ? "u" : "d";
   // Persist. The target bar's open = targetTsMs (i.e. the upcoming
-  // 5m boundary). Its open price is approximately the current Pyth
-  // price (close of the bar we just synthesised). We persist that
-  // as `synth_open` because it's both the synthetic close of the
-  // prior bar AND the open we're betting the next bar moves away
+  // period boundary). Its open price is approximately the current
+  // Pyth price (close of the bar we just synthesised). We persist
+  // that as `synth_open` because it's both the synthetic close of
+  // the prior bar AND the open we're betting the next bar moves away
   // from.
   //
   // `regime_votes` keeps its legacy column name but stores the
@@ -392,7 +426,7 @@ async function makePrediction({
       ts_ms: targetTsMs,
       decided_at_ms: Date.now(),
       asset: state.asset,
-      period: TRADE_DECISION_PERIOD,
+      period: state.period,
       prediction,
       synth_open: cur.close,
       regime_votes: JSON.stringify({
@@ -405,13 +439,16 @@ async function makePrediction({
     })
     .returning("id")
     .executeTakeFirstOrThrow();
-  const pending = pendingByAsset.get(state.asset);
+  const pending = pendingByState.get(
+    dryRunStateKey({ asset: state.asset, period: state.period }),
+  );
   if (pending !== undefined) {
     pending.set(targetTsMs, String(inserted.id));
   }
   await orderSimulator.scheduleOrder({
     decisionId: String(inserted.id),
     asset: state.asset,
+    period: state.period,
     prediction,
     targetTsMs,
     confidence: orderConfidence,
@@ -422,13 +459,13 @@ async function finalizeAndScore({
   db,
   state,
   closedBar,
-  pendingByAsset,
+  pendingByState,
   log,
 }: {
   readonly db: DatabaseClient;
   readonly state: DryRunAssetState;
   readonly closedBar: FilterBar;
-  readonly pendingByAsset: Map<Asset, Map<number, string>>;
+  readonly pendingByState: Map<string, Map<number, string>>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   // Append the bar to the rolling buffer; trim to avoid unbounded
@@ -438,7 +475,9 @@ async function finalizeAndScore({
     state.bars = state.bars.slice(-TRADE_DECISION_HYDRATE_BARS);
   }
   // Score any pending decisions whose target was THIS bar.
-  const pending = pendingByAsset.get(state.asset);
+  const pending = pendingByState.get(
+    dryRunStateKey({ asset: state.asset, period: state.period }),
+  );
   if (pending === undefined) {
     return;
   }
@@ -468,10 +507,21 @@ async function finalizeAndScore({
   log({
     kind: "outcome",
     asset: state.asset,
+    period: state.period,
     tsMs: closedBar.openTimeMs,
     prediction: row.prediction,
     actualClose: closedBar.close,
     actualOpen: closedBar.open,
     won: won === 1,
   });
+}
+
+function dryRunStateKey({
+  asset,
+  period,
+}: {
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+}): string {
+  return `${period}:${asset}`;
 }

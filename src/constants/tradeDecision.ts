@@ -5,19 +5,29 @@
  * same policy.
  */
 
-/** Candle period the current trade-decision loop predicts. */
-export const TRADE_DECISION_PERIOD = "5m";
-
 /**
  * Every candle period the dry-run table is allowed to hold a decision
  * for. Matches the `dry_run_period` CHECK constraint on
  * `dry_run_decisions.period` so the dashboard period toggle and the
  * schema agree on the option set.
  */
-export const TRADE_DECISION_SUPPORTED_PERIODS: readonly string[] = [
-  "5m",
-  "15m",
-];
+export const TRADE_DECISION_SUPPORTED_PERIODS = ["5m", "15m"] as const;
+
+export type TradeDecisionPeriod =
+  (typeof TRADE_DECISION_SUPPORTED_PERIODS)[number];
+
+/**
+ * Candle periods the dry-run trader predicts when the CLI does not
+ * provide an override.
+ */
+export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
+  TRADE_DECISION_SUPPORTED_PERIODS;
+
+/**
+ * Dashboard/default display period. The runner itself uses
+ * `TRADE_DECISION_DEFAULT_PERIODS`.
+ */
+export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
 
 /**
  * How long before the target candle opens the loop snapshots the

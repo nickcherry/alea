@@ -5,7 +5,7 @@ import {
   DRY_RUN_ORDER_PRICE_WINDOW,
   type DryRunOrderStatus,
 } from "@alea/constants/dryRun";
-import { TRADE_DECISION_PERIOD } from "@alea/constants/tradeDecision";
+import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { FilterPrediction } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
@@ -52,6 +52,7 @@ export type DryRunOrderPlacementResolution =
 export type DryRunOrderLogEvent = {
   readonly kind: "order";
   readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
   readonly tsMs: number;
   readonly prediction: "u" | "d";
   readonly status: DryRunOrderStatus;
@@ -64,6 +65,7 @@ export type DryRunOrderLogEvent = {
 type PendingDryRunOrder = {
   readonly decisionId: string;
   readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
   readonly prediction: "u" | "d";
   readonly targetTsMs: number;
   readonly orderAtMs: number;
@@ -198,6 +200,7 @@ export function createDryRunOrderSimulator({
   readonly scheduleOrder: (input: {
     readonly decisionId: string;
     readonly asset: Asset;
+    readonly period: TradeDecisionPeriod;
     readonly prediction: "u" | "d";
     readonly targetTsMs: number;
     readonly confidence: number | null;
@@ -277,10 +280,14 @@ export function createDryRunOrderSimulator({
     if (order.marketKey !== null && sessions.has(order.marketKey)) {
       return true;
     }
-    const key = marketKey({ asset: order.asset, targetTsMs: order.targetTsMs });
+    const key = marketKey({
+      asset: order.asset,
+      period: order.period,
+      targetTsMs: order.targetTsMs,
+    });
     const cachedMarket = marketDiscovery.get({
       asset: order.asset,
-      timeframe: TRADE_DECISION_PERIOD,
+      timeframe: order.period,
       windowStartTsMs: order.targetTsMs,
     });
     if (cachedMarket === null) {
@@ -294,12 +301,14 @@ export function createDryRunOrderSimulator({
   const scheduleOrder = async ({
     decisionId,
     asset,
+    period,
     prediction,
     targetTsMs,
     confidence,
   }: {
     readonly decisionId: string;
     readonly asset: Asset;
+    readonly period: TradeDecisionPeriod;
     readonly prediction: "u" | "d";
     readonly targetTsMs: number;
     readonly confidence: number | null;
@@ -308,11 +317,12 @@ export function createDryRunOrderSimulator({
       return;
     }
     const stepMs = resolutionTimeframeStepMs({
-      timeframe: TRADE_DECISION_PERIOD,
+      timeframe: period,
     });
     const order: PendingDryRunOrder = {
       decisionId,
       asset,
+      period,
       prediction,
       targetTsMs,
       orderAtMs: targetTsMs + DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
@@ -338,11 +348,11 @@ export function createDryRunOrderSimulator({
       return;
     }
 
-    const key = marketKey({ asset, targetTsMs });
+    const key = marketKey({ asset, period, targetTsMs });
     void marketDiscovery
       .getOrDiscover({
         asset,
-        timeframe: TRADE_DECISION_PERIOD,
+        timeframe: period,
         windowStartTsMs: targetTsMs,
       })
       .then((market) => {
@@ -581,6 +591,7 @@ export function createDryRunOrderSimulator({
     log({
       kind: "order",
       asset: order.asset,
+      period: order.period,
       tsMs: order.targetTsMs,
       prediction: order.prediction,
       status: order.status,
@@ -766,10 +777,12 @@ function roundPrice(value: number): number {
 
 function marketKey({
   asset,
+  period,
   targetTsMs,
 }: {
   readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
 }): string {
-  return `${asset}:${TRADE_DECISION_PERIOD}:${targetTsMs}`;
+  return `${asset}:${period}:${targetTsMs}`;
 }

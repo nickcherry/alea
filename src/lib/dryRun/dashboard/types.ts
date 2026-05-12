@@ -100,7 +100,7 @@ export type DryRunDashboardCumulativeRow = {
 /**
  * Aggregates split out per candle period. The client renders one slice
  * at a time as the user flips the 5m/15m toggle; the SSR pass shows the
- * `decisionConfig.period` slice (currently the live runner's period).
+ * `decisionConfig.period` slice (the default display period).
  */
 export type DryRunDashboardPeriodSlice = {
   readonly summary: DryRunDashboardSummary;
