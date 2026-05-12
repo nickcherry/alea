@@ -6,6 +6,8 @@ describe("Pyth candle mappings", () => {
   it("maps alea timeframes to Pyth resolutions", () => {
     expect(pythResolution({ timeframe: "1m" })).toBe("1");
     expect(pythResolution({ timeframe: "5m" })).toBe("5");
+    expect(pythResolution({ timeframe: "15m" })).toBe("15");
+    expect(pythResolution({ timeframe: "1h" })).toBe("60");
   });
 
   it("maps assets to Pyth oracle symbols", () => {

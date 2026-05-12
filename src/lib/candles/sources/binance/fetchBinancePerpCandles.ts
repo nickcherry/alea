@@ -110,7 +110,7 @@ type ArchiveSpec = {
    */
   readonly dayStartMs?: number;
   readonly symbol?: string;
-  readonly interval?: "1m" | "5m" | "15m";
+  readonly interval?: "1m" | "5m" | "15m" | "1h";
 };
 
 function chooseArchive({
@@ -122,7 +122,7 @@ function chooseArchive({
   readonly dayStart: number;
   readonly todayUtc: number;
   readonly symbol: string;
-  readonly interval: "1m" | "5m" | "15m";
+  readonly interval: "1m" | "5m" | "15m" | "1h";
 }): ArchiveSpec {
   const day = new Date(dayStart);
   const monthEnd = Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + 1, 1);
@@ -217,7 +217,7 @@ async function downloadAndParse({
  * Fetch one UTC day's klines from the live fapi REST endpoint when
  * Vision hasn't yet published the daily archive. fapi caps responses
  * at 1500 klines per call; one UTC day is 288 klines at 5m and 1440
- * at 1m, both within the cap.
+ * at 1m and 24 klines at 1h, both within the cap.
  */
 async function fetchFapiDay({
   dayStartMs,
@@ -228,7 +228,7 @@ async function fetchFapiDay({
 }: {
   readonly dayStartMs: number;
   readonly symbol: string;
-  readonly interval: "1m" | "5m" | "15m";
+  readonly interval: "1m" | "5m" | "15m" | "1h";
   readonly asset: Asset;
   readonly timeframe: CandleTimeframe;
 }): Promise<readonly Candle[]> {

@@ -8,7 +8,7 @@ export function coinbaseGranularity({
   timeframe,
 }: {
   readonly timeframe: CandleTimeframe;
-}): "ONE_MINUTE" | "FIVE_MINUTE" | "FIFTEEN_MINUTE" {
+}): "ONE_MINUTE" | "FIVE_MINUTE" | "FIFTEEN_MINUTE" | "ONE_HOUR" {
   switch (timeframe) {
     case "1m":
       return "ONE_MINUTE";
@@ -16,5 +16,7 @@ export function coinbaseGranularity({
       return "FIVE_MINUTE";
     case "15m":
       return "FIFTEEN_MINUTE";
+    case "1h":
+      return "ONE_HOUR";
   }
 }

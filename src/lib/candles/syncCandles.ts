@@ -9,6 +9,9 @@ import type { Product } from "@alea/types/products";
 import type { CandleSource } from "@alea/types/sources";
 import { sql } from "kysely";
 
+const pythCandlesPerFetchPage = 9000;
+const pythMaxWindowMs = 360 * 24 * 60 * 60 * 1000;
+
 type SyncCandlesParams = {
   readonly db: DatabaseClient;
   readonly source: CandleSource;
@@ -42,9 +45,9 @@ export type SyncCandlesResult = {
 
 /**
  * Pages through `[start, end)` for one (source, asset, product, timeframe)
- * series, fetching `candlesPerFetchPage` candles per call. Each page is
- * upserted before the next is fetched so a long sync can be interrupted
- * without losing all progress. Per-page latency is recorded for the caller.
+ * series, fetching provider-sized pages. Each page is upserted before the
+ * next is fetched so a long sync can be interrupted without losing all
+ * progress. Per-page latency is recorded for the caller.
  */
 export async function syncCandles({
   db,
@@ -56,7 +59,7 @@ export async function syncCandles({
   end,
 }: SyncCandlesParams): Promise<SyncCandlesResult> {
   const barMs = timeframeMs({ timeframe });
-  const pageMs = barMs * candlesPerFetchPage;
+  const pageMs = barMs * candlesPerSyncPage({ source, barMs });
   const pages: SyncCandlesPageMetric[] = [];
   let fetched = 0;
   let persisted = 0;
@@ -128,6 +131,26 @@ export async function syncCandles({
     fetchTotalMs,
     upsertTotalMs,
   };
+}
+
+function candlesPerSyncPage({
+  source,
+  barMs,
+}: {
+  readonly source: CandleSource;
+  readonly barMs: number;
+}): number {
+  switch (source) {
+    case "pyth":
+      return Math.min(
+        pythCandlesPerFetchPage,
+        Math.max(1, Math.floor(pythMaxWindowMs / barMs)),
+      );
+    case "binance":
+    case "coinbase":
+    case "coindesk":
+      return candlesPerFetchPage;
+  }
 }
 
 /**

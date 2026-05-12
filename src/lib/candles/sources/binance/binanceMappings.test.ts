@@ -7,6 +7,8 @@ describe("Binance candle mappings", () => {
   it("maps alea timeframes to Binance intervals", () => {
     expect(binanceInterval({ timeframe: "1m" })).toBe("1m");
     expect(binanceInterval({ timeframe: "5m" })).toBe("5m");
+    expect(binanceInterval({ timeframe: "15m" })).toBe("15m");
+    expect(binanceInterval({ timeframe: "1h" })).toBe("1h");
   });
 
   it("maps assets to spot and perp USDT symbols", () => {

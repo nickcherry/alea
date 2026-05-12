@@ -41,8 +41,8 @@ const millisecondsPerDay = 86_400_000;
 const syncConcurrency = 2;
 
 /**
- * Backfills 5-minute (or 1-minute) candles into Postgres for a configurable
- * window, asset list, and source list.
+ * Backfills candles into Postgres for a configurable timeframe, window,
+ * asset list, and source list.
  */
 export const candlesSyncCommand = defineCommand({
   name: "candles:sync",
@@ -108,6 +108,7 @@ export const candlesSyncCommand = defineCommand({
   examples: [
     "bun alea candles:sync",
     "bun alea candles:sync --timeframe 5m --days 730",
+    "bun alea candles:sync --timeframe 1h --sources pyth --products spot",
     "bun alea candles:sync --assets btc,eth --sources pyth",
     "bun alea candles:sync --products spot",
   ],

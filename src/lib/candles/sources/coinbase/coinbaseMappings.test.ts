@@ -7,6 +7,8 @@ describe("Coinbase candle mappings", () => {
   it("maps alea timeframes to Coinbase granularities", () => {
     expect(coinbaseGranularity({ timeframe: "1m" })).toBe("ONE_MINUTE");
     expect(coinbaseGranularity({ timeframe: "5m" })).toBe("FIVE_MINUTE");
+    expect(coinbaseGranularity({ timeframe: "15m" })).toBe("FIFTEEN_MINUTE");
+    expect(coinbaseGranularity({ timeframe: "1h" })).toBe("ONE_HOUR");
   });
 
   it("maps assets to spot and perp product ids", () => {

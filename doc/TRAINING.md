@@ -15,6 +15,9 @@ Rows are cached by exact candle range and active `TRAINING_PROFILE_ID`.
 Use `--filters filter_id1,filter_id2`, `--periods 5m`, or
 `--assets btc,eth` to slice.
 
+The broader candle store can hold `1m` and `1h` bars, but training
+currently evaluates the trade-decision periods only: `5m` and `15m`.
+
 ## Window
 
 Training starts at the earliest matching Pyth spot candle in the local

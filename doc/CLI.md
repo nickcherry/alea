@@ -24,8 +24,8 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `db:*`
   `db:migrate`
 - `candles:*`
-  `candles:sync`
-  `candles:fill-gaps`
+  `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run`, `backtest:run`, or Polymarket resolution sync trade hourly markets.
+  `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
 - `training:*`
   `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against cached pyth/spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `backtest:*`

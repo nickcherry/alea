@@ -88,14 +88,15 @@ export async function fetchPythCandles({
       windowLabel: `${nextStartSec}..${pageEndSec}`,
     });
     const raw = await response.json();
-    const status = headerSchema.parse(raw).s;
+    const header = headerSchema.parse(raw);
+    const status = header.s;
     if (status === "no_data") {
       nextStartSec = pageEndSec;
       continue;
     }
     if (status !== "ok") {
       throw new Error(
-        `Pyth Benchmarks ${symbol} ${timeframe} returned status ${status}`,
+        `Pyth Benchmarks ${symbol} ${timeframe} returned status ${status}${header.errmsg === undefined ? "" : `: ${header.errmsg}`}`,
       );
     }
     const parsed = okResponseSchema.parse(raw);
@@ -153,6 +154,8 @@ function barSecondsFor({
       return 300;
     case "15m":
       return 900;
+    case "1h":
+      return 3600;
   }
 }
 
@@ -230,7 +233,9 @@ async function sleepWithJitter({
   await new Promise((resolve) => setTimeout(resolve, totalMs));
 }
 
-const headerSchema = z.object({ s: z.string() }).passthrough();
+const headerSchema = z
+  .object({ s: z.string(), errmsg: z.string().optional() })
+  .passthrough();
 
 const okResponseSchema = z
   .object({

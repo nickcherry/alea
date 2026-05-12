@@ -24,7 +24,7 @@ const fillConcurrency = 8;
 
 /**
  * Re-queries each configured (source, asset, product, timeframe) series for
- * any missing 5-min bars between the persisted min and max, upserting
+ * any missing bars between the persisted min and max, upserting
  * whatever the source returns now. Useful after a large historical sync
  * when one or two venues had transient outages whose data has since been
  * backfilled by the venue.

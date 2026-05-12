@@ -9,6 +9,11 @@ The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
 fees and roughly 1:1 risk/reward, win rate is the edge.
 
+The candle store can also ingest `1m` and `1h` bars for research and
+source-comparison work. Those are data-only today; trading, committee
+selection, and Polymarket settlement workflows still operate on `5m`
+and `15m` periods.
+
 ## Terminology
 
 Use **training artifacts** or the concrete table names for persisted
@@ -70,7 +75,8 @@ After adding a new filter or refreshing candles:
 
 ```sh
 bun alea db:migrate              # ensure schema is current
-bun alea candles:sync            # refresh pyth-spot candles (if needed)
+bun alea candles:sync            # refresh candles (default: 5m)
+bun alea candles:sync --timeframe 1h --sources pyth --products spot # optional hourly Pyth spot
 bun alea training:run            # refresh filter training artifacts
 bun alea regimes:backfill        # re-classify every bar (if classifier changed)
 bun alea committee:select        # rebuild the regime-scoped voter roster

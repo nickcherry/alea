@@ -12,5 +12,7 @@ export function pythResolution({
       return "5";
     case "15m":
       return "15";
+    case "1h":
+      return "60";
   }
 }

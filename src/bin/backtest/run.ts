@@ -15,12 +15,12 @@ import { allCandidates } from "@alea/lib/filters/registry";
 import type { FilterBar } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 import { assetSchema } from "@alea/types/assets";
-import type { CandleTimeframe } from "@alea/types/candles";
-import { candleTimeframeSchema } from "@alea/types/candles";
 import pc from "picocolors";
 import { z } from "zod";
 
-const SUPPORTED_PERIODS: readonly CandleTimeframe[] = ["5m", "15m"];
+const SUPPORTED_PERIODS = ["5m", "15m"] as const;
+const supportedPeriodSchema = z.enum(SUPPORTED_PERIODS);
+type SupportedPeriod = (typeof SUPPORTED_PERIODS)[number];
 
 /**
  * Runs every registered filter at every default config across the
@@ -49,7 +49,7 @@ export const trainingRunCommand = defineCommand({
         .transform((v) =>
           v === undefined ? undefined : v.split(",").map((s) => s.trim()),
         )
-        .pipe(z.array(candleTimeframeSchema).default([...SUPPORTED_PERIODS]))
+        .pipe(z.array(supportedPeriodSchema).default([...SUPPORTED_PERIODS]))
         .describe(
           `Candle periods to evaluate (default: ${SUPPORTED_PERIODS.join(",")}).`,
         ),
@@ -172,7 +172,7 @@ async function loadBars({
 }: {
   readonly db: ReturnType<typeof createDatabase>;
   readonly asset: Asset;
-  readonly period: CandleTimeframe;
+  readonly period: SupportedPeriod;
 }): Promise<readonly FilterBar[]> {
   const rows = await db
     .selectFrom("candles")

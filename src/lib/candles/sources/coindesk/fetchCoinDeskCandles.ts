@@ -2,8 +2,10 @@ import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import { z } from "zod";
 
-const indexBaseUrl =
+const indexMinuteBaseUrl =
   "https://data-api.coindesk.com/index/cc/v1/historical/minutes";
+const indexHourBaseUrl =
+  "https://data-api.coindesk.com/index/cc/v1/historical/hours";
 /**
  * CADLI = CoinDesk Aggregated Liquid Index. A volume-weighted multi-
  * exchange index that tracks the same kind of cross-venue aggregation
@@ -14,11 +16,13 @@ const indexBaseUrl =
 const market = "cadli";
 /**
  * CoinDesk's `historical/minutes` endpoint caps a single request to
- * 2000 underlying minute candles. With `aggregate=N` the row limit
- * scales down to `2000 / N` (5m → 400, 15m → 133, etc) — the API
- * rejects anything larger with HTTP 400.
+ * 2000 underlying minute candles. With `aggregate=N` the row limit scales
+ * down to `2000 / N` (5m -> 400, 15m -> 133). 1h candles use the separate
+ * `historical/hours` endpoint because the minute endpoint rejects
+ * `aggregate=60`.
  */
 const maxUnderlyingMinutesPerPage = 2000;
+const maxHourlyRowsPerPage = 2000;
 const oneMinuteMs = 60_000;
 
 type FetchCoinDeskCandlesParams = {
@@ -46,20 +50,20 @@ export async function fetchCoinDeskCandles({
   start,
   end,
 }: FetchCoinDeskCandlesParams): Promise<readonly Candle[]> {
-  const aggregate = aggregateForTimeframe({ timeframe });
-  const barMs = aggregate * oneMinuteMs;
-  const rowsPerPage = Math.floor(maxUnderlyingMinutesPerPage / aggregate);
+  const requestSpec = requestSpecForTimeframe({ timeframe });
   const startSec = Math.floor(start.getTime() / 1000);
   const endSec = Math.ceil(end.getTime() / 1000);
   const instrument = instrumentFor({ asset });
   const accumulator: Candle[] = [];
   let pageEndSec = endSec;
   while (pageEndSec > startSec) {
-    const url = new URL(indexBaseUrl);
+    const url = new URL(requestSpec.baseUrl);
     url.searchParams.set("market", market);
     url.searchParams.set("instrument", instrument);
-    url.searchParams.set("limit", String(rowsPerPage));
-    url.searchParams.set("aggregate", String(aggregate));
+    url.searchParams.set("limit", String(requestSpec.rowsPerPage));
+    if (requestSpec.aggregate !== undefined) {
+      url.searchParams.set("aggregate", String(requestSpec.aggregate));
+    }
     url.searchParams.set("to_ts", String(pageEndSec));
 
     const response = await fetch(url.toString(), {
@@ -86,7 +90,7 @@ export async function fetchCoinDeskCandles({
       // TIMESTAMP isn't on a canonical boundary so we don't pollute
       // the (source, asset, product, timeframe, timestamp) primary
       // key with off-grid rows.
-      if ((row.TIMESTAMP * 1000) % barMs !== 0) {
+      if ((row.TIMESTAMP * 1000) % requestSpec.barMs !== 0) {
         continue;
       }
       accumulator.push({
@@ -105,7 +109,7 @@ export async function fetchCoinDeskCandles({
         oldestSeenSec = row.TIMESTAMP;
       }
     }
-    if (parsed.Data.length < rowsPerPage) {
+    if (parsed.Data.length < requestSpec.rowsPerPage) {
       break;
     }
     const nextEnd = oldestSeenSec - 1;
@@ -128,19 +132,44 @@ export async function fetchCoinDeskCandles({
   return out;
 }
 
-function aggregateForTimeframe({
+function requestSpecForTimeframe({
   timeframe,
 }: {
   readonly timeframe: CandleTimeframe;
-}): number {
+}): {
+  readonly baseUrl: string;
+  readonly aggregate?: number;
+  readonly rowsPerPage: number;
+  readonly barMs: number;
+} {
   switch (timeframe) {
     case "1m":
-      return 1;
+      return minuteRequestSpec({ aggregate: 1 });
     case "5m":
-      return 5;
+      return minuteRequestSpec({ aggregate: 5 });
     case "15m":
-      return 15;
+      return minuteRequestSpec({ aggregate: 15 });
+    case "1h":
+      return {
+        baseUrl: indexHourBaseUrl,
+        rowsPerPage: maxHourlyRowsPerPage,
+        barMs: 60 * oneMinuteMs,
+      };
   }
+}
+
+function minuteRequestSpec({ aggregate }: { readonly aggregate: number }): {
+  readonly baseUrl: string;
+  readonly aggregate: number;
+  readonly rowsPerPage: number;
+  readonly barMs: number;
+} {
+  return {
+    baseUrl: indexMinuteBaseUrl,
+    aggregate,
+    rowsPerPage: Math.floor(maxUnderlyingMinutesPerPage / aggregate),
+    barMs: aggregate * oneMinuteMs,
+  };
 }
 
 function instrumentFor({ asset }: { readonly asset: Asset }): string {

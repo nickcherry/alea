@@ -20,11 +20,22 @@ describe("alignTimeframeWindow", () => {
       }).toISOString(),
     ).toBe("2026-05-04T12:30:00.000Z");
   });
+
+  it("floors dates to the most recent 1h boundary", () => {
+    expect(
+      alignTimeframeWindow({
+        date: new Date("2026-05-04T12:34:56.789Z"),
+        timeframe: "1h",
+      }).toISOString(),
+    ).toBe("2026-05-04T12:00:00.000Z");
+  });
 });
 
 describe("timeframeMs", () => {
   it("returns the candle duration in milliseconds", () => {
     expect(timeframeMs({ timeframe: "1m" })).toBe(60_000);
     expect(timeframeMs({ timeframe: "5m" })).toBe(300_000);
+    expect(timeframeMs({ timeframe: "15m" })).toBe(900_000);
+    expect(timeframeMs({ timeframe: "1h" })).toBe(3_600_000);
   });
 });
