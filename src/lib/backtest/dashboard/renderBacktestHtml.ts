@@ -7,6 +7,7 @@ import type {
 import type { FilterFamily } from "@alea/lib/filters/types";
 import {
   aleaBrandMark,
+  aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
 import {
@@ -29,12 +30,12 @@ export function renderBacktestHtml({
     readonly scripts: readonly string[];
   };
 }): string {
-  const subtitle = [
-    `generated ${formatDateTime({ ms: payload.generatedAtMs })}`,
-    `latest ${formatDateTimeOrDash({ ms: payload.summary.computedAtMaxMs })}`,
-    `${payload.summary.runCount.toLocaleString()} runs`,
-  ].join('<span class="sep">&middot;</span>');
+  const subtitle = `generated ${formatDateTime({ ms: payload.generatedAtMs })}`;
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
+  const chartTokensJson = escapeJsonForHtml({
+    value: JSON.stringify(aleaChartTokens),
+  });
+  const initialPeriod = payload.supportedPeriods[0] ?? "5m";
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -42,6 +43,8 @@ export function renderBacktestHtml({
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Alea &middot; Backtest</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js" charset="utf-8"></script>
   ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
 </head>
 <body>
@@ -53,68 +56,100 @@ export function renderBacktestHtml({
     </header>
     ${renderTopNav({ activeId: "backtest" })}
     <main class="alea-main backtest-main">
-      ${renderSummary({ payload })}
-      ${renderProfile({ payload })}
-      ${renderPeriodTable({ rows: payload.byPeriod })}
-      ${renderAssetTable({ rows: payload.byAsset })}
-      ${renderTopCandidateTable({ rows: payload.topCandidates })}
+      ${renderPeriodControls({ periods: payload.supportedPeriods, initialPeriod })}
+      ${renderPnlChart()}
+      ${renderProfile({ payload, initialPeriod })}
+      ${renderPeriodTable({ rows: payload.byPeriod, initialPeriod })}
+      ${renderAssetTable({ rows: payload.byAsset, initialPeriod })}
+      ${renderTopCandidateTable({ rows: payload.topCandidates, initialPeriod })}
     </main>
   </div>
   <script id="backtest-payload" type="application/json">${payloadJson}</script>
+  <script id="backtest-tokens" type="application/json">${chartTokensJson}</script>
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
 }
 
-function renderSummary({
-  payload,
+function renderPeriodControls({
+  periods,
+  initialPeriod,
 }: {
-  readonly payload: BacktestDashboardPayload;
+  readonly periods: readonly string[];
+  readonly initialPeriod: string;
 }): string {
-  const s = payload.summary;
-  return `<section class="alea-summary-grid backtest-summary" aria-label="Backtest summary">
-    ${metric({
-      label: "Coverage",
-      value: formatCoverage({
-        runCount: s.runCount,
-        expectedRunCount: s.expectedRunCount,
-      }),
-      sub: `${s.missingRunCount.toLocaleString()} missing`,
-      tone: s.missingRunCount === 0 ? "positive" : "negative",
-    })}
-    ${metric({
-      label: "Win rate",
-      value: formatPercentOrDash({ value: s.winRate }),
-      sub: `${s.nWins.toLocaleString()} / ${s.nEngagements.toLocaleString()}`,
-      tone: toneForMetric({ value: s.winRate }),
-    })}
-    ${metric({
-      label: "Latest computed",
-      value: formatDateTimeOrDash({ ms: s.computedAtMaxMs }),
-      sub: `oldest ${formatDateTimeOrDash({ ms: s.computedAtMinMs })}`,
-    })}
-    ${metric({
-      label: "Candidates",
-      value: s.activeCandidateCount.toLocaleString(),
-      sub: `${s.activeFilterCount.toLocaleString()} filters`,
-    })}
+  return `<div class="alea-page-controls backtest-controls">
+    <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+      ${periods
+        .map(
+          (period) =>
+            `<button class="alea-pill-tab is-prominent backtest-period-tab" role="tab" data-period="${escapeHtml({ value: period })}" aria-selected="${period === initialPeriod ? "true" : "false"}">${escapeHtml({ value: period })}</button>`,
+        )
+        .join("")}
+    </div>
+  </div>`;
+}
+
+function renderPnlChart(): string {
+  return `<section class="alea-panel backtest-panel backtest-chart-panel">
+    <div class="alea-section-rule"><h2>Cumulative PnL</h2></div>
+    <div class="backtest-chart-frame">
+      <div id="backtest-pnl-chart" class="backtest-chart-host"></div>
+      <div id="backtest-pnl-empty" class="backtest-chart-empty">No chart data.</div>
+      <div id="backtest-pnl-tooltip" class="alea-tooltip"></div>
+    </div>
   </section>`;
 }
 
 function renderProfile({
   payload,
+  initialPeriod,
 }: {
   readonly payload: BacktestDashboardPayload;
+  readonly initialPeriod: string;
 }): string {
+  const periodRow =
+    payload.byPeriod.find((row) => row.period === initialPeriod) ?? null;
   return `<section class="alea-panel backtest-profile">
     <div class="alea-section-rule"><h2>Profile</h2></div>
     <div class="backtest-profile-grid">
+      ${profileItem({
+        id: "backtest-profile-period",
+        label: "Period",
+        value: initialPeriod,
+      })}
+      ${profileItem({
+        id: "backtest-profile-coverage",
+        label: "Coverage",
+        value:
+          periodRow === null
+            ? "0 / 0"
+            : formatCoverage({
+                runCount: periodRow.runCount,
+                expectedRunCount: periodRow.expectedRunCount,
+              }),
+      })}
+      ${profileItem({
+        id: "backtest-profile-win-rate",
+        label: "Win rate",
+        value: formatPercentOrDash({ value: periodRow?.winRate ?? null }),
+      })}
+      ${profileItem({
+        id: "backtest-profile-engagements",
+        label: "Engagements",
+        value: (periodRow?.nEngagements ?? 0).toLocaleString(),
+      })}
+      ${profileItem({
+        id: "backtest-profile-latest",
+        label: "Latest computed",
+        value: formatDateTimeOrDash({ ms: periodRow?.computedAtMaxMs ?? null }),
+      })}
       ${profileItem({ label: "Training profile", value: payload.trainingProfileId })}
-      ${profileItem({ label: "Periods", value: payload.supportedPeriods.join(", ") })}
       ${profileItem({ label: "Assets", value: payload.assets.join(", ") })}
       ${profileItem({
+        id: "backtest-profile-candle-range",
         label: "Candle range",
-        value: `${formatDateOrDash({ ms: payload.summary.rangeFirstMs })} to ${formatDateOrDash({ ms: payload.summary.rangeLastMs })}`,
+        value: `${formatDateOrDash({ ms: periodRow?.rangeFirstMs ?? null })} to ${formatDateOrDash({ ms: periodRow?.rangeLastMs ?? null })}`,
       })}
     </div>
   </section>`;
@@ -122,8 +157,10 @@ function renderProfile({
 
 function renderPeriodTable({
   rows,
+  initialPeriod,
 }: {
   readonly rows: readonly BacktestDashboardPeriodRow[];
+  readonly initialPeriod: string;
 }): string {
   return `<section class="alea-panel backtest-panel">
     <div class="alea-section-rule"><h2>Periods</h2></div>
@@ -142,15 +179,21 @@ function renderPeriodTable({
           </tr>
         </thead>
         <tbody>
-          ${rows.map(renderPeriodRow).join("")}
+          ${rows.map((row) => renderPeriodRow({ row, initialPeriod })).join("")}
         </tbody>
       </table>
     </div>
   </section>`;
 }
 
-function renderPeriodRow(row: BacktestDashboardPeriodRow): string {
-  return `<tr>
+function renderPeriodRow({
+  row,
+  initialPeriod,
+}: {
+  readonly row: BacktestDashboardPeriodRow;
+  readonly initialPeriod: string;
+}): string {
+  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
     <th>${escapeHtml({ value: row.period })}</th>
     <td>${formatCoverage({ runCount: row.runCount, expectedRunCount: row.expectedRunCount })}</td>
     <td>${row.assetCount.toLocaleString()}</td>
@@ -164,8 +207,10 @@ function renderPeriodRow(row: BacktestDashboardPeriodRow): string {
 
 function renderAssetTable({
   rows,
+  initialPeriod,
 }: {
   readonly rows: readonly BacktestDashboardAssetRow[];
+  readonly initialPeriod: string;
 }): string {
   return `<section class="alea-panel backtest-panel">
     <div class="alea-section-rule"><h2>Assets</h2></div>
@@ -182,15 +227,21 @@ function renderAssetTable({
           </tr>
         </thead>
         <tbody>
-          ${rows.map(renderAssetRow).join("")}
+          ${rows.map((row) => renderAssetRow({ row, initialPeriod })).join("")}
         </tbody>
       </table>
     </div>
   </section>`;
 }
 
-function renderAssetRow(row: BacktestDashboardAssetRow): string {
-  return `<tr>
+function renderAssetRow({
+  row,
+  initialPeriod,
+}: {
+  readonly row: BacktestDashboardAssetRow;
+  readonly initialPeriod: string;
+}): string {
+  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
     <th>${escapeHtml({ value: `${row.period} / ${row.asset}` })}</th>
     <td>${formatCoverage({ runCount: row.runCount, expectedRunCount: row.expectedRunCount })}</td>
     <td>${row.nEngagements.toLocaleString()}</td>
@@ -202,13 +253,23 @@ function renderAssetRow(row: BacktestDashboardAssetRow): string {
 
 function renderTopCandidateTable({
   rows,
+  initialPeriod,
 }: {
   readonly rows: readonly BacktestDashboardCandidateRow[];
+  readonly initialPeriod: string;
 }): string {
   const body =
     rows.length === 0
       ? `<tr><td colspan="9"><span class="alea-muted">No active-profile backtest rows.</span></td></tr>`
-      : rows.map(renderTopCandidateRow).join("");
+      : rows
+          .map((row) => renderTopCandidateRow({ row, initialPeriod }))
+          .join("");
+  const emptyRow =
+    rows.length === 0
+      ? ""
+      : `<tr id="backtest-candidate-empty"${
+          rows.some((row) => row.period === initialPeriod) ? " hidden" : ""
+        }><td colspan="9"><span class="alea-muted">No active-profile backtest rows for this period.</span></td></tr>`;
   return `<section class="alea-panel backtest-panel">
     <div class="alea-section-rule"><h2>Top Candidates</h2></div>
     <div class="alea-table-wrap">
@@ -226,18 +287,24 @@ function renderTopCandidateTable({
             <th>Config</th>
           </tr>
         </thead>
-        <tbody>${body}</tbody>
+        <tbody id="backtest-candidate-body">${body}${emptyRow}</tbody>
       </table>
     </div>
   </section>`;
 }
 
-function renderTopCandidateRow(row: BacktestDashboardCandidateRow): string {
+function renderTopCandidateRow({
+  row,
+  initialPeriod,
+}: {
+  readonly row: BacktestDashboardCandidateRow;
+  readonly initialPeriod: string;
+}): string {
   const family =
     row.filterFamily === null
       ? "unknown"
       : familyLabel({ family: row.filterFamily as FilterFamily });
-  return `<tr>
+  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
     <th>
       <span class="backtest-filter-id">${escapeHtml({ value: row.filterId })}</span>
       <span class="backtest-filter-version">v${row.filterVersion.toLocaleString()}</span>
@@ -253,36 +320,30 @@ function renderTopCandidateRow(row: BacktestDashboardCandidateRow): string {
   </tr>`;
 }
 
-function metric({
+function profileItem({
+  id,
   label,
   value,
-  sub,
-  tone,
 }: {
+  readonly id?: string;
   readonly label: string;
   readonly value: string;
-  readonly sub: string;
-  readonly tone?: "positive" | "negative";
 }): string {
-  const toneClass = tone === undefined ? "" : ` ${tone}`;
-  return `<div class="alea-metric">
-    <p class="alea-metric-label">${escapeHtml({ value: label })}</p>
-    <p class="alea-metric-value${toneClass}">${escapeHtml({ value })}</p>
-    <p class="alea-metric-sub">${escapeHtml({ value: sub })}</p>
+  const idAttr = id === undefined ? "" : ` id="${id}"`;
+  return `<div class="backtest-profile-item">
+    <span class="backtest-profile-label">${escapeHtml({ value: label })}</span>
+    <span${idAttr} class="backtest-profile-value">${escapeHtml({ value })}</span>
   </div>`;
 }
 
-function profileItem({
-  label,
-  value,
+function hiddenUnlessActive({
+  period,
+  initialPeriod,
 }: {
-  readonly label: string;
-  readonly value: string;
+  readonly period: string;
+  readonly initialPeriod: string;
 }): string {
-  return `<div class="backtest-profile-item">
-    <span class="backtest-profile-label">${escapeHtml({ value: label })}</span>
-    <span class="backtest-profile-value">${escapeHtml({ value })}</span>
-  </div>`;
+  return period === initialPeriod ? "" : " hidden";
 }
 
 function formatCoverage({
@@ -320,21 +381,4 @@ function winRateCellClass({
   readonly value: number | null;
 }): string {
   return `alea-mono${winRateToneClass({ value })}`;
-}
-
-function toneForMetric({
-  value,
-}: {
-  readonly value: number | null;
-}): "positive" | "negative" | undefined {
-  if (value === null) {
-    return undefined;
-  }
-  if (value >= 0.52) {
-    return "positive";
-  }
-  if (value < 0.48) {
-    return "negative";
-  }
-  return undefined;
 }

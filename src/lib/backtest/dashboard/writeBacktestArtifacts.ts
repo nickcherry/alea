@@ -15,7 +15,7 @@ export async function writeBacktestArtifacts({
 }): Promise<void> {
   const assets = await copyDashboardAssets({
     htmlPath,
-    pageAssets: ["backtest.css"],
+    pageAssets: ["backtest.css", "backtest.js"],
   });
   const html = renderBacktestHtml({ payload, assets });
   await Promise.all([

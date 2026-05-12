@@ -372,16 +372,12 @@ async function buildBacktestDashboard({
       payload.summary.winRate === null
         ? "—"
         : `${(payload.summary.winRate * 100).toFixed(1)}%`;
-    const latest =
-      payload.summary.computedAtMaxMs === null
-        ? "none"
-        : new Date(payload.summary.computedAtMaxMs).toISOString().slice(0, 16);
     io.writeStdout(
-      `  ${pc.green("runs =")} ${payload.summary.runCount.toLocaleString()}` +
+      `  ${pc.green("coverage =")} ${payload.summary.runCount.toLocaleString()}/${payload.summary.expectedRunCount.toLocaleString()}` +
         `  ${pc.dim("missing=")}${payload.summary.missingRunCount.toLocaleString()}` +
         `  ${pc.dim("engagements=")}${payload.summary.nEngagements.toLocaleString()}` +
         `  ${pc.dim("wr=")}${wr}` +
-        `  ${pc.dim("latest=")}${latest}\n` +
+        "\n" +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {

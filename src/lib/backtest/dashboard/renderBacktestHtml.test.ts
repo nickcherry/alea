@@ -3,7 +3,7 @@ import type { BacktestDashboardPayload } from "@alea/lib/backtest/dashboard/type
 import { describe, expect, it } from "bun:test";
 
 describe("renderBacktestHtml", () => {
-  it("renders the backtest dashboard shell, nav link, and core summary", () => {
+  it("renders the backtest dashboard shell, period toggle, and chart", () => {
     const payload: BacktestDashboardPayload = {
       generatedAtMs: Date.UTC(2026, 4, 12, 12),
       trainingProfileId: "profile-v1",
@@ -34,18 +34,24 @@ describe("renderBacktestHtml", () => {
       byPeriod: [],
       byAsset: [],
       topCandidates: [],
+      pnlSeries: [],
     };
 
     const html = renderBacktestHtml({
       payload,
-      assets: { stylesheets: ["alea.css", "backtest.css"], scripts: [] },
+      assets: {
+        stylesheets: ["alea.css", "backtest.css"],
+        scripts: ["backtest.js"],
+      },
     });
 
     expect(html).toContain("Alea &middot; Backtest");
     expect(html).toContain("Backtest");
     expect(html).toContain("/dryrun/");
-    expect(html).toContain("2 / 2");
-    expect(html).toContain("60.0%");
+    expect(html).not.toContain("latest ");
+    expect(html).not.toContain("runs");
+    expect(html).toContain("backtest-period-tab");
+    expect(html).toContain("backtest-pnl-chart");
     expect(html).toContain("profile-v1");
   });
 });

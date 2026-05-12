@@ -8,6 +8,7 @@ import type {
   BacktestDashboardCandidateRow,
   BacktestDashboardPayload,
   BacktestDashboardPeriodRow,
+  BacktestDashboardPnlPoint,
   BacktestDashboardSummary,
 } from "@alea/lib/backtest/dashboard/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -16,6 +17,7 @@ import {
   candidateRegistryKey,
 } from "@alea/lib/filters/activeCandidates";
 import { getFilter } from "@alea/lib/filters/registry";
+import { sql } from "kysely";
 
 const TOP_CANDIDATE_LIMIT = 30;
 
@@ -126,7 +128,77 @@ export async function loadBacktestPayload({
       activeCandidateCount: activeCandidates.length,
     }),
     topCandidates: buildTopCandidateRows({ rows }),
+    pnlSeries: await buildPnlSeries({ db, activeCandidates }),
   };
+}
+
+async function buildPnlSeries({
+  db,
+  activeCandidates,
+}: {
+  readonly db: DatabaseClient;
+  readonly activeCandidates: ReturnType<typeof activeCandidateRows>;
+}): Promise<readonly BacktestDashboardPnlPoint[]> {
+  if (activeCandidates.length === 0) {
+    return [];
+  }
+
+  const activeCandidateValues = sql.join(
+    activeCandidates.map(
+      (candidate) =>
+        sql`(${candidate.filterId}::text, ${candidate.filterVersion}::integer, ${candidate.configCanon}::text)`,
+    ),
+  );
+  const rows = await sql<{
+    period: string;
+    ts_ms: string;
+    n_engagements: string;
+    n_wins: string;
+  }>`
+    with active_candidates(filter_id, filter_version, config_canon) as (
+      values ${activeCandidateValues}
+    ),
+    engagement_days as (
+      select
+        fr.period,
+        date_trunc('day', to_timestamp(fe.ts_ms / 1000.0)) as bucket,
+        count(*)::text as n_engagements,
+        coalesce(sum(fe.won), 0)::text as n_wins
+      from filter_runs fr
+      join active_candidates ac
+        on ac.filter_id = fr.filter_id
+        and ac.filter_version = fr.filter_version
+        and ac.config_canon = fr.config_canon
+      join filter_engagements fe on fe.run_hash = fr.run_hash
+      where fr.training_profile = ${TRAINING_PROFILE_ID}
+      group by fr.period, bucket
+    )
+    select
+      period,
+      ((extract(epoch from bucket) * 1000)::bigint)::text as ts_ms,
+      n_engagements,
+      n_wins
+    from engagement_days
+    order by period, ts_ms
+  `.execute(db);
+
+  const cumulativeByPeriod = new Map<string, number>();
+  return rows.rows.map((row) => {
+    const nEngagements = Number(row.n_engagements);
+    const nWins = Number(row.n_wins);
+    const nLosses = nEngagements - nWins;
+    const cumulative =
+      (cumulativeByPeriod.get(row.period) ?? 0) + nWins - nLosses;
+    cumulativeByPeriod.set(row.period, cumulative);
+    return {
+      period: row.period,
+      tsMs: Number(row.ts_ms),
+      nEngagements,
+      nWins,
+      nLosses,
+      cumulativePnlUnits: cumulative,
+    };
+  });
 }
 
 function buildPeriodRows({
@@ -225,33 +297,37 @@ function buildTopCandidateRows({
     addToAggregate(bucket, row);
   }
 
-  return Array.from(buckets.values())
-    .map((bucket) => {
-      const projection = aggregateProjection(bucket);
-      return {
-        id: bucket.id,
-        filterId: bucket.filterId,
-        filterVersion: bucket.filterVersion,
-        filterFamily: bucket.filterFamily,
-        period: bucket.period,
-        configCanon: bucket.configCanon,
-        assetCount: bucket.assets.size,
-        nEngagements: projection.nEngagements,
-        nWins: projection.nWins,
-        winRate: projection.winRate,
-        upWinRate: projection.upWinRate,
-        downWinRate: projection.downWinRate,
-        computedAtMaxMs: projection.computedAtMaxMs,
-      };
-    })
-    .sort((a, b) => {
-      const wrDelta = (b.winRate ?? -1) - (a.winRate ?? -1);
-      if (wrDelta !== 0) {
-        return wrDelta;
-      }
-      return b.nEngagements - a.nEngagements;
-    })
-    .slice(0, TOP_CANDIDATE_LIMIT);
+  const rowsByCandidate = Array.from(buckets.values()).map((bucket) => {
+    const projection = aggregateProjection(bucket);
+    return {
+      id: bucket.id,
+      filterId: bucket.filterId,
+      filterVersion: bucket.filterVersion,
+      filterFamily: bucket.filterFamily,
+      period: bucket.period,
+      configCanon: bucket.configCanon,
+      assetCount: bucket.assets.size,
+      nEngagements: projection.nEngagements,
+      nWins: projection.nWins,
+      winRate: projection.winRate,
+      upWinRate: projection.upWinRate,
+      downWinRate: projection.downWinRate,
+      computedAtMaxMs: projection.computedAtMaxMs,
+    };
+  });
+
+  return TRADE_DECISION_SUPPORTED_PERIODS.flatMap((period) =>
+    rowsByCandidate
+      .filter((row) => row.period === period)
+      .sort((a, b) => {
+        const wrDelta = (b.winRate ?? -1) - (a.winRate ?? -1);
+        if (wrDelta !== 0) {
+          return wrDelta;
+        }
+        return b.nEngagements - a.nEngagements;
+      })
+      .slice(0, TOP_CANDIDATE_LIMIT),
+  );
 }
 
 function summaryFromAggregate({
