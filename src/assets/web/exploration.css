@@ -295,18 +295,18 @@
 
 .filter-card-table {
   width: 100%;
-  min-width: 740px;
+  min-width: 900px;
   border-collapse: collapse;
   table-layout: fixed;
   font-variant-numeric: tabular-nums;
 }
 
 .filter-card-table thead th {
-  padding: 10px 12px 6px;
+  padding: 10px 8px 6px;
   font-family: var(--alea-font-sans);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--alea-text-subtle);
   border-bottom: 1px solid var(--alea-border-faint);

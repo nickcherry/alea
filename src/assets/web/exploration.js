@@ -305,12 +305,12 @@
       '<div class="filter-card-table-wrap">' +
       '<table class="filter-card-table">' +
       "<colgroup>" +
-      '<col style="width: 32%" />' +
-      '<col style="width: 8%" />' +
+      '<col style="width: 27%" />' +
       '<col style="width: 13%" />' +
-      '<col style="width: 8%" />' +
-      '<col style="width: 8%" />' +
-      '<col style="width: 31%" />' +
+      '<col style="width: 14%" />' +
+      '<col style="width: 10%" />' +
+      '<col style="width: 10%" />' +
+      '<col style="width: 26%" />' +
       "</colgroup>" +
       "<thead>" +
       "<tr>" +
