@@ -5,7 +5,7 @@ export type BacktestDashboardSummary = {
   readonly runCount: number;
   readonly missingRunCount: number;
   readonly ignoredInactiveRunCount: number;
-  readonly nBarsMax: number;
+  readonly nBars: number;
   readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
@@ -27,7 +27,7 @@ export type BacktestDashboardPeriodRow = {
   readonly runCount: number;
   readonly missingRunCount: number;
   readonly assetCount: number;
-  readonly nBarsMax: number;
+  readonly nBars: number;
   readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
@@ -43,7 +43,7 @@ export type BacktestDashboardAssetRow = {
   readonly expectedRunCount: number;
   readonly runCount: number;
   readonly missingRunCount: number;
-  readonly nBarsMax: number;
+  readonly nBars: number;
   readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
@@ -56,9 +56,9 @@ export type BacktestDashboardCandidateRow = {
   readonly filterVersion: number;
   readonly filterFamily: string | null;
   readonly period: string;
-  readonly asset: string | null;
   readonly configCanon: string;
   readonly assetCount: number;
+  readonly nBars: number;
   readonly nEngagements: number;
   readonly nWins: number;
   readonly winRate: number | null;
@@ -86,6 +86,5 @@ export type BacktestDashboardPayload = {
   readonly byPeriod: readonly BacktestDashboardPeriodRow[];
   readonly byAsset: readonly BacktestDashboardAssetRow[];
   readonly topCandidates: readonly BacktestDashboardCandidateRow[];
-  readonly topCandidatesByAsset: readonly BacktestDashboardCandidateRow[];
   readonly pnlSeries: readonly BacktestDashboardPnlPoint[];
 };

@@ -20,8 +20,6 @@ import {
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
-const INITIAL_ASSET = "all";
-
 export function renderBacktestHtml({
   payload,
   assets,
@@ -61,13 +59,15 @@ export function renderBacktestHtml({
       ${renderTopControls({
         periods: payload.supportedPeriods,
         initialPeriod,
-        assets: payload.assets,
-        initialAsset: INITIAL_ASSET,
       })}
       ${renderProfile({ payload, initialPeriod })}
       ${renderPnlChart()}
-      ${renderTradeActivity({ rows: payload.byPeriod, initialPeriod })}
-      ${renderAssetTable({ rows: payload.byAsset, initialPeriod })}
+      ${renderTradeActivity({
+        periodRows: payload.byPeriod,
+        assetRows: payload.byAsset,
+        assets: payload.assets,
+        initialPeriod,
+      })}
       ${renderTopCandidateTable({
         rows: payload.topCandidates,
         initialPeriod,
@@ -84,13 +84,9 @@ export function renderBacktestHtml({
 function renderTopControls({
   periods,
   initialPeriod,
-  assets,
-  initialAsset,
 }: {
   readonly periods: readonly string[];
   readonly initialPeriod: string;
-  readonly assets: readonly string[];
-  readonly initialAsset: string;
 }): string {
   return `<div class="alea-page-controls backtest-controls">
     <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
@@ -101,25 +97,13 @@ function renderTopControls({
         )
         .join("")}
     </div>
-    <label class="alea-select-wrap alea-page-controls-right">
-      <span>Asset</span>
-      <select id="backtest-asset-select">
-        <option value="all"${initialAsset === "all" ? " selected" : ""}>All assets</option>
-        ${assets
-          .map(
-            (asset) =>
-              `<option value="${escapeHtml({ value: asset })}"${initialAsset === asset ? " selected" : ""}>${escapeHtml({ value: asset.toUpperCase() })}</option>`,
-          )
-          .join("\n        ")}
-      </select>
-    </label>
   </div>`;
 }
 
 function renderPnlChart(): string {
   return `<section class="alea-panel backtest-panel backtest-chart-panel">
-    <div class="alea-section-rule"><h2>Cumulative PnL <span id="backtest-pnl-context" class="backtest-section-context"></span></h2></div>
-    <p class="backtest-chart-note">Per-strategy average: each active candidate trades the selected asset(s) at $<span id="backtest-stake-usd">20</span> notional, 1:1 RR. Aggregate dollar PnL is divided by the active-candidate count so the line shows what an average strategy would have earned.</p>
+    <div class="alea-section-rule"><h2>Cumulative PnL</h2></div>
+    <p class="backtest-chart-note">Per-strategy average across all assets: each active candidate trades at $<span id="backtest-stake-usd">20</span> notional, 1:1 RR. Aggregate dollar PnL is divided by the active-candidate count so the line shows what an average strategy would have earned.</p>
     <div class="backtest-chart-frame">
       <div id="backtest-pnl-chart" class="backtest-chart-host"></div>
       <div id="backtest-pnl-empty" class="backtest-chart-empty">No chart data.</div>
@@ -139,7 +123,7 @@ function renderProfile({
     payload.byPeriod.find((row) => row.period === initialPeriod) ?? null;
   return `<details class="alea-panel backtest-profile alea-collapsible">
     <summary class="alea-collapsible-summary">
-      <h2>Profile <span id="backtest-profile-context" class="backtest-section-context"></span></h2>
+      <h2>Profile</h2>
     </summary>
     <div class="backtest-profile-grid">
       ${profileItem({
@@ -148,30 +132,14 @@ function renderProfile({
         value: initialPeriod,
       })}
       ${profileItem({
-        id: "backtest-profile-asset",
-        label: "Asset",
-        value: "All assets",
-      })}
-      ${profileItem({
-        id: "backtest-profile-coverage",
-        label: "Coverage",
-        value:
-          periodRow === null
-            ? "0 / 0"
-            : formatCoverage({
-                runCount: periodRow.runCount,
-                expectedRunCount: periodRow.expectedRunCount,
-              }),
+        id: "backtest-profile-engagements",
+        label: "Engagements",
+        value: (periodRow?.nEngagements ?? 0).toLocaleString(),
       })}
       ${profileItem({
         id: "backtest-profile-win-rate",
         label: "Win rate",
         value: formatPercentOrDash({ value: periodRow?.winRate ?? null }),
-      })}
-      ${profileItem({
-        id: "backtest-profile-engagements",
-        label: "Engagements",
-        value: (periodRow?.nEngagements ?? 0).toLocaleString(),
       })}
       ${profileItem({
         id: "backtest-profile-latest",
@@ -190,24 +158,49 @@ function renderProfile({
 }
 
 function renderTradeActivity({
-  rows,
+  periodRows,
+  assetRows,
+  assets,
   initialPeriod,
 }: {
-  readonly rows: readonly BacktestDashboardPeriodRow[];
+  readonly periodRows: readonly BacktestDashboardPeriodRow[];
+  readonly assetRows: readonly BacktestDashboardAssetRow[];
+  readonly assets: readonly string[];
   readonly initialPeriod: string;
 }): string {
-  const periodRow = rows.find((row) => row.period === initialPeriod) ?? null;
-  const trades = periodRow?.nEngagements ?? 0;
-  const possible =
-    periodRow === null ? 0 : periodRow.nBarsMax * periodRow.runCount;
-  const tradeRate =
-    periodRow === null || possible === 0 ? null : trades / possible;
+  const periodRow =
+    periodRows.find((row) => row.period === initialPeriod) ?? null;
+  const allRow = renderActivityRow({
+    rowKey: "all",
+    label: "All assets",
+    isAll: true,
+    nEngagements: periodRow?.nEngagements ?? 0,
+    nBars: periodRow?.nBars ?? 0,
+    winRate: periodRow?.winRate ?? null,
+  });
+  const perAssetRows = assets
+    .map((asset) => {
+      const row =
+        assetRows.find(
+          (r) => r.period === initialPeriod && r.asset === asset,
+        ) ?? null;
+      return renderActivityRow({
+        rowKey: asset,
+        label: asset.toUpperCase(),
+        isAll: false,
+        nEngagements: row?.nEngagements ?? 0,
+        nBars: row?.nBars ?? 0,
+        winRate: row?.winRate ?? null,
+      });
+    })
+    .join("");
   return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Trade activity <span id="backtest-activity-context" class="backtest-section-context"></span></h2></div>
+    <div class="alea-section-rule"><h2>Trade activity</h2></div>
     <div class="alea-table-wrap">
       <table class="alea-table backtest-table backtest-activity-table">
         <thead>
           <tr>
+            <th>Asset</th>
             <th>Trades</th>
             <th>Possible</th>
             <th>Trade rate</th>
@@ -215,61 +208,36 @@ function renderTradeActivity({
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td id="backtest-activity-trades" class="alea-mono backtest-activity-num">${trades.toLocaleString()}</td>
-            <td id="backtest-activity-possible" class="alea-mono backtest-activity-num">${possible.toLocaleString()}</td>
-            <td id="backtest-activity-trade-rate" class="alea-mono backtest-activity-num">${formatPercentOrDash({ value: tradeRate })}</td>
-            <td id="backtest-activity-win-rate" class="${winRateCellClass({ value: periodRow?.winRate ?? null })} backtest-activity-num">${formatPercentOrDash({ value: periodRow?.winRate ?? null })}</td>
-          </tr>
+          ${allRow}${perAssetRows}
         </tbody>
       </table>
     </div>
   </section>`;
 }
 
-function renderAssetTable({
-  rows,
-  initialPeriod,
+function renderActivityRow({
+  rowKey,
+  label,
+  isAll,
+  nEngagements,
+  nBars,
+  winRate,
 }: {
-  readonly rows: readonly BacktestDashboardAssetRow[];
-  readonly initialPeriod: string;
+  readonly rowKey: string;
+  readonly label: string;
+  readonly isAll: boolean;
+  readonly nEngagements: number;
+  readonly nBars: number;
+  readonly winRate: number | null;
 }): string {
-  return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Assets</h2></div>
-    <div class="alea-table-wrap">
-      <table class="alea-table backtest-table">
-        <thead>
-          <tr>
-            <th>Period / Asset</th>
-            <th>Coverage</th>
-            <th>Engagements</th>
-            <th>WR</th>
-            <th>Bars</th>
-            <th>Latest</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((row) => renderAssetRow({ row, initialPeriod })).join("")}
-        </tbody>
-      </table>
-    </div>
-  </section>`;
-}
-
-function renderAssetRow({
-  row,
-  initialPeriod,
-}: {
-  readonly row: BacktestDashboardAssetRow;
-  readonly initialPeriod: string;
-}): string {
-  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}" data-backtest-asset="${escapeHtml({ value: row.asset })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
-    <th>${escapeHtml({ value: `${row.period} / ${row.asset}` })}</th>
-    <td>${formatCoverage({ runCount: row.runCount, expectedRunCount: row.expectedRunCount })}</td>
-    <td>${row.nEngagements.toLocaleString()}</td>
-    <td class="${winRateCellClass({ value: row.winRate })}">${formatPercentOrDash({ value: row.winRate })}</td>
-    <td>${row.nBarsMax.toLocaleString()}</td>
-    <td>${formatDateTimeOrDash({ ms: row.computedAtMaxMs })}</td>
+  const tradeRate = nBars === 0 ? null : nEngagements / nBars;
+  const cls = `backtest-activity-row${isAll ? " is-all" : ""}`;
+  return `<tr class="${cls}" data-backtest-activity-row="${escapeHtml({ value: rowKey })}">
+    <th class="backtest-activity-asset">${escapeHtml({ value: label })}</th>
+    <td class="alea-mono backtest-activity-num" data-cell="trades">${nEngagements.toLocaleString()}</td>
+    <td class="alea-mono backtest-activity-num" data-cell="possible">${nBars.toLocaleString()}</td>
+    <td class="alea-mono backtest-activity-num" data-cell="trade-rate">${formatPercentOrDash({ value: tradeRate })}</td>
+    <td class="${winRateCellClass({ value: winRate })} backtest-activity-num" data-cell="win-rate">${formatPercentOrDash({ value: winRate })}</td>
   </tr>`;
 }
 
@@ -282,7 +250,7 @@ function renderTopCandidateTable({
 }): string {
   const body =
     rows.length === 0
-      ? `<tr><td colspan="9"><span class="alea-muted">No active-profile backtest rows.</span></td></tr>`
+      ? `<tr><td colspan="7"><span class="alea-muted">No active-profile backtest rows.</span></td></tr>`
       : rows
           .map((row) => renderTopCandidateRow({ row, initialPeriod }))
           .join("");
@@ -291,18 +259,17 @@ function renderTopCandidateTable({
       ? ""
       : `<tr id="backtest-candidate-empty"${
           rows.some((row) => row.period === initialPeriod) ? " hidden" : ""
-        }><td colspan="9"><span class="alea-muted">No active-profile backtest rows for this period.</span></td></tr>`;
+        }><td colspan="7"><span class="alea-muted">No active-profile backtest rows for this period.</span></td></tr>`;
   return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Top Candidates <span id="backtest-candidates-context" class="backtest-section-context"></span></h2></div>
+    <div class="alea-section-rule"><h2>Top Candidates</h2></div>
     <div class="alea-table-wrap">
       <table class="alea-table backtest-table backtest-candidates-table">
         <thead>
           <tr>
             <th>Candidate</th>
-            <th>Period</th>
             <th>Family</th>
-            <th>Assets</th>
-            <th>Engagements</th>
+            <th>Trades</th>
+            <th>Trade rate</th>
             <th>WR</th>
             <th>UP WR</th>
             <th>DOWN WR</th>
@@ -326,15 +293,15 @@ function renderTopCandidateRow({
     row.filterFamily === null
       ? "unknown"
       : familyLabel({ family: row.filterFamily as FilterFamily });
+  const tradeRate = row.nBars === 0 ? null : row.nEngagements / row.nBars;
   return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
     <th>
       <span class="backtest-filter-id">${escapeHtml({ value: row.filterId })}</span>
       <span class="backtest-filter-version">v${row.filterVersion.toLocaleString()}</span>
     </th>
-    <td>${escapeHtml({ value: row.period })}</td>
     <td>${escapeHtml({ value: family })}</td>
-    <td>${row.assetCount.toLocaleString()}</td>
     <td>${row.nEngagements.toLocaleString()}</td>
+    <td class="alea-mono">${formatPercentOrDash({ value: tradeRate })}</td>
     <td class="${winRateCellClass({ value: row.winRate })}">${formatPercentOrDash({ value: row.winRate })}</td>
     <td class="${winRateCellClass({ value: row.upWinRate })}">${formatPercentOrDash({ value: row.upWinRate })}</td>
     <td class="${winRateCellClass({ value: row.downWinRate })}">${formatPercentOrDash({ value: row.downWinRate })}</td>
@@ -366,19 +333,6 @@ function hiddenUnlessActive({
   readonly initialPeriod: string;
 }): string {
   return period === initialPeriod ? "" : " hidden";
-}
-
-function formatCoverage({
-  runCount,
-  expectedRunCount,
-}: {
-  readonly runCount: number;
-  readonly expectedRunCount: number;
-}): string {
-  if (expectedRunCount === 0) {
-    return "0 / 0";
-  }
-  return `${runCount.toLocaleString()} / ${expectedRunCount.toLocaleString()}`;
 }
 
 function formatPercentOrDash({

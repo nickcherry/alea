@@ -47,7 +47,7 @@ type NormalizedRunRow = RawFilterRunRow & {
 
 type Aggregate = {
   runCount: number;
-  nBarsMax: number;
+  nBars: number;
   nEngagementsUp: number;
   nWinsUp: number;
   nEngagementsDown: number;
@@ -130,7 +130,6 @@ export async function loadBacktestPayload({
       activeCandidateCount: activeCandidates.length,
     }),
     topCandidates: buildTopCandidateRows({ rows }),
-    topCandidatesByAsset: buildTopCandidateRowsByAsset({ rows }),
     pnlSeries: await buildPnlSeries({ db, activeCandidates }),
   };
 }
@@ -247,7 +246,7 @@ function buildAssetRows({
         expectedRunCount: activeCandidateCount,
         runCount,
         missingRunCount: Math.max(0, activeCandidateCount - runCount),
-        nBarsMax: projection.nBarsMax,
+        nBars: projection.nBars,
         nEngagements: projection.nEngagements,
         nWins: projection.nWins,
         winRate: projection.winRate,
@@ -263,100 +262,33 @@ function buildTopCandidateRows({
 }: {
   readonly rows: readonly NormalizedRunRow[];
 }): readonly BacktestDashboardCandidateRow[] {
-  return collectTopCandidates({
-    rows,
-    keyFor: (row) =>
-      [row.period, row.filter_id, row.filter_version, row.config_canon].join(
-        "|",
-      ),
-    bucketSeed: (row) => ({
-      filterId: row.filter_id,
-      filterVersion: row.filter_version,
-      filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
-      period: row.period,
-      asset: null,
-      configCanon: row.config_canon,
-    }),
-    groupBy: (row) => row.period,
-    groupKeys: TRADE_DECISION_SUPPORTED_PERIODS,
-  });
-}
-
-function buildTopCandidateRowsByAsset({
-  rows,
-}: {
-  readonly rows: readonly NormalizedRunRow[];
-}): readonly BacktestDashboardCandidateRow[] {
-  const groupKeys: string[] = [];
-  for (const period of TRADE_DECISION_SUPPORTED_PERIODS) {
-    for (const asset of assetValues) {
-      groupKeys.push(`${period}|${asset}`);
-    }
-  }
-  return collectTopCandidates({
-    rows,
-    keyFor: (row) =>
-      [
-        row.period,
-        row.asset,
-        row.filter_id,
-        row.filter_version,
-        row.config_canon,
-      ].join("|"),
-    bucketSeed: (row) => ({
-      filterId: row.filter_id,
-      filterVersion: row.filter_version,
-      filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
-      period: row.period,
-      asset: row.asset,
-      configCanon: row.config_canon,
-    }),
-    groupBy: (row) => `${row.period}|${row.asset}`,
-    groupKeys,
-  });
-}
-
-function collectTopCandidates({
-  rows,
-  keyFor,
-  bucketSeed,
-  groupBy,
-  groupKeys,
-}: {
-  readonly rows: readonly NormalizedRunRow[];
-  readonly keyFor: (row: NormalizedRunRow) => string;
-  readonly bucketSeed: (row: NormalizedRunRow) => {
-    readonly filterId: string;
-    readonly filterVersion: number;
-    readonly filterFamily: string | null;
-    readonly period: string;
-    readonly asset: string | null;
-    readonly configCanon: string;
-  };
-  readonly groupBy: (row: NormalizedRunRow) => string;
-  readonly groupKeys: readonly string[];
-}): readonly BacktestDashboardCandidateRow[] {
   type CandidateBucket = Aggregate & {
     readonly id: string;
     readonly filterId: string;
     readonly filterVersion: number;
     readonly filterFamily: string | null;
     readonly period: string;
-    readonly asset: string | null;
     readonly configCanon: string;
     readonly assets: Set<string>;
-    readonly group: string;
   };
   const buckets = new Map<string, CandidateBucket>();
   for (const row of rows) {
-    const id = keyFor(row);
+    const id = [
+      row.period,
+      row.filter_id,
+      row.filter_version,
+      row.config_canon,
+    ].join("|");
     let bucket = buckets.get(id);
     if (bucket === undefined) {
       bucket = {
         id,
-        ...bucketSeed(row),
+        filterId: row.filter_id,
+        filterVersion: row.filter_version,
+        filterFamily: getFilter(row.filter_id)?.filter.family ?? null,
+        period: row.period,
+        configCanon: row.config_canon,
         assets: new Set<string>(),
-        group: groupBy(row),
         ...emptyAggregate(),
       };
       buckets.set(id, bucket);
@@ -368,38 +300,34 @@ function collectTopCandidates({
   const rowsByCandidate = Array.from(buckets.values()).map((bucket) => {
     const projection = aggregateProjection(bucket);
     return {
-      group: bucket.group,
-      row: {
-        id: bucket.id,
-        filterId: bucket.filterId,
-        filterVersion: bucket.filterVersion,
-        filterFamily: bucket.filterFamily,
-        period: bucket.period,
-        asset: bucket.asset,
-        configCanon: bucket.configCanon,
-        assetCount: bucket.assets.size,
-        nEngagements: projection.nEngagements,
-        nWins: projection.nWins,
-        winRate: projection.winRate,
-        upWinRate: projection.upWinRate,
-        downWinRate: projection.downWinRate,
-        computedAtMaxMs: projection.computedAtMaxMs,
-      } satisfies BacktestDashboardCandidateRow,
-    };
+      id: bucket.id,
+      filterId: bucket.filterId,
+      filterVersion: bucket.filterVersion,
+      filterFamily: bucket.filterFamily,
+      period: bucket.period,
+      configCanon: bucket.configCanon,
+      assetCount: bucket.assets.size,
+      nBars: projection.nBars,
+      nEngagements: projection.nEngagements,
+      nWins: projection.nWins,
+      winRate: projection.winRate,
+      upWinRate: projection.upWinRate,
+      downWinRate: projection.downWinRate,
+      computedAtMaxMs: projection.computedAtMaxMs,
+    } satisfies BacktestDashboardCandidateRow;
   });
 
-  return groupKeys.flatMap((group) =>
+  return TRADE_DECISION_SUPPORTED_PERIODS.flatMap((period) =>
     rowsByCandidate
-      .filter((r) => r.group === group)
+      .filter((row) => row.period === period)
       .sort((a, b) => {
-        const wrDelta = (b.row.winRate ?? -1) - (a.row.winRate ?? -1);
+        const wrDelta = (b.winRate ?? -1) - (a.winRate ?? -1);
         if (wrDelta !== 0) {
           return wrDelta;
         }
-        return b.row.nEngagements - a.row.nEngagements;
+        return b.nEngagements - a.nEngagements;
       })
-      .slice(0, TOP_CANDIDATE_LIMIT)
-      .map((r) => r.row),
+      .slice(0, TOP_CANDIDATE_LIMIT),
   );
 }
 
@@ -440,7 +368,7 @@ function aggregateRows(rows: readonly NormalizedRunRow[]): Aggregate {
 function emptyAggregate(): Aggregate {
   return {
     runCount: 0,
-    nBarsMax: 0,
+    nBars: 0,
     nEngagementsUp: 0,
     nWinsUp: 0,
     nEngagementsDown: 0,
@@ -454,7 +382,7 @@ function emptyAggregate(): Aggregate {
 
 function addToAggregate(aggregate: Aggregate, row: NormalizedRunRow): void {
   aggregate.runCount += 1;
-  aggregate.nBarsMax = Math.max(aggregate.nBarsMax, row.n_bars);
+  aggregate.nBars += row.n_bars;
   aggregate.nEngagementsUp += row.n_engagements_up;
   aggregate.nWinsUp += row.n_wins_up;
   aggregate.nEngagementsDown += row.n_engagements_down;
@@ -491,7 +419,7 @@ function aggregateProjection(
   const nEngagements = aggregate.nEngagementsUp + aggregate.nEngagementsDown;
   const nWins = aggregate.nWinsUp + aggregate.nWinsDown;
   return {
-    nBarsMax: aggregate.nBarsMax,
+    nBars: aggregate.nBars,
     nEngagements,
     nWins,
     winRate: ratio({ numerator: nWins, denominator: nEngagements }),

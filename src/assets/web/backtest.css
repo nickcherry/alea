@@ -106,9 +106,46 @@
   white-space: nowrap;
 }
 
+.backtest-activity-table th,
+.backtest-activity-table td {
+  text-align: right;
+}
+
+.backtest-activity-table th:first-child,
+.backtest-activity-table td.backtest-activity-asset,
+.backtest-activity-table th.backtest-activity-asset {
+  text-align: left;
+}
+
+.backtest-activity-asset {
+  font-family: var(--alea-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--alea-text-muted);
+}
+
 .backtest-activity-num {
-  font-size: 14px;
   font-variant-numeric: tabular-nums;
+}
+
+.backtest-activity-row.is-all .backtest-activity-asset {
+  color: var(--alea-gold);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+.backtest-activity-row.is-all td {
+  background: rgba(215, 170, 69, 0.06);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--alea-text);
+}
+
+.backtest-activity-row.is-all th,
+.backtest-activity-row.is-all td {
+  border-bottom: 1px solid rgba(215, 170, 69, 0.25);
 }
 
 .backtest-candidates-table {
