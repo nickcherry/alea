@@ -61,12 +61,12 @@ export const backtestSweepCommitteeCommand = defineCommand({
       key: "mode",
       long: "--mode",
       valueName: "MODE",
-      choices: ["broad", "focus", "fine", "ridge", "macro"],
+      choices: ["broad", "focus", "fine", "ridge", "macro", "stacked"],
       schema: z
-        .enum(["broad", "focus", "fine", "ridge", "macro"])
+        .enum(["broad", "focus", "fine", "ridge", "macro", "stacked"])
         .default("broad")
         .describe(
-          "Sweep grid to run: broad first pass, focused ridge search, fine ridge search, strict/volume ridge search, or macro stress test.",
+          "Sweep grid to run: broad first pass, focused ridge search, fine ridge search, strict/volume ridge search, macro stress test, or stacked macro test.",
         ),
     }),
     defineValueOption({
@@ -129,6 +129,7 @@ export const backtestSweepCommitteeCommand = defineCommand({
     "bun alea backtest:sweep-committee --mode fine --telegram",
     "bun alea backtest:sweep-committee --mode ridge --telegram",
     "bun alea backtest:sweep-committee --mode macro",
+    "bun alea backtest:sweep-committee --mode stacked",
   ],
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
@@ -236,8 +237,17 @@ export const backtestSweepCommitteeCommand = defineCommand({
 function buildSweepTrials({
   mode,
 }: {
-  readonly mode: "broad" | "focus" | "fine" | "ridge" | "macro";
+  readonly mode:
+    | "broad"
+    | "focus"
+    | "fine"
+    | "ridge"
+    | "macro"
+    | "stacked";
 }): readonly SweepTrial[] {
+  if (mode === "stacked") {
+    return buildStackedMacroSweepTrials();
+  }
   if (mode === "macro") {
     return buildMacroSweepTrials();
   }
@@ -626,6 +636,88 @@ function buildMacroSweepTrials(): readonly SweepTrial[] {
               ...selection,
               minAggregateWinRate,
               minWorstQuarterWinRate: 0.46,
+              topN,
+            },
+            decisionRules: {
+              ...decision,
+              minVotesToTrade,
+              minConsensusFraction,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
+function buildStackedMacroSweepTrials(): readonly SweepTrial[] {
+  const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
+  const decision = DEFAULT_COMMITTEE_DECISION_RULES;
+  const out: SweepTrial[] = [];
+  const add = ({
+    id,
+    selectionRules,
+    decisionRules,
+    hypothesis,
+  }: {
+    readonly id: string;
+    readonly selectionRules: CommitteeSelectionRules;
+    readonly decisionRules: CommitteeDecisionRules;
+    readonly hypothesis: string;
+  }) => {
+    const trial = { id, hypothesis, selectionRules, decisionRules };
+    if (!out.some((existing) => sameTrial(existing, trial))) {
+      out.push(trial);
+    }
+  };
+
+  const selectionFamilies = [
+    {
+      label: "strict",
+      hypothesis:
+        "stack strict candidate quality with high vote quorum to test whether the big WR move compounds",
+      minAggregateWinRate: 0.54,
+      minWorstQuarterWinRate: 0.52,
+      topNs: [16, 18],
+    },
+    {
+      label: "middle",
+      hypothesis:
+        "stack middle-volume candidate quality with high vote quorum to preserve more trade count",
+      minAggregateWinRate: 0.538,
+      minWorstQuarterWinRate: 0.52,
+      topNs: [17, 18],
+    },
+    {
+      label: "volume",
+      hypothesis:
+        "stack high-volume candidate quality with high vote quorum to see if breadth is salvageable",
+      minAggregateWinRate: 0.52,
+      minWorstQuarterWinRate: 0.46,
+      topNs: [15, 40],
+    },
+  ] as const;
+
+  for (const family of selectionFamilies) {
+    for (const topN of family.topNs) {
+      for (const minVotesToTrade of [2, 5, 6, 8, 10]) {
+        for (const minConsensusFraction of [0.5, 1]) {
+          add({
+            id: [
+              family.label,
+              `agg${pctId(family.minAggregateWinRate)}`,
+              `wq${pctId(family.minWorstQuarterWinRate)}`,
+              `top${topN}`,
+              `v${minVotesToTrade}`,
+              `c${pctId(minConsensusFraction)}`,
+            ].join("-"),
+            hypothesis: family.hypothesis,
+            selectionRules: {
+              ...selection,
+              minAggregateWinRate: family.minAggregateWinRate,
+              minWorstQuarterWinRate: family.minWorstQuarterWinRate,
               topN,
             },
             decisionRules: {

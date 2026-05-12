@@ -48,6 +48,7 @@ bun alea backtest:sweep-committee --mode focus --telegram
 bun alea backtest:sweep-committee --mode fine --telegram
 bun alea backtest:sweep-committee --mode ridge --telegram
 bun alea backtest:sweep-committee --mode macro
+bun alea backtest:sweep-committee --mode stacked
 ```
 
 The command writes a JSON artifact under `tmp/committee-sweeps/`.
@@ -63,6 +64,9 @@ neighborhoods more densely after a promising cluster appears.
 `--mode macro` deliberately skips micro-optimization and tests only
 large moves: very strict candidate floors, much higher vote quorums,
 near-unanimous consensus, and broad rosters.
+`--mode stacked` tests whether the strongest macro levers compound by
+crossing high vote quorums with the known strict, middle-volume, and
+high-volume committee-selection clusters.
 
 ## Selection Levers
 
@@ -118,6 +122,8 @@ Start broad, then deepen around clusters:
    regime exists. Ignore anything that fails to move absolute win rate
    by at least one percentage point unless it dramatically increases
    trade volume without hurting win rate.
+8. Use stacked mode only after a macro lever moves the needle; it is a
+   short compound-effect test, not a fine tuning pass.
 
 Cut the search off quickly when a config only wins by shrinking to tiny
 trade volume, by concentrating in one day, or by helping one period
