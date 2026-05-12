@@ -271,6 +271,20 @@ export interface CommitteeSelectionTable {
   >;
 }
 
+export interface ExplorationPayloadCacheTable {
+  readonly training_profile: string;
+  readonly schema_version: number;
+  readonly active_candidate_fingerprint: string;
+  readonly filter_runs_fingerprint: string;
+  readonly bar_regimes_fingerprint: string;
+  readonly payload: unknown;
+  readonly computed_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+}
+
 export interface Database {
   readonly candles: CandleTable;
   readonly market_event: MarketEventTable;
@@ -279,6 +293,7 @@ export interface Database {
   readonly dry_run_decisions: DryRunDecisionTable;
   readonly bar_regimes: BarRegimeTable;
   readonly committee_selections: CommitteeSelectionTable;
+  readonly exploration_payload_cache: ExplorationPayloadCacheTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
   readonly polymarket_price_samples: PolymarketPriceSampleTable;
 }
