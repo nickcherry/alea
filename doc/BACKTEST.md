@@ -1,10 +1,11 @@
 # Backtest Framework
 
 The current `backtest:run` command is the engine behind the
-`/exploration/` dashboard. It evaluates every registered (filter,
-config) candidate at every supported (period, asset) combination
-inside the configured training window, and persists both the
-aggregate counts and every individual prediction to Postgres.
+`/backtest/` and `/exploration/` dashboards. It evaluates every
+registered (filter, config) candidate at every supported (period,
+asset) combination inside the configured training window, and
+persists both the aggregate counts and every individual prediction to
+Postgres.
 
 This is filter training, despite the historical command name. The new
 committee-backtest paradigm is a separate holdout phase: replay the

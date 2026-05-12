@@ -35,7 +35,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `dry:*`
   `dry:run` — long-running process that streams live Pyth ticks, classifies the current regime, runs the rostered committee for `5m,15m` by default (override with `--periods`), persists decisions to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
-  `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, `/exploration/`, `/committee/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
+  `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, `/exploration/`, `/committee/`, `/backtest/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`

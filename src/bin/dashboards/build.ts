@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
+import { loadBacktestPayload } from "@alea/lib/backtest/dashboard/loadBacktestPayload";
+import { writeBacktestArtifacts } from "@alea/lib/backtest/dashboard/writeBacktestArtifacts";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -34,6 +36,7 @@ const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
 const explorationDir = resolvePath(webDir, "exploration");
 const committeeDir = resolvePath(webDir, "committee");
+const backtestDir = resolvePath(webDir, "backtest");
 const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
@@ -56,6 +59,9 @@ const cacheDir = resolvePath(tmpDir, ".cache");
  *   tmp/web/committee/index.html     ← trade committee ("/committee/")
  *   tmp/web/committee/index.assets/
  *   tmp/web/committee/data.json
+ *   tmp/web/backtest/index.html      ← backtest artifacts ("/backtest/")
+ *   tmp/web/backtest/index.assets/
+ *   tmp/web/backtest/data.json
  *
  * Trading page needs Polymarket auth (POLYMARKET_PRIVATE_KEY +
  * POLYMARKET_FUNDER_ADDRESS); when those aren't set we skip it with
@@ -66,7 +72,7 @@ export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), filter exploration page (/exploration/), trade committee page (/committee/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), filter exploration page (/exploration/), trade committee page (/committee/), backtest page (/backtest/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -106,7 +112,7 @@ export const dashboardsBuildCommand = defineCommand({
               ),
         )
         .describe(
-          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, exploration, committee, dryrun, proxy.",
+          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, exploration, committee, backtest, dryrun, proxy.",
         ),
     }),
   ],
@@ -125,6 +131,7 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(webDir, { recursive: true });
     await mkdir(explorationDir, { recursive: true });
     await mkdir(committeeDir, { recursive: true });
+    await mkdir(backtestDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
@@ -149,6 +156,10 @@ export const dashboardsBuildCommand = defineCommand({
     }
     if (shouldBuild("committee")) {
       await buildTradeCommitteeDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("backtest")) {
+      await buildBacktestDashboard({ io });
       io.writeStdout("\n");
     }
     if (shouldBuild("dryrun")) {
@@ -337,6 +348,40 @@ async function buildTradeCommitteeDashboard({
       `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
         `  ${pc.dim("filters=")}${payload.uniqueFilterCount.toLocaleString()}` +
         `  ${pc.dim("selected_at=")}${selectedAt}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
+}
+
+async function buildBacktestDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("backtest")} ${pc.dim("(/backtest/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadBacktestPayload({ db });
+    const htmlPath = resolvePath(backtestDir, "index.html");
+    const jsonPath = resolvePath(backtestDir, "data.json");
+    await writeBacktestArtifacts({ payload, htmlPath, jsonPath });
+    const wr =
+      payload.summary.winRate === null
+        ? "—"
+        : `${(payload.summary.winRate * 100).toFixed(1)}%`;
+    const latest =
+      payload.summary.computedAtMaxMs === null
+        ? "none"
+        : new Date(payload.summary.computedAtMaxMs).toISOString().slice(0, 16);
+    io.writeStdout(
+      `  ${pc.green("runs =")} ${payload.summary.runCount.toLocaleString()}` +
+        `  ${pc.dim("missing=")}${payload.summary.missingRunCount.toLocaleString()}` +
+        `  ${pc.dim("engagements=")}${payload.summary.nEngagements.toLocaleString()}` +
+        `  ${pc.dim("wr=")}${wr}` +
+        `  ${pc.dim("latest=")}${latest}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {

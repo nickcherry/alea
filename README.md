@@ -72,15 +72,15 @@ dry-run or live trading.
 
 The dashboard sequence is the operating map:
 
-| Phase                 | Page            | Purpose                                                                                                                                  |
-| --------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Proxy calibration     | Proxy accuracy  | Check whether Pyth is reliable enough as the historical training proxy for Polymarket settlement.                                        |
-| Market microstructure | Price paths     | Learn how quickly Polymarket UP/DOWN prices move away from 50c, which informs realistic order timing assumptions.                        |
-| Candidate research    | Exploration     | Compare filter/config candidates on historical predictive behavior, prune weak families, and identify where to explore next.             |
-| Roster construction   | Trade committee | Inspect which candidates were selected per regime and whether the selection thresholds are calibrated.                                   |
-| Committee holdout     | Backtest        | Planned holdout replay over the post-training window; no Polymarket book data, just committee prediction quality and policy calibration. |
-| Live-like rehearsal   | Dry run         | Run the live decision path without real orders, including Polymarket market discovery, quote observation, and fill simulation.           |
-| Production            | Live trading    | Track realized performance from real capital and real order placement.                                                                   |
+| Phase                 | Page            | Purpose                                                                                                                        |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Proxy calibration     | Proxy accuracy  | Check whether Pyth is reliable enough as the historical training proxy for Polymarket settlement.                              |
+| Market microstructure | Price paths     | Learn how quickly Polymarket UP/DOWN prices move away from 50c, which informs realistic order timing assumptions.              |
+| Candidate research    | Exploration     | Compare filter/config candidates on historical predictive behavior, prune weak families, and identify where to explore next.   |
+| Roster construction   | Trade committee | Inspect which candidates were selected per regime and whether the selection thresholds are calibrated.                         |
+| Backtest audit        | Backtest        | Inspect current active-profile `backtest:run` artifacts, coverage, latest compute time, aggregate WR, and top candidates.      |
+| Live-like rehearsal   | Dry run         | Run the live decision path without real orders, including Polymarket market discovery, quote observation, and fill simulation. |
+| Production            | Live trading    | Track realized performance from real capital and real order placement.                                                         |
 
 ## Docs
 

@@ -256,15 +256,15 @@ arranges them under one host and one shared top nav.
 The dashboard sequence is a research-to-production funnel, not a set
 of interchangeable reports:
 
-| Phase                 | Page               | Decision it supports                                                                                           |
-| --------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                 |
-| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                            |
-| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                   |
-| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                     |
-| Committee holdout     | Backtest           | Planned: replay committee predictions over the post-training holdout without Polymarket order-book simulation. |
-| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.             |
-| Production            | Live trading PnL   | Track realized results from actual order placement.                                                            |
+| Phase                 | Page               | Decision it supports                                                                                            |
+| --------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                  |
+| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                             |
+| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                    |
+| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                      |
+| Backtest audit        | Backtest           | Current active-profile `backtest:run` artifact coverage, latest compute time, aggregate WR, and top candidates. |
+| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.              |
+| Production            | Live trading PnL   | Track realized results from actual order placement.                                                             |
 
 | Route           | Page               | Source                                                                                              |
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
@@ -273,6 +273,7 @@ of interchangeable reports:
 | `/price-paths/` | Price paths        | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
 | `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
 | `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
+| `/backtest/`    | Backtest           | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
 | `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
@@ -314,6 +315,10 @@ tmp/web/
     index.html             ← trade committee (served at /committee/)
     index.assets/
     data.json
+  backtest/
+    index.html             ← backtest audit (served at /backtest/)
+    index.assets/
+    data.json
   dryrun/
     index.html             ← dry-run committee (served at /dryrun/)
     index.assets/
@@ -328,9 +333,10 @@ it with a warning so the rest of the site can still rebuild. The
 price-path page builds from `polymarket_price_samples`, the proxy page builds
 from `polymarket_resolutions` + Pyth candles, the exploration page builds from
 `filter_runs` + `bar_regimes`, the trade committee page builds from
-`committee_selections`, and the dry-run page builds from `dry_run_decisions`
-plus the shared trade-decision constants shown on the page — all five work
-without trading creds.
+`committee_selections`, the backtest page builds from `filter_runs`, and the
+dry-run page builds from `dry_run_decisions` plus the shared trade-decision
+constants shown on the page — all research/runtime pages work without trading
+creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);

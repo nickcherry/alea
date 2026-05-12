@@ -20,6 +20,7 @@ const TOP_NAV_PAGES: readonly TopNavPage[] = [
   { id: "price-paths", label: "Price paths", href: "/price-paths/" },
   { id: "exploration", label: "Exploration", href: "/exploration/" },
   { id: "committee", label: "Trade committee", href: "/committee/" },
+  { id: "backtest", label: "Backtest", href: "/backtest/" },
   { id: "dryrun", label: "Dry run", href: "/dryrun/" },
   { id: "live", label: "Live trading", href: "/" },
 ];
