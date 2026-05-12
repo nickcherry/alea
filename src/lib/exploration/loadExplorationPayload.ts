@@ -2,7 +2,6 @@ import "@alea/lib/filters/all";
 
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import { loadFilterPeerOverlaps } from "@alea/lib/exploration/loadFilterPeerOverlaps";
 import { loadQuarterAggregates } from "@alea/lib/exploration/loadQuarterAggregates";
 import { loadRegimeAggregates } from "@alea/lib/exploration/loadRegimeAggregates";
 import type {
@@ -10,7 +9,6 @@ import type {
   ExplorationPayload,
   ExplorationQuarter,
   ExplorationRegimeStats,
-  FilterPeerOverlap,
 } from "@alea/lib/exploration/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
 import {
@@ -19,8 +17,6 @@ import {
 } from "@alea/lib/filters/activeCandidates";
 import { getFilter } from "@alea/lib/filters/registry";
 import type { FilterFamily } from "@alea/lib/filters/types";
-
-const TOP_PEERS_PER_FILTER = 5;
 
 /**
  * Loads every active-profile row in `filter_runs`, then collapses across
@@ -42,30 +38,28 @@ export async function loadExplorationPayload({
   readonly db: DatabaseClient;
   readonly now?: () => number;
 }): Promise<ExplorationPayload> {
-  const [rawPerAssetRows, quarterRows, peerOverlapRows, regimeRows] =
-    await Promise.all([
-      db
-        .selectFrom("filter_runs")
-        .select([
-          "run_hash",
-          "filter_id",
-          "filter_version",
-          "config",
-          "config_canon",
-          "period",
-          "asset",
-          "n_bars",
-          "n_engagements_up",
-          "n_wins_up",
-          "n_engagements_down",
-          "n_wins_down",
-        ])
-        .where("training_profile", "=", TRAINING_PROFILE_ID)
-        .execute(),
-      loadQuarterAggregates({ db }),
-      loadFilterPeerOverlaps({ db }),
-      loadRegimeAggregates({ db }),
-    ]);
+  const [rawPerAssetRows, quarterRows, regimeRows] = await Promise.all([
+    db
+      .selectFrom("filter_runs")
+      .select([
+        "run_hash",
+        "filter_id",
+        "filter_version",
+        "config",
+        "config_canon",
+        "period",
+        "asset",
+        "n_bars",
+        "n_engagements_up",
+        "n_wins_up",
+        "n_engagements_down",
+        "n_wins_down",
+      ])
+      .where("training_profile", "=", TRAINING_PROFILE_ID)
+      .execute(),
+    loadQuarterAggregates({ db }),
+    loadRegimeAggregates({ db }),
+  ]);
   const activeKeys = activeCandidateKeys();
   const perAssetRows = rawPerAssetRows.filter((r) =>
     activeKeys.has(
@@ -76,31 +70,6 @@ export async function loadExplorationPayload({
       }),
     ),
   );
-
-  // Index the peer-overlap table by (period, filterId) so we can
-  // tack the top-K peers onto each row's payload below.
-  const peersByPeriodFilter = new Map<string, FilterPeerOverlap[]>();
-  for (const row of peerOverlapRows) {
-    const aFamily = familyOf(row.filterA);
-    const bFamily = familyOf(row.filterB);
-    if (aFamily === null || bFamily === null) {
-      continue;
-    }
-    pushPeer(peersByPeriodFilter, row.period, row.filterA, {
-      otherFilterId: row.filterB,
-      otherFamily: bFamily,
-      jaccard: row.jaccard,
-    });
-    pushPeer(peersByPeriodFilter, row.period, row.filterB, {
-      otherFilterId: row.filterA,
-      otherFamily: aFamily,
-      jaccard: row.jaccard,
-    });
-  }
-  for (const list of peersByPeriodFilter.values()) {
-    list.sort((a, b) => b.jaccard - a.jaccard);
-    list.splice(TOP_PEERS_PER_FILTER);
-  }
 
   // First, map run_hash -> the (filter, version, config_canon, period)
   // bucket it contributes to, so we can join quarter rows back.
@@ -289,7 +258,6 @@ export async function loadExplorationPayload({
       // shouldn't appear on the dashboard.
       continue;
     }
-    const topPeers = peersByPeriodFilter.get(`${b.period}|${b.filterId}`) ?? [];
     const byRegime: Record<string, ExplorationRegimeStats> = {};
     for (const [regime, stats] of b.regimes.entries()) {
       const rEngagements = stats.nEngagementsUp + stats.nEngagementsDown;
@@ -366,7 +334,10 @@ export async function loadExplorationPayload({
       quarterWinRateMax:
         quarterRates.length === 0 ? null : Math.max(...quarterRates),
       family,
-      topPeers,
+      // The browser does not render peer overlaps today. Keeping this
+      // empty preserves the payload shape without running the exact
+      // co-engagement self-join that dominated dashboard build time.
+      topPeers: [],
       byRegime,
     });
   }
@@ -399,19 +370,4 @@ function bucketKey(row: {
 function familyOf(filterId: string): FilterFamily | null {
   const entry = getFilter(filterId);
   return entry === undefined ? null : entry.filter.family;
-}
-
-function pushPeer(
-  map: Map<string, FilterPeerOverlap[]>,
-  period: string,
-  filterId: string,
-  peer: FilterPeerOverlap,
-): void {
-  const key = `${period}|${filterId}`;
-  let list = map.get(key);
-  if (list === undefined) {
-    list = [];
-    map.set(key, list);
-  }
-  list.push(peer);
 }
