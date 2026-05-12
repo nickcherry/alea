@@ -61,11 +61,13 @@ export const backtestSweepCommitteeCommand = defineCommand({
       key: "mode",
       long: "--mode",
       valueName: "MODE",
-      choices: ["broad", "focus"],
+      choices: ["broad", "focus", "fine"],
       schema: z
-        .enum(["broad", "focus"])
+        .enum(["broad", "focus", "fine"])
         .default("broad")
-        .describe("Sweep grid to run: broad first pass or focused ridge search."),
+        .describe(
+          "Sweep grid to run: broad first pass, focused ridge search, or fine ridge search.",
+        ),
     }),
     defineValueOption({
       key: "maxRuns",
@@ -111,6 +113,7 @@ export const backtestSweepCommitteeCommand = defineCommand({
     "bun alea backtest:sweep-committee",
     "bun alea backtest:sweep-committee --max-runs 200 --telegram",
     "bun alea backtest:sweep-committee --mode focus --telegram",
+    "bun alea backtest:sweep-committee --mode fine --telegram",
   ],
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
@@ -209,8 +212,11 @@ export const backtestSweepCommitteeCommand = defineCommand({
 function buildSweepTrials({
   mode,
 }: {
-  readonly mode: "broad" | "focus";
+  readonly mode: "broad" | "focus" | "fine";
 }): readonly SweepTrial[] {
+  if (mode === "fine") {
+    return buildFineSweepTrials();
+  }
   if (mode === "focus") {
     return buildFocusedSweepTrials();
   }
@@ -379,6 +385,46 @@ function buildFocusedSweepTrials(): readonly SweepTrial[] {
     }
   }
 
+  return out;
+}
+
+function buildFineSweepTrials(): readonly SweepTrial[] {
+  const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
+  const decision = DEFAULT_COMMITTEE_DECISION_RULES;
+  const out: SweepTrial[] = [];
+  for (const minAggregateWinRate of [0.52, 0.525, 0.53, 0.535, 0.54]) {
+    for (const minEngagements of [20, 80]) {
+      for (const minWorstQuarterWinRate of [0.48, 0.5, 0.52]) {
+        for (const topN of [11, 12, 13, 14, 15, 16, 18, 20, 25]) {
+          for (const minVotesToTrade of [2, 3]) {
+            out.push({
+              id: [
+                `agg${pctId(minAggregateWinRate)}`,
+                `eng${minEngagements}`,
+                `wq${pctId(minWorstQuarterWinRate)}`,
+                `top${topN}`,
+                `v${minVotesToTrade}`,
+              ].join("-"),
+              hypothesis:
+                "fine ridge search for stable WR with more usable trade volume",
+              selectionRules: {
+                ...selection,
+                minAggregateWinRate,
+                minEngagements,
+                minWorstQuarterWinRate,
+                topN,
+              },
+              decisionRules: {
+                ...decision,
+                minVotesToTrade,
+                minConsensusFraction: 0.5,
+              },
+            });
+          }
+        }
+      }
+    }
+  }
   return out;
 }
 

@@ -44,6 +44,7 @@ Useful options:
 bun alea backtest:sweep-committee --max-runs 200
 bun alea backtest:sweep-committee --max-runs 200 --telegram
 bun alea backtest:sweep-committee --mode focus --telegram
+bun alea backtest:sweep-committee --mode fine --telegram
 ```
 
 The command writes a JSON artifact under `tmp/committee-sweeps/`.
@@ -52,7 +53,8 @@ committee replay.
 
 `--mode broad` is the first pass across individual levers and coarse
 crosses. `--mode focus` searches a tighter grid around the broad-pass
-ridge.
+ridge. `--mode fine` is for a later pass around the best focused
+neighborhood, including finer top-N and worst-quarter probes.
 
 ## Selection Levers
 
