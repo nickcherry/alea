@@ -149,4 +149,43 @@ describe("selectCommitteeCandidates", () => {
     expect(byRegime.get("low_vol_ranging")).toBe(3);
     expect(byRegime.get("high_vol_ranging")).toBe(3);
   });
+
+  it("keeps only the best-ranked config per filter before applying topN", () => {
+    const result = selectCommitteeCandidates({
+      stats: [
+        stats({
+          filterId: "duplicate",
+          configCanon: "duplicate-best",
+          nEngagements: 500,
+          winRate: 0.62,
+          wilsonLow: 0.6,
+        }),
+        stats({
+          filterId: "duplicate",
+          configCanon: "duplicate-worse",
+          nEngagements: 500,
+          winRate: 0.61,
+          wilsonLow: 0.59,
+        }),
+        stats({
+          filterId: "distinct_a",
+          nEngagements: 500,
+          winRate: 0.6,
+          wilsonLow: 0.58,
+        }),
+        stats({
+          filterId: "distinct_b",
+          nEngagements: 500,
+          winRate: 0.59,
+          wilsonLow: 0.57,
+        }),
+      ],
+      rules: RULES,
+    });
+    expect(result.map((r) => `${r.filterId}:${r.configCanon}`)).toEqual([
+      "duplicate:duplicate-best",
+      "distinct_a:distinct_a-default",
+      "distinct_b:distinct_b-default",
+    ]);
+  });
 });

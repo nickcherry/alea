@@ -47,10 +47,11 @@ Qualifying candidates are **ranked by Wilson 95% lower bound desc**
 (with `nEngagements` desc as tie-break). Wilson LB punishes small samples
 in the ranking even after they cleared the absolute eligibility
 floor, so a 20-engagement 80% candidate gets admitted but ranks below a
-500-engagement 60% candidate. Take the **top 20**.
+500-engagement 60% candidate. For each `filter_id`, keep only the
+highest-ranked config, then take the **top 20 distinct filters**.
 
-Final selection: top 20 per `(market_regime, period)`. With 4
-regimes × 2 periods = 8 buckets, the table holds up to 160 rows.
+Final selection: top 20 distinct filters per `(market_regime, period)`.
+With 4 regimes × 2 periods = 8 buckets, the table holds up to 160 rows.
 
 ```sh
 bun alea committee:select

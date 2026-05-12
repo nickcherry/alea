@@ -6,8 +6,8 @@ import type {
 
 /**
  * Apply the eligibility + ranking rules to a flat list of
- * `(candidate, regime)` stats and return the selected top-N per
- * `(regime, period)`. Pure function — no DB, no IO — so the unit
+ * `(candidate, regime)` stats and return the selected top-N distinct
+ * filters per `(regime, period)`. Pure function — no DB, no IO — so the unit
  * tests can pin behavior without a Postgres dependency.
  *
  * Eligibility (per regime):
@@ -43,16 +43,38 @@ export function selectCommitteeCandidates({
   }
   const out: SelectedCandidate[] = [];
   for (const list of byKey.values()) {
-    list.sort((a, b) => {
-      if (b.wilsonLow !== a.wilsonLow) {
-        return b.wilsonLow - a.wilsonLow;
-      }
-      return b.nEngagements - a.nEngagements;
-    });
-    const top = list.slice(0, rules.topN);
+    list.sort(compareCandidateStats);
+    const top = keepBestConfigPerFilter({ sorted: list }).slice(0, rules.topN);
     for (let i = 0; i < top.length; i++) {
       out.push({ ...top[i]!, rank: i + 1 });
     }
+  }
+  return out;
+}
+
+function compareCandidateStats(
+  a: CandidateRegimeStats,
+  b: CandidateRegimeStats,
+): number {
+  if (b.wilsonLow !== a.wilsonLow) {
+    return b.wilsonLow - a.wilsonLow;
+  }
+  return b.nEngagements - a.nEngagements;
+}
+
+function keepBestConfigPerFilter({
+  sorted,
+}: {
+  readonly sorted: readonly CandidateRegimeStats[];
+}): readonly CandidateRegimeStats[] {
+  const seen = new Set<string>();
+  const out: CandidateRegimeStats[] = [];
+  for (const s of sorted) {
+    if (seen.has(s.filterId)) {
+      continue;
+    }
+    seen.add(s.filterId);
+    out.push(s);
   }
   return out;
 }
