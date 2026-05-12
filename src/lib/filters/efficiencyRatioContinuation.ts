@@ -48,11 +48,10 @@ export const efficiencyRatioContinuation: Filter<Config> = {
 registerFilter({
   filter: efficiencyRatioContinuation as Filter<unknown>,
   defaultConfigs: () => [
+    { length: 7, minER: 0.7, minNetMovePct: 0.002 },
     { length: 10, minER: 0.65, minNetMovePct: 0.003 },
     { length: 14, minER: 0.6, minNetMovePct: 0.004 },
     { length: 20, minER: 0.55, minNetMovePct: 0.005 },
-    { length: 7, minER: 0.7, minNetMovePct: 0.0025 },
     { length: 30, minER: 0.5, minNetMovePct: 0.007 },
   ],
 });
-

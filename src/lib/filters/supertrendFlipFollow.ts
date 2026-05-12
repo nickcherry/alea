@@ -53,4 +53,3 @@ registerFilter({
     { atrLength: 14, multiplier: 3.5 },
   ],
 });
-

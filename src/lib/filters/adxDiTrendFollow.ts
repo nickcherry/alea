@@ -7,12 +7,13 @@ const configSchema = z.object({
   length: z.number().int().positive().default(14),
   adxMin: z.number().nonnegative().default(25),
   diSpreadMin: z.number().nonnegative().default(10),
+  requireAdxRising: z.boolean().default(false),
 });
 type Config = z.infer<typeof configSchema>;
 
 export const adxDiTrendFollow: Filter<Config> = {
   id: "adx_di_trend_follow",
-  version: 1,
+  version: 2,
   family: "trend_continuation",
   description:
     "Classic ADX/+DI/-DI trend follow. High ADX plus a sufficient +DI lead predicts UP; high ADX plus a sufficient -DI lead predicts DOWN.",
@@ -30,6 +31,7 @@ export const adxDiTrendFollow: Filter<Config> = {
     });
     const i = bars.length - 1;
     const currentAdx = adx[i];
+    const previousAdx = adx[i - 1];
     const plus = plusDi[i];
     const minus = minusDi[i];
     if (
@@ -40,6 +42,14 @@ export const adxDiTrendFollow: Filter<Config> = {
       minus === null ||
       minus === undefined ||
       currentAdx < config.adxMin
+    ) {
+      return null;
+    }
+    if (
+      config.requireAdxRising &&
+      (previousAdx === null ||
+        previousAdx === undefined ||
+        currentAdx <= previousAdx)
     ) {
       return null;
     }
@@ -56,11 +66,10 @@ export const adxDiTrendFollow: Filter<Config> = {
 registerFilter({
   filter: adxDiTrendFollow as Filter<unknown>,
   defaultConfigs: () => [
-    { length: 14, adxMin: 25, diSpreadMin: 10 },
-    { length: 14, adxMin: 30, diSpreadMin: 8 },
-    { length: 7, adxMin: 30, diSpreadMin: 12 },
-    { length: 20, adxMin: 25, diSpreadMin: 8 },
-    { length: 14, adxMin: 20, diSpreadMin: 15 },
+    { length: 14, adxMin: 25, diSpreadMin: 8, requireAdxRising: false },
+    { length: 14, adxMin: 30, diSpreadMin: 8, requireAdxRising: true },
+    { length: 7, adxMin: 30, diSpreadMin: 12, requireAdxRising: false },
+    { length: 20, adxMin: 25, diSpreadMin: 8, requireAdxRising: true },
+    { length: 14, adxMin: 20, diSpreadMin: 15, requireAdxRising: false },
   ],
 });
-

@@ -60,6 +60,8 @@ export type FilterPrediction = "up" | "down" | null;
  *   - `volatility_compression_continuation` — squeeze breakouts
  *   - `trend_quality` / `trend_continuation` / `trend_flip_continuation`
  *                               — directional trend-following signals
+ *   - pullback, persistence, swing-structure, and body-sign families
+ *                               — OHLC-only continuation/failure probes
  *   - volume/body/sequence families — orthogonal volume participation
  *                               and candle-body direction tests
  */
@@ -72,11 +74,24 @@ export type FilterFamily =
   | "divergence"
   | "structure_reversion"
   | "compression_continuation"
+  | "compression_failure"
   | "volatility_compression_continuation"
+  | "candle_momentum_continuation"
+  | "candle_exhaustion"
+  | "micro_structure_continuation"
+  | "swing_structure_continuation"
+  | "swing_structure_reversion"
   | "trend_quality"
   | "range_reversion"
   | "trend_continuation"
+  | "trend_exhaustion"
   | "trend_flip_continuation"
+  | "trend_pullback_continuation"
+  | "persistence_continuation"
+  | "body_sign_regime"
+  | "momentum_cross_continuation"
+  | "momentum_exhaustion"
+  | "oscillator_reversal"
   | "volume_weighted_reversion"
   | "volume_oscillator_reversion"
   | "volume_divergence"

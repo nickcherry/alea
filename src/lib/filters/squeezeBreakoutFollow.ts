@@ -87,13 +87,40 @@ export const squeezeBreakoutFollow: Filter<Config> = {
 registerFilter({
   filter: squeezeBreakoutFollow as Filter<unknown>,
   defaultConfigs: () => [
-    // Survived the 2026-05-11 prune as the selected 5m/high_vol_trending config.
     {
       length: 20,
       multiplier: 2,
       widthLookback: 100,
       maxWidthPercentile: 10,
       minBodyFraction: 0.5,
+    },
+    {
+      length: 20,
+      multiplier: 2,
+      widthLookback: 200,
+      maxWidthPercentile: 15,
+      minBodyFraction: 0.4,
+    },
+    {
+      length: 14,
+      multiplier: 2,
+      widthLookback: 100,
+      maxWidthPercentile: 10,
+      minBodyFraction: 0.5,
+    },
+    {
+      length: 20,
+      multiplier: 2.5,
+      widthLookback: 100,
+      maxWidthPercentile: 20,
+      minBodyFraction: 0.5,
+    },
+    {
+      length: 50,
+      multiplier: 2,
+      widthLookback: 200,
+      maxWidthPercentile: 15,
+      minBodyFraction: 0.4,
     },
   ],
 });

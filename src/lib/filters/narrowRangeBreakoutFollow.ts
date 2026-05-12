@@ -1,5 +1,6 @@
 import {
   barRange,
+  bodyFraction,
   closeLocation,
 } from "@alea/lib/filters/_barMath";
 import { registerFilter } from "@alea/lib/filters/registry";
@@ -11,13 +12,14 @@ const configSchema = z.object({
   nrLookback: z.number().int().positive().default(7),
   atrLength: z.number().int().positive().default(14),
   minBreakAtr: z.number().nonnegative().default(0.02),
+  minBodyFraction: z.number().min(0).max(1).default(0.5),
   minCloseLocation: z.number().min(0).max(1).default(0.7),
 });
 type Config = z.infer<typeof configSchema>;
 
 export const narrowRangeBreakoutFollow: Filter<Config> = {
   id: "narrow_range_breakout_follow",
-  version: 1,
+  version: 2,
   family: "compression_continuation",
   description:
     "Continuation after a narrow-range pause. If the prior candle is the narrowest in `nrLookback` bars and the latest candle breaks it decisively, follow the breakout direction.",
@@ -53,7 +55,15 @@ export const narrowRangeBreakoutFollow: Filter<Config> = {
       period: config.atrLength,
     })[n - 2];
     const location = closeLocation(latest);
-    if (atr === null || atr === undefined || atr <= 0 || location === null) {
+    const body = bodyFraction(latest);
+    if (
+      atr === null ||
+      atr === undefined ||
+      atr <= 0 ||
+      location === null ||
+      body === null ||
+      body < config.minBodyFraction
+    ) {
       return null;
     }
     const minBreak = config.minBreakAtr * atr;
@@ -76,11 +86,40 @@ export const narrowRangeBreakoutFollow: Filter<Config> = {
 registerFilter({
   filter: narrowRangeBreakoutFollow as Filter<unknown>,
   defaultConfigs: () => [
-    { nrLookback: 7, atrLength: 14, minBreakAtr: 0.02, minCloseLocation: 0.7 },
-    { nrLookback: 4, atrLength: 14, minBreakAtr: 0.02, minCloseLocation: 0.7 },
-    { nrLookback: 10, atrLength: 14, minBreakAtr: 0.05, minCloseLocation: 0.75 },
-    { nrLookback: 7, atrLength: 7, minBreakAtr: 0.05, minCloseLocation: 0.75 },
-    { nrLookback: 14, atrLength: 14, minBreakAtr: 0.03, minCloseLocation: 0.8 },
+    {
+      nrLookback: 4,
+      atrLength: 14,
+      minBreakAtr: 0.02,
+      minBodyFraction: 0.4,
+      minCloseLocation: 0.7,
+    },
+    {
+      nrLookback: 7,
+      atrLength: 14,
+      minBreakAtr: 0.02,
+      minBodyFraction: 0.5,
+      minCloseLocation: 0.7,
+    },
+    {
+      nrLookback: 7,
+      atrLength: 7,
+      minBreakAtr: 0.05,
+      minBodyFraction: 0.5,
+      minCloseLocation: 0.75,
+    },
+    {
+      nrLookback: 10,
+      atrLength: 14,
+      minBreakAtr: 0.05,
+      minBodyFraction: 0.5,
+      minCloseLocation: 0.75,
+    },
+    {
+      nrLookback: 14,
+      atrLength: 14,
+      minBreakAtr: 0.03,
+      minBodyFraction: 0.4,
+      minCloseLocation: 0.8,
+    },
   ],
 });
-
