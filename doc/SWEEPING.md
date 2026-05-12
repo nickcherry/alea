@@ -43,14 +43,15 @@ Useful options:
 ```sh
 bun alea backtest:sweep-committee --max-runs 200
 bun alea backtest:sweep-committee --max-runs 200 --telegram
+bun alea backtest:sweep-committee --max-runs 20 --telegram --telegram-every 1
 bun alea backtest:sweep-committee --mode focus --telegram
 bun alea backtest:sweep-committee --mode fine --telegram
 bun alea backtest:sweep-committee --mode ridge --telegram
 ```
 
 The command writes a JSON artifact under `tmp/committee-sweeps/`.
-With `--telegram`, it sends a short update after every transient
-committee replay.
+With `--telegram`, it sends checkpoint updates, new-best updates, and a
+final update. Use `--telegram-every 1` only for tiny debug sweeps.
 
 `--mode broad` is the first pass across individual levers and coarse
 crosses. `--mode focus` searches a tighter grid around the broad-pass
@@ -114,3 +115,7 @@ Cut the search off quickly when a config only wins by shrinking to tiny
 trade volume, by concentrating in one day, or by helping one period
 while hurting the other. Look deeper when win rate, trade count, and
 period balance move together across adjacent settings.
+
+Dense grids should be used to map a promising neighborhood, not as a
+default operating mode. Once adjacent configs stop moving win rate by
+meaningful amounts, stop the grid and compare the surviving clusters.

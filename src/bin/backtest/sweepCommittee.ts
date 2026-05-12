@@ -106,7 +106,20 @@ export const backtestSweepCommitteeCommand = defineCommand({
       schema: z
         .boolean()
         .default(false)
-        .describe("Send a short Telegram update after every trial."),
+        .describe("Send concise Telegram checkpoint updates during the sweep."),
+    }),
+    defineValueOption({
+      key: "telegramEvery",
+      long: "--telegram-every",
+      valueName: "N",
+      schema: z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(25)
+        .describe(
+          "When --telegram is set, send a progress update every N trials. Use 1 only for tiny debug sweeps.",
+        ),
     }),
   ],
   examples: [
@@ -119,7 +132,7 @@ export const backtestSweepCommitteeCommand = defineCommand({
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
   sideEffects:
-    "Reads candles and training artifacts. Writes a JSON artifact under tmp/. With --telegram, sends one Telegram message per trial. Does not mutate committee_selections or persist committee_backtest_runs.",
+    "Reads candles and training artifacts. Writes a JSON artifact under tmp/. With --telegram, sends checkpoint Telegram updates. Does not mutate committee_selections or persist committee_backtest_runs.",
   async run({ io, options }) {
     const trials = buildSweepTrials({ mode: options.mode }).slice(
       0,
@@ -183,14 +196,23 @@ export const backtestSweepCommitteeCommand = defineCommand({
             `${pc.dim(`score=${result.score.toFixed(3)}`)} ` +
             `${best === result ? pc.green("new best") : pc.dim(`best=${best?.trial.id ?? "-"}`)}\n`,
         );
-        await telegram(
-          formatTelegramUpdate({
+        if (
+          shouldSendTelegramUpdate({
             index: i + 1,
             total: trials.length,
-            result,
-            best: best ?? result,
-          }),
-        );
+            every: options.telegramEvery,
+            isNewBest: best === result,
+          })
+        ) {
+          await telegram(
+            formatTelegramUpdate({
+              index: i + 1,
+              total: trials.length,
+              result,
+              best: best ?? result,
+            }),
+          );
+        }
       }
     } finally {
       await destroyDatabase(db);
@@ -684,6 +706,20 @@ function formatTelegramUpdate({
     `By period: ${periods}.`,
     bestText,
   ].join(" ");
+}
+
+function shouldSendTelegramUpdate({
+  index,
+  total,
+  every,
+  isNewBest,
+}: {
+  readonly index: number;
+  readonly total: number;
+  readonly every: number;
+  readonly isNewBest: boolean;
+}): boolean {
+  return index === 1 || index === total || index % every === 0 || isNewBest;
 }
 
 function sameTrial(a: SweepTrial, b: SweepTrial): boolean {
