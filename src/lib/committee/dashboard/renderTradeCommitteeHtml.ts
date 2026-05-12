@@ -151,8 +151,6 @@ export function renderTradeCommitteeHtml({
           </table>
         </div>
       </section>
-
-      ${renderFiringChartSection()}
     </main>
   </div>
   <script id="trade-committee-payload" type="application/json">${payloadJson}</script>
@@ -196,26 +194,4 @@ function renderConfigItem(item: ConfigItem): string {
     </div>`;
 }
 
-function renderFiringChartSection(): string {
-  return `
-      <section class="committee-section committee-firings-card">
-        <header class="committee-firings-header">
-          <div class="alea-section-rule"><h2>Firings Over Time</h2></div>
-          <div class="alea-legend committee-firings-legend" aria-label="Direction legend">
-            <span class="alea-legend-item"><span class="alea-legend-swatch" style="background: #46c37b"></span>up consensus</span>
-            <span class="alea-legend-item"><span class="alea-legend-swatch" style="background: #d85a4f"></span>down consensus</span>
-          </div>
-        </header>
-        <div class="committee-firings-body">
-          <div class="committee-firings-empty" id="committee-firings-empty" hidden>
-            <span class="alea-muted">No firings recorded for this scope.</span>
-          </div>
-          <div class="committee-firings-canvas-wrap">
-            <canvas id="committee-firings-canvas"></canvas>
-            <div class="alea-tooltip committee-firings-tooltip" id="committee-firings-tooltip" role="tooltip"></div>
-          </div>
-          <div class="committee-firings-axis" id="committee-firings-axis" aria-hidden="true"></div>
-        </div>
-      </section>`;
-}
 
