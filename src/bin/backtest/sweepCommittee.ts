@@ -58,6 +58,16 @@ export const backtestSweepCommitteeCommand = defineCommand({
     "Runs transient committee holdout replays across selection and voting configurations without changing production constants or rewriting committee_selections. Results are ranked by a win-rate-first, volume-aware score and written to a JSON artifact.",
   options: [
     defineValueOption({
+      key: "mode",
+      long: "--mode",
+      valueName: "MODE",
+      choices: ["broad", "focus"],
+      schema: z
+        .enum(["broad", "focus"])
+        .default("broad")
+        .describe("Sweep grid to run: broad first pass or focused ridge search."),
+    }),
+    defineValueOption({
       key: "maxRuns",
       long: "--max-runs",
       valueName: "N",
@@ -100,13 +110,17 @@ export const backtestSweepCommitteeCommand = defineCommand({
   examples: [
     "bun alea backtest:sweep-committee",
     "bun alea backtest:sweep-committee --max-runs 200 --telegram",
+    "bun alea backtest:sweep-committee --mode focus --telegram",
   ],
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
   sideEffects:
     "Reads candles and training artifacts. Writes a JSON artifact under tmp/. With --telegram, sends one Telegram message per trial. Does not mutate committee_selections or persist committee_backtest_runs.",
   async run({ io, options }) {
-    const trials = buildSweepTrials().slice(0, options.maxRuns);
+    const trials = buildSweepTrials({ mode: options.mode }).slice(
+      0,
+      options.maxRuns,
+    );
     const outPath =
       options.out ??
       resolvePath(
@@ -192,7 +206,18 @@ export const backtestSweepCommitteeCommand = defineCommand({
   },
 });
 
-function buildSweepTrials(): readonly SweepTrial[] {
+function buildSweepTrials({
+  mode,
+}: {
+  readonly mode: "broad" | "focus";
+}): readonly SweepTrial[] {
+  if (mode === "focus") {
+    return buildFocusedSweepTrials();
+  }
+  return buildBroadSweepTrials();
+}
+
+function buildBroadSweepTrials(): readonly SweepTrial[] {
   const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
   const decision = DEFAULT_COMMITTEE_DECISION_RULES;
   const out: SweepTrial[] = [];
@@ -293,6 +318,62 @@ function buildSweepTrials(): readonly SweepTrial[] {
               },
             });
           }
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
+function buildFocusedSweepTrials(): readonly SweepTrial[] {
+  const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
+  const decision = DEFAULT_COMMITTEE_DECISION_RULES;
+  const out: SweepTrial[] = [];
+  const add = ({
+    minAggregateWinRate,
+    minEngagements,
+    topN,
+    minVotesToTrade,
+  }: {
+    readonly minAggregateWinRate: number;
+    readonly minEngagements: number;
+    readonly topN: number;
+    readonly minVotesToTrade: number;
+  }) => {
+    out.push({
+      id: [
+        `agg${pctId(minAggregateWinRate)}`,
+        `eng${minEngagements}`,
+        `top${topN}`,
+        `v${minVotesToTrade}`,
+      ].join("-"),
+      hypothesis:
+        "focused ridge search around the broad-pass WR/trade-rate cluster",
+      selectionRules: {
+        ...selection,
+        minAggregateWinRate,
+        minEngagements,
+        topN,
+      },
+      decisionRules: {
+        ...decision,
+        minVotesToTrade,
+        minConsensusFraction: 0.5,
+      },
+    });
+  };
+
+  for (const minAggregateWinRate of [0.525, 0.53, 0.535, 0.54, 0.545]) {
+    for (const minEngagements of [10, 20, 40, 80]) {
+      for (const topN of [8, 10, 12, 15, 18, 20, 25]) {
+        for (const minVotesToTrade of [2, 3]) {
+          add({
+            minAggregateWinRate,
+            minEngagements,
+            topN,
+            minVotesToTrade,
+          });
         }
       }
     }
@@ -480,7 +561,11 @@ function sameTrial(a: SweepTrial, b: SweepTrial): boolean {
 }
 
 function pctId(value: number): string {
-  return String(Math.round(value * 100));
+  const pct = value * 100;
+  return (Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1)).replace(
+    ".",
+    "p",
+  );
 }
 
 function formatWr(value: number | null): string {

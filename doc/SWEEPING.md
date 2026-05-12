@@ -43,11 +43,16 @@ Useful options:
 ```sh
 bun alea backtest:sweep-committee --max-runs 200
 bun alea backtest:sweep-committee --max-runs 200 --telegram
+bun alea backtest:sweep-committee --mode focus --telegram
 ```
 
 The command writes a JSON artifact under `tmp/committee-sweeps/`.
 With `--telegram`, it sends a short update after every transient
 committee replay.
+
+`--mode broad` is the first pass across individual levers and coarse
+crosses. `--mode focus` searches a tighter grid around the broad-pass
+ridge.
 
 ## Selection Levers
 
