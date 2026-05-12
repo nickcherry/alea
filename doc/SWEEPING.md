@@ -45,6 +45,7 @@ bun alea backtest:sweep-committee --max-runs 200
 bun alea backtest:sweep-committee --max-runs 200 --telegram
 bun alea backtest:sweep-committee --mode focus --telegram
 bun alea backtest:sweep-committee --mode fine --telegram
+bun alea backtest:sweep-committee --mode ridge --telegram
 ```
 
 The command writes a JSON artifact under `tmp/committee-sweeps/`.
@@ -55,6 +56,8 @@ committee replay.
 crosses. `--mode focus` searches a tighter grid around the broad-pass
 ridge. `--mode fine` is for a later pass around the best focused
 neighborhood, including finer top-N and worst-quarter probes.
+`--mode ridge` tests the current strict-stability and higher-volume
+neighborhoods more densely after a promising cluster appears.
 
 ## Selection Levers
 
@@ -103,6 +106,9 @@ Start broad, then deepen around clusters:
 3. Sweep one selection lever at a time.
 4. Cross promising selection ranges with voting settings.
 5. Prefer clusters of good neighboring configs over isolated winners.
+6. Run the ridge mode once a cluster appears, then choose between the
+   strict high-WR ridge and the higher-volume ridge using the period
+   breakdown.
 
 Cut the search off quickly when a config only wins by shrinking to tiny
 trade volume, by concentrating in one day, or by helping one period

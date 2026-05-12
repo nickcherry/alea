@@ -61,12 +61,12 @@ export const backtestSweepCommitteeCommand = defineCommand({
       key: "mode",
       long: "--mode",
       valueName: "MODE",
-      choices: ["broad", "focus", "fine"],
+      choices: ["broad", "focus", "fine", "ridge"],
       schema: z
-        .enum(["broad", "focus", "fine"])
+        .enum(["broad", "focus", "fine", "ridge"])
         .default("broad")
         .describe(
-          "Sweep grid to run: broad first pass, focused ridge search, or fine ridge search.",
+          "Sweep grid to run: broad first pass, focused ridge search, fine ridge search, or strict/volume ridge search.",
         ),
     }),
     defineValueOption({
@@ -114,6 +114,7 @@ export const backtestSweepCommitteeCommand = defineCommand({
     "bun alea backtest:sweep-committee --max-runs 200 --telegram",
     "bun alea backtest:sweep-committee --mode focus --telegram",
     "bun alea backtest:sweep-committee --mode fine --telegram",
+    "bun alea backtest:sweep-committee --mode ridge --telegram",
   ],
   output:
     "Prints one line per trial plus the best current configuration. Writes JSON results.",
@@ -212,8 +213,11 @@ export const backtestSweepCommitteeCommand = defineCommand({
 function buildSweepTrials({
   mode,
 }: {
-  readonly mode: "broad" | "focus" | "fine";
+  readonly mode: "broad" | "focus" | "fine" | "ridge";
 }): readonly SweepTrial[] {
+  if (mode === "ridge") {
+    return buildRidgeSweepTrials();
+  }
   if (mode === "fine") {
     return buildFineSweepTrials();
   }
@@ -425,6 +429,89 @@ function buildFineSweepTrials(): readonly SweepTrial[] {
       }
     }
   }
+  return out;
+}
+
+function buildRidgeSweepTrials(): readonly SweepTrial[] {
+  const selection = DEFAULT_COMMITTEE_SELECTION_RULES;
+  const decision = DEFAULT_COMMITTEE_DECISION_RULES;
+  const out: SweepTrial[] = [];
+  const add = ({
+    minAggregateWinRate,
+    minEngagements,
+    minWorstQuarterWinRate,
+    topN,
+    minVotesToTrade = 2,
+    hypothesis,
+  }: {
+    readonly minAggregateWinRate: number;
+    readonly minEngagements: number;
+    readonly minWorstQuarterWinRate: number;
+    readonly topN: number;
+    readonly minVotesToTrade?: number;
+    readonly hypothesis: string;
+  }) => {
+    const trial = {
+      id: [
+        `agg${pctId(minAggregateWinRate)}`,
+        `eng${minEngagements}`,
+        `wq${pctId(minWorstQuarterWinRate)}`,
+        `top${topN}`,
+        `v${minVotesToTrade}`,
+      ].join("-"),
+      hypothesis,
+      selectionRules: {
+        ...selection,
+        minAggregateWinRate,
+        minEngagements,
+        minWorstQuarterWinRate,
+        topN,
+      },
+      decisionRules: {
+        ...decision,
+        minVotesToTrade,
+        minConsensusFraction: 0.5,
+      },
+    };
+    if (!out.some((existing) => sameTrial(existing, trial))) {
+      out.push(trial);
+    }
+  };
+
+  for (const minAggregateWinRate of [0.538, 0.54, 0.542, 0.545]) {
+    for (const minEngagements of [20, 80]) {
+      for (const minWorstQuarterWinRate of [0.5, 0.51, 0.52, 0.53]) {
+        for (const topN of [13, 14, 15, 16, 17, 18, 19, 20]) {
+          add({
+            minAggregateWinRate,
+            minEngagements,
+            minWorstQuarterWinRate,
+            topN,
+            hypothesis:
+              "strict stability ridge: preserve the 57% cluster while testing roster breadth",
+          });
+        }
+      }
+    }
+  }
+
+  for (const minAggregateWinRate of [0.52, 0.525, 0.53, 0.535, 0.54]) {
+    for (const minEngagements of [20, 80]) {
+      for (const minWorstQuarterWinRate of [0.46, 0.47, 0.48, 0.49, 0.5]) {
+        for (const topN of [14, 15, 16, 17, 18, 19, 20]) {
+          add({
+            minAggregateWinRate,
+            minEngagements,
+            minWorstQuarterWinRate,
+            topN,
+            hypothesis:
+              "volume ridge: test whether a looser stability floor buys enough extra trades",
+          });
+        }
+      }
+    }
+  }
+
   return out;
 }
 
