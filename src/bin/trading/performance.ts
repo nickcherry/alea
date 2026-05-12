@@ -53,7 +53,7 @@ export const tradingPerformanceCommand = defineCommand({
       `${pc.bold("trading:performance")} ${pc.dim("funder=")}${auth.funderAddress.slice(0, 10)}...\n\n`,
     );
 
-    const payload = await scanPolymarketTradingPerformance({
+    const { payload } = await scanPolymarketTradingPerformance({
       funderAddress: auth.funderAddress,
       clobClient: auth.client,
       onProgress: (event) => {

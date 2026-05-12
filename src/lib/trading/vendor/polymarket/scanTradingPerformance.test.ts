@@ -39,7 +39,7 @@ function fakeDataApiFetch({
 describe("scanPolymarketTradingPerformance", () => {
   it("computes lifetime PnL from /activity cashflows + /positions mark-to-market", async () => {
     const progress: TradingPerformanceScanProgress[] = [];
-    const payload = await scanPolymarketTradingPerformance({
+    const { payload } = await scanPolymarketTradingPerformance({
       funderAddress: "0xfunder",
       generatedAtMs: 1_777_900_600_000,
       dataApiFetch: fakeDataApiFetch({

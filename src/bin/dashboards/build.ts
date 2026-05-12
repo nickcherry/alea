@@ -1,4 +1,5 @@
-import { mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
@@ -21,7 +22,10 @@ import { writeProxyAccuracyArtifacts } from "@alea/lib/polymarket/dashboard/writ
 import { getPolymarketAuthState } from "@alea/lib/polymarket/getPolymarketClobClient";
 import { formatUsd } from "@alea/lib/trading/format";
 import { writeTradingPerformanceArtifacts } from "@alea/lib/trading/performance/writeTradingPerformanceArtifacts";
-import { scanPolymarketTradingPerformance } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
+import {
+  type PolymarketRawActivity,
+  scanPolymarketTradingPerformance,
+} from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
 import pc from "picocolors";
 import { z } from "zod";
 
@@ -33,6 +37,7 @@ const committeeDir = resolvePath(webDir, "committee");
 const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
+const cacheDir = resolvePath(tmpDir, ".cache");
 
 /**
  * Builds every static dashboard the alea Cloudflare worker serves
@@ -71,6 +76,16 @@ export const dashboardsBuildCommand = defineCommand({
         .default(false)
         .describe(
           "After the build, push tmp/web/ to the alea Cloudflare Worker via Wrangler.",
+        ),
+    }),
+    defineFlagOption({
+      key: "noCache",
+      long: "--no-cache",
+      schema: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Force a full re-fetch of upstream APIs instead of reusing the local activity cache. By default the trading page re-uses cached Polymarket /activity rows and only fetches pages newer than the cache cutoff.",
         ),
     }),
     defineValueOption({
@@ -113,13 +128,15 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
+    await mkdir(cacheDir, { recursive: true });
 
     const only = options.only;
+    const useCache = !options.noCache;
     const shouldBuild = (name: string): boolean =>
       only === null ? true : only.has(name);
 
     if (shouldBuild("trading")) {
-      await buildTradingDashboard({ io });
+      await buildTradingDashboard({ io, useCache });
       io.writeStdout("\n");
     }
     if (shouldBuild("price-paths")) {
@@ -161,8 +178,10 @@ export const dashboardsBuildCommand = defineCommand({
 
 async function buildTradingDashboard({
   io,
+  useCache,
 }: {
   readonly io: { writeStdout: (line: string) => void };
+  readonly useCache: boolean;
 }): Promise<void> {
   io.writeStdout(`${pc.bold("trading")} ${pc.dim("(/)")}\n`);
 
@@ -181,9 +200,18 @@ async function buildTradingDashboard({
     `  ${pc.dim("funder=")}${auth.funderAddress.slice(0, 10)}...\n`,
   );
 
-  const payload = await scanPolymarketTradingPerformance({
+  const activityCachePath = resolvePath(
+    cacheDir,
+    `polymarket-activity-${auth.funderAddress.toLowerCase()}.json`,
+  );
+  const existingActivity = useCache
+    ? await readActivityCache({ path: activityCachePath, io })
+    : undefined;
+
+  const { payload, mergedActivity } = await scanPolymarketTradingPerformance({
     funderAddress: auth.funderAddress,
     clobClient: auth.client,
+    existingActivity,
     onProgress: (event) => {
       const label =
         event.kind === "activity-page"
@@ -194,6 +222,18 @@ async function buildTradingDashboard({
       io.writeStdout(`  ${label}\n`);
     },
   });
+
+  if (useCache) {
+    await writeFile(activityCachePath, JSON.stringify(mergedActivity));
+    const newCount =
+      existingActivity === undefined
+        ? mergedActivity.length
+        : mergedActivity.length - existingActivity.length;
+    io.writeStdout(
+      `  ${pc.dim("cache:")} ${mergedActivity.length.toLocaleString()} activity rows ` +
+        `(${newCount.toLocaleString()} new this run)\n`,
+    );
+  }
 
   const htmlPath = resolvePath(webDir, "index.html");
   const jsonPath = resolvePath(webDir, "data.json");
@@ -375,5 +415,29 @@ async function buildProxyAccuracyDashboard({
     );
   } finally {
     await destroyDatabase(db);
+  }
+}
+
+async function readActivityCache({
+  path,
+  io,
+}: {
+  readonly path: string;
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<readonly PolymarketRawActivity[] | undefined> {
+  if (!existsSync(path)) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf-8"));
+    if (!Array.isArray(parsed)) {
+      return undefined;
+    }
+    return parsed as readonly PolymarketRawActivity[];
+  } catch (err) {
+    io.writeStdout(
+      `  ${pc.yellow("cache:")} failed to read ${pc.dim(path)} (${err instanceof Error ? err.message : String(err)}) — refetching\n`,
+    );
+    return undefined;
   }
 }

@@ -47,7 +47,7 @@ export async function scanPolymarketLifetimePnl({
   readonly onProgress?: (event: LifetimePnlScanProgress) => void;
   readonly dataApiFetch?: DataApiFetch;
 }): Promise<LifetimePnlScanResult> {
-  const payload = await scanPolymarketTradingPerformance({
+  const { payload } = await scanPolymarketTradingPerformance({
     funderAddress,
     dataApiFetch,
     // We don't pass clobClient, so `scanPolymarketTradingPerformance`

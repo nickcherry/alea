@@ -18,6 +18,36 @@ export type TradingPerformanceScanProgress =
   | { readonly kind: "trades-page"; readonly tradesSoFar: number };
 
 /**
+ * Raw activity row from data-api /activity. Exposed so callers can
+ * cache the immutable history to disk and feed it back as
+ * `existingActivity` on later runs — the scanner then only fetches
+ * pages newer than the cached cutoff.
+ */
+export type PolymarketRawActivity = {
+  readonly type: string;
+  readonly side?: string;
+  readonly conditionId?: string;
+  readonly title?: string;
+  readonly slug?: string;
+  readonly outcome?: string;
+  readonly usdcSize: number;
+  readonly size?: number;
+  readonly price?: number;
+  readonly timestamp: number;
+};
+
+export type TradingPerformanceScanResult = {
+  readonly payload: TradingPerformancePayload;
+  /**
+   * The full activity ledger used to build `payload`, merged from
+   * `existingActivity` (if provided) and any newer rows fetched this
+   * run. Sorted newest-first. Callers should write this back to their
+   * cache so the next run only fetches the delta.
+   */
+  readonly mergedActivity: readonly PolymarketRawActivity[];
+};
+
+/**
  * Custom hook for tests — defaults to global `fetch`. The signature
  * matches a `RequestInit`-like minimum the implementation cares about.
  */
@@ -47,6 +77,7 @@ export async function scanPolymarketTradingPerformance({
   onProgress,
   dataApiFetch = async (url) => fetch(url),
   clobClient,
+  existingActivity,
 }: {
   /** Polymarket proxy/funder address — the trades' on-chain owner. */
   readonly funderAddress: string;
@@ -61,19 +92,41 @@ export async function scanPolymarketTradingPerformance({
    * only needs the lifetime PnL scalar).
    */
   readonly clobClient?: ClobClient;
-}): Promise<TradingPerformancePayload> {
-  const [activity, positions, tradeRolesByConditionId] = await Promise.all([
-    fetchAllActivity({ funderAddress, onProgress, dataApiFetch }),
+  /**
+   * Activity rows already on disk from a prior run. When provided, the
+   * scanner walks /activity pages (DESC by timestamp) and stops as
+   * soon as it reaches the cached cutoff, then concatenates the newer
+   * rows in front of `existingActivity`. The merged ledger is returned
+   * in `result.mergedActivity` so callers can persist it back.
+   */
+  readonly existingActivity?: readonly PolymarketRawActivity[];
+}): Promise<TradingPerformanceScanResult> {
+  const cutoffTimestamp =
+    existingActivity === undefined || existingActivity.length === 0
+      ? undefined
+      : existingActivity.reduce((m, a) => Math.max(m, a.timestamp), 0);
+  const [newActivity, positions, tradeRolesByConditionId] = await Promise.all([
+    fetchActivitySince({
+      funderAddress,
+      onProgress,
+      dataApiFetch,
+      sinceTimestamp: cutoffTimestamp,
+    }),
     fetchAllPositions({ funderAddress, onProgress, dataApiFetch }),
     fetchTradeRoles({ clobClient, onProgress }),
   ]);
-  return buildTradingPerformancePayload({
+  const mergedActivity =
+    existingActivity === undefined
+      ? newActivity
+      : [...newActivity, ...existingActivity];
+  const payload = buildTradingPerformancePayload({
     walletAddress: funderAddress,
     generatedAtMs,
-    activity: activity.map(toInputActivity),
+    activity: mergedActivity.map(toInputActivity),
     positions: positions.map(toInputPosition),
     tradeRolesByConditionId,
   });
+  return { payload, mergedActivity };
 }
 
 async function fetchTradeRoles({
@@ -94,18 +147,7 @@ async function fetchTradeRoles({
   });
 }
 
-type RawActivity = {
-  readonly type: string;
-  readonly side?: string;
-  readonly conditionId?: string;
-  readonly title?: string;
-  readonly slug?: string;
-  readonly outcome?: string;
-  readonly usdcSize: number;
-  readonly size?: number;
-  readonly price?: number;
-  readonly timestamp: number;
-};
+type RawActivity = PolymarketRawActivity;
 
 type RawPosition = {
   readonly conditionId: string;
@@ -119,14 +161,22 @@ type RawPosition = {
   readonly redeemable?: boolean;
 };
 
-async function fetchAllActivity({
+async function fetchActivitySince({
   funderAddress,
   onProgress,
   dataApiFetch,
+  sinceTimestamp,
 }: {
   readonly funderAddress: string;
   readonly onProgress?: (event: TradingPerformanceScanProgress) => void;
   readonly dataApiFetch: DataApiFetch;
+  /**
+   * Exclusive timestamp cutoff (Unix seconds). When set, the scan
+   * stops as soon as it encounters a row whose timestamp is <=
+   * `sinceTimestamp`. Assumes /activity returns rows in DESC
+   * timestamp order (the data-api default).
+   */
+  readonly sinceTimestamp: number | undefined;
 }): Promise<RawActivity[]> {
   const accumulator: RawActivity[] = [];
   let offset = 0;
@@ -151,7 +201,16 @@ async function fetchAllActivity({
     if (page.length === 0) {
       return accumulator;
     }
-    accumulator.push(...page);
+    for (const row of page) {
+      if (sinceTimestamp !== undefined && row.timestamp <= sinceTimestamp) {
+        onProgress?.({
+          kind: "activity-page",
+          activitiesSoFar: accumulator.length,
+        });
+        return accumulator;
+      }
+      accumulator.push(row);
+    }
     onProgress?.({
       kind: "activity-page",
       activitiesSoFar: accumulator.length,
