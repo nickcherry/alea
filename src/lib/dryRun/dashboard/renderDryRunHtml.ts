@@ -13,6 +13,7 @@ import {
   formatDateTime,
   formatMarketRegime as formatMarketRegimeRaw,
   formatPercent,
+  infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
@@ -81,81 +82,83 @@ export function renderDryRunHtml({
       </div>
 
       <section class="dry-run-section">
-        <div class="alea-section-rule"><h2>Trade Decision Config</h2></div>
-        <div class="alea-config-grid">
-          ${renderConfigGroup({
-            title: "Timing",
-            items: [
-              {
-                label: "Decision Lead",
-                value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
-                sub: "before target candle open",
-              },
-              {
-                label: "Hydrated Bars",
-                value: payload.decisionConfig.hydratedBars.toLocaleString(),
-                sub: "startup history per asset",
-              },
-            ],
-          })}
-          ${renderConfigGroup({
-            title: "Voting",
-            items: [
-              {
-                label: "Max Votes / Filter",
-                value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
-                sub: "highest-WR engaged config wins",
-              },
-              {
-                label: "Min Votes",
-                value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
-                sub: "after filter-level collapse",
-              },
-              {
-                label: "Consensus",
-                value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
-                sub: "ties still abstain",
-              },
-              {
-                label: "Filter Tie Break",
-                value: formatFilterTieBreak({
-                  value: payload.decisionConfig.filterTieBreak,
-                }),
-                sub: "when multiple configs engage",
-              },
-            ],
-          })}
-          ${renderConfigGroup({
-            title: "Order Simulation",
-            items: [
-              {
-                label: "Placement Delay",
-                value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
-                sub: "after target market opens",
-              },
-              {
-                label: "50c Window",
-                value: `±${payload.decisionConfig.orderPriceWindowCents.toLocaleString()}c`,
-                sub: "observed predicted-side price",
-              },
-              {
-                label: "Limit Offset",
-                value: `+${payload.decisionConfig.orderLimitOffsetCents.toLocaleString()}c`,
-                sub: "above observed predicted-side price",
-              },
-              {
-                label: "Quote Max Age",
-                value: `${(payload.decisionConfig.orderMaxQuoteAgeMs / 1000).toLocaleString()}s`,
-                sub: "book/BBO freshness required",
-              },
-              {
-                label: "Discovery Lead",
-                value: `${(payload.decisionConfig.marketDiscoveryLeadMs / 1000).toLocaleString()}s`,
-                sub: "pre-discover current/next markets",
-              },
-            ],
-          })}
-        </div>
+        <details class="alea-config-section">
+          <summary class="alea-config-summary alea-section-rule"><h2>Trade Decision Config</h2></summary>
+          <div class="alea-config-grid">
+            ${renderConfigGroup({
+              title: "Timing",
+              items: [
+                {
+                  label: "Decision Lead",
+                  value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
+                  tip: "How long before the target candle's open the committee runs.",
+                },
+                {
+                  label: "Hydrated Bars",
+                  value: payload.decisionConfig.hydratedBars.toLocaleString(),
+                  tip: "Per-asset history loaded at startup so filters can compute on bar one.",
+                },
+              ],
+            })}
+            ${renderConfigGroup({
+              title: "Voting",
+              items: [
+                {
+                  label: "Max Votes / Filter",
+                  value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
+                  tip: "Cap on votes any single filter family can contribute. The highest-WR engaged config wins.",
+                },
+                {
+                  label: "Min Votes",
+                  value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
+                  tip: "Minimum votes (after filter-level collapse) required before a decision is taken.",
+                },
+                {
+                  label: "Consensus",
+                  value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
+                  tip: "Fraction of votes that must agree on a side. Ties still abstain.",
+                },
+                {
+                  label: "Filter Tie Break",
+                  value: formatFilterTieBreak({
+                    value: payload.decisionConfig.filterTieBreak,
+                  }),
+                  tip: "Order used to pick a winner when multiple configs in the same filter engage.",
+                },
+              ],
+            })}
+            ${renderConfigGroup({
+              title: "Order Simulation",
+              items: [
+                {
+                  label: "Placement Delay",
+                  value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
+                  tip: "Wait after the target market opens before placing the simulated order.",
+                },
+                {
+                  label: "50c Window",
+                  value: `±${payload.decisionConfig.orderPriceWindowCents.toLocaleString()}c`,
+                  tip: "Acceptable distance from 50c on the observed predicted-side price.",
+                },
+                {
+                  label: "Limit Offset",
+                  value: `+${payload.decisionConfig.orderLimitOffsetCents.toLocaleString()}c`,
+                  tip: "Offset above the observed predicted-side price used to price the limit order.",
+                },
+                {
+                  label: "Quote Max Age",
+                  value: `${(payload.decisionConfig.orderMaxQuoteAgeMs / 1000).toLocaleString()}s`,
+                  tip: "Maximum allowed age of the book/BBO snapshot used to price the order.",
+                },
+                {
+                  label: "Discovery Lead",
+                  value: `${(payload.decisionConfig.marketDiscoveryLeadMs / 1000).toLocaleString()}s`,
+                  tip: "Lead time used to pre-discover the current/next Polymarket markets.",
+                },
+              ],
+            })}
+          </div>
+        </details>
       </section>
 
       <section class="dry-run-section">
@@ -479,7 +482,7 @@ function renderDirectionSplit({
 type ConfigItem = {
   readonly label: string;
   readonly value: string;
-  readonly sub: string;
+  readonly tip: string;
 };
 
 function renderConfigGroup({
@@ -499,15 +502,11 @@ function renderConfigGroup({
 }
 
 function renderConfigItem(item: ConfigItem): string {
-  const subHtml =
-    item.sub === ""
-      ? ""
-      : `<span class="alea-config-sub">${escapeHtml({ value: item.sub })}</span>`;
+  const tipHtml = item.tip === "" ? "" : infoTip({ text: item.tip });
   return `
     <div class="alea-config-item">
-      <span class="alea-config-label">${escapeHtml({ value: item.label })}</span>
+      <span class="alea-config-label">${escapeHtml({ value: item.label })}${tipHtml}</span>
       <span class="alea-config-value">${escapeHtml({ value: item.value })}</span>
-      ${subHtml}
     </div>`;
 }
 

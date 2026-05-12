@@ -8,6 +8,7 @@ import {
   escapeJsonForHtml,
   formatDateTime,
   formatPercent,
+  infoTip,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
@@ -49,73 +50,75 @@ export function renderTradeCommitteeHtml({
       </div>
 
       <section class="committee-section">
-        <div class="alea-section-rule"><h2>Selection Config</h2></div>
-        <div class="alea-config-grid">
-          ${renderConfigGroup({
-            title: "Eligibility",
-            items: [
-              {
-                label: "Min Engagements",
-                value: `>= ${payload.selectionConfig.minEngagements.toLocaleString()}`,
-                sub: "inside the target regime",
-              },
-              {
-                label: "Aggregate WR Floor",
-                value: `>= ${formatPercent({ value: payload.selectionConfig.minAggregateWinRate })}`,
-                sub: "candidate/regime aggregate",
-              },
-              {
-                label: "Worst-Quarter WR Floor",
-                value: `>= ${formatPercent({ value: payload.selectionConfig.minWorstQuarterWinRate })}`,
-                sub: "only quarters above sample floor",
-              },
-              {
-                label: "Worst-Quarter Sample",
-                value: `>= ${payload.selectionConfig.worstQuarterMinEngagements.toLocaleString()}`,
-                sub: "engagements before quarter counts",
-              },
-            ],
-          })}
-          ${renderConfigGroup({
-            title: "Selection",
-            items: [
-              {
-                label: "Bucket Cap",
-                value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
-                sub: "selected per timeframe/regime",
-              },
-              {
-                label: "Ranking",
-                value: "Wilson low desc",
-                sub: "ties: engagements desc",
-              },
-            ],
-          })}
-          ${renderConfigGroup({
-            title: "Training",
-            items: [
-              {
-                label: "Training Window",
-                value: `${formatTrainingStartPolicy({
-                  value: payload.selectionConfig.trainingWindowStartPolicy,
-                })} -> ${formatUtcDate({
-                  ms: payload.selectionConfig.trainingWindowEndInclusiveMs,
-                })}`,
-                sub: "UTC, end inclusive",
-              },
-              {
-                label: "Training Move Floor",
-                value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
-                sub: "open-to-close absolute move",
-              },
-              {
-                label: "Training Profile",
-                value: payload.selectionConfig.trainingProfileId,
-                sub: "outcome rule + window identity",
-              },
-            ],
-          })}
-        </div>
+        <details class="alea-config-section">
+          <summary class="alea-config-summary alea-section-rule"><h2>Selection Config</h2></summary>
+          <div class="alea-config-grid">
+            ${renderConfigGroup({
+              title: "Eligibility",
+              items: [
+                {
+                  label: "Min Engagements",
+                  value: `>= ${payload.selectionConfig.minEngagements.toLocaleString()}`,
+                  tip: "Minimum engagements inside the target regime before a candidate qualifies.",
+                },
+                {
+                  label: "Aggregate WR Floor",
+                  value: `>= ${formatPercent({ value: payload.selectionConfig.minAggregateWinRate })}`,
+                  tip: "Floor on the candidate's aggregate win rate within the regime.",
+                },
+                {
+                  label: "Worst-Quarter WR Floor",
+                  value: `>= ${formatPercent({ value: payload.selectionConfig.minWorstQuarterWinRate })}`,
+                  tip: "Floor on the worst quarter's win rate — only quarters above the sample floor are counted.",
+                },
+                {
+                  label: "Worst-Quarter Sample",
+                  value: `>= ${payload.selectionConfig.worstQuarterMinEngagements.toLocaleString()}`,
+                  tip: "A quarter only counts toward the worst-quarter floor once it has this many engagements.",
+                },
+              ],
+            })}
+            ${renderConfigGroup({
+              title: "Selection",
+              items: [
+                {
+                  label: "Bucket Cap",
+                  value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
+                  tip: "Max candidates selected per timeframe/regime bucket.",
+                },
+                {
+                  label: "Ranking",
+                  value: "Wilson low desc",
+                  tip: "Sorted by Wilson lower bound (descending). Ties broken by engagement count (descending).",
+                },
+              ],
+            })}
+            ${renderConfigGroup({
+              title: "Training",
+              items: [
+                {
+                  label: "Training Window",
+                  value: `${formatTrainingStartPolicy({
+                    value: payload.selectionConfig.trainingWindowStartPolicy,
+                  })} -> ${formatUtcDate({
+                    ms: payload.selectionConfig.trainingWindowEndInclusiveMs,
+                  })}`,
+                  tip: "Date range used for training, UTC. End date is inclusive.",
+                },
+                {
+                  label: "Training Move Floor",
+                  value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
+                  tip: "Minimum open-to-close absolute move (%) required for a candle to count as an outcome.",
+                },
+                {
+                  label: "Training Profile",
+                  value: payload.selectionConfig.trainingProfileId,
+                  tip: "Identifier combining the outcome rule and training/backtest window.",
+                },
+              ],
+            })}
+          </div>
+        </details>
       </section>
 
       <section class="committee-section committee-roster-card">
@@ -186,7 +189,7 @@ function formatUtcDate({ ms }: { readonly ms: number }): string {
 type ConfigItem = {
   readonly label: string;
   readonly value: string;
-  readonly sub: string;
+  readonly tip: string;
 };
 
 function renderConfigGroup({
@@ -206,14 +209,10 @@ function renderConfigGroup({
 }
 
 function renderConfigItem(item: ConfigItem): string {
-  const subHtml =
-    item.sub === ""
-      ? ""
-      : `<span class="alea-config-sub">${escapeHtml({ value: item.sub })}</span>`;
+  const tipHtml = item.tip === "" ? "" : infoTip({ text: item.tip });
   return `
     <div class="alea-config-item">
-      <span class="alea-config-label">${escapeHtml({ value: item.label })}</span>
+      <span class="alea-config-label">${escapeHtml({ value: item.label })}${tipHtml}</span>
       <span class="alea-config-value">${escapeHtml({ value: item.value })}</span>
-      ${subHtml}
     </div>`;
 }

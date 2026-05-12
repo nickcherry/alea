@@ -362,6 +362,36 @@ body {
 /* override these rules; the look is shared across every dashboard.   */
 /* ------------------------------------------------------------------ */
 
+/* Collapsible <details> wrapper around the config grid. Closed by
+   default; the summary mimics .alea-section-rule with a caret marker. */
+.alea-config-section {
+  margin: 0;
+}
+
+.alea-config-summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.alea-config-summary::-webkit-details-marker {
+  display: none;
+}
+
+.alea-config-summary > h2::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.95em;
+  margin-right: 4px;
+  color: var(--alea-gold);
+  font-size: 0.78em;
+  vertical-align: 0.08em;
+}
+
+.alea-config-section[open] > .alea-config-summary > h2::before {
+  content: "▾";
+}
+
 .alea-config-grid {
   display: flex;
   flex-direction: column;
@@ -418,20 +448,9 @@ body {
   overflow-wrap: anywhere;
 }
 
-.alea-config-sub {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--alea-text-subtle);
-  text-align: right;
-}
-
 @media (max-width: 720px) {
   .alea-config-label {
     flex: 0 0 160px;
-  }
-
-  .alea-config-sub {
-    display: none;
   }
 }
 
