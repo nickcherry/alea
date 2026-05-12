@@ -26,25 +26,23 @@
   var periodTabs = document.querySelectorAll(".committee-period-tab");
   var regimeTabs = document.querySelectorAll(".committee-regime-tab");
 
-  // Firings raster heatmap constants + DOM hooks. Declared up front so
-  // the initial render() below has them in scope (var hoisting would
-  // otherwise leave them undefined).
-  var DAY_MS = 86400000;
-  var ROW_HEIGHT = 18;
-  var ROW_GAP = 2;
-  var CELL_MIN_ALPHA = 0.16;
-  var COLOR_UP = { r: 70, g: 195, b: 123 };
-  var COLOR_DOWN = { r: 216, g: 90, b: 79 };
-  var COLOR_SPLIT = { r: 215, g: 170, b: 69 };
-  var BG_ROW_EVEN = "rgba(215, 170, 69, 0.03)";
-  var BG_ROW_ODD = "rgba(215, 170, 69, 0.06)";
+  // Firings clustering chart constants + DOM hooks. Declared up front
+  // so the initial render() below has them in scope (var hoisting
+  // would otherwise leave them undefined).
+  var WEEK_MS = 7 * 86400000;
+  var CHART_HEIGHT = 220;
+  var CHART_PAD_TOP = 12;
+  var CHART_PAD_BOTTOM = 8;
+  var COLOR_UP = "#46c37b";
+  var COLOR_DOWN = "#d85a4f";
+  var COLOR_AXIS = "rgba(215, 170, 69, 0.35)";
+  var COLOR_AXIS_TEXT = "#b8aa8a";
 
   var canvas = document.getElementById("committee-firings-canvas");
-  var labelsEl = document.getElementById("committee-firings-labels");
   var axisEl = document.getElementById("committee-firings-axis");
   var emptyEl = document.getElementById("committee-firings-empty");
   var firingsTooltip = document.getElementById("committee-firings-tooltip");
-  var hoverState = { cells: null, totalDays: 0, firstMs: 0 };
+  var hoverState = { bars: null, cssWidth: 0, cssHeight: 0 };
 
   if (canvas) {
     canvas.addEventListener("mousemove", onCanvasMove);
@@ -187,15 +185,10 @@
   // ---------------------------------------------------------------
 
   function renderFiringsChart() {
-    if (!canvas || !labelsEl || !axisEl) return;
-    var visibleSeries = firings
-      .filter(function (s) {
-        return s.period === currentPeriod && s.marketRegime === currentRegime;
-      })
-      .slice()
-      .sort(function (a, b) {
-        return a.rank - b.rank;
-      });
+    if (!canvas || !axisEl) return;
+    var visibleSeries = firings.filter(function (s) {
+      return s.period === currentPeriod && s.marketRegime === currentRegime;
+    });
 
     var hasData =
       visibleSeries.length > 0 &&
@@ -206,44 +199,71 @@
 
     if (emptyEl) emptyEl.hidden = hasData;
     if (!hasData) {
-      labelsEl.innerHTML = "";
       axisEl.innerHTML = "";
       var ctx0 = canvas.getContext("2d");
       if (ctx0) ctx0.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
-    var firstMs =
-      Math.floor(firingsRange.firstMs / DAY_MS) * DAY_MS;
-    var lastMs = Math.floor(firingsRange.lastMs / DAY_MS) * DAY_MS;
-    var totalDays = Math.max(1, Math.round((lastMs - firstMs) / DAY_MS) + 1);
+    // Aggregate across selected candidates per weekly bucket. For each
+    // (filter, bucket) we classify the filter's vote as up-dominant,
+    // down-dominant, or balanced; the bar at that bucket then counts
+    // distinct filters per class. Bar above 0 = filters that voted up,
+    // below 0 = filters that voted down. Symmetric bars = disagreement,
+    // one-sided bars = consensus.
+    var firstBucket =
+      Math.floor(firingsRange.firstMs / WEEK_MS) * WEEK_MS;
+    var lastBucket = Math.floor(firingsRange.lastMs / WEEK_MS) * WEEK_MS;
+    var nBuckets = Math.round((lastBucket - firstBucket) / WEEK_MS) + 1;
 
-    labelsEl.innerHTML = visibleSeries
-      .map(function (s, idx) {
-        var isLast = idx === visibleSeries.length - 1;
-        var style =
-          "height: " +
-          ROW_HEIGHT +
-          "px;" +
-          (isLast ? "" : "margin-bottom: " + ROW_GAP + "px;");
-        return (
-          '<div class="committee-firings-label" style="' +
-          style +
-          '"><span class="rank">#' +
-          Number(s.rank).toLocaleString() +
-          "</span>" +
-          escapeHtml(s.filterId) +
-          "</div>"
-        );
-      })
-      .join("");
+    // bars[i] = { up: { count, votes }, down: { count, votes },
+    //             upFilters: [...], downFilters: [...] }
+    var bars = new Array(nBuckets);
+    for (var b = 0; b < nBuckets; b++) {
+      bars[b] = {
+        up: 0,
+        down: 0,
+        upFilters: [],
+        downFilters: [],
+        upVotes: 0,
+        downVotes: 0,
+      };
+    }
+    for (var i = 0; i < visibleSeries.length; i++) {
+      var s = visibleSeries[i];
+      var bucketsArr = s.buckets || [];
+      for (var j = 0; j < bucketsArr.length; j++) {
+        var bk = bucketsArr[j];
+        var idx = Math.round((bk.t - firstBucket) / WEEK_MS);
+        if (idx < 0 || idx >= nBuckets) continue;
+        var bar = bars[idx];
+        var u = bk.u || 0;
+        var d = bk.d || 0;
+        bar.upVotes += u;
+        bar.downVotes += d;
+        if (u > d) {
+          bar.up += 1;
+          bar.upFilters.push({ id: s.filterId, rank: s.rank, u: u, d: d });
+        } else if (d > u) {
+          bar.down += 1;
+          bar.downFilters.push({ id: s.filterId, rank: s.rank, u: u, d: d });
+        }
+        // Ties (u === d) don't contribute to either side — rare and
+        // ambiguous; we just drop them rather than picking a side.
+      }
+    }
+
+    var maxStack = 1;
+    for (var k = 0; k < bars.length; k++) {
+      if (bars[k].up > maxStack) maxStack = bars[k].up;
+      if (bars[k].down > maxStack) maxStack = bars[k].down;
+    }
 
     var dpr = window.devicePixelRatio || 1;
     var wrap = canvas.parentNode;
     var rect = wrap.getBoundingClientRect();
     var cssWidth = Math.max(200, Math.floor(rect.width));
-    var cssHeight = visibleSeries.length * (ROW_HEIGHT + ROW_GAP) - ROW_GAP;
-    if (cssHeight < ROW_HEIGHT) cssHeight = ROW_HEIGHT;
+    var cssHeight = CHART_HEIGHT;
     canvas.style.width = cssWidth + "px";
     canvas.style.height = cssHeight + "px";
     canvas.width = Math.floor(cssWidth * dpr);
@@ -254,98 +274,57 @@
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, cssWidth, cssHeight);
 
-    // Precompute per-row cells + the max count across the visible grid
-    // (used to normalize cell opacity).
-    var rowsToDraw = [];
-    var maxCount = 1;
-    for (var i = 0; i < visibleSeries.length; i++) {
-      var series = visibleSeries[i];
-      var buckets = series.buckets || [];
-      var cells = [];
-      for (var j = 0; j < buckets.length; j++) {
-        var bk = buckets[j];
-        var total = (bk.u || 0) + (bk.d || 0);
-        if (total === 0) continue;
-        if (total > maxCount) maxCount = total;
-        cells.push({
-          dayIdx: Math.round((bk.t - firstMs) / DAY_MS),
-          u: bk.u || 0,
-          d: bk.d || 0,
-          t: bk.t,
-        });
+    var midY = (cssHeight - CHART_PAD_BOTTOM + CHART_PAD_TOP) / 2;
+    var half = midY - CHART_PAD_TOP;
+    var pxPerBucket = cssWidth / nBuckets;
+    var barPxWidth = Math.max(1, pxPerBucket - 0.5);
+
+    // Zero baseline.
+    ctx.fillStyle = COLOR_AXIS;
+    ctx.fillRect(0, midY, cssWidth, 1);
+
+    for (var bi = 0; bi < bars.length; bi++) {
+      var info = bars[bi];
+      var x = bi * pxPerBucket;
+      if (info.up > 0) {
+        var hUp = (info.up / maxStack) * half;
+        ctx.fillStyle = COLOR_UP;
+        ctx.fillRect(x, midY - hUp, barPxWidth, hUp);
       }
-      rowsToDraw.push({ series: series, cells: cells });
-    }
-
-    var pxPerDay = cssWidth / totalDays;
-    // Each cell paints at least one CSS pixel wide.
-    var cellPxWidth = Math.max(1, pxPerDay);
-
-    for (var r = 0; r < rowsToDraw.length; r++) {
-      var yTop = r * (ROW_HEIGHT + ROW_GAP);
-      ctx.fillStyle = r % 2 === 0 ? BG_ROW_EVEN : BG_ROW_ODD;
-      ctx.fillRect(0, yTop, cssWidth, ROW_HEIGHT);
-      var rowCells = rowsToDraw[r].cells;
-      for (var c = 0; c < rowCells.length; c++) {
-        var cell = rowCells[c];
-        var x = cell.dayIdx * pxPerDay;
-        var color = cellColor(cell, maxCount);
-        ctx.fillStyle = color;
-        ctx.fillRect(x, yTop, cellPxWidth, ROW_HEIGHT);
+      if (info.down > 0) {
+        var hDown = (info.down / maxStack) * half;
+        ctx.fillStyle = COLOR_DOWN;
+        ctx.fillRect(x, midY + 1, barPxWidth, hDown);
       }
     }
 
-    axisEl.innerHTML = renderAxisTicks(firstMs, lastMs);
+    // Y-axis ticks: 0, max/2, max on both sides.
+    ctx.fillStyle = COLOR_AXIS_TEXT;
+    ctx.font = "11px Inter, ui-sans-serif, system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "right";
+    ctx.fillText(String(maxStack), cssWidth - 2, midY - half + 6);
+    ctx.fillText(String(maxStack), cssWidth - 2, midY + half - 6);
+    ctx.fillText("0", cssWidth - 2, midY);
 
-    hoverState.cells = rowsToDraw;
-    hoverState.totalDays = totalDays;
-    hoverState.firstMs = firstMs;
+    axisEl.innerHTML = renderAxisTicks(firstBucket, lastBucket);
+
+    hoverState.bars = bars;
+    hoverState.firstBucket = firstBucket;
+    hoverState.pxPerBucket = pxPerBucket;
     hoverState.cssWidth = cssWidth;
     hoverState.cssHeight = cssHeight;
-  }
-
-  function cellColor(cell, maxCount) {
-    var total = cell.u + cell.d;
-    if (total === 0) return "rgba(0,0,0,0)";
-    // Net direction in [-1, 1]: +1 all up, -1 all down.
-    var net = (cell.u - cell.d) / total;
-    var blend;
-    if (net >= 0) {
-      // Blend split (gold) -> up (green) as net moves from 0 -> 1.
-      blend = mixColor(COLOR_SPLIT, COLOR_UP, net);
-    } else {
-      // Blend split (gold) -> down (red) as net moves 0 -> -1.
-      blend = mixColor(COLOR_SPLIT, COLOR_DOWN, -net);
-    }
-    // Log-scale the saturation: even single-fire days are visible, but
-    // dense days are visually distinct.
-    var t = Math.log(1 + total) / Math.log(1 + maxCount);
-    var alpha = CELL_MIN_ALPHA + (1 - CELL_MIN_ALPHA) * Math.min(1, t);
-    return "rgba(" + blend.r + "," + blend.g + "," + blend.b + "," + alpha.toFixed(3) + ")";
-  }
-
-  function mixColor(a, b, t) {
-    return {
-      r: Math.round(a.r + (b.r - a.r) * t),
-      g: Math.round(a.g + (b.g - a.g) * t),
-      b: Math.round(a.b + (b.b - a.b) * t),
-    };
+    hoverState.midY = midY;
+    hoverState.half = half;
+    hoverState.maxStack = maxStack;
   }
 
   function renderAxisTicks(firstMs, lastMs) {
-    // Pick ~6 evenly-spaced labels along the time axis.
     var labels = [];
     var firstYear = new Date(firstMs).getUTCFullYear();
     var lastYear = new Date(lastMs).getUTCFullYear();
-    if (lastYear - firstYear <= 4) {
-      // Year-quarter ticks across the range.
-      for (var y = firstYear; y <= lastYear; y++) {
-        labels.push({ ms: Date.UTC(y, 0, 1), label: String(y) });
-      }
-    } else {
-      for (var yr = firstYear; yr <= lastYear; yr += 1) {
-        labels.push({ ms: Date.UTC(yr, 0, 1), label: String(yr) });
-      }
+    for (var y = firstYear; y <= lastYear; y++) {
+      labels.push({ ms: Date.UTC(y, 0, 1), label: String(y) });
     }
     return labels
       .map(function (t) {
@@ -355,52 +334,66 @@
   }
 
   function onCanvasMove(ev) {
-    if (!hoverState.cells || !firingsTooltip) return;
+    if (!hoverState.bars || !firingsTooltip) return;
     var rect = canvas.getBoundingClientRect();
     var x = ev.clientX - rect.left;
     var y = ev.clientY - rect.top;
-    var rowIdx = Math.floor(y / (ROW_HEIGHT + ROW_GAP));
-    if (rowIdx < 0 || rowIdx >= hoverState.cells.length) {
+    var idx = Math.floor(x / hoverState.pxPerBucket);
+    if (idx < 0 || idx >= hoverState.bars.length) {
       firingsTooltip.classList.remove("visible");
       return;
     }
-    var pxPerDay = hoverState.cssWidth / hoverState.totalDays;
-    var dayIdx = Math.floor(x / pxPerDay);
-    var row = hoverState.cells[rowIdx];
-    var hit = null;
-    // O(cells) per row but each row only has the days with fires.
-    for (var i = 0; i < row.cells.length; i++) {
-      if (row.cells[i].dayIdx === dayIdx) {
-        hit = row.cells[i];
-        break;
-      }
-    }
-    if (hit === null) {
+    var info = hoverState.bars[idx];
+    if (info.up === 0 && info.down === 0) {
       firingsTooltip.classList.remove("visible");
       return;
     }
-    var when = new Date(hit.t).toISOString().slice(0, 10);
-    var total = hit.u + hit.d;
+    var weekStart = new Date(hoverState.firstBucket + idx * WEEK_MS);
+    var weekStr = weekStart.toISOString().slice(0, 10);
+    var upList = info.upFilters
+      .slice()
+      .sort(function (a, b) {
+        return a.rank - b.rank;
+      })
+      .map(function (f) {
+        return "#" + f.rank + " " + f.id;
+      })
+      .join(", ");
+    var downList = info.downFilters
+      .slice()
+      .sort(function (a, b) {
+        return a.rank - b.rank;
+      })
+      .map(function (f) {
+        return "#" + f.rank + " " + f.id;
+      })
+      .join(", ");
     firingsTooltip.innerHTML =
-      '<div class="alea-tooltip-head">' +
-      escapeHtml(row.series.filterId) +
-      " &middot; rank #" +
-      Number(row.series.rank).toLocaleString() +
+      '<div class="alea-tooltip-head">Week of ' +
+      escapeHtml(weekStr) +
       "</div>" +
-      '<div class="alea-tooltip-row"><span></span><span class="name">Day</span><span class="value">' +
-      escapeHtml(when) +
-      "</span></div>" +
       '<div class="alea-tooltip-row"><span></span><span class="name">Up</span><span class="value">' +
-      Number(hit.u).toLocaleString() +
-      "</span></div>" +
+      Number(info.up).toLocaleString() +
+      " filters &middot; " +
+      Number(info.upVotes).toLocaleString() +
+      " votes</span></div>" +
+      (upList === ""
+        ? ""
+        : '<div class="committee-firings-tooltip-list">' +
+          escapeHtml(upList) +
+          "</div>") +
       '<div class="alea-tooltip-row"><span></span><span class="name">Down</span><span class="value">' +
-      Number(hit.d).toLocaleString() +
-      "</span></div>" +
-      '<div class="alea-tooltip-row"><span></span><span class="name">Total</span><span class="value">' +
-      Number(total).toLocaleString() +
-      "</span></div>";
+      Number(info.down).toLocaleString() +
+      " filters &middot; " +
+      Number(info.downVotes).toLocaleString() +
+      " votes</span></div>" +
+      (downList === ""
+        ? ""
+        : '<div class="committee-firings-tooltip-list">' +
+          escapeHtml(downList) +
+          "</div>");
     var hostRect = canvas.parentNode.getBoundingClientRect();
-    var tipLeft = Math.min(hostRect.width - 220, Math.max(8, x + 12));
+    var tipLeft = Math.min(hostRect.width - 280, Math.max(8, x + 12));
     var tipTop = Math.max(8, y + 12);
     firingsTooltip.style.left = tipLeft + "px";
     firingsTooltip.style.top = tipTop + "px";

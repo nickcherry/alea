@@ -168,12 +168,12 @@ function buildFiringSeries({
       list = [];
       bucketsById.set(id, list);
     }
-    list.push({ t: r.day_ms, u: r.n_up, d: r.n_down });
-    if (firstMs === null || r.day_ms < firstMs) {
-      firstMs = r.day_ms;
+    list.push({ t: r.bucket_ms, u: r.n_up, d: r.n_down });
+    if (firstMs === null || r.bucket_ms < firstMs) {
+      firstMs = r.bucket_ms;
     }
-    if (lastMs === null || r.day_ms > lastMs) {
-      lastMs = r.day_ms;
+    if (lastMs === null || r.bucket_ms > lastMs) {
+      lastMs = r.bucket_ms;
     }
   }
 
