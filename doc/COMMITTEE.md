@@ -12,7 +12,7 @@ trading when it ships. There is no separate "live committee".
 ## Two phases
 
 **Selection** runs once, offline. The `committee:select` CLI scans
-regime-stratified backtest stats and writes the voter roster to a
+regime-stratified training stats and writes the voter roster to a
 DB table. Selection is **manual** — operator runs it after a fresh
 `backtest:run` or a `regimes:backfill`.
 
@@ -138,7 +138,7 @@ tag, the up/down/abstain tally, and the synthetic-open price. See
 
 Selection is **manual on purpose**. Re-running `committee:select`
 swaps the live voter roster — the dry-run loop won't pick up the
-change until it restarts. Sequence after a new backtest:
+change until it restarts. Sequence after refreshing training artifacts:
 
 ```sh
 bun alea backtest:run          # write filter_engagements

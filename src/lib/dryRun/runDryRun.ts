@@ -286,7 +286,7 @@ async function makePrediction({
   };
   const bars: readonly FilterBar[] = [...state.bars, synthBar];
   const marketRegime = classifyMarketRegime({ bars });
-  // Regime-scoped voter set: only candidates whose backtest record
+  // Regime-scoped voter set: only candidates whose training record
   // qualified for THIS regime get to vote on this bar. If the
   // classifier can't decide a regime (early-history, can't happen
   // post-hydration in practice) we abstain entirely — no decision,

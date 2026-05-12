@@ -31,7 +31,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `regimes:*`
   `regimes:backfill` — classifies every bar in `candles` into a market regime and writes the tags to `bar_regimes`. See [REGIMES.md](./REGIMES.md).
 - `committee:*`
-  `committee:select` — picks the top-N candidates per `(market_regime, period)` from regime-stratified backtest stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
+  `committee:select` — picks the top-N candidates per `(market_regime, period)` from regime-stratified training stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
 - `dry:*`
   `dry:run` — long-running process that streams live Pyth ticks, classifies the current regime, runs the rostered committee at every 5m boundary, and persists decisions to `dry_run_decisions`. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`

@@ -111,7 +111,7 @@ config perform when the market was in _that_ state".
 
 The same join feeds `committee:select` (see
 [COMMITTEE.md](./COMMITTEE.md)), which uses regime-stratified
-backtest stats to choose which candidates can vote in which regime.
+training stats to choose which candidates can vote in which regime.
 
 ## Quarter buckets
 

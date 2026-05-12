@@ -12,6 +12,13 @@ or 15m candle close green or red?) paired with Polymarket maker
 orders at ~50¢. Zero fees, ~1:1 risk-reward, so the win rate IS the
 edge.
 
+## Terminology
+
+Use **training artifacts** or the concrete table names for persisted
+research outputs. `backtest:run` is the CLI that generates them, but
+`filter_runs` rows and `filter_engagements` rows are not "backtest
+rows" in operator notes, status checks, or docs.
+
 ## How the pieces fit
 
 1. **Filters** are tiny deterministic predictors that emit
@@ -23,10 +30,10 @@ edge.
    [BACKTEST.md](./doc/BACKTEST.md).
 3. **Market regimes** classify every historical bar into one of
    `{low_vol, high_vol} × {trending, ranging}`. The classifier and
-   the `bar_regimes` table let us stratify backtest stats by
+   the `bar_regimes` table let us stratify training stats by
    regime. See [REGIMES.md](./doc/REGIMES.md).
 4. **Trading committee** picks the top-N candidates per regime
-   using regime-stratified backtest stats, persisting the voter
+   using regime-stratified training stats, persisting the voter
    roster to `committee_selections`. At decision time only the
    roster for the current regime gets to vote. See
    [COMMITTEE.md](./doc/COMMITTEE.md).

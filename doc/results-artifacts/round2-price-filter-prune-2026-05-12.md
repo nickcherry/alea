@@ -37,7 +37,7 @@ Validation:
 
 - Active registry after edits: 47 filters / 249 candidates.
 - Removed derived rows for the retired filters under `pyth-open-close-min-abs-move-pct-v1:0.02`: 600 `filter_runs` rows and 9,334,738 `filter_engagements` rows.
-- Post-backtest active DB rows: 2,490 `filter_runs` rows = 249 candidates x 2 periods x 5 assets.
+- Post-run active training rows: 2,490 `filter_runs` rows = 249 candidates x 2 periods x 5 assets.
 - Deployed exploration dashboard: 498 rows / 47 filters / 0 retired-filter rows.
 - Deployed committee dashboard: 80 rows / 19 filters.
 

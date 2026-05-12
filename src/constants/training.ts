@@ -6,7 +6,7 @@
 export const TRAINING_OUTCOME_MIN_ABS_MOVE_PCT = 0.02;
 
 /**
- * Persisted on derived backtest rows so old labels are not reused after
+ * Persisted on derived training rows so old labels are not reused after
  * changing the training outcome rule. Bump the version if the logic
  * changes without changing the numeric threshold.
  */

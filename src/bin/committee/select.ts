@@ -10,7 +10,7 @@ import pc from "picocolors";
 /**
  * Rebuilds the regime-scoped voter roster in `committee_selections`.
  *
- * Reads the regime-stratified backtest stats from
+ * Reads the regime-stratified training stats from
  * `filter_engagements ⋈ bar_regimes`, applies the eligibility +
  * top-N rules in `lib/committee/selection/`, and writes the result
  * in one transaction. The dry-run loop (and live trading, when it
@@ -31,7 +31,7 @@ export const committeeSelectCommand = defineCommand({
   summary:
     "Pick the top-N candidates per market regime and write committee_selections",
   description:
-    "Scans regime-stratified backtest stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min engagements, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (market_regime, period), and rewrites committee_selections.",
+    "Scans regime-stratified training stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min engagements, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (market_regime, period), and rewrites committee_selections.",
   options: [],
   examples: ["bun alea committee:select"],
   output:

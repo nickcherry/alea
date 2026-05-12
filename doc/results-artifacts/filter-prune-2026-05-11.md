@@ -49,6 +49,6 @@ Dashboard and committee loaders now gate rows by the current active `(filter_id,
 ## Post-Prune Validation
 
 - Active registry after follow-up: 38 filters, 189 default candidates.
-- Active backtest cache after follow-up: 1,890 `filter_runs` rows, matching 189 candidates x 2 periods x 5 assets.
+- Active training cache after follow-up: 1,890 `filter_runs` rows, matching 189 candidates x 2 periods x 5 assets.
 - Deployed exploration payload after follow-up: 378 aggregate rows, 0 retired-filter rows.
 - Deployed committee payload after follow-up: 80 rows, 17 filters, 0 retired-filter rows.
