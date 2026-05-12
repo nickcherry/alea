@@ -4,6 +4,7 @@ import { resolve as resolvePath } from "node:path";
 import { env } from "@alea/constants/env";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
+import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { loadTradeCommitteePayload } from "@alea/lib/committee/dashboard/loadTradeCommitteePayload";
 import { writeTradeCommitteeArtifacts } from "@alea/lib/committee/dashboard/writeTradeCommitteeArtifacts";
 import { runWranglerDeploy } from "@alea/lib/dashboards/runWranglerDeploy";
@@ -72,8 +73,33 @@ export const dashboardsBuildCommand = defineCommand({
           "After the build, push tmp/web/ to the alea Cloudflare Worker via Wrangler.",
         ),
     }),
+    defineValueOption({
+      key: "only",
+      long: "--only",
+      valueName: "LIST",
+      schema: z
+        .string()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? null
+            : new Set(
+                value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter((s) => s.length > 0),
+              ),
+        )
+        .describe(
+          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, exploration, committee, dryrun, proxy.",
+        ),
+    }),
   ],
-  examples: ["bun alea dashboards:build", "bun alea dashboards:build --deploy"],
+  examples: [
+    "bun alea dashboards:build",
+    "bun alea dashboards:build --deploy",
+    "bun alea dashboards:build --only committee --deploy",
+  ],
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
@@ -88,17 +114,33 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
 
-    await buildTradingDashboard({ io });
-    io.writeStdout("\n");
-    await buildPricePathsDashboard({ io });
-    io.writeStdout("\n");
-    await buildExplorationDashboard({ io });
-    io.writeStdout("\n");
-    await buildTradeCommitteeDashboard({ io });
-    io.writeStdout("\n");
-    await buildDryRunDashboard({ io });
-    io.writeStdout("\n");
-    await buildProxyAccuracyDashboard({ io });
+    const only = options.only;
+    const shouldBuild = (name: string): boolean =>
+      only === null ? true : only.has(name);
+
+    if (shouldBuild("trading")) {
+      await buildTradingDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("price-paths")) {
+      await buildPricePathsDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("exploration")) {
+      await buildExplorationDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("committee")) {
+      await buildTradeCommitteeDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("dryrun")) {
+      await buildDryRunDashboard({ io });
+      io.writeStdout("\n");
+    }
+    if (shouldBuild("proxy")) {
+      await buildProxyAccuracyDashboard({ io });
+    }
 
     if (options.deploy) {
       io.writeStdout(`\n${pc.bold("deploying")} ${pc.dim("to alea worker")}\n`);
