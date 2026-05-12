@@ -85,6 +85,32 @@ registerFilter({
     { fast: 8, slow: 21, signal: 5, zLength: 50, zThreshold: 2, turnBars: 1 },
     { fast: 5, slow: 13, signal: 5, zLength: 30, zThreshold: 2.5, turnBars: 1 },
     { fast: 16, slow: 34, signal: 9, zLength: 100, zThreshold: 2, turnBars: 2 },
+    { fast: 5, slow: 13, signal: 5, zLength: 50, zThreshold: 2.5, turnBars: 1 },
+    { fast: 8, slow: 21, signal: 5, zLength: 30, zThreshold: 2.5, turnBars: 1 },
+    {
+      fast: 8,
+      slow: 21,
+      signal: 5,
+      zLength: 100,
+      zThreshold: 2.5,
+      turnBars: 1,
+    },
+    {
+      fast: 12,
+      slow: 26,
+      signal: 9,
+      zLength: 50,
+      zThreshold: 2.5,
+      turnBars: 1,
+    },
+    {
+      fast: 12,
+      slow: 26,
+      signal: 9,
+      zLength: 75,
+      zThreshold: 2.25,
+      turnBars: 1,
+    },
   ],
 });
 

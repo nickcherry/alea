@@ -127,7 +127,10 @@ function buildFiringSeries({
   readonly firingRows: Awaited<ReturnType<typeof loadCommitteeFirings>>;
 }): {
   readonly firings: readonly TradeCommitteeFiringSeries[];
-  readonly firingsRangeMs: { readonly firstMs: number; readonly lastMs: number } | null;
+  readonly firingsRangeMs: {
+    readonly firstMs: number;
+    readonly lastMs: number;
+  } | null;
 } {
   const byId = new Map<string, TradeCommitteeFiringSeries>();
   for (const row of selectedRows) {
@@ -166,8 +169,12 @@ function buildFiringSeries({
       bucketsById.set(id, list);
     }
     list.push({ t: r.day_ms, u: r.n_up, d: r.n_down });
-    if (firstMs === null || r.day_ms < firstMs) firstMs = r.day_ms;
-    if (lastMs === null || r.day_ms > lastMs) lastMs = r.day_ms;
+    if (firstMs === null || r.day_ms < firstMs) {
+      firstMs = r.day_ms;
+    }
+    if (lastMs === null || r.day_ms > lastMs) {
+      lastMs = r.day_ms;
+    }
   }
 
   for (const [id, list] of bucketsById.entries()) {
