@@ -1,3 +1,4 @@
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 
 /**
@@ -67,6 +68,7 @@ export async function loadCommitteeRoster({
       "win_rate",
       "selected_at_ms",
     ])
+    .where("training_profile", "=", TRAINING_PROFILE_ID)
     .execute();
   const byBucket = new Map<string, CommitteeRosterMember[]>();
   let selectedAtMs: number | null = null;

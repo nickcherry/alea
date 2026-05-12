@@ -251,6 +251,19 @@ serves a single multi-page dashboard. Each page is still a standalone
 static HTML asset following the contract above; the worker just
 arranges them under one host and one shared top nav.
 
+The dashboard sequence is a research-to-production funnel, not a set
+of interchangeable reports:
+
+| Phase                 | Page               | Decision it supports                                                                                           |
+| --------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                 |
+| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                            |
+| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                   |
+| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                     |
+| Committee holdout     | Backtest           | Planned: replay committee predictions over the post-training holdout without Polymarket order-book simulation. |
+| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.             |
+| Production            | Live trading PnL   | Track realized results from actual order placement.                                                            |
+
 | Route           | Page               | Source                                                                                              |
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |

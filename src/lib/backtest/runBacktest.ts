@@ -1,4 +1,4 @@
-import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { runHash } from "@alea/lib/filters/hash";
 import { getFilter } from "@alea/lib/filters/registry";
@@ -73,11 +73,10 @@ const ENGAGEMENT_INSERT_CHUNK = 5000;
  * `bars.length - 1`.
  *
  * Caching: the row in `filter_runs` keyed by `runHash` is the
- * authoritative cache. If a row exists whose `range_last_ms` is
- * at least the latest bar's `openTimeMs`, the function returns
- * the cached stats unchanged. Otherwise it recomputes from
- * scratch and replaces both the aggregate row and the per-engagement
- * rows in `filter_engagements` atomically (per-run).
+ * authoritative cache only when its stored range exactly matches the
+ * requested bounded training window and its profile is active. Otherwise
+ * it recomputes from scratch and replaces both the aggregate row and the
+ * per-engagement rows in `filter_engagements` atomically (per-run).
  */
 export async function runBacktestForCandidate({
   db,
@@ -105,8 +104,8 @@ export async function runBacktestForCandidate({
     asset,
   });
 
-  // Cache check. `filter_runs` is the authority when it covers the
-  // requested range and was produced by the active training profile.
+  // Cache check. `filter_runs` is the authority when it exactly matches
+  // the requested range and was produced by the active training profile.
   // If either changes, the write path below atomically replaces the
   // aggregate row and its `filter_engagements`.
   const existing = await db
@@ -114,33 +113,30 @@ export async function runBacktestForCandidate({
     .selectAll()
     .where("run_hash", "=", rh)
     .executeTakeFirst();
-  if (existing !== undefined) {
-    const cachedLast = Number(existing.range_last_ms);
-    if (
-      cachedLast >= rangeLastMs &&
-      existing.training_profile === TRAINING_OUTCOME_PROFILE_ID
-    ) {
-      return {
-        runHash: rh,
-        candidateHash: candidate.candidateHash,
-        filterId: candidate.filterId,
-        version: candidate.version,
-        config: candidate.config,
-        configCanon: candidate.configCanon,
-        period,
-        asset,
-        rangeFirstMs: Number(existing.range_first_ms),
-        rangeLastMs: cachedLast,
-        stats: {
-          nBars: existing.n_bars,
-          nEngagementsUp: existing.n_engagements_up,
-          nWinsUp: existing.n_wins_up,
-          nEngagementsDown: existing.n_engagements_down,
-          nWinsDown: existing.n_wins_down,
-        },
-        fromCache: true,
-      };
-    }
+  if (
+    existing !== undefined &&
+    isUsableTrainingCache({ existing, rangeFirstMs, rangeLastMs })
+  ) {
+    return {
+      runHash: rh,
+      candidateHash: candidate.candidateHash,
+      filterId: candidate.filterId,
+      version: candidate.version,
+      config: candidate.config,
+      configCanon: candidate.configCanon,
+      period,
+      asset,
+      rangeFirstMs: Number(existing.range_first_ms),
+      rangeLastMs: Number(existing.range_last_ms),
+      stats: {
+        nBars: existing.n_bars,
+        nEngagementsUp: existing.n_engagements_up,
+        nWinsUp: existing.n_wins_up,
+        nEngagementsDown: existing.n_engagements_down,
+        nWinsDown: existing.n_wins_down,
+      },
+      fromCache: true,
+    };
   }
 
   // Compute fresh.
@@ -194,7 +190,7 @@ export async function runBacktestForCandidate({
         run_hash: rh,
         filter_id: candidate.filterId,
         filter_version: candidate.version,
-        training_profile: TRAINING_OUTCOME_PROFILE_ID,
+        training_profile: TRAINING_PROFILE_ID,
         config: candidate.config as never,
         config_canon: candidate.configCanon,
         period,
@@ -211,7 +207,7 @@ export async function runBacktestForCandidate({
       .onConflict((oc) =>
         oc.column("run_hash").doUpdateSet({
           config: candidate.config as never,
-          training_profile: TRAINING_OUTCOME_PROFILE_ID,
+          training_profile: TRAINING_PROFILE_ID,
           config_canon: candidate.configCanon,
           range_first_ms: rangeFirstMs,
           range_last_ms: rangeLastMs,
@@ -240,6 +236,30 @@ export async function runBacktestForCandidate({
     stats,
     fromCache: false,
   };
+}
+
+export type TrainingCacheRange = {
+  readonly range_first_ms: string | number | bigint;
+  readonly range_last_ms: string | number | bigint;
+  readonly training_profile: string;
+};
+
+export function isUsableTrainingCache({
+  existing,
+  rangeFirstMs,
+  rangeLastMs,
+  trainingProfileId = TRAINING_PROFILE_ID,
+}: {
+  readonly existing: TrainingCacheRange;
+  readonly rangeFirstMs: number;
+  readonly rangeLastMs: number;
+  readonly trainingProfileId?: string;
+}): boolean {
+  return (
+    Number(existing.range_first_ms) === rangeFirstMs &&
+    Number(existing.range_last_ms) === rangeLastMs &&
+    existing.training_profile === trainingProfileId
+  );
 }
 
 /**

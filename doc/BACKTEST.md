@@ -1,10 +1,15 @@
 # Backtest Framework
 
-The filter-committee backtest is the engine behind the
+The current `backtest:run` command is the engine behind the
 `/exploration/` dashboard. It evaluates every registered (filter,
 config) candidate at every supported (period, asset) combination
-against three years of pyth/spot candles, and persists both the
+inside the configured training window, and persists both the
 aggregate counts and every individual prediction to Postgres.
+
+This is filter training, despite the historical command name. The new
+committee-backtest paradigm is a separate holdout phase: replay the
+selected trade committee after the training window, without Polymarket
+order-book simulation, to calibrate voting policy before dry-run/live.
 
 Run it:
 
@@ -12,9 +17,27 @@ Run it:
 bun alea backtest:run
 ```
 
-Re-runs are cheap: rows in `filter_runs` whose `range_last_ms`
-already covers the available candles are skipped. Use `--filters
-filter_id1,filter_id2` or `--periods 5m`/`--assets btc,eth` to slice.
+Re-runs are cheap after the active profile is populated: rows in
+`filter_runs` whose stored range exactly matches the configured
+training window and active training profile are skipped. Use
+`--filters filter_id1,filter_id2` or `--periods 5m`/`--assets btc,eth`
+to slice.
+
+## Research windows
+
+Window settings live in
+[`src/constants/researchWindows.ts`](../src/constants/researchWindows.ts).
+Training starts at the earliest matching Pyth spot candle in the local
+DB and uses a half-open upper bound of
+`2026-04-01T00:00:00.000Z`, i.e. the inclusive end is
+`2026-03-31T23:59:59.999Z`. Committee backtests start immediately at
+`2026-04-01T00:00:00.000Z` and end at the start of the current UTC day
+so they cover complete candles through yesterday.
+
+`TRAINING_PROFILE_ID` combines the outcome-labeling rule with this
+research-window identity. Changing either the outcome threshold or the
+window invalidates old `filter_runs` and old committee rosters until
+`backtest:run` and `committee:select` are refreshed.
 
 ## What a "filter" is
 
@@ -95,8 +118,8 @@ The aggregate counts on `filter_runs` and the engagements on
 ("old aggregates + new engagements" or vice versa).
 
 Each `filter_runs` row also carries `training_profile`, so cached rows
-from older outcome-label rules are ignored until `backtest:run`
-recomputes them under the active profile.
+from older outcome-label rules or older research windows are ignored
+until `backtest:run` recomputes them under the active profile.
 
 ## Regime stratification
 

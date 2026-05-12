@@ -57,7 +57,8 @@ export interface MarketEventTable {
  * `filter_engagements` table.
  * The columns left here exist purely to support fast leaderboard
  * queries without scanning engagements. `training_profile` identifies
- * the outcome-labeling rule used to produce the derived row.
+ * the outcome-labeling rule and research window used to produce the
+ * derived row.
  */
 export interface FilterRunTable {
   readonly run_hash: string;
@@ -251,6 +252,7 @@ export interface PolymarketPriceSampleTable {
 }
 
 export interface CommitteeSelectionTable {
+  readonly training_profile: string;
   readonly market_regime: string;
   readonly period: string;
   readonly filter_id: string;

@@ -1,3 +1,4 @@
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { SelectedCandidate } from "@alea/lib/committee/selection/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 
@@ -28,6 +29,7 @@ export async function persistCommitteeSelections({
       .insertInto("committee_selections")
       .values(
         selections.map((s) => ({
+          training_profile: TRAINING_PROFILE_ID,
           market_regime: s.marketRegime,
           period: s.period,
           filter_id: s.filterId,

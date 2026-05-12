@@ -1,6 +1,11 @@
 import "@alea/lib/filters/all";
 
 import { assetValues } from "@alea/constants/assets";
+import {
+  TRAINING_WINDOW_END_EXCLUSIVE_MS,
+  TRAINING_WINDOW_END_INCLUSIVE_MS,
+  TRAINING_WINDOW_START_POLICY,
+} from "@alea/constants/researchWindows";
 import { runBacktestForCandidate } from "@alea/lib/backtest/runBacktest";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -19,9 +24,10 @@ const SUPPORTED_PERIODS: readonly CandleTimeframe[] = ["5m", "15m"];
 
 /**
  * Runs every registered filter at every default config across the
- * (period × asset) grid. Results land in the `filter_runs` Postgres
- * table; reruns skip whichever (candidate, period, asset) tuples
- * already have a row covering the requested candle range.
+ * (period × asset) grid inside the configured training window. Results
+ * land in the `filter_runs` Postgres table; reruns skip whichever
+ * (candidate, period, asset) tuples already have an exact active-profile
+ * row for that window.
  *
  * Side effects: reads `candles` (pyth/spot only — that's the
  * source we backfilled for the new framework), upserts into
@@ -31,7 +37,7 @@ export const backtestRunCommand = defineCommand({
   name: "backtest:run",
   summary: "Run every registered filter × default config × (period × asset)",
   description:
-    "Walks pyth/spot candles for each (filter, config, period, asset) combination produced by `filters/all` and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose `range_last_ms` already covers the available candles are skipped. Use `--force` to recompute even when a cached row exists.",
+    "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all` and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
   options: [
     defineValueOption({
       key: "periods",
@@ -101,6 +107,9 @@ export const backtestRunCommand = defineCommand({
 
     io.writeStdout(
       `${pc.bold("backtest:run")} ${pc.dim(`candidates=${selected.length}  periods=${options.periods.join(",")}  assets=${options.assets.join(",")}`)}\n\n`,
+    );
+    io.writeStdout(
+      `${pc.dim("training window:")} ${formatTrainingWindowForCli()}\n\n`,
     );
 
     const db = createDatabase();
@@ -172,6 +181,7 @@ async function loadBars({
     .where("product", "=", "spot")
     .where("asset", "=", asset)
     .where("timeframe", "=", period)
+    .where("timestamp", "<", new Date(TRAINING_WINDOW_END_EXCLUSIVE_MS))
     .orderBy("timestamp", "asc")
     .execute();
   return rows.map((r) => ({
@@ -185,4 +195,8 @@ async function loadBars({
     close: r.close,
     volume: r.volume,
   }));
+}
+
+function formatTrainingWindowForCli(): string {
+  return `${TRAINING_WINDOW_START_POLICY.replaceAll("_", " ")} -> ${new Date(TRAINING_WINDOW_END_INCLUSIVE_MS).toISOString()}`;
 }

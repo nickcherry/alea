@@ -1,4 +1,4 @@
-import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { activeCandidateRows } from "@alea/lib/filters/activeCandidates";
 import { sql } from "kysely";
@@ -58,7 +58,7 @@ export async function loadFilterPeerOverlaps({
         and ac.filter_version = fr.filter_version
         and ac.config_canon = fr.config_canon
       join filter_engagements fe on fe.run_hash = fr.run_hash
-      where fr.training_profile = ${TRAINING_OUTCOME_PROFILE_ID}
+      where fr.training_profile = ${TRAINING_PROFILE_ID}
     ),
     filter_totals as (
       select filter_id, period, count(*) as total

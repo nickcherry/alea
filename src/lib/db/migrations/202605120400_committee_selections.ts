@@ -17,6 +17,10 @@ import { type Kysely, sql } from "kysely";
  * was taken so an operator can tell how stale the live voter roster
  * is.
  *
+ * `training_profile` ties the roster back to the outcome-label rule
+ * and research window used to select it. Runtime loaders only accept
+ * rows for the active profile.
+ *
  * `period` is part of the key because a candidate can qualify for
  * 5m but not 15m (or vice versa); the dry-run loop is 5m today but
  * a 15m loop would pull its own roster from the same table.
@@ -24,6 +28,7 @@ import { type Kysely, sql } from "kysely";
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`
     create table if not exists committee_selections (
+      training_profile text not null,
       market_regime text not null,
       period text not null,
       filter_id text not null,

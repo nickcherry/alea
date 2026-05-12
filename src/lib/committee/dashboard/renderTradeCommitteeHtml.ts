@@ -95,14 +95,23 @@ export function renderTradeCommitteeHtml({
             title: "Training",
             items: [
               {
+                label: "Training Window",
+                value: `${formatTrainingStartPolicy({
+                  value: payload.selectionConfig.trainingWindowStartPolicy,
+                })} -> ${formatUtcDate({
+                  ms: payload.selectionConfig.trainingWindowEndInclusiveMs,
+                })}`,
+                sub: "UTC, end inclusive",
+              },
+              {
                 label: "Training Move Floor",
                 value: `${payload.selectionConfig.trainingOutcomeMinAbsMovePct.toLocaleString()}%`,
                 sub: "open-to-close absolute move",
               },
               {
                 label: "Training Profile",
-                value: payload.selectionConfig.trainingOutcomeProfileId,
-                sub: "",
+                value: payload.selectionConfig.trainingProfileId,
+                sub: "outcome rule + window identity",
               },
             ],
           })}
@@ -159,6 +168,21 @@ export function renderTradeCommitteeHtml({
 </html>`;
 }
 
+function formatTrainingStartPolicy({
+  value,
+}: {
+  readonly value: "earliest_available_candle";
+}): string {
+  switch (value) {
+    case "earliest_available_candle":
+      return "earliest candle";
+  }
+}
+
+function formatUtcDate({ ms }: { readonly ms: number }): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
 type ConfigItem = {
   readonly label: string;
   readonly value: string;
@@ -193,5 +217,3 @@ function renderConfigItem(item: ConfigItem): string {
       ${subHtml}
     </div>`;
 }
-
-

@@ -12,9 +12,8 @@ import { type Kysely, sql } from "kysely";
  *   used to compute the hash. Storing it lets us reconstruct what
  *   the hash represents without re-deriving from `config`.
  * - `range_first_ms` / `range_last_ms`: the candle range the row
- *   summarises. If the backtest CLI is asked for a window the row
- *   already covers (range_last_ms >= target), it skips; otherwise
- *   it recomputes.
+ *   summarises. If the backtest CLI is asked for the same active
+ *   profile and exact window, it skips; otherwise it recomputes.
  * - `n_engagements_*` / `n_wins_*`: aggregate stats. Win rate is
  *   computed in dashboards on the fly.
  *

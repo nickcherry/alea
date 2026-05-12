@@ -61,6 +61,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
   await sql`
     create table committee_selections (
+      training_profile text not null,
       market_regime text not null,
       period text not null,
       filter_id text not null,

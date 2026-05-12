@@ -1,6 +1,6 @@
 import "@alea/lib/filters/all";
 
-import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadFilterPeerOverlaps } from "@alea/lib/exploration/loadFilterPeerOverlaps";
 import { loadQuarterAggregates } from "@alea/lib/exploration/loadQuarterAggregates";
@@ -60,7 +60,7 @@ export async function loadExplorationPayload({
           "n_engagements_down",
           "n_wins_down",
         ])
-        .where("training_profile", "=", TRAINING_OUTCOME_PROFILE_ID)
+        .where("training_profile", "=", TRAINING_PROFILE_ID)
         .execute(),
       loadQuarterAggregates({ db }),
       loadFilterPeerOverlaps({ db }),

@@ -1,8 +1,13 @@
 import "@alea/lib/filters/all";
 
 import {
+  TRAINING_WINDOW_END_INCLUSIVE_MS,
+  TRAINING_WINDOW_START_POLICY,
+} from "@alea/constants/researchWindows";
+import {
   TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
   TRAINING_OUTCOME_PROFILE_ID,
+  TRAINING_PROFILE_ID,
 } from "@alea/constants/training";
 import {
   type TradeCommitteeCandidateRow,
@@ -50,6 +55,7 @@ export async function loadTradeCommitteePayload({
       "worst_quarter_wr",
       "selected_at_ms",
     ])
+    .where("training_profile", "=", TRAINING_PROFILE_ID)
     .execute();
 
   const rows: TradeCommitteeCandidateRow[] = [];
@@ -97,8 +103,11 @@ export async function loadTradeCommitteePayload({
     uniqueFilterCount: filterIds.size,
     selectionConfig: {
       ...rules,
+      trainingProfileId: TRAINING_PROFILE_ID,
       trainingOutcomeProfileId: TRAINING_OUTCOME_PROFILE_ID,
       trainingOutcomeMinAbsMovePct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+      trainingWindowStartPolicy: TRAINING_WINDOW_START_POLICY,
+      trainingWindowEndInclusiveMs: TRAINING_WINDOW_END_INCLUSIVE_MS,
       rankingMetric: "wilson_low_desc",
       tieBreak: "n_engagements_desc",
     },

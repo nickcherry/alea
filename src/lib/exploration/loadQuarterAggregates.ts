@@ -1,4 +1,4 @@
-import { TRAINING_OUTCOME_PROFILE_ID } from "@alea/constants/training";
+import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { sql } from "kysely";
 
@@ -36,7 +36,7 @@ export async function loadQuarterAggregates({
       coalesce(sum(fe.won), 0)::text as n_wins
     from filter_engagements fe
     join filter_runs fr on fr.run_hash = fe.run_hash
-    where fr.training_profile = ${TRAINING_OUTCOME_PROFILE_ID}
+    where fr.training_profile = ${TRAINING_PROFILE_ID}
     group by fe.run_hash, year, quarter
   `.execute(db);
 

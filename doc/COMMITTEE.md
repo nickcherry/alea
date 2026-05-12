@@ -12,9 +12,10 @@ trading when it ships. There is no separate "live committee".
 ## Two phases
 
 **Selection** runs once, offline. The `committee:select` CLI scans
-regime-stratified training stats and writes the voter roster to a
-DB table. Selection is **manual** — operator runs it after a fresh
-`backtest:run` or a `regimes:backfill`.
+regime-stratified training stats for the active training profile and
+writes the voter roster to a DB table tagged with that same profile.
+Selection is **manual** — operator runs it after a fresh `backtest:run`
+or a `regimes:backfill`.
 
 **Evaluation** runs every 5-minute boundary, inside the dry-run /
 live loop. Classify the bar's regime → look up the roster for
@@ -69,6 +70,7 @@ Schema in
 
 | Column                                        | Meaning                                                           |
 | --------------------------------------------- | ----------------------------------------------------------------- |
+| `training_profile`                            | Outcome-label + research-window identity used to select the row   |
 | `market_regime`                               | One of the four regime tags                                       |
 | `period`                                      | `5m` or `15m`                                                     |
 | `filter_id`, `filter_version`, `config_canon` | Candidate identity                                                |
@@ -81,6 +83,11 @@ Schema in
 Primary key: `(market_regime, period, filter_id, filter_version, config_canon)`.
 Replacing the whole table on every run is cheap (≤ 160 rows
 in practice).
+
+Dry-run/live loaders only read rows whose `training_profile` matches
+the active constant. When the training window or outcome-label rule
+changes, the old roster intentionally disappears until the operator
+rebuilds training artifacts and runs `committee:select`.
 
 ## Evaluation
 
@@ -165,6 +172,17 @@ modes is what happens with an actionable decision:
 
 The implication for testing: anything that's safe to validate
 against the dry-run loop will behave identically in live trading.
+
+## Committee backtest
+
+The planned committee-backtest phase sits between roster construction
+and dry-run. It should use the holdout window from
+[`src/constants/researchWindows.ts`](../src/constants/researchWindows.ts),
+replay the selected committee over historical Pyth candles, and score
+only directional prediction quality. It should not connect to
+Polymarket or simulate order-book fills; those questions belong to
+dry-run. The point is fast iteration on consensus, vote weighting, and
+position-sizing policy before testing live-like execution.
 
 ## Files
 

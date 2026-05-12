@@ -24,8 +24,11 @@ export type TradeCommitteeCandidateRow = {
 };
 
 export type TradeCommitteeSelectionConfig = CommitteeSelectionRules & {
+  readonly trainingProfileId: string;
   readonly trainingOutcomeProfileId: string;
   readonly trainingOutcomeMinAbsMovePct: number;
+  readonly trainingWindowStartPolicy: "earliest_available_candle";
+  readonly trainingWindowEndInclusiveMs: number;
   readonly rankingMetric: "wilson_low_desc";
   readonly tieBreak: "n_engagements_desc";
 };

@@ -19,6 +19,23 @@ research outputs. `backtest:run` is the CLI that generates them, but
 `filter_runs` rows and `filter_engagements` rows are not "backtest
 rows" in operator notes, status checks, or docs.
 
+## Research windows
+
+Configured research windows live in
+[`src/constants/researchWindows.ts`](./src/constants/researchWindows.ts).
+Training starts at the earliest matching Pyth spot candle available in
+the local DB and ends at the close of Q1 2026
+(`2026-03-31T23:59:59.999Z`). The committee backtest holdout starts
+immediately after that (`2026-04-01T00:00:00.000Z`) and runs through
+yesterday in UTC.
+
+The existing `backtest:run` command generates filter training artifacts
+for the training window. The newer committee-backtest concept is a
+separate holdout phase: replay the selected trade committee over the
+backtest window without Polymarket order-book simulation, so voting,
+consensus, weighting, and sizing logic can iterate quickly before
+dry-run or live trading.
+
 ## How the pieces fit
 
 1. **Filters** are tiny deterministic predictors that emit
@@ -50,6 +67,20 @@ rows" in operator notes, status checks, or docs.
    page surfaces the selected voter roster and selection gates; the
    dry-run page surfaces the live committee's hit rate. See
    [DASHBOARDS.md](./doc/DASHBOARDS.md).
+
+## Research lifecycle
+
+The dashboard sequence is the operating map:
+
+| Phase                 | Page            | Purpose                                                                                                                                  |
+| --------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy  | Check whether Pyth is reliable enough as the historical training proxy for Polymarket settlement.                                        |
+| Market microstructure | Price paths     | Learn how quickly Polymarket UP/DOWN prices move away from 50c, which informs realistic order timing assumptions.                        |
+| Candidate research    | Exploration     | Compare filter/config candidates on historical predictive behavior, prune weak families, and identify where to explore next.             |
+| Roster construction   | Trade committee | Inspect which candidates were selected per regime and whether the selection thresholds are calibrated.                                   |
+| Committee holdout     | Backtest        | Planned holdout replay over the post-training window; no Polymarket book data, just committee prediction quality and policy calibration. |
+| Live-like rehearsal   | Dry run         | Run the live decision path without real orders, including Polymarket market discovery, quote observation, and fill simulation.           |
+| Production            | Live trading    | Track realized performance from real capital and real order placement.                                                                   |
 
 ## Docs
 

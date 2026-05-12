@@ -98,13 +98,13 @@ At T-5s of each boundary, for each asset:
 Dry-run order configuration lives in
 [`src/constants/dryRun.ts`](../src/constants/dryRun.ts).
 
-| Constant                            | Default | Meaning                                                     |
-| ----------------------------------- | ------: | ----------------------------------------------------------- |
-| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`  |  3000ms | Wait after the target market opens before simulating entry  |
-| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`  |      3c | Only consider predicted-side prices within `50c ± window`   |
-| `DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`  |    0.5c | Limit-buy offset above the observed predicted-side price    |
-| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`    |  2000ms | Maximum book/BBO quote age at placement or fill evaluation  |
-| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`  | 30000ms | How early to pre-discover current and next Polymarket markets |
+| Constant                           | Default | Meaning                                                       |
+| ---------------------------------- | ------: | ------------------------------------------------------------- |
+| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS` |  3000ms | Wait after the target market opens before simulating entry    |
+| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS` |      3c | Only consider predicted-side prices within `50c ± window`     |
+| `DRY_RUN_ORDER_LIMIT_OFFSET_CENTS` |    0.5c | Limit-buy offset above the observed predicted-side price      |
+| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`   |  2000ms | Maximum book/BBO quote age at placement or fill evaluation    |
+| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS` | 30000ms | How early to pre-discover current and next Polymarket markets |
 
 The order price uses the predicted outcome token: UP decisions look
 at the UP token, DOWN decisions look at the DOWN token. For a DOWN
@@ -136,6 +136,9 @@ window before trying to stream or trade it.
 The committee is loaded once at startup and cached for the life of
 the process. If you re-run `committee:select` while a dry-run is
 live, the process won't pick up the new roster — restart it.
+The loader only accepts rows tagged with the active training profile,
+so changing the training window or outcome-label rule requires
+refreshing both training artifacts and `committee_selections`.
 
 ## Persistence: `dry_run_decisions`
 
@@ -144,26 +147,26 @@ Append-only. One row per non-abstain decision. Schema:
 and the `market_regime` column added by
 [`202605120200_dry_run_market_regime`](../src/lib/db/migrations/202605120200_dry_run_market_regime.ts).
 
-| Column            | Meaning                                                              |
-| ----------------- | -------------------------------------------------------------------- |
-| `id`              | bigserial PK                                                         |
-| `ts_ms`           | Open-time of the target bar (the bar being predicted)                |
-| `decided_at_ms`   | Wall-clock when the prediction was made                              |
-| `asset`, `period` | Self-explanatory                                                     |
-| `prediction`      | `'u'` or `'d'`                                                       |
-| `synth_open`      | Pyth price snapshotted at T-5s — used as the bar's synthetic open    |
-| `regime_votes`    | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
-| `actual_close`    | Filled in once the target bar settles                                |
-| `won`             | 0/1, null until scored                                               |
-| `market_regime`   | Classifier's read at decision time                                   |
-| `order_status`    | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason    |
-| `order_placed_at_ms` | Simulated order-placement wall-clock                              |
-| `order_observed_price` | Predicted-side token price read at simulated placement          |
-| `order_limit_price` | Simulated limit-buy price                                          |
-| `order_confidence` | Average effective winning-voter confidence used for the EV gate     |
-| `order_filled_at_ms` | When the simulated order first became fillable                    |
-| `order_fill_price` | Simulated fill price                                                |
-| `order_expires_at_ms` | Target market close; placed orders still unfilled here expire    |
+| Column                 | Meaning                                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| `id`                   | bigserial PK                                                         |
+| `ts_ms`                | Open-time of the target bar (the bar being predicted)                |
+| `decided_at_ms`        | Wall-clock when the prediction was made                              |
+| `asset`, `period`      | Self-explanatory                                                     |
+| `prediction`           | `'u'` or `'d'`                                                       |
+| `synth_open`           | Pyth price snapshotted at T-5s — used as the bar's synthetic open    |
+| `regime_votes`         | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
+| `actual_close`         | Filled in once the target bar settles                                |
+| `won`                  | 0/1, null until scored                                               |
+| `market_regime`        | Classifier's read at decision time                                   |
+| `order_status`         | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason   |
+| `order_placed_at_ms`   | Simulated order-placement wall-clock                                 |
+| `order_observed_price` | Predicted-side token price read at simulated placement               |
+| `order_limit_price`    | Simulated limit-buy price                                            |
+| `order_confidence`     | Average effective winning-voter confidence used for the EV gate      |
+| `order_filled_at_ms`   | When the simulated order first became fillable                       |
+| `order_fill_price`     | Simulated fill price                                                 |
+| `order_expires_at_ms`  | Target market close; placed orders still unfilled here expire        |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when

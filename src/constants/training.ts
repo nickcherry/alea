@@ -1,3 +1,5 @@
+import { RESEARCH_WINDOW_PROFILE_ID } from "@alea/constants/researchWindows";
+
 /**
  * Minimum absolute open-to-close move, in percent, required before a
  * Pyth candle becomes a training outcome. Example: 0.01 means
@@ -11,3 +13,10 @@ export const TRAINING_OUTCOME_MIN_ABS_MOVE_PCT = 0.02;
  * changes without changing the numeric threshold.
  */
 export const TRAINING_OUTCOME_PROFILE_ID = `pyth-open-close-min-abs-move-pct-v1:${TRAINING_OUTCOME_MIN_ABS_MOVE_PCT}`;
+
+/**
+ * Persisted on derived training artifacts and committee selections. It
+ * combines the outcome-labeling rule with the research window identity so
+ * old all-DB rows cannot be reused after the training/backtest split moves.
+ */
+export const TRAINING_PROFILE_ID = `${TRAINING_OUTCOME_PROFILE_ID}|${RESEARCH_WINDOW_PROFILE_ID}`;

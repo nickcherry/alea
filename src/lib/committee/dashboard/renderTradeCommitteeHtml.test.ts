@@ -33,6 +33,8 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).toContain("Aggregate WR Floor");
     expect(html).toContain("Wilson low desc");
     expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.02");
+    expect(html).toContain("earliest candle -&gt; 2026-03-31");
+    expect(html).toContain("train-earliest-through-2026-q1");
   });
 });
 
@@ -48,8 +50,12 @@ function payloadFixture(): TradeCommitteePayload {
       minWorstQuarterWinRate: 0.5,
       worstQuarterMinEngagements: 10,
       topN: 10,
+      trainingProfileId:
+        "pyth-open-close-min-abs-move-pct-v1:0.02|train-earliest-through-2026-q1__backtest-2026-q2-through-yesterday-v1",
       trainingOutcomeProfileId: "pyth-open-close-min-abs-move-pct-v1:0.02",
       trainingOutcomeMinAbsMovePct: 0.02,
+      trainingWindowStartPolicy: "earliest_available_candle",
+      trainingWindowEndInclusiveMs: Date.parse("2026-03-31T23:59:59.999Z"),
       rankingMetric: "wilson_low_desc",
       tieBreak: "n_engagements_desc",
     },
