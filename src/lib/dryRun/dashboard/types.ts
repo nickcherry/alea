@@ -42,6 +42,8 @@ export type DryRunDecisionConfig = {
   readonly orderPlacementDelayMs: number;
   readonly orderPriceWindowCents: number;
   readonly orderLimitOffsetCents: number;
+  readonly orderMaxQuoteAgeMs: number;
+  readonly marketDiscoveryLeadMs: number;
 };
 
 export type DryRunDashboardAssetRow = {

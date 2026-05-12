@@ -66,12 +66,18 @@ The canonical URL set lives in
   parsed depth levels as well as top-of-book so taker dry-run and live paths
   can walk the chosen ask book before entry. The legacy maker simulator also
   uses the bid levels to estimate queue ahead.
+- `marketDiscoveryCache` centralizes current/next-window Gamma slug discovery
+  and deduplicates concurrent lookups. Dry-run uses it now; live trading should
+  share it so order placement has already resolved condition/token ids before
+  the target window opens.
 - The public market WebSocket subscription sends
   `{ type: "market", assets_ids: [...tokenIds], custom_feature_enabled: true }`.
-  Dry trading consumes `book`/`best_bid_ask` for market state,
-  `last_trade_price` for queue-aware fill simulation, `tick_size_change` as
-  operator-visible venue metadata, and `market_resolved` for official-first
-  dry settlement. REST resolution remains the fallback if the websocket event
+  Dry-run consumes `book`/`best_bid_ask` for executable quote state and treats
+  `last_trade_price` as non-fill evidence; a simulated limit buy fills only
+  when the fresh predicted-side ask is at or below the configured limit.
+  `tick_size_change` remains operator-visible venue metadata, and
+  `market_resolved` is the official-first settlement event for paths that need
+  venue resolution. REST resolution remains the fallback if the websocket event
   is missed.
 - Current live order placement is FAK taker BUY. The adapter caps the order at
   the just-in-time book walk's worst consumed ask, rejects expected fills below

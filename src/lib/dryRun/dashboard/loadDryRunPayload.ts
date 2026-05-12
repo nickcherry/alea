@@ -1,7 +1,9 @@
 import "@alea/lib/filters/all";
 
 import {
+  DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
   DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
+  DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
 } from "@alea/constants/dryRun";
@@ -173,6 +175,8 @@ export async function loadDryRunPayload({
       orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
       orderPriceWindowCents: DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
       orderLimitOffsetCents: DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
+      orderMaxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
+      marketDiscoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
     },
     byPeriod,
     recent,

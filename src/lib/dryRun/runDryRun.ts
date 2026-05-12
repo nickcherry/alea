@@ -1,5 +1,6 @@
 import "@alea/lib/filters/all";
 
+import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
 import {
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_LEAD_TIME_MS,
@@ -29,6 +30,7 @@ import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
+import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -159,8 +161,10 @@ export async function runDryRun({
   for (const asset of assets) {
     pendingByAsset.set(asset, new Map());
   }
+  const marketDiscovery = createPolymarketMarketDiscoveryCache();
   const orderSimulator = createDryRunOrderSimulator({
     db,
+    marketDiscovery,
     log: (event) => log(event),
   });
 
@@ -227,6 +231,12 @@ export async function runDryRun({
     while (running) {
       try {
         const now = Date.now();
+        marketDiscovery.warm({
+          assets,
+          timeframes: [TRADE_DECISION_PERIOD],
+          nowMs: now,
+          discoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
+        });
         await orderSimulator.tick({ nowMs: now });
         const nextBoundary = Math.ceil(now / FIVE_MIN_MS) * FIVE_MIN_MS;
         const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;

@@ -14,6 +14,12 @@ export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
 /** Limit-buy offset above the observed predicted-side token price, in cents. */
 export const DRY_RUN_ORDER_LIMIT_OFFSET_CENTS = 0.5;
 
+/** Maximum age for book/BBO quotes used at simulated placement/fill time. */
+export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = 2 * 1000;
+
+/** How early the runner should discover target Polymarket markets. */
+export const DRY_RUN_MARKET_DISCOVERY_LEAD_MS = 30 * 1000;
+
 /** Same as `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`, expressed as a 0..1 token price. */
 export const DRY_RUN_ORDER_PRICE_WINDOW =
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS / 100;

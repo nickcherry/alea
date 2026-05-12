@@ -41,14 +41,17 @@ For each of the 5 supported assets (`btc`, `eth`, `sol`, `xrp`,
    decision; otherwise skip.
 4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 3s`
    after the target Polymarket market opens, read the live UP/DOWN
-   market data for the predicted side. If the observed predicted-side
-   price is within the configured 50c window, and the average
+   book/BBO market data for the predicted side. The runner
+   pre-discovers current and next markets before entry so the market
+   subscription is already available when the simulated placement time
+   arrives. If the observed predicted-side price is within the
+   configured 50c window, and the average
    selected-regime win rate of the effective winning voters is at
    least the simulated limit price, place a pretend limit buy at
    `observed price + DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`. The runner
-   then watches the book/trade stream until the target market closes.
-   If the simulated limit never trades through, the row is marked
-   `unfilled`.
+   then watches fresh predicted-side ask quotes until the target
+   market closes. If the simulated limit never becomes executable, the
+   row is marked `unfilled`.
 5. **Score** — when a closed bar's actual close arrives (via the
    normal tick-driven finalize on the next bar's first tick),
    compare to the prediction. Update the pending row's
@@ -100,6 +103,8 @@ Dry-run order configuration lives in
 | `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`  |  3000ms | Wait after the target market opens before simulating entry  |
 | `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`  |      3c | Only consider predicted-side prices within `50c ± window`   |
 | `DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`  |    0.5c | Limit-buy offset above the observed predicted-side price    |
+| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`    |  2000ms | Maximum book/BBO quote age at placement or fill evaluation  |
+| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`  | 30000ms | How early to pre-discover current and next Polymarket markets |
 
 The order price uses the predicted outcome token: UP decisions look
 at the UP token, DOWN decisions look at the DOWN token. For a DOWN
@@ -107,11 +112,26 @@ decision that is equivalent to moving lower in normalized UP-price
 space, but the persisted order fields are always in predicted-side
 token price terms.
 
+Observed placement price comes from the midpoint of a fresh
+predicted-side book/BBO quote. If that side is unavailable, the
+runner can infer the predicted-side midpoint from a fresh opposite
+token midpoint. Fill simulation is stricter: a pretend limit buy only
+fills when the predicted-side ask itself is fresh and less than or
+equal to the simulated limit price. Trade prints are intentionally not
+fill evidence, because seeing a trade does not prove our resting order
+would have been next in queue.
+
 The confidence gate uses the average selected-regime win rate across
 the effective winning voters after the same one-vote-per-filter
 collapse used by the committee decision. A simulated order is skipped
 when `avg_confidence < limit_price`; in a zero-fee binary market this
 is the direct expected-value check.
+
+Market discovery is centralized in
+[`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts).
+Dry-run uses it now; live trading should use the same cache when
+order placement comes back so both paths pre-discover the exact market
+window before trying to stream or trade it.
 
 The committee is loaded once at startup and cached for the life of
 the process. If you re-run `committee:select` while a dry-run is
@@ -203,6 +223,8 @@ loader + renderer.
   the main loop.
 - [`src/lib/dryRun/orderSimulation.ts`](../src/lib/dryRun/orderSimulation.ts) —
   post-open dry-run order placement + fill simulation.
+- [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts) —
+  shared current/next-window market discovery cache.
 - [`src/lib/dryRun/loadRecentBars.ts`](../src/lib/dryRun/loadRecentBars.ts) —
   hydration query.
 - [`src/lib/dryRun/types.ts`](../src/lib/dryRun/types.ts) — internal

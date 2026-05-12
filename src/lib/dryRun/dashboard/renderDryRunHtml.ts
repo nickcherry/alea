@@ -143,6 +143,16 @@ export function renderDryRunHtml({
                 value: `+${payload.decisionConfig.orderLimitOffsetCents.toLocaleString()}c`,
                 sub: "above observed predicted-side price",
               },
+              {
+                label: "Quote Max Age",
+                value: `${(payload.decisionConfig.orderMaxQuoteAgeMs / 1000).toLocaleString()}s`,
+                sub: "book/BBO freshness required",
+              },
+              {
+                label: "Discovery Lead",
+                value: `${(payload.decisionConfig.marketDiscoveryLeadMs / 1000).toLocaleString()}s`,
+                sub: "pre-discover current/next markets",
+              },
             ],
           })}
         </div>
