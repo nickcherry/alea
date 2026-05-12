@@ -1,7 +1,7 @@
 # Dry Run
 
-The dry-run loop is the bridge between offline backtests and real
-trading: a long-running process that streams live Pyth ticks, builds
+The dry-run loop is the bridge between offline committee backtests
+and real trading: a long-running process that streams live Pyth ticks, builds
 synthetic bars at the boundary, asks the committee to predict the
 next bar, and persists every decision to `dry_run_decisions`. No
 real orders are placed. The loop also simulates whether a configured
@@ -209,8 +209,8 @@ contract.
   during the gap; in-flight bar accumulators recover on the next
   tick. Logged as `disconnected` + `connected`.
 - **Stale committee roster** — the CLI startup line shows
-  `selected_at`. If that's days old and the backtest has since
-  expanded, the live committee is voting with an outdated
+  `selected_at`. If that's days old and the training artifact set has
+  since expanded, the live committee is voting with an outdated
   candidate set. Operator's responsibility to rebuild + restart.
 - **Empty roster bucket** — if `committee:select` finds zero
   qualifiers for a regime, decisions in that regime always

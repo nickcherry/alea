@@ -262,7 +262,7 @@ of interchangeable reports:
 | Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                             |
 | Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                    |
 | Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                      |
-| Backtest audit        | Backtest           | Current active-profile `backtest:run` artifact coverage, latest compute time, aggregate WR, and top candidates. |
+| Backtest              | Backtest           | Latest committee holdout replay: decisions, scored trades, WR, PnL proxy, and period/asset/regime breakdowns.   |
 | Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.              |
 | Production            | Live trading PnL   | Track realized results from actual order placement.                                                             |
 
@@ -316,7 +316,7 @@ tmp/web/
     index.assets/
     data.json
   backtest/
-    index.html             ← backtest audit (served at /backtest/)
+    index.html             ← committee backtest (served at /backtest/)
     index.assets/
     data.json
   dryrun/
@@ -333,7 +333,7 @@ it with a warning so the rest of the site can still rebuild. The
 price-path page builds from `polymarket_price_samples`, the proxy page builds
 from `polymarket_resolutions` + Pyth candles, the exploration page builds from
 `filter_runs` + `bar_regimes`, the trade committee page builds from
-`committee_selections`, the backtest page builds from `filter_runs`, and the
+`committee_selections`, the backtest page builds from `committee_backtest_runs`, and the
 dry-run page builds from `dry_run_decisions` plus the shared trade-decision
 constants shown on the page — all research/runtime pages work without trading
 creds.

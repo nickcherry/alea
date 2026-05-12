@@ -113,7 +113,7 @@ export function renderTradeCommitteeHtml({
                 {
                   label: "Training Profile",
                   value: payload.selectionConfig.trainingProfileId,
-                  tip: "Identifier combining the outcome rule and training/backtest window.",
+                  tip: "Identifier combining the outcome rule and research windows.",
                 },
               ],
             })}

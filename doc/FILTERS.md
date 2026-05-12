@@ -3,7 +3,7 @@
 A **filter** is the unit of prediction the rest of the system is
 built around: a tiny, deterministic function that looks at recent
 bars and emits `"up"`, `"down"`, or `null` (abstain). Everything
-else — the backtest, the regime classifier, the committee — orbits
+else — filter training, the regime classifier, the committee — orbits
 the filter contract.
 
 The framework lives in [`src/lib/filters/`](../src/lib/filters/).
@@ -29,14 +29,14 @@ type Filter<TConfig> = {
 };
 ```
 
-Plus a `defaultConfigs()` array of configs the backtest walks. The
+Plus a `defaultConfigs()` array of configs the training walker evaluates. The
 framework guarantees:
 
 1. `predict` is called with `bars` of length exactly
    `requiredBars(config)`, ordered ascending by `openTimeMs`. The
    most recent **closed** bar is `bars[bars.length - 1]`. The
    prediction subject (the next bar) is **not** in the array — see
-   "No-leak invariant" in [BACKTEST.md](./BACKTEST.md).
+   "No-leak invariant" in [TRAINING.md](./TRAINING.md).
 2. `configSchema.parse(config)` is the only way the framework hands
    the filter a config. Defaults declared in the schema apply.
 3. The cache key for a `(filter, config)` pair is the candidate hash
@@ -86,9 +86,9 @@ regime is a separate concept; see [REGIMES.md](./REGIMES.md).
 ## Bar windows + the no-leak rule
 
 Every filter consumes a `FilterBar[]` (`openTimeMs`, `open`, `high`,
-`low`, `close`, `volume`). The backtest walker enforces no-leak by
+`low`, `close`, `volume`). The training walker enforces no-leak by
 slicing the window before `predict` runs and only touching the next
-bar after the prediction is locked in. See [BACKTEST.md](./BACKTEST.md)
+bar after the prediction is locked in. See [TRAINING.md](./TRAINING.md)
 for the exact mechanics.
 
 A filter must not reach outside its `bars` argument. That includes:
@@ -104,7 +104,7 @@ is a code-review obligation.
 ## Training outcome threshold
 
 Filters never see the target candle directly. After a prediction is
-locked in, the backtest labels that next candle from its Pyth
+locked in, the training pass labels that next candle from its Pyth
 open-to-close move. If the absolute move is less than or equal to
 `TRAINING_OUTCOME_MIN_ABS_MOVE_PCT` in
 [`src/constants/training.ts`](../src/constants/training.ts), the
@@ -118,13 +118,13 @@ the in-process directory of registered filters. Each filter file
 calls `registerFilter({ filter, defaultConfigs })` at module
 top-level; [`src/lib/filters/all.ts`](../src/lib/filters/all.ts) is
 the single import that loads the whole registry. Any entry point
-that uses the committee or runs the backtest imports
+that uses the committee or runs filter training imports
 `@alea/lib/filters/all` for side effects.
 
 `allCandidates()` returns the flat `(filter, config)` list across
 every registered filter, in deterministic order
 `(filterId asc, defaultConfigs array order)`. The committee
-evaluator reads this; the backtest walker reads this. Adding or
+evaluator reads this; the training walker reads this. Adding or
 removing a registration changes the candidate set on the next
 process start — no migration needed.
 
@@ -133,13 +133,13 @@ process start — no migration needed.
 1. Create `src/lib/filters/<id>.ts`:
    - Export the `Filter` value (no default exports).
    - Provide `defaultConfigs(): TConfig[]`. These are the configs
-     the backtest will walk — keep the list to the cuts you actually
+     the training pass will evaluate — keep the list to the cuts you actually
      want measured, not a sweep.
    - Call `registerFilter({ filter, defaultConfigs })` at module
      top-level.
 2. Import the new file from
    [`src/lib/filters/all.ts`](../src/lib/filters/all.ts).
-3. Run `bun alea backtest:run`. The new candidates appear in
+3. Run `bun alea training:run`. The new candidates appear in
    `filter_runs` + the exploration dashboard.
 4. Run `bun alea committee:select` if you want the new candidates
    eligible for the live committee. Otherwise the dry-run keeps the
@@ -147,7 +147,7 @@ process start — no migration needed.
 
 If `predict` logic changes after the filter is registered, bump
 `version`. The version is part of the cache key, so cached runs are
-invalidated and the next `backtest:run` recomputes.
+invalidated and the next `training:run` recomputes.
 
 ## Pruning
 
@@ -160,7 +160,7 @@ committee selector then ranks among those.
 Filters that fail to clear the committee's eligibility bar in **any**
 regime (see [COMMITTEE.md](./COMMITTEE.md)) are dead weight in the
 exploration dashboard but harmless — they cost a small amount of
-backtest CPU on the next `backtest:run` and otherwise don't engage.
+training CPU on the next `training:run` and otherwise don't engage.
 Delete the file (and its `all.ts` import) when you're sure it
 doesn't pay rent.
 

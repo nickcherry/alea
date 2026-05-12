@@ -17,6 +17,6 @@ export const TRAINING_OUTCOME_PROFILE_ID = `pyth-open-close-min-abs-move-pct-v1:
 /**
  * Persisted on derived training artifacts and committee selections. It
  * combines the outcome-labeling rule with the research window identity so
- * old all-DB rows cannot be reused after the training/backtest split moves.
+ * old derived rows cannot be reused after training or holdout windows move.
  */
 export const TRAINING_PROFILE_ID = `${TRAINING_OUTCOME_PROFILE_ID}|${RESEARCH_WINDOW_PROFILE_ID}`;

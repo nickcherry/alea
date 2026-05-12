@@ -3,7 +3,7 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * One row per non-abstain prediction. Together they're the
- * append-only source of truth for backtest results; `filter_runs`
+ * append-only source of truth for training results; `filter_runs`
  * stays as a fast aggregate-cache used by the leaderboard query.
  *
  * `run_hash` joins to `filter_runs.run_hash` (no formal FK because

@@ -4,7 +4,7 @@ import type { Candidate, Filter } from "@alea/lib/filters/types";
 /**
  * The framework's single source of truth for which filter
  * implementations exist. Each entry exposes one `Filter<TConfig>`
- * implementation. The backtest CLI iterates this map, calls
+ * implementation. The training command iterates this map, calls
  * `defaultCandidates()` on each, and runs every produced candidate
  * across the configured (period × asset) grid.
  *
@@ -51,7 +51,7 @@ export function allFilters(): readonly FilterRegistryEntry[] {
  * defaults are applied and shape is validated) before hashing.
  *
  * Order is `(filterId asc, config-list order)` so reruns produce
- * the same candidate sequence and the backtest CLI's progress log
+ * the same candidate sequence and the training command's progress log
  * is reproducible.
  */
 export function allCandidates(): readonly Candidate[] {

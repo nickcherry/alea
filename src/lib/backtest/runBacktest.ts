@@ -93,7 +93,7 @@ export async function runBacktestForCandidate({
 }): Promise<RunBacktestResult> {
   if (bars.length < 2) {
     throw new Error(
-      `backtest needs at least 2 bars, got ${bars.length} for ${candidate.filterId}/${period}/${asset}`,
+      `training pass needs at least 2 bars, got ${bars.length} for ${candidate.filterId}/${period}/${asset}`,
     );
   }
   const rangeFirstMs = bars[0]!.openTimeMs;

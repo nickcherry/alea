@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { backtestRunCommand } from "@alea/bin/backtest/run";
+import { trainingRunCommand } from "@alea/bin/backtest/run";
+import { backtestRunCommand } from "@alea/bin/backtest/runCommittee";
 import { candlesFillGapsCommand } from "@alea/bin/candles/fillGaps";
 import { candlesSyncCommand } from "@alea/bin/candles/sync";
 import { committeeSelectCommand } from "@alea/bin/committee/select";
@@ -28,6 +29,7 @@ const cli = createCli({
     dbMigrateCommand,
     candlesSyncCommand,
     candlesFillGapsCommand,
+    trainingRunCommand,
     backtestRunCommand,
     committeeSelectCommand,
     dryRunCommand,

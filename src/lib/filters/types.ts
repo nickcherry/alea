@@ -140,7 +140,7 @@ export type Filter<TConfig> = {
 };
 
 /**
- * A configured filter, ready to backtest. `config` is the
+ * A configured filter, ready for training or committee replay. `config` is the
  * already-validated config object the filter's schema would have
  * produced; the candidate's `hash` is deterministic over
  * `(filterId, version, configCanon)` and is used as the cache key

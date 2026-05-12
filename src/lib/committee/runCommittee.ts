@@ -50,7 +50,7 @@ export function evaluateCommittee({
     let prediction = null as ReturnType<typeof entry.filter.predict>;
     if (bars.length >= need) {
       // Pass only the trailing `need` bars so the filter sees what
-      // it'd see in a real backtest.
+      // it'd see in training, replay, or live evaluation.
       const slice = bars.slice(bars.length - need);
       prediction = entry.filter.predict(cand.config, slice);
     }

@@ -31,7 +31,7 @@ export type ExplorationQuarter = {
 };
 
 /**
- * One backtested candidate at one timeframe, aggregated across every
+ * One trained candidate at one timeframe, aggregated across every
  * asset in the universe. A filter that crushes on xrp but flops on
  * btc/eth/sol shows up here as a single number that reflects all of
  * them — exactly the view the trader wants because we'll deploy any

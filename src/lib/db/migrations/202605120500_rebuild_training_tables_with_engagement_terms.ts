@@ -4,8 +4,8 @@ import { type Kysely, sql } from "kysely";
 /**
  * Rebuild derived training tables so the persisted aggregate counters use
  * engagement terminology end-to-end. This intentionally drops only derived
- * backtest/selection state; canonical candles and captured market data are
- * untouched and can repopulate these tables via backtest/regime/committee
+ * training/selection state; canonical candles and captured market data are
+ * untouched and can repopulate these tables via training/regime/committee
  * commands.
  */
 export async function up(db: Kysely<Database>): Promise<void> {

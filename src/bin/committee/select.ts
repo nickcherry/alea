@@ -17,9 +17,9 @@ import pc from "picocolors";
  * exists) loads this table at startup and only lets a candidate
  * vote when the classifier's current-bar regime matches the row.
  *
- * Manual command — operator runs it after a fresh `backtest:run`
- * (which feeds new `filter_engagements`) or after `regimes:backfill`
- * (which feeds new `bar_regimes` tags).
+ * Manual command — operator runs it after a fresh `training:run`
+ * pass (which feeds new `filter_engagements`) or after
+ * `regimes:backfill` (which feeds new `bar_regimes` tags).
  *
  * No CLI flags yet — the thresholds in
  * `DEFAULT_COMMITTEE_SELECTION_RULES` are the contract. If we ever

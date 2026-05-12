@@ -1,6 +1,6 @@
 # Filter Prune 2026-05-11
 
-Scope: prune active default candidates from the May 2026 expansion pass after the first full pyth/spot backtest. Implementations are preserved in `src/lib/filters/` so they can be reactivated when the data source or evidence changes.
+Scope: prune active default candidates from the May 2026 expansion pass after the first full pyth/spot training run. Implementations are preserved in `src/lib/filters/` so they can be reactivated when the data source or evidence changes.
 
 ## Retired From Active Registration
 

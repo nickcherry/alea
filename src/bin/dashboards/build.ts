@@ -59,7 +59,7 @@ const cacheDir = resolvePath(tmpDir, ".cache");
  *   tmp/web/committee/index.html     ← trade committee ("/committee/")
  *   tmp/web/committee/index.assets/
  *   tmp/web/committee/data.json
- *   tmp/web/backtest/index.html      ← backtest artifacts ("/backtest/")
+ *   tmp/web/backtest/index.html      ← committee backtest ("/backtest/")
  *   tmp/web/backtest/index.assets/
  *   tmp/web/backtest/data.json
  *
@@ -124,7 +124,7 @@ export const dashboardsBuildCommand = defineCommand({
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
-    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `filter_runs`, `committee_selections`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
+    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `filter_runs`, `committee_selections`, `committee_backtest_runs`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
   async run({ io, options }) {
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
@@ -368,15 +368,24 @@ async function buildBacktestDashboard({
     const htmlPath = resolvePath(backtestDir, "index.html");
     const jsonPath = resolvePath(backtestDir, "data.json");
     await writeBacktestArtifacts({ payload, htmlPath, jsonPath });
+    const latest = payload.latestRun;
+    if (latest === null) {
+      io.writeStdout(
+        `  ${pc.yellow("no persisted committee backtest run")}\n` +
+          `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+      );
+      return;
+    }
     const wr =
-      payload.summary.winRate === null
-        ? "—"
-        : `${(payload.summary.winRate * 100).toFixed(1)}%`;
+      latest.totals.winRate === null
+        ? "-"
+        : `${(latest.totals.winRate * 100).toFixed(1)}%`;
     io.writeStdout(
-      `  ${pc.green("coverage =")} ${payload.summary.runCount.toLocaleString()}/${payload.summary.expectedRunCount.toLocaleString()}` +
-        `  ${pc.dim("missing=")}${payload.summary.missingRunCount.toLocaleString()}` +
-        `  ${pc.dim("engagements=")}${payload.summary.nEngagements.toLocaleString()}` +
+      `  ${pc.green("run =")} ${latest.id}` +
+        `  ${pc.dim("decisions=")}${latest.totals.committeeDecisions.toLocaleString()}` +
+        `  ${pc.dim("scored=")}${latest.totals.scoredTrades.toLocaleString()}` +
         `  ${pc.dim("wr=")}${wr}` +
+        `  ${pc.dim("pnl=")}$${latest.totals.pnlUsd.toLocaleString()}` +
         "\n" +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );

@@ -1,5 +1,5 @@
 /**
- * Import this file once at any entry point (CLI, backtest) to
+ * Import this file once at any entry point (CLI, training, committee replay) to
  * populate the filter registry with every implementation under
  * `filters/`. Each file's top-level `registerFilter` call runs as a
  * side effect of being imported.
@@ -18,7 +18,7 @@
  * first full run: volume-dependent filters remain as implementations
  * but are unregistered until the training source carries volume, and
  * consistently sub-50 continuation/trend families were retired from
- * default backtests. Later round-2 research reactivated selected
+ * default training runs. Later round-2 research reactivated selected
  * OHLC-only continuation/failure/trend families with revised configs.
  */
 /**

@@ -7,7 +7,7 @@ const LEGACY_TRAINING_PROFILE = "legacy-open-close-tie-up-v0";
  * Tag derived training rows with the training outcome profile that
  * produced them. Existing rows used the old open/close direction rule,
  * so they are explicitly marked legacy and ignored by current readers
- * until `backtest:run` recomputes them.
+ * until `training:run` recomputes them.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`

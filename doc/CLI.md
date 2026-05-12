@@ -26,8 +26,10 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync`
   `candles:fill-gaps`
+- `training:*`
+  `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against cached pyth/spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `backtest:*`
-  `backtest:run` — runs every registered filter × default config × (period × asset) against cached pyth/spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
+  `backtest:run` — replays the selected trade committee over the holdout window, persists one `committee_backtest_runs` row, and feeds the `/backtest/` dashboard.
 - `regimes:*`
   `regimes:backfill` — classifies every bar in `candles` into a market regime and writes the tags to `bar_regimes`. See [REGIMES.md](./REGIMES.md).
 - `committee:*`

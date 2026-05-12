@@ -14,8 +14,8 @@ trading when it ships. There is no separate "live committee".
 **Selection** runs once, offline. The `committee:select` CLI scans
 regime-stratified training stats for the active training profile and
 writes the voter roster to a DB table tagged with that same profile.
-Selection is **manual** — operator runs it after a fresh `backtest:run`
-or a `regimes:backfill`.
+Selection is **manual** — operator runs it after a fresh
+`training:run` pass or a `regimes:backfill`.
 
 **Evaluation** runs at each configured trade-decision boundary,
 inside the dry-run / live loop. Dry-run defaults to `5m,15m`, and
@@ -151,9 +151,10 @@ swaps the live voter roster — the dry-run loop won't pick up the
 change until it restarts. Sequence after refreshing training artifacts:
 
 ```sh
-bun alea backtest:run          # write filter_engagements
+bun alea training:run          # write training artifacts
 bun alea regimes:backfill      # if classifier or candle set changed
 bun alea committee:select      # rebuild roster from fresh stats
+bun alea backtest:run          # replay roster over the holdout window
 # restart any running dry-run process to pick up new roster
 ```
 
@@ -177,11 +178,11 @@ against the dry-run loop will behave identically in live trading.
 
 ## Committee backtest
 
-The planned committee-backtest phase sits between roster construction
-and dry-run. It should use the holdout window from
+`bun alea backtest:run` sits between roster construction and dry-run.
+It uses the holdout window from
 [`src/constants/researchWindows.ts`](../src/constants/researchWindows.ts),
-replay the selected committee over historical Pyth candles, and score
-only directional prediction quality. It should not connect to
+replays the selected committee over historical Pyth candles, and
+scores directional prediction quality. It does not connect to
 Polymarket or simulate order-book fills; those questions belong to
 dry-run. The point is fast iteration on consensus, vote weighting, and
 position-sizing policy before testing live-like execution.

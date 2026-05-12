@@ -33,9 +33,9 @@ const SUPPORTED_PERIODS: readonly CandleTimeframe[] = ["5m", "15m"];
  * source we backfilled for the new framework), upserts into
  * `filter_runs`. No network.
  */
-export const backtestRunCommand = defineCommand({
-  name: "backtest:run",
-  summary: "Run every registered filter × default config × (period × asset)",
+export const trainingRunCommand = defineCommand({
+  name: "training:run",
+  summary: "Refresh filter training artifacts for every active candidate",
   description:
     "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all` and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
   options: [
@@ -84,9 +84,9 @@ export const backtestRunCommand = defineCommand({
     }),
   ],
   examples: [
-    "bun alea backtest:run",
-    "bun alea backtest:run --periods 5m --assets btc,eth",
-    "bun alea backtest:run --filters rsi_meanrev,zscore_reversion",
+    "bun alea training:run",
+    "bun alea training:run --periods 5m --assets btc,eth",
+    "bun alea training:run --filters rsi_meanrev,zscore_reversion",
   ],
   output:
     "One line per (filter, config, period, asset): engagement count, win count, win rate.",
@@ -106,7 +106,7 @@ export const backtestRunCommand = defineCommand({
     }
 
     io.writeStdout(
-      `${pc.bold("backtest:run")} ${pc.dim(`candidates=${selected.length}  periods=${options.periods.join(",")}  assets=${options.assets.join(",")}`)}\n\n`,
+      `${pc.bold("training artifacts")} ${pc.dim(`command=training:run  candidates=${selected.length}  periods=${options.periods.join(",")}  assets=${options.assets.join(",")}`)}\n\n`,
     );
     io.writeStdout(
       `${pc.dim("training window:")} ${formatTrainingWindowForCli()}\n\n`,

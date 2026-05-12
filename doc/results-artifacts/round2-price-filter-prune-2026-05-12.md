@@ -1,6 +1,6 @@
 # Round 2 Price-Only Filter Prune 2026-05-12
 
-Scope: post-backtest cleanup of the round-2 OHLC-only filter batch. Implementations remain in `src/lib/filters/`; this pass only changes active registration/config coverage.
+Scope: post-training-run cleanup of the round-2 OHLC-only filter batch. Implementations remain in `src/lib/filters/`; this pass only changes active registration/config coverage.
 
 ## Retired From Active Registration
 

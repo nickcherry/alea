@@ -3,7 +3,7 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * One row per (filter_id, filter_version, config_canon, period,
- * asset) — the unit of cache key for the filter-committee backtest.
+ * asset) — the unit of cache key for filter training artifacts.
  *
  * - `run_hash`: deterministic hex hash of the five identity fields.
  *   Primary key. When a filter's `version` is bumped the hash
@@ -12,7 +12,7 @@ import { type Kysely, sql } from "kysely";
  *   used to compute the hash. Storing it lets us reconstruct what
  *   the hash represents without re-deriving from `config`.
  * - `range_first_ms` / `range_last_ms`: the candle range the row
- *   summarises. If the backtest CLI is asked for the same active
+ *   summarises. If the training command is asked for the same active
  *   profile and exact window, it skips; otherwise it recomputes.
  * - `n_engagements_*` / `n_wins_*`: aggregate stats. Win rate is
  *   computed in dashboards on the fly.

@@ -50,7 +50,7 @@ export interface MarketEventTable {
 }
 
 /**
- * Aggregate cache for the filter-committee backtest: one row per
+ * Aggregate cache for filter training artifacts: one row per
  * (filter_id, filter_version, config_canon, period, asset). See
  * migration `202605110000_create_filter_runs.ts` for the original
  * rationale. Per-prediction detail lives in the relational
@@ -271,6 +271,39 @@ export interface CommitteeSelectionTable {
   >;
 }
 
+export interface CommitteeBacktestRunTable {
+  readonly id: Generated<string>;
+  readonly run_profile: string;
+  readonly training_profile: string;
+  readonly selected_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly window_start_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly window_end_exclusive_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly started_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly completed_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly duration_ms: number;
+  readonly summary_json: unknown;
+}
+
 export interface ExplorationPayloadCacheTable {
   readonly training_profile: string;
   readonly schema_version: number;
@@ -293,6 +326,7 @@ export interface Database {
   readonly dry_run_decisions: DryRunDecisionTable;
   readonly bar_regimes: BarRegimeTable;
   readonly committee_selections: CommitteeSelectionTable;
+  readonly committee_backtest_runs: CommitteeBacktestRunTable;
   readonly exploration_payload_cache: ExplorationPayloadCacheTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
   readonly polymarket_price_samples: PolymarketPriceSampleTable;

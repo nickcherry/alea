@@ -10,7 +10,7 @@ import { type Kysely, sql } from "kysely";
  * table with `filter_engagements` to stratify a filter's engagements by
  * the market regime they happened in — so the dashboard can answer
  * "how does zscore_reversion behave when the market is high-vol
- * ranging" without re-running the backtest.
+ * ranging" without re-running filter training.
  *
  * Regimes can be null at the very start of an asset's history where
  * the classifier hasn't seen enough bars (it needs ~100 of priors
