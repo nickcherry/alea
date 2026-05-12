@@ -27,7 +27,7 @@ export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minAggregateWinRate: 0.53,
   minWorstQuarterWinRate: 0.5,
   worstQuarterMinEngagements: 10,
-  topN: 10,
+  topN: 20,
 };
 
 /** Inputs the ranking sees about a single (candidate, regime). */
