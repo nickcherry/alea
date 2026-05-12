@@ -30,6 +30,35 @@ export type TradeCommitteeSelectionConfig = CommitteeSelectionRules & {
   readonly tieBreak: "n_engagements_desc";
 };
 
+/**
+ * One day-bucket of firings for a single selected candidate (in its
+ * target market regime). `t` is midnight-UTC in ms; `u`/`d` are the
+ * counts of up/down votes that day, summed across every asset that
+ * contributed engagements in this regime.
+ *
+ * Short field names keep the wire payload small — there's one of these
+ * per (selection, day-with-fires).
+ */
+export type TradeCommitteeFiringBucket = {
+  readonly t: number;
+  readonly u: number;
+  readonly d: number;
+};
+
+/**
+ * Firings for one selected candidate. Keyed by the same identity as
+ * `TradeCommitteeCandidateRow.id` so the chart can group by rank within
+ * the active (period, regime) tab.
+ */
+export type TradeCommitteeFiringSeries = {
+  readonly id: string;
+  readonly period: TradeCommitteePeriod;
+  readonly marketRegime: MarketRegime;
+  readonly filterId: string;
+  readonly rank: number;
+  readonly buckets: readonly TradeCommitteeFiringBucket[];
+};
+
 export type TradeCommitteePayload = {
   readonly generatedAtMs: number;
   readonly selectedAtMs: number | null;
@@ -37,4 +66,9 @@ export type TradeCommitteePayload = {
   readonly uniqueFilterCount: number;
   readonly selectionConfig: TradeCommitteeSelectionConfig;
   readonly rows: readonly TradeCommitteeCandidateRow[];
+  readonly firings: readonly TradeCommitteeFiringSeries[];
+  readonly firingsRangeMs: {
+    readonly firstMs: number;
+    readonly lastMs: number;
+  } | null;
 };

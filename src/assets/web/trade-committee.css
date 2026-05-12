@@ -174,3 +174,115 @@
     flex: 0 0 auto;
   }
 }
+
+.committee-firings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--alea-border-faint);
+}
+
+.committee-firings-header .alea-section-rule {
+  margin: 0;
+}
+
+.committee-firings-legend {
+  align-items: center;
+  font-family: var(--alea-font-sans);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--alea-text-subtle);
+}
+
+.committee-firings-body {
+  padding: 14px 18px 18px;
+}
+
+.committee-firings-empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.committee-firings-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 1px;
+}
+
+.committee-firings-labels {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  font-family: var(--alea-font-mono);
+  font-size: 10.5px;
+  color: var(--alea-text-muted);
+}
+
+.committee-firings-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  white-space: nowrap;
+  padding-right: 6px;
+  letter-spacing: 0.01em;
+}
+
+.committee-firings-label .rank {
+  display: inline-block;
+  min-width: 20px;
+  text-align: right;
+  color: var(--alea-text-subtle);
+  margin-right: 8px;
+}
+
+.committee-firings-canvas-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.committee-firings-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The cells are small rectangles drawn at integer coords — let
+     them stay sharp rather than smearing under DPR scaling. */
+  image-rendering: pixelated;
+}
+
+.committee-firings-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.committee-firings-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-left: 0;
+  font-family: var(--alea-font-sans);
+  font-size: 10.5px;
+  color: var(--alea-text-subtle);
+  letter-spacing: 0.04em;
+}
+
+.committee-firings-axis .tick {
+  position: relative;
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.committee-firings-axis .tick:first-child {
+  text-align: left;
+}
+
+.committee-firings-axis .tick:last-child {
+  text-align: right;
+}

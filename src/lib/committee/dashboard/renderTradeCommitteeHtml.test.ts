@@ -33,6 +33,10 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).toContain("Aggregate WR Floor");
     expect(html).toContain("Wilson low desc");
     expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.02");
+    // Firings chart section renders at the bottom.
+    expect(html).toContain("Firings Over Time");
+    expect(html).toContain('id="committee-firings-canvas"');
+    expect(html).toContain('id="committee-firings-tooltip"');
   });
 });
 
@@ -72,5 +76,22 @@ function payloadFixture(): TradeCommitteePayload {
         selectedAtMs: 1_777_900_500_000,
       },
     ],
+    firings: [
+      {
+        id: "5m|low_vol_ranging|rsi_mean_rev|1|{}",
+        period: "5m",
+        marketRegime: "low_vol_ranging",
+        filterId: "rsi_mean_rev",
+        rank: 1,
+        buckets: [
+          { t: 1_700_000_000_000, u: 4, d: 1 },
+          { t: 1_700_086_400_000, u: 0, d: 3 },
+        ],
+      },
+    ],
+    firingsRangeMs: {
+      firstMs: 1_700_000_000_000,
+      lastMs: 1_700_086_400_000,
+    },
   };
 }

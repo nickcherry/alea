@@ -4,8 +4,11 @@ import {
   TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
   TRAINING_OUTCOME_PROFILE_ID,
 } from "@alea/constants/training";
+import { loadCommitteeFirings } from "@alea/lib/committee/dashboard/loadCommitteeFirings";
 import {
   type TradeCommitteeCandidateRow,
+  type TradeCommitteeFiringBucket,
+  type TradeCommitteeFiringSeries,
   type TradeCommitteePayload,
   type TradeCommitteePeriod,
 } from "@alea/lib/committee/dashboard/types";
@@ -34,23 +37,26 @@ export async function loadTradeCommitteePayload({
   readonly now?: () => number;
   readonly rules?: CommitteeSelectionRules;
 }): Promise<TradeCommitteePayload> {
-  const selectionRows = await db
-    .selectFrom("committee_selections")
-    .select([
-      "market_regime",
-      "period",
-      "filter_id",
-      "filter_version",
-      "config_canon",
-      "rank",
-      "n_engagements",
-      "n_wins",
-      "win_rate",
-      "wilson_low",
-      "worst_quarter_wr",
-      "selected_at_ms",
-    ])
-    .execute();
+  const [selectionRows, firingRows] = await Promise.all([
+    db
+      .selectFrom("committee_selections")
+      .select([
+        "market_regime",
+        "period",
+        "filter_id",
+        "filter_version",
+        "config_canon",
+        "rank",
+        "n_engagements",
+        "n_wins",
+        "win_rate",
+        "wilson_low",
+        "worst_quarter_wr",
+        "selected_at_ms",
+      ])
+      .execute(),
+    loadCommitteeFirings({ db }),
+  ]);
 
   const rows: TradeCommitteeCandidateRow[] = [];
   for (const r of selectionRows) {
@@ -90,6 +96,11 @@ export async function loadTradeCommitteePayload({
   const selectedAtMs =
     rows.length === 0 ? null : Math.max(...rows.map((r) => r.selectedAtMs));
 
+  const { firings, firingsRangeMs } = buildFiringSeries({
+    selectedRows: rows,
+    firingRows,
+  });
+
   return {
     generatedAtMs: now(),
     selectedAtMs,
@@ -103,7 +114,74 @@ export async function loadTradeCommitteePayload({
       tieBreak: "n_engagements_desc",
     },
     rows,
+    firings,
+    firingsRangeMs,
   };
+}
+
+function buildFiringSeries({
+  selectedRows,
+  firingRows,
+}: {
+  readonly selectedRows: readonly TradeCommitteeCandidateRow[];
+  readonly firingRows: Awaited<ReturnType<typeof loadCommitteeFirings>>;
+}): {
+  readonly firings: readonly TradeCommitteeFiringSeries[];
+  readonly firingsRangeMs: { readonly firstMs: number; readonly lastMs: number } | null;
+} {
+  const byId = new Map<string, TradeCommitteeFiringSeries>();
+  for (const row of selectedRows) {
+    byId.set(row.id, {
+      id: row.id,
+      period: row.period,
+      marketRegime: row.marketRegime,
+      filterId: row.filterId,
+      rank: row.rank,
+      buckets: [],
+    });
+  }
+
+  const bucketsById = new Map<string, TradeCommitteeFiringBucket[]>();
+  let firstMs: number | null = null;
+  let lastMs: number | null = null;
+  for (const r of firingRows) {
+    const period = parsePeriod({ value: r.period });
+    const marketRegime = parseMarketRegime({ value: r.market_regime });
+    if (period === null || marketRegime === null) {
+      continue;
+    }
+    const id = [
+      period,
+      marketRegime,
+      r.filter_id,
+      String(r.filter_version),
+      r.config_canon,
+    ].join("|");
+    if (!byId.has(id)) {
+      continue;
+    }
+    let list = bucketsById.get(id);
+    if (list === undefined) {
+      list = [];
+      bucketsById.set(id, list);
+    }
+    list.push({ t: r.day_ms, u: r.n_up, d: r.n_down });
+    if (firstMs === null || r.day_ms < firstMs) firstMs = r.day_ms;
+    if (lastMs === null || r.day_ms > lastMs) lastMs = r.day_ms;
+  }
+
+  for (const [id, list] of bucketsById.entries()) {
+    list.sort((a, b) => a.t - b.t);
+    const series = byId.get(id);
+    if (series !== undefined) {
+      byId.set(id, { ...series, buckets: list });
+    }
+  }
+
+  const firings = Array.from(byId.values());
+  const firingsRangeMs =
+    firstMs === null || lastMs === null ? null : { firstMs, lastMs };
+  return { firings, firingsRangeMs };
 }
 
 function parsePeriod({
