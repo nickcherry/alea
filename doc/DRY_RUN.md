@@ -4,8 +4,9 @@ The dry-run loop is the bridge between offline backtests and real
 trading: a long-running process that streams live Pyth ticks, builds
 synthetic bars at the boundary, asks the committee to predict the
 next bar, and persists every decision to `dry_run_decisions`. No
-orders are placed — the goal is to see what the committee would
-have done if it were trading.
+real orders are placed. The loop also simulates whether a configured
+post-open Polymarket order would have been eligible, placed, filled,
+or left unfilled.
 
 Run it:
 
@@ -38,7 +39,17 @@ For each of the 5 supported assets (`btc`, `eth`, `sol`, `xrp`,
    classifier. Look up the committee roster for that regime. Apply
    the shared trade decision policy. If non-abstain, persist the
    decision; otherwise skip.
-4. **Score** — when a closed bar's actual close arrives (via the
+4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 3s`
+   after the target Polymarket market opens, read the live UP/DOWN
+   market data for the predicted side. If the observed predicted-side
+   price is within the configured 50c window, and the average
+   selected-regime win rate of the effective winning voters is at
+   least the simulated limit price, place a pretend limit buy at
+   `observed price + DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`. The runner
+   then watches the book/trade stream until the target market closes.
+   If the simulated limit never trades through, the row is marked
+   `unfilled`.
+5. **Score** — when a closed bar's actual close arrives (via the
    normal tick-driven finalize on the next bar's first tick),
    compare to the prediction. Update the pending row's
    `actual_close` + `won`.
@@ -79,6 +90,29 @@ At T-5s of each boundary, for each asset:
    ties and all-abstain still abstain.
 7. Persist if non-abstain.
 
+## Order simulation
+
+Dry-run order configuration lives in
+[`src/constants/dryRun.ts`](../src/constants/dryRun.ts).
+
+| Constant                            | Default | Meaning                                                     |
+| ----------------------------------- | ------: | ----------------------------------------------------------- |
+| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`  |  3000ms | Wait after the target market opens before simulating entry  |
+| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`  |      3c | Only consider predicted-side prices within `50c ± window`   |
+| `DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`  |    0.5c | Limit-buy offset above the observed predicted-side price    |
+
+The order price uses the predicted outcome token: UP decisions look
+at the UP token, DOWN decisions look at the DOWN token. For a DOWN
+decision that is equivalent to moving lower in normalized UP-price
+space, but the persisted order fields are always in predicted-side
+token price terms.
+
+The confidence gate uses the average selected-regime win rate across
+the effective winning voters after the same one-vote-per-filter
+collapse used by the committee decision. A simulated order is skipped
+when `avg_confidence < limit_price`; in a zero-fee binary market this
+is the direct expected-value check.
+
 The committee is loaded once at startup and cached for the life of
 the process. If you re-run `committee:select` while a dry-run is
 live, the process won't pick up the new roster — restart it.
@@ -102,10 +136,19 @@ and the `market_regime` column added by
 | `actual_close`    | Filled in once the target bar settles                                |
 | `won`             | 0/1, null until scored                                               |
 | `market_regime`   | Classifier's read at decision time                                   |
+| `order_status`    | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason    |
+| `order_placed_at_ms` | Simulated order-placement wall-clock                              |
+| `order_observed_price` | Predicted-side token price read at simulated placement          |
+| `order_limit_price` | Simulated limit-buy price                                          |
+| `order_confidence` | Average effective winning-voter confidence used for the EV gate     |
+| `order_filled_at_ms` | When the simulated order first became fillable                    |
+| `order_fill_price` | Simulated fill price                                                |
+| `order_expires_at_ms` | Target market close; placed orders still unfilled here expire    |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when
-the target bar closes.
+the target bar closes. Older rows created before order simulation are
+marked `order_status = 'untracked'`.
 
 ## CLI output
 
@@ -158,6 +201,8 @@ loader + renderer.
 
 - [`src/lib/dryRun/runDryRun.ts`](../src/lib/dryRun/runDryRun.ts) —
   the main loop.
+- [`src/lib/dryRun/orderSimulation.ts`](../src/lib/dryRun/orderSimulation.ts) —
+  post-open dry-run order placement + fill simulation.
 - [`src/lib/dryRun/loadRecentBars.ts`](../src/lib/dryRun/loadRecentBars.ts) —
   hydration query.
 - [`src/lib/dryRun/types.ts`](../src/lib/dryRun/types.ts) — internal

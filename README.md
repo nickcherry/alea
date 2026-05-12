@@ -40,8 +40,9 @@ rows" in operator notes, status checks, or docs.
 5. **Dry-run loop** streams live Pyth ticks, classifies the
    current regime, asks the regime's committee to predict the next
    5-minute bar, persists every decision to `dry_run_decisions`,
-   and scores it once the bar closes. No orders are placed today;
-   live trading will share this exact code path. See
+   simulates the configured post-open Polymarket order, and scores
+   the signal once the bar closes. No real orders are placed today;
+   live trading will share this exact decision path. See
    [DRY_RUN.md](./doc/DRY_RUN.md).
 6. **Dashboards** are static HTML pages built from the same data
    and deployed to a Cloudflare Worker. The exploration page

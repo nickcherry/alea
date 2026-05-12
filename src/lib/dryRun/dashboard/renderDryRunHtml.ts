@@ -125,6 +125,26 @@ export function renderDryRunHtml({
               },
             ],
           })}
+          ${renderConfigGroup({
+            title: "Order Simulation",
+            items: [
+              {
+                label: "Placement Delay",
+                value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
+                sub: "after target market opens",
+              },
+              {
+                label: "50c Window",
+                value: `±${payload.decisionConfig.orderPriceWindowCents.toLocaleString()}c`,
+                sub: "observed predicted-side price",
+              },
+              {
+                label: "Limit Offset",
+                value: `+${payload.decisionConfig.orderLimitOffsetCents.toLocaleString()}c`,
+                sub: "above observed predicted-side price",
+              },
+            ],
+          })}
         </div>
       </section>
 
@@ -191,11 +211,12 @@ export function renderDryRunHtml({
                 <th class="num-col">Synth Open</th>
                 <th class="num-col">Actual Close</th>
                 <th class="num-col">Move</th>
+                <th>Order</th>
                 <th>Outcome</th>
               </tr>
             </thead>
             <tbody id="dry-run-recent-body">
-              ${recentRows.map(renderRecentRow).join("")}
+              ${renderRecentRows({ rows: recentRows })}
             </tbody>
           </table>
         </div>
@@ -271,6 +292,17 @@ function recentMetaLabel({
   return `latest ${shown.toLocaleString()} of ${totalForPeriod.toLocaleString()}`;
 }
 
+function renderRecentRows({
+  rows,
+}: {
+  readonly rows: readonly DryRunDashboardRecentRow[];
+}): string {
+  if (rows.length === 0) {
+    return `<tr><td colspan="9"><span class="alea-muted">No decisions yet for this period.</span></td></tr>`;
+  }
+  return rows.map(renderRecentRow).join("");
+}
+
 function renderRecentRow(row: DryRunDashboardRecentRow): string {
   const ts = new Date(row.tsMs).toISOString().slice(0, 16).replace("T", " ");
   const tag =
@@ -306,9 +338,88 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       <td class="num-col alea-mono">${row.synthOpen.toFixed(2)}</td>
       <td class="num-col alea-mono">${close}</td>
       <td class="num-col">${moveCell}</td>
+      <td>${renderOrderCell(row)}</td>
       <td>${outcome}</td>
     </tr>
   `;
+}
+
+function renderOrderCell(row: DryRunDashboardRecentRow): string {
+  const status = row.orderStatus;
+  if (status === "filled") {
+    return `<span class="dry-run-order filled">FILLED</span>${renderOrderPriceBits({
+      limitPrice: row.orderLimitPrice,
+      fillPrice: row.orderFillPrice,
+      confidence: row.orderConfidence,
+    })}`;
+  }
+  if (status === "unfilled") {
+    return `<span class="dry-run-order unfilled">UNFILLED</span>${renderOrderPriceBits({
+      limitPrice: row.orderLimitPrice,
+      fillPrice: row.orderFillPrice,
+      confidence: row.orderConfidence,
+    })}`;
+  }
+  if (status === "placed" || status === "pending_placement") {
+    return `<span class="dry-run-order pending">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits({
+      limitPrice: row.orderLimitPrice,
+      fillPrice: row.orderFillPrice,
+      confidence: row.orderConfidence,
+    })}`;
+  }
+  if (status.startsWith("skipped")) {
+    return `<span class="dry-run-order skipped">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits({
+      limitPrice: row.orderLimitPrice,
+      fillPrice: row.orderFillPrice,
+      confidence: row.orderConfidence,
+    })}`;
+  }
+  return `<span class="alea-muted">${escapeHtml({ value: formatOrderStatus(status) })}</span>`;
+}
+
+function renderOrderPriceBits({
+  limitPrice,
+  fillPrice,
+  confidence,
+}: {
+  readonly limitPrice: number | null;
+  readonly fillPrice: number | null;
+  readonly confidence: number | null;
+}): string {
+  const bits: string[] = [];
+  if (limitPrice !== null) {
+    bits.push(`limit ${formatCents({ value: limitPrice })}`);
+  }
+  if (fillPrice !== null) {
+    bits.push(`fill ${formatCents({ value: fillPrice })}`);
+  }
+  if (confidence !== null) {
+    bits.push(`conf ${formatCents({ value: confidence })}`);
+  }
+  return bits.length === 0
+    ? ""
+    : `<span class="dry-run-order-detail">${escapeHtml({ value: bits.join(" · ") })}</span>`;
+}
+
+function formatOrderStatus(status: string): string {
+  switch (status) {
+    case "pending_placement":
+      return "pending";
+    case "skipped_no_market":
+      return "skip no market";
+    case "skipped_no_price":
+      return "skip no price";
+    case "skipped_price_window":
+      return "skip price";
+    case "skipped_confidence":
+      return "skip edge";
+    default:
+      return status.replaceAll("_", " ");
+  }
+}
+
+function formatCents({ value }: { readonly value: number }): string {
+  return `${(value * 100).toFixed(1)}c`;
 }
 
 /**
@@ -396,4 +507,3 @@ function formatFilterTieBreak({ value }: { readonly value: string }): string {
   }
   return value;
 }
-

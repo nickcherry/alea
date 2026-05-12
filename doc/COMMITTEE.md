@@ -156,9 +156,11 @@ should see the diff and re-launch deliberately.
 The committee logic is **identical**. The only difference between
 modes is what happens with an actionable decision:
 
-- Dry-run today: persist to `dry_run_decisions`, no order placed.
-- Live (when it ships): the same persistence plus a maker order on
-  Polymarket at ~50¢. The committee path is unchanged.
+- Dry-run today: persist to `dry_run_decisions`, no real order placed.
+- Dry-run execution simulation: the same persisted decision plus a
+  pretend post-open Polymarket order whose fill status is tracked.
+- Live (when it ships): the same decision path plus real order
+  placement. The committee path is unchanged.
 
 The implication for testing: anything that's safe to validate
 against the dry-run loop will behave identically in live trading.

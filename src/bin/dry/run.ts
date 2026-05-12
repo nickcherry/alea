@@ -11,8 +11,8 @@ import pc from "picocolors";
  * registered asset, and runs the committee on every 5m boundary
  * (snapshotting the Pyth price 5 seconds before the boundary as the
  * synthetic close of the about-to-finalize bar). Decisions land in
- * `dry_run_decisions`; outcomes are scored once the target bar
- * finalizes.
+ * `dry_run_decisions`; the configured post-open Polymarket order is
+ * simulated; outcomes are scored once the target bar finalizes.
  *
  * Stays running until SIGINT / SIGTERM. Intended to live in a
  * long-running tmux / background session.
@@ -21,13 +21,13 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run the committee in dry-run mode against live Pyth prices",
   description:
-    "Long-running process. Hydrates bar history from `candles`, subscribes to Pyth Hermes for live ticks, and at T-5s of each 5m boundary runs the committee to predict the next 5m bar's direction. Predictions land in `dry_run_decisions`; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, subscribes to Pyth Hermes for live ticks, and at T-5s of each 5m boundary runs the committee to predict the next 5m bar's direction. Predictions land in `dry_run_decisions`; the configured post-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
   options: [],
   examples: ["bun alea dry:run"],
   output:
-    "Streams decision + outcome events to stdout. Persists to the `dry_run_decisions` table.",
+    "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",
   sideEffects:
-    "Opens a Pyth Hermes SSE connection. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
+    "Opens Pyth Hermes and Polymarket market-data connections. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
   async run({ io }) {
     io.writeStdout(`${pc.bold("dry:run")} ${pc.dim(`assets=${assetValues.join(",")}`)}\n\n`);
     const db = createDatabase();
@@ -95,6 +95,37 @@ export const dryRunCommand = defineCommand({
               );
               break;
             }
+            case "order": {
+              const tag =
+                event.status === "filled"
+                  ? pc.green("FILLED")
+                  : event.status === "unfilled"
+                    ? pc.yellow("UNFILL")
+                    : event.status.startsWith("skipped")
+                      ? pc.dim("SKIP  ")
+                      : pc.dim("ORDER ");
+              const parts = [
+                `target=${new Date(event.tsMs).toISOString().slice(11, 16)}`,
+                `pred=${event.prediction}`,
+                `status=${event.status}`,
+              ];
+              if (event.observedPrice !== null) {
+                parts.push(`obs=${formatCents(event.observedPrice)}`);
+              }
+              if (event.limitPrice !== null) {
+                parts.push(`limit=${formatCents(event.limitPrice)}`);
+              }
+              if (event.confidence !== null) {
+                parts.push(`conf=${formatCents(event.confidence)}`);
+              }
+              if (event.fillPrice !== null) {
+                parts.push(`fill=${formatCents(event.fillPrice)}`);
+              }
+              io.writeStdout(
+                `${pc.dim(ts)} ${tag} ${event.asset.padEnd(5)} ${pc.dim(parts.join(" "))}\n`,
+              );
+              break;
+            }
             case "error":
               io.writeStdout(`${pc.dim(ts)} ${pc.red("error")} ${event.message}\n`);
               break;
@@ -112,3 +143,7 @@ export const dryRunCommand = defineCommand({
     }
   },
 });
+
+function formatCents(value: number): string {
+  return `${(value * 100).toFixed(1)}c`;
+}

@@ -5,6 +5,7 @@ import {
   TRADE_DECISION_LEAD_TIME_MS,
   TRADE_DECISION_PERIOD,
 } from "@alea/constants/tradeDecision";
+import { selectEffectiveCommitteeVotes } from "@alea/lib/committee/aggregate";
 import {
   evaluateCommittee,
   listCommitteeCandidates,
@@ -18,6 +19,11 @@ import {
 import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadRecentBars } from "@alea/lib/dryRun/loadRecentBars";
+import {
+  averageWinningVoteConfidence,
+  createDryRunOrderSimulator,
+  type DryRunOrderLogEvent,
+} from "@alea/lib/dryRun/orderSimulation";
 import type { DryRunAssetState } from "@alea/lib/dryRun/types";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
@@ -72,6 +78,7 @@ export type DryRunLogEvent =
       readonly actualOpen: number;
       readonly won: boolean;
     }
+  | DryRunOrderLogEvent
   | { readonly kind: "error"; readonly message: string };
 
 /**
@@ -90,6 +97,8 @@ export type DryRunLogEvent =
  *      close of the about-to-finalize bar, build a synthetic bar
  *      object, run the committee, and persist the decision if it's
  *      not an abstain.
+ *   4. For non-abstain decisions, simulate the configured post-open
+ *      Polymarket order and track whether it fills before expiry.
  *
  * The dry-run loop is single-threaded by design — all state lives
  * in the closure, no locking required. Persistence is the only
@@ -150,6 +159,10 @@ export async function runDryRun({
   for (const asset of assets) {
     pendingByAsset.set(asset, new Map());
   }
+  const orderSimulator = createDryRunOrderSimulator({
+    db,
+    log: (event) => log(event),
+  });
 
   const handle = streamPythHermes({
     assets: [...assets],
@@ -214,6 +227,7 @@ export async function runDryRun({
     while (running) {
       try {
         const now = Date.now();
+        await orderSimulator.tick({ nowMs: now });
         const nextBoundary = Math.ceil(now / FIVE_MIN_MS) * FIVE_MIN_MS;
         const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
         if (now >= fireTime) {
@@ -229,6 +243,7 @@ export async function runDryRun({
               roster,
               candidatesByKey,
               pendingByAsset,
+              orderSimulator,
               log,
             });
           }
@@ -246,6 +261,7 @@ export async function runDryRun({
   return {
     async stop(): Promise<void> {
       running = false;
+      await orderSimulator.stop();
       await handle.stop();
     },
   };
@@ -258,6 +274,7 @@ async function makePrediction({
   roster,
   candidatesByKey,
   pendingByAsset,
+  orderSimulator,
   log,
 }: {
   readonly db: DatabaseClient;
@@ -266,6 +283,7 @@ async function makePrediction({
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
   readonly pendingByAsset: Map<Asset, Map<number, string>>;
+  readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   // Build a synthetic CLOSED bar for the bar that's about to end.
@@ -312,10 +330,20 @@ async function makePrediction({
       }
     }
   }
-  const { decision } =
+  const { decision, votes } =
     rosterCandidates.length === 0
-      ? { decision: { prediction: null, up: 0, down: 0, abstain: 0 } as const }
+      ? {
+          decision: { prediction: null, up: 0, down: 0, abstain: 0 } as const,
+          votes: [],
+        }
       : evaluateCommittee({ bars, candidates: rosterCandidates });
+  const effectiveVotes = selectEffectiveCommitteeVotes({ votes });
+  const orderConfidence = averageWinningVoteConfidence({
+    prediction: decision.prediction,
+    winRates: effectiveVotes
+      .filter((vote) => vote.prediction === decision.prediction)
+      .map((vote) => vote.selection.winRate),
+  });
   log({
     kind: "decision",
     asset: state.asset,
@@ -361,6 +389,7 @@ async function makePrediction({
         up: decision.up,
         down: decision.down,
         abstain: decision.abstain,
+        avgWinningVoteConfidence: orderConfidence,
       }),
       market_regime: marketRegime,
     })
@@ -370,6 +399,13 @@ async function makePrediction({
   if (pending !== undefined) {
     pending.set(targetTsMs, String(inserted.id));
   }
+  await orderSimulator.scheduleOrder({
+    decisionId: String(inserted.id),
+    asset: state.asset,
+    prediction,
+    targetTsMs,
+    confidence: orderConfidence,
+  });
 }
 
 async function finalizeAndScore({

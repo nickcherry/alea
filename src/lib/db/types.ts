@@ -1,3 +1,4 @@
+import type { DryRunOrderStatus } from "@alea/constants/dryRun";
 import type { CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
 import type { CandleSource } from "@alea/types/sources";
@@ -139,6 +140,26 @@ export interface DryRunDecisionTable {
   readonly actual_close: number | null;
   readonly won: number | null;
   readonly market_regime: string | null;
+  readonly order_status: Generated<DryRunOrderStatus>;
+  readonly order_placed_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly order_observed_price: number | null;
+  readonly order_limit_price: number | null;
+  readonly order_confidence: number | null;
+  readonly order_filled_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly order_fill_price: number | null;
+  readonly order_expires_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
 }
 
 export interface BarRegimeTable {

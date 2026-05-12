@@ -194,7 +194,7 @@
     }
     if (rows.length === 0) {
       recentBody.innerHTML =
-        '<tr><td colspan="8"><span class="alea-muted">No decisions yet for this period.</span></td></tr>';
+        '<tr><td colspan="9"><span class="alea-muted">No decisions yet for this period.</span></td></tr>';
       return;
     }
     recentBody.innerHTML = rows.map(renderRecentRow).join("");
@@ -249,10 +249,64 @@
       moveCell +
       "</td>" +
       "<td>" +
+      renderOrderCell(row) +
+      "</td>" +
+      "<td>" +
       outcome +
       "</td>" +
       "</tr>"
     );
+  }
+
+  function renderOrderCell(row) {
+    var status = row.orderStatus || "untracked";
+    var label = formatOrderStatus(status);
+    var cls = "dry-run-order";
+    if (status === "filled") cls += " filled";
+    else if (status === "unfilled") cls += " unfilled";
+    else if (status === "placed" || status === "pending_placement")
+      cls += " pending";
+    else if (status.indexOf("skipped") === 0) cls += " skipped";
+    else return '<span class="alea-muted">' + escapeHtml(label) + "</span>";
+    return (
+      '<span class="' +
+      cls +
+      '">' +
+      escapeHtml(label.toUpperCase()) +
+      "</span>" +
+      renderOrderPriceBits(row)
+    );
+  }
+
+  function renderOrderPriceBits(row) {
+    var bits = [];
+    if (row.orderLimitPrice !== null && row.orderLimitPrice !== undefined) {
+      bits.push("limit " + formatCents(row.orderLimitPrice));
+    }
+    if (row.orderFillPrice !== null && row.orderFillPrice !== undefined) {
+      bits.push("fill " + formatCents(row.orderFillPrice));
+    }
+    if (row.orderConfidence !== null && row.orderConfidence !== undefined) {
+      bits.push("conf " + formatCents(row.orderConfidence));
+    }
+    return bits.length === 0
+      ? ""
+      : '<span class="dry-run-order-detail">' +
+          escapeHtml(bits.join(" · ")) +
+          "</span>";
+  }
+
+  function formatOrderStatus(status) {
+    if (status === "pending_placement") return "pending";
+    if (status === "skipped_no_market") return "skip no market";
+    if (status === "skipped_no_price") return "skip no price";
+    if (status === "skipped_price_window") return "skip price";
+    if (status === "skipped_confidence") return "skip edge";
+    return String(status).replace(/_/g, " ");
+  }
+
+  function formatCents(value) {
+    return (Number(value) * 100).toFixed(1) + "c";
   }
 
   function renderMoveCell(synthOpen, actualClose) {

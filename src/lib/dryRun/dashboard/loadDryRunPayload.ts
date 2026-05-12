@@ -1,6 +1,11 @@
 import "@alea/lib/filters/all";
 
 import {
+  DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
+  DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
+  DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
+} from "@alea/constants/dryRun";
+import {
   MAX_COMMITTEE_VOTES_PER_FILTER,
   MIN_COMMITTEE_CONSENSUS_FRACTION,
   MIN_COMMITTEE_VOTES_TO_TRADE,
@@ -82,6 +87,11 @@ type DryRunDecisionRow = {
   readonly won: number | null;
   readonly market_regime: string | null;
   readonly regime_votes: unknown;
+  readonly order_status: string;
+  readonly order_observed_price: number | null;
+  readonly order_limit_price: number | null;
+  readonly order_confidence: number | null;
+  readonly order_fill_price: number | null;
 };
 
 export async function loadDryRunPayload({
@@ -109,6 +119,11 @@ export async function loadDryRunPayload({
       "won",
       "market_regime",
       "regime_votes",
+      "order_status",
+      "order_observed_price",
+      "order_limit_price",
+      "order_confidence",
+      "order_fill_price",
     ])
     .orderBy("ts_ms", "desc")
     .execute();
@@ -116,7 +131,6 @@ export async function loadDryRunPayload({
   const allRows = allRowsRaw as readonly DryRunDecisionRow[];
 
   const recent: DryRunDashboardRecentRow[] = allRows
-    .filter((r) => r.won !== null)
     .slice(0, RECENT_LIMIT)
     .map((r) => ({
       id: String(r.id),
@@ -129,6 +143,11 @@ export async function loadDryRunPayload({
       actualClose: r.actual_close,
       won: r.won,
       marketRegime: r.market_regime,
+      orderStatus: r.order_status,
+      orderObservedPrice: r.order_observed_price,
+      orderLimitPrice: r.order_limit_price,
+      orderConfidence: r.order_confidence,
+      orderFillPrice: r.order_fill_price,
     }));
 
   const candidateCount = listCommitteeCandidates().length;
@@ -151,6 +170,9 @@ export async function loadDryRunPayload({
       minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
       minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
       filterTieBreak: TRADE_DECISION_FILTER_TIE_BREAK,
+      orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
+      orderPriceWindowCents: DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
+      orderLimitOffsetCents: DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
     },
     byPeriod,
     recent,

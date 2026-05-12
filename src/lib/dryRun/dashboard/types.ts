@@ -39,6 +39,9 @@ export type DryRunDecisionConfig = {
   readonly minVotesToTrade: number;
   readonly minConsensusFraction: number;
   readonly filterTieBreak: string;
+  readonly orderPlacementDelayMs: number;
+  readonly orderPriceWindowCents: number;
+  readonly orderLimitOffsetCents: number;
 };
 
 export type DryRunDashboardAssetRow = {
@@ -64,6 +67,11 @@ export type DryRunDashboardRecentRow = {
   readonly actualClose: number | null;
   readonly won: number | null;
   readonly marketRegime: string | null;
+  readonly orderStatus: string;
+  readonly orderObservedPrice: number | null;
+  readonly orderLimitPrice: number | null;
+  readonly orderConfidence: number | null;
+  readonly orderFillPrice: number | null;
 };
 
 export type DryRunDashboardRegimeAggregate = {
@@ -109,7 +117,7 @@ export type DryRunDashboardPayload = {
    */
   readonly byPeriod: { readonly [period: string]: DryRunDashboardPeriodSlice };
   /**
-   * Newest-first list of settled decisions across every period. The
+   * Newest-first list of decisions across every period. The
    * page renders this client-side filtered by the active period tab.
    */
   readonly recent: readonly DryRunDashboardRecentRow[];

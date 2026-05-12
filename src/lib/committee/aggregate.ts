@@ -31,6 +31,15 @@ export function aggregateCommittee({
   return { prediction, ...tallies };
 }
 
+export function selectEffectiveCommitteeVotes({
+  votes,
+}: {
+  readonly votes: readonly CandidateVote[];
+}): readonly CandidateVote[] {
+  const byFilterId = selectEffectiveVotesByFilter({ votes });
+  return Array.from(byFilterId.values()).flat();
+}
+
 function tallyEffectiveVotes({
   votes,
 }: {
