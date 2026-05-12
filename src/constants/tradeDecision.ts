@@ -54,7 +54,7 @@ export const TRADE_DECISION_HYDRATE_BARS = 150;
 export const MAX_COMMITTEE_VOTES_PER_FILTER = 1;
 
 /** Minimum non-abstain, filter-collapsed votes required to trade. */
-export const MIN_COMMITTEE_VOTES_TO_TRADE = 1;
+export const MIN_COMMITTEE_VOTES_TO_TRADE = 2;
 
 /**
  * Minimum share of non-abstain votes that the winning side must

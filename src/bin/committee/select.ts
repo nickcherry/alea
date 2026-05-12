@@ -43,8 +43,8 @@ export const committeeSelectCommand = defineCommand({
     const rules = DEFAULT_COMMITTEE_SELECTION_RULES;
     io.writeStdout(
       `${pc.dim("rules:")} minEngagements=${rules.minEngagements} ` +
-        `aggWR>=${(rules.minAggregateWinRate * 100).toFixed(0)}% ` +
-        `worstQ WR>=${(rules.minWorstQuarterWinRate * 100).toFixed(0)}% ` +
+        `aggWR>=${(rules.minAggregateWinRate * 100).toFixed(1)}% ` +
+        `worstQ WR>=${(rules.minWorstQuarterWinRate * 100).toFixed(1)}% ` +
         `(q>=${rules.worstQuarterMinEngagements} engagements) ` +
         `top=${rules.topN}\n\n`,
     );

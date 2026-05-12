@@ -31,8 +31,8 @@ committee, **within that regime** it must clear:
 | Rule                       | Default | Why                                             |
 | -------------------------- | ------- | ----------------------------------------------- |
 | Min engagements in regime  | `≥ 20`  | Below this the WR is too noisy to act on        |
-| Aggregate WR in regime     | `≥ 53%` | Proves a base-rate edge over coin-flip          |
-| Worst-quarter WR in regime | `≥ 50%` | Rejects "one good year, several bad" candidates |
+| Aggregate WR in regime     | `≥ 53.8%` | Proves a base-rate edge over coin-flip          |
+| Worst-quarter WR in regime | `≥ 52%` | Rejects "one good year, several bad" candidates |
 
 The worst-quarter check only applies to quarters with at least 10
 engagements inside this regime. Candidates with no quarter that meaningful
@@ -54,10 +54,10 @@ Qualifying candidates are **ranked by Wilson 95% lower bound desc**
 in the ranking even after they cleared the absolute eligibility
 floor, so a 20-engagement 80% candidate gets admitted but ranks below a
 500-engagement 60% candidate. For each `filter_id`, keep only the
-highest-ranked config, then take the **top 20 distinct filters**.
+highest-ranked config, then take the **top 17 distinct filters**.
 
-Final selection: top 20 distinct filters per `(market_regime, period)`.
-With 4 regimes × 2 periods = 8 buckets, the table holds up to 160 rows.
+Final selection: top 17 distinct filters per `(market_regime, period)`.
+With 4 regimes × 2 periods = 8 buckets, the table holds up to 136 rows.
 
 ```sh
 bun alea committee:select
@@ -135,14 +135,14 @@ Critical decision settings live in
 | `TRADE_DECISION_LEAD_TIME_MS`      |     `5000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `1` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `2` | Minimum non-abstain votes after filter collapse                                     |
 | `MIN_COMMITTEE_CONSENSUS_FRACTION` |      `0.5` | Winning side must hold at least this share; ties still abstain                      |
 | `TRADE_DECISION_FILTER_TIE_BREAK`  | highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
 With the current constants, the final decision is simple majority
-after filter-level vote collapse. A single engaged filter can trade;
-raising `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both dry-run
-and live.
+after filter-level vote collapse, with at least two engaged filters
+required. Changing `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both
+dry-run and live.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See

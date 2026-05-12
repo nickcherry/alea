@@ -24,10 +24,10 @@ export type CommitteeSelectionRules = {
 
 export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minEngagements: 20,
-  minAggregateWinRate: 0.53,
-  minWorstQuarterWinRate: 0.5,
+  minAggregateWinRate: 0.538,
+  minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 10,
-  topN: 20,
+  topN: 17,
 };
 
 /** Inputs the ranking sees about a single (candidate, regime). */

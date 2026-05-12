@@ -67,6 +67,11 @@ describe("aggregateCommittee", () => {
 
   it("does not let an abstaining high-win-rate config block an engaged config for the same filter", () => {
     const decision = aggregateCommittee({
+      rules: {
+        maxVotesPerFilter: 1,
+        minVotesToTrade: 1,
+        minConsensusFraction: 0.5,
+      },
       votes: [
         vote({
           filterId: "rsi_mean_rev",
@@ -87,6 +92,25 @@ describe("aggregateCommittee", () => {
 
     expect(decision).toEqual({
       prediction: "up",
+      up: 1,
+      down: 0,
+      abstain: 0,
+    });
+  });
+
+  it("requires the default minimum vote count before producing a trade", () => {
+    const decision = aggregateCommittee({
+      votes: [
+        vote({
+          filterId: "rsi_mean_rev",
+          prediction: "up",
+          winRate: 0.55,
+        }),
+      ],
+    });
+
+    expect(decision).toEqual({
+      prediction: null,
       up: 1,
       down: 0,
       abstain: 0,
