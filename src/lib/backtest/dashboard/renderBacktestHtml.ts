@@ -66,7 +66,7 @@ export function renderBacktestHtml({
       })}
       ${renderProfile({ payload, initialPeriod })}
       ${renderPnlChart()}
-      ${renderPeriodTable({ rows: payload.byPeriod, initialPeriod })}
+      ${renderTradeActivity({ rows: payload.byPeriod, initialPeriod })}
       ${renderAssetTable({ rows: payload.byAsset, initialPeriod })}
       ${renderTopCandidateTable({
         rows: payload.topCandidates,
@@ -189,54 +189,42 @@ function renderProfile({
   </details>`;
 }
 
-function renderPeriodTable({
+function renderTradeActivity({
   rows,
   initialPeriod,
 }: {
   readonly rows: readonly BacktestDashboardPeriodRow[];
   readonly initialPeriod: string;
 }): string {
+  const periodRow = rows.find((row) => row.period === initialPeriod) ?? null;
+  const trades = periodRow?.nEngagements ?? 0;
+  const possible =
+    periodRow === null ? 0 : periodRow.nBarsMax * periodRow.runCount;
+  const tradeRate =
+    periodRow === null || possible === 0 ? null : trades / possible;
   return `<section class="alea-panel backtest-panel">
-    <div class="alea-section-rule"><h2>Periods <span class="backtest-section-context">all assets</span></h2></div>
+    <div class="alea-section-rule"><h2>Trade activity <span id="backtest-activity-context" class="backtest-section-context"></span></h2></div>
     <div class="alea-table-wrap">
-      <table class="alea-table backtest-table">
+      <table class="alea-table backtest-table backtest-activity-table">
         <thead>
           <tr>
-            <th>Period</th>
-            <th>Coverage</th>
-            <th>Assets</th>
-            <th>Engagements</th>
-            <th>WR</th>
-            <th>Bars</th>
-            <th>Latest</th>
-            <th>Range</th>
+            <th>Trades</th>
+            <th>Possible</th>
+            <th>Trade rate</th>
+            <th>Win rate</th>
           </tr>
         </thead>
         <tbody>
-          ${rows.map((row) => renderPeriodRow({ row, initialPeriod })).join("")}
+          <tr>
+            <td id="backtest-activity-trades" class="alea-mono backtest-activity-num">${trades.toLocaleString()}</td>
+            <td id="backtest-activity-possible" class="alea-mono backtest-activity-num">${possible.toLocaleString()}</td>
+            <td id="backtest-activity-trade-rate" class="alea-mono backtest-activity-num">${formatPercentOrDash({ value: tradeRate })}</td>
+            <td id="backtest-activity-win-rate" class="${winRateCellClass({ value: periodRow?.winRate ?? null })} backtest-activity-num">${formatPercentOrDash({ value: periodRow?.winRate ?? null })}</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </section>`;
-}
-
-function renderPeriodRow({
-  row,
-  initialPeriod,
-}: {
-  readonly row: BacktestDashboardPeriodRow;
-  readonly initialPeriod: string;
-}): string {
-  return `<tr data-backtest-period="${escapeHtml({ value: row.period })}"${hiddenUnlessActive({ period: row.period, initialPeriod })}>
-    <th>${escapeHtml({ value: row.period })}</th>
-    <td>${formatCoverage({ runCount: row.runCount, expectedRunCount: row.expectedRunCount })}</td>
-    <td>${row.assetCount.toLocaleString()}</td>
-    <td>${row.nEngagements.toLocaleString()}</td>
-    <td class="${winRateCellClass({ value: row.winRate })}">${formatPercentOrDash({ value: row.winRate })}</td>
-    <td>${row.nBarsMax.toLocaleString()}</td>
-    <td>${formatDateTimeOrDash({ ms: row.computedAtMaxMs })}</td>
-    <td>${formatDateOrDash({ ms: row.rangeFirstMs })} to ${formatDateOrDash({ ms: row.rangeLastMs })}</td>
-  </tr>`;
 }
 
 function renderAssetTable({

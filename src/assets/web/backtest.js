@@ -73,6 +73,7 @@
     renderAssetRows();
     renderCandidates();
     renderProfile();
+    renderActivity();
     renderSectionContext();
     renderChart();
   }
@@ -190,6 +191,28 @@
     setText("backtest-pnl-context", "/ " + label);
     setText("backtest-profile-context", "/ " + label);
     setText("backtest-candidates-context", "/ " + label);
+    setText("backtest-activity-context", "/ " + label);
+  }
+
+  function renderActivity() {
+    var stats = profileStats();
+    var trades = Number(stats.nEngagements || 0);
+    var bars = Number(stats.nBarsMax || 0);
+    var runs = Number(stats.runCount || 0);
+    var possible = bars * runs;
+    var tradeRate = possible === 0 ? null : trades / possible;
+    setText("backtest-activity-trades", trades.toLocaleString());
+    setText(
+      "backtest-activity-possible",
+      possible > 0 ? possible.toLocaleString() : "—",
+    );
+    setText("backtest-activity-trade-rate", formatPercent(tradeRate));
+    setText("backtest-activity-win-rate", formatPercent(stats.winRate));
+    var wrCell = document.getElementById("backtest-activity-win-rate");
+    if (wrCell) {
+      wrCell.className =
+        wrCellClass(stats.winRate) + " backtest-activity-num";
+    }
   }
 
   function profileStats() {
@@ -208,6 +231,7 @@
       runCount: assetRow.runCount,
       expectedRunCount: assetRow.expectedRunCount,
       nEngagements: assetRow.nEngagements,
+      nBarsMax: assetRow.nBarsMax,
       nWins: assetRow.nWins,
       winRate: assetRow.winRate,
       computedAtMaxMs: assetRow.computedAtMaxMs,
@@ -221,6 +245,7 @@
       runCount: 0,
       expectedRunCount: 0,
       nEngagements: 0,
+      nBarsMax: 0,
       nWins: 0,
       winRate: null,
       computedAtMaxMs: null,
