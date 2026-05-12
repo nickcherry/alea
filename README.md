@@ -1,16 +1,13 @@
 # Alea
 
-Filter-committee research toolkit for Polymarket's crypto up/down
-markets. We train dozens of small predictive filters against
-three years of Pyth/spot candles across every traded asset,
-classify each historical bar by market regime, select the
-best-performing candidates per regime, and run the resulting
-committee against live Pyth ticks in a dry-run loop.
+Filter-committee research toolkit for Polymarket crypto up/down
+markets. Alea trains deterministic Pyth-candle filters, selects a
+regime-aware trade committee, replays that committee over a holdout
+window, and runs the same voting path in dry-run/live trading.
 
-The strategy: pre-window directional prediction (will the next 5m
-or 15m candle close green or red?) paired with Polymarket maker
-orders at ~50¢. Zero fees, ~1:1 risk-reward, so the win rate IS the
-edge.
+The strategy is directional prediction before the next `5m` or `15m`
+candle closes, paired with Polymarket maker orders near 50c. With zero
+fees and roughly 1:1 risk/reward, win rate is the edge.
 
 ## Terminology
 
@@ -22,119 +19,50 @@ rows" in operator notes, status checks, or docs.
 Reserve **backtest** for the holdout replay that simulates trade
 committee decisions without order-book or fill modeling.
 
-## Research windows
-
-Configured research windows live in
-[`src/constants/researchWindows.ts`](./src/constants/researchWindows.ts).
-Training starts at the earliest matching Pyth spot candle available in
-the local DB and ends at the close of Q1 2026
-(`2026-03-31T23:59:59.999Z`). The committee backtest holdout starts
-immediately after that (`2026-04-01T00:00:00.000Z`) and runs through
-yesterday in UTC.
-
-`training:run` generates filter training artifacts for the training
-window. `backtest:run` replays the selected trade committee over the
-backtest window without Polymarket order-book simulation, so voting,
-consensus, weighting, and sizing logic can iterate quickly before
-dry-run or live trading.
-
 ## How the pieces fit
 
-1. **Filters** are tiny deterministic predictors that emit
-   `"up" | "down" | null` from a trailing bar window. See
-   [FILTERS.md](./doc/FILTERS.md).
-2. **Filter training** evaluates every `(filter, config, period,
-   asset)` candidate against the cached candles, persisting
-   per-engagement rows to `filter_engagements` and aggregates to
-   `filter_runs`. See [TRAINING.md](./doc/TRAINING.md).
-3. **Market regimes** classify every historical bar into one of
-   `{low_vol, high_vol} × {trending, ranging}`. The classifier and
-   the `bar_regimes` table let us stratify training stats by
-   regime. See [REGIMES.md](./doc/REGIMES.md).
-4. **Trading committee** picks the top-N candidates per regime
-   using regime-stratified training stats, persisting the voter
-   roster to `committee_selections`. At decision time only the
-   roster for the current regime gets to vote. See
-   [COMMITTEE.md](./doc/COMMITTEE.md).
-5. **Backtest** replays the selected committee over the holdout window
-   without order-book or fill modeling. See
-   [BACKTEST.md](./doc/BACKTEST.md).
-6. **Dry-run loop** streams live Pyth ticks, classifies the
-   current regime, asks the regime's committee to predict the next
-   5m and 15m bars by default, persists every decision to
-   `dry_run_decisions`, simulates the configured post-open
-   Polymarket order, and scores the signal once the bar closes. No
-   real orders are placed today; live trading will share this exact
-   decision path. See [DRY_RUN.md](./doc/DRY_RUN.md).
-7. **Dashboards** are static HTML pages built from the same data
-   and deployed to a Cloudflare Worker. The exploration page
-   surfaces regime-stratified filter performance; the trade committee
-   page surfaces the selected voter roster and selection gates; the
-   dry-run page surfaces the live committee's hit rate. See
-   [DASHBOARDS.md](./doc/DASHBOARDS.md).
+1. **Training** evaluates filter/config/period/asset candidates and
+   writes `filter_runs` + `filter_engagements`.
+2. **Regimes** tag historical bars as low/high volatility and
+   trending/ranging.
+3. **Committee selection** picks the best candidates per
+   `(market_regime, period)` and writes `committee_selections`.
+4. **Backtest** replays the selected committee over the holdout window
+   without Polymarket order-book or fill modeling.
+5. **Dry run / live** use the same committee voting logic; only order
+   placement differs.
+6. **Dashboards** expose proxy calibration, price paths, exploration,
+   committee roster, backtest, dry run, and live performance.
 
-## Research lifecycle
-
-The dashboard sequence is the operating map:
-
-| Phase                 | Page            | Purpose                                                                                                                        |
-| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Proxy calibration     | Proxy accuracy  | Check whether Pyth is reliable enough as the historical training proxy for Polymarket settlement.                              |
-| Market microstructure | Price paths     | Learn how quickly Polymarket UP/DOWN prices move away from 50c, which informs realistic order timing assumptions.              |
-| Candidate research    | Exploration     | Compare filter/config candidates on historical predictive behavior, prune weak families, and identify where to explore next.   |
-| Roster construction   | Trade committee | Inspect which candidates were selected per regime and whether the selection thresholds are calibrated.                         |
-| Backtest              | Backtest        | Inspect the latest committee holdout replay: decisions, scored trades, WR, PnL proxy, and period/asset/regime breakdowns.      |
-| Live-like rehearsal   | Dry run         | Run the live decision path without real orders, including Polymarket market discovery, quote observation, and fill simulation. |
-| Production            | Live trading    | Track realized performance from real capital and real order placement.                                                         |
+Research windows live in
+[`src/constants/researchWindows.ts`](./src/constants/researchWindows.ts).
+Training ends at `2026-03-31T23:59:59.999Z`; the committee backtest
+starts at `2026-04-01T00:00:00.000Z` and runs through yesterday UTC.
 
 ## Docs
 
-### Subsystems
+- [Backtest](./doc/BACKTEST.md) — committee holdout replay.
+- [CLI](./doc/CLI.md) — command structure and side effects.
+- [Coding Conventions](./doc/CODING_CONVENTIONS.md) — TypeScript and repo style.
+- [Committee](./doc/COMMITTEE.md) — selection, ranking, voting.
+- [Dashboards](./doc/DASHBOARDS.md) — static dashboard build/deploy.
+- [Documentation](./doc/DOCUMENTATION.md) — doc maintenance rules.
+- [Dry Run](./doc/DRY_RUN.md) — live decision path without real orders.
+- [Filters](./doc/FILTERS.md) — filter contract and registry.
+- [How To Work With Nick](./doc/HOW_TO_WORK_WITH_NICK.md) — collaboration preferences.
+- [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — feed-latency research.
+- [Market Capture](./doc/MARKET_CAPTURE.md) — long-running market tape capture.
+- [Polymarket](./doc/POLYMARKET.md) — Polymarket integration and price paths.
+- [Proxy Accuracy](./doc/PROXY.md) — Pyth vs Polymarket settlement agreement.
+- [Regimes](./doc/REGIMES.md) — market regime classifier.
+- [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) — proxy-feed reliability.
+- [Sweeping](./doc/SWEEPING.md) — committee selection/voting sweep plan.
+- [Training](./doc/TRAINING.md) — filter training artifacts.
 
-- [Filters](./doc/FILTERS.md) — the filter framework + the no-leak
-  invariant + the registry.
-- [Filter Training](./doc/TRAINING.md) — walker, cache, storage
-  schema, quarter buckets.
-- [Backtest](./doc/BACKTEST.md) — committee holdout replay without
-  order-book or fill modeling.
-- [Regimes](./doc/REGIMES.md) — market regime classifier + the
-  `bar_regimes` table + backfill.
-- [Trading Committee](./doc/COMMITTEE.md) — selection eligibility,
-  ranking, regime-scoped voting.
-- [Dry Run](./doc/DRY_RUN.md) — live Pyth loop, synthetic bars,
-  decision persistence.
-- [Dashboards](./doc/DASHBOARDS.md) — design contract + Cloudflare
-  Worker deployment.
+Research artifacts:
 
-### Operator workflows
-
-- [CLI](./doc/CLI.md) — command structure, families, side effects.
-- [Polymarket Price Paths](./doc/POLYMARKET.md) —
-  `bun alea polymarket:price-sample` records live 5m/15m UP price
-  paths so we can calibrate how quickly prices move away from 50¢;
-  the Price Paths dashboard page visualizes that behavior.
-- [Market Capture](./doc/MARKET_CAPTURE.md) — long-running tape
-  recorder for Polymarket market data, Pyth spot ticks, and
-  Polymarket Chainlink reference events.
-- [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — finding the
-  fastest useful leading-indicator feeds.
-- [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) —
-  checking whether fast exchange-feed proxies are reliable enough
-  for Polymarket-side training.
-- [Proxy Accuracy](./doc/PROXY.md) — historical agreement between
-  Pyth open/close and Polymarket's Chainlink-derived settlement,
-  used to calibrate the training threshold.
-
-### Engineering
-
-- [Polymarket Integration](./doc/POLYMARKET.md) — endpoint
-  contracts.
-- [Coding Conventions](./doc/CODING_CONVENTIONS.md) — repo
-  structure, TypeScript style, testing expectations.
-- [Documentation](./doc/DOCUMENTATION.md) — how docs are written
-  and maintained.
-- [How To Work With Nick](./doc/HOW_TO_WORK_WITH_NICK.md) —
-  collaboration preferences.
+- [Filter Prune 2026-05-11](./doc/results-artifacts/filter-prune-2026-05-11.md)
+- [Round 2 Price Filter Prune 2026-05-12](./doc/results-artifacts/round2-price-filter-prune-2026-05-12.md)
 
 ## Typical workflow
 
@@ -146,7 +74,8 @@ bun alea candles:sync            # refresh pyth-spot candles (if needed)
 bun alea training:run            # refresh filter training artifacts
 bun alea regimes:backfill        # re-classify every bar (if classifier changed)
 bun alea committee:select        # rebuild the regime-scoped voter roster
-bun alea backtest:run            # replay the committee over the holdout window
+bun alea backtest:run            # replay latest selected committee
+bun alea backtest:sweep-committee # explore committee thresholds without mutating roster
 bun alea dashboards:build --deploy
 # restart any running `bun alea dry:run` to pick up the new roster
 ```

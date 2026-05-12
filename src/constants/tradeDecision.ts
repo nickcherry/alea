@@ -16,6 +16,12 @@ export const TRADE_DECISION_SUPPORTED_PERIODS = ["5m", "15m"] as const;
 export type TradeDecisionPeriod =
   (typeof TRADE_DECISION_SUPPORTED_PERIODS)[number];
 
+export type CommitteeDecisionRules = {
+  readonly maxVotesPerFilter: number;
+  readonly minVotesToTrade: number;
+  readonly minConsensusFraction: number;
+};
+
 /**
  * Candle periods the dry-run trader predicts when the CLI does not
  * provide an override.
@@ -55,6 +61,12 @@ export const MIN_COMMITTEE_VOTES_TO_TRADE = 1;
  * hold. Ties still abstain separately, so 0.5 is simple majority.
  */
 export const MIN_COMMITTEE_CONSENSUS_FRACTION = 0.5;
+
+export const DEFAULT_COMMITTEE_DECISION_RULES: CommitteeDecisionRules = {
+  maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
+  minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
+  minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
+};
 
 export const TRADE_DECISION_FILTER_TIE_BREAK =
   "highest_win_rate_then_engagements_then_rank";

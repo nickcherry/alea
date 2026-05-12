@@ -1,5 +1,9 @@
 import "@alea/lib/filters/all";
 
+import {
+  type CommitteeDecisionRules,
+  DEFAULT_COMMITTEE_DECISION_RULES,
+} from "@alea/constants/tradeDecision";
 import { aggregateCommittee } from "@alea/lib/committee/aggregate";
 import {
   type CandidateVote,
@@ -30,9 +34,11 @@ export function listCommitteeCandidates(): readonly Candidate[] {
 export function evaluateCommittee({
   bars,
   candidates,
+  decisionRules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
   readonly bars: readonly FilterBar[];
   readonly candidates?: readonly (Candidate | CommitteeCandidate)[];
+  readonly decisionRules?: CommitteeDecisionRules;
 }): {
   readonly decision: CommitteeDecision;
   readonly votes: readonly CandidateVote[];
@@ -56,7 +62,7 @@ export function evaluateCommittee({
     }
     votes.push({ candidate: cand, prediction, selection: voter.selection });
   }
-  const decision = aggregateCommittee({ votes });
+  const decision = aggregateCommittee({ votes, rules: decisionRules });
   return { decision, votes };
 }
 

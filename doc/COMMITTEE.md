@@ -40,6 +40,10 @@ skip the check (sparse + high-WR is admissible).
 
 Defaults live in
 [`DEFAULT_COMMITTEE_SELECTION_RULES`](../src/lib/committee/selection/types.ts).
+Sweep experiments over these knobs live in
+[`SWEEPING.md`](./SWEEPING.md) and should be run through
+`bun alea backtest:sweep-committee` rather than by editing constants
+between trials.
 The eligibility rule is the same shape for every regime — there's
 no auto-relaxation for rare regimes today. If a regime ends up with
 < 10 qualifiers under the current rules, the committee will be

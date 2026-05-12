@@ -1,7 +1,6 @@
 import {
-  MAX_COMMITTEE_VOTES_PER_FILTER,
-  MIN_COMMITTEE_CONSENSUS_FRACTION,
-  MIN_COMMITTEE_VOTES_TO_TRADE,
+  type CommitteeDecisionRules,
+  DEFAULT_COMMITTEE_DECISION_RULES,
 } from "@alea/constants/tradeDecision";
 import type {
   CandidateVote,
@@ -23,29 +22,39 @@ import type { FilterPrediction } from "@alea/lib/filters/types";
  */
 export function aggregateCommittee({
   votes,
+  rules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
   readonly votes: readonly CandidateVote[];
+  readonly rules?: CommitteeDecisionRules;
 }): CommitteeDecision {
-  const tallies = tallyEffectiveVotes({ votes });
-  const prediction = resolvePrediction({ up: tallies.up, down: tallies.down });
+  const tallies = tallyEffectiveVotes({ votes, rules });
+  const prediction = resolvePrediction({
+    up: tallies.up,
+    down: tallies.down,
+    rules,
+  });
   return { prediction, ...tallies };
 }
 
 export function selectEffectiveCommitteeVotes({
   votes,
+  rules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
   readonly votes: readonly CandidateVote[];
+  readonly rules?: CommitteeDecisionRules;
 }): readonly CandidateVote[] {
-  const byFilterId = selectEffectiveVotesByFilter({ votes });
+  const byFilterId = selectEffectiveVotesByFilter({ votes, rules });
   return Array.from(byFilterId.values()).flat();
 }
 
 function tallyEffectiveVotes({
   votes,
+  rules,
 }: {
   readonly votes: readonly CandidateVote[];
+  readonly rules: CommitteeDecisionRules;
 }): Omit<CommitteeDecision, "prediction"> {
-  const byFilterId = selectEffectiveVotesByFilter({ votes });
+  const byFilterId = selectEffectiveVotesByFilter({ votes, rules });
   let up = 0;
   let down = 0;
   let abstain = 0;
@@ -67,8 +76,10 @@ function tallyEffectiveVotes({
 
 function selectEffectiveVotesByFilter({
   votes,
+  rules,
 }: {
   readonly votes: readonly CandidateVote[];
+  readonly rules: CommitteeDecisionRules;
 }): ReadonlyMap<string, readonly CandidateVote[]> {
   const byFilterId = new Map<string, CandidateVote[]>();
   for (const vote of votes) {
@@ -83,11 +94,11 @@ function selectEffectiveVotesByFilter({
     }
   }
   for (const [filterId, selected] of byFilterId) {
-    if (selected.length <= MAX_COMMITTEE_VOTES_PER_FILTER) {
+    if (selected.length <= rules.maxVotesPerFilter) {
       continue;
     }
     selected.sort(compareFilterVotes);
-    byFilterId.set(filterId, selected.slice(0, MAX_COMMITTEE_VOTES_PER_FILTER));
+    byFilterId.set(filterId, selected.slice(0, rules.maxVotesPerFilter));
   }
   return byFilterId;
 }
@@ -113,12 +124,14 @@ function compareFilterVotes(a: CandidateVote, b: CandidateVote): number {
 function resolvePrediction({
   up,
   down,
+  rules,
 }: {
   readonly up: number;
   readonly down: number;
+  readonly rules: CommitteeDecisionRules;
 }): FilterPrediction {
   const nonAbstain = up + down;
-  if (nonAbstain < MIN_COMMITTEE_VOTES_TO_TRADE) {
+  if (nonAbstain < rules.minVotesToTrade) {
     return null;
   }
   if (up === down) {
@@ -128,7 +141,7 @@ function resolvePrediction({
   const prediction = up > down ? "up" : "down";
   const winningVotes = Math.max(up, down);
   const consensus = winningVotes / nonAbstain;
-  if (consensus < MIN_COMMITTEE_CONSENSUS_FRACTION) {
+  if (consensus < rules.minConsensusFraction) {
     return null;
   }
   return prediction;

@@ -10,9 +10,8 @@ import {
   resolveBacktestWindowEndExclusiveMs,
 } from "@alea/constants/researchWindows";
 import {
-  MAX_COMMITTEE_VOTES_PER_FILTER,
-  MIN_COMMITTEE_CONSENSUS_FRACTION,
-  MIN_COMMITTEE_VOTES_TO_TRADE,
+  type CommitteeDecisionRules,
+  DEFAULT_COMMITTEE_DECISION_RULES,
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
   type TradeDecisionPeriod,
@@ -160,18 +159,24 @@ export async function runAndPersistCommitteeBacktest({
 
 export async function runCommitteeBacktest({
   db,
+  roster,
+  decisionRules = DEFAULT_COMMITTEE_DECISION_RULES,
   startedAtMs = Date.now(),
   now = () => Date.now(),
 }: {
   readonly db: DatabaseClient;
+  readonly roster?: CommitteeRoster;
+  readonly decisionRules?: CommitteeDecisionRules;
   readonly startedAtMs?: number;
   readonly now?: () => number;
 }): Promise<CommitteeBacktestSummary> {
   const windowEndExclusiveMs = resolveBacktestWindowEndExclusiveMs({
     nowMs: startedAtMs,
   });
-  const roster = await loadCommitteeRoster({ db });
-  const rosterCandidatesByBucket = buildRosterCandidatesByBucket({ roster });
+  const activeRoster = roster ?? (await loadCommitteeRoster({ db }));
+  const rosterCandidatesByBucket = buildRosterCandidatesByBucket({
+    roster: activeRoster,
+  });
   const loaded = await loadBacktestBars({ db, windowEndExclusiveMs });
   const acc = createAccumulator();
 
@@ -181,6 +186,7 @@ export async function runCommitteeBacktest({
       windowEndExclusiveMs,
       rosterCandidatesByBucket,
       acc,
+      decisionRules,
     });
   }
 
@@ -200,14 +206,14 @@ export async function runCommitteeBacktest({
     assets: assetValues,
     tradeDecisionConfig: {
       hydrateBars: TRADE_DECISION_HYDRATE_BARS,
-      maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
-      minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
-      minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
+      maxVotesPerFilter: decisionRules.maxVotesPerFilter,
+      minVotesToTrade: decisionRules.minVotesToTrade,
+      minConsensusFraction: decisionRules.minConsensusFraction,
     },
     roster: {
-      selectedAtMs: roster.selectedAtMs,
-      bucketCount: roster.byBucket.size,
-      candidateCount: [...roster.byBucket.values()].reduce(
+      selectedAtMs: activeRoster.selectedAtMs,
+      bucketCount: activeRoster.byBucket.size,
+      candidateCount: [...activeRoster.byBucket.values()].reduce(
         (sum, list) => sum + list.length,
         0,
       ),
@@ -309,6 +315,7 @@ function replaySeries({
   windowEndExclusiveMs,
   rosterCandidatesByBucket,
   acc,
+  decisionRules,
 }: {
   readonly series: LoadedBars;
   readonly windowEndExclusiveMs: number;
@@ -317,6 +324,7 @@ function replaySeries({
     readonly CommitteeCandidate[]
   >;
   readonly acc: ReturnType<typeof createAccumulator>;
+  readonly decisionRules: CommitteeDecisionRules;
 }): void {
   for (let i = 0; i < series.bars.length - 1; i += 1) {
     const target = series.bars[i + 1]!;
@@ -355,7 +363,11 @@ function replaySeries({
       continue;
     }
 
-    const { decision } = evaluateCommittee({ bars: window, candidates });
+    const { decision } = evaluateCommittee({
+      bars: window,
+      candidates,
+      decisionRules,
+    });
     if (decision.prediction === null) {
       increment(regimeBuckets, "abstainMoments");
       continue;

@@ -15,6 +15,12 @@ bun alea backtest:run
 Each run inserts one row into `committee_backtest_runs`. The `/backtest/`
 dashboard reads the latest persisted row.
 
+Backtest summaries keep `5m` and `15m` performance separated in
+`byPeriod`, and period/asset pairs separated in `byPeriodAsset`. Use
+those breakdowns before trusting an overall win rate; a good committee
+setting should usually not depend on one timeframe carrying the whole
+result.
+
 ## Window
 
 Window settings live in
