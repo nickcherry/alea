@@ -3,7 +3,7 @@ import type { DatabaseClient } from "@alea/lib/db/types";
 
 /**
  * Voter roster used by the dry-run loop (and live trading, when it
- * exists). Maps `(market_regime, period)` to the selected candidate
+ * exists). Maps `(asset, market_regime, period)` to the selected candidate
  * keys and their selection stats in that bucket — and `selectedAtMs`
  * so the caller can warn when the roster is dramatically stale.
  *
@@ -24,13 +24,15 @@ export type CommitteeRosterMember = {
 };
 
 export function rosterBucketKey({
+  asset,
   marketRegime,
   period,
 }: {
+  readonly asset: string;
   readonly marketRegime: string;
   readonly period: string;
 }): string {
-  return `${marketRegime}|${period}`;
+  return `${asset}|${marketRegime}|${period}`;
 }
 
 export function candidateRosterKey({
@@ -59,6 +61,7 @@ export async function loadCommitteeRoster({
     .selectFrom("committee_selections")
     .select([
       "market_regime",
+      "asset",
       "period",
       "filter_id",
       "filter_version",
@@ -74,6 +77,7 @@ export async function loadCommitteeRoster({
   let selectedAtMs: number | null = null;
   for (const r of rows) {
     const bucket = rosterBucketKey({
+      asset: r.asset,
       marketRegime: r.market_regime,
       period: r.period,
     });

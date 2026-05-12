@@ -12,7 +12,7 @@ import type { FilterPrediction } from "@alea/lib/filters/types";
  * Shared trade-decision vote policy. Multiple selected configs for
  * one filter are all evaluated, but only one active vote per filter
  * can reach the final tally. When several configs of the same filter
- * engage, the one with the strongest selected-regime win rate wins
+ * engage, the one with the strongest selected asset/regime win rate wins
  * the filter slot.
  *
  * After that filter collapse, the winning side must clear the

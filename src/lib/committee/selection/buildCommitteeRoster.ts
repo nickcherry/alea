@@ -16,6 +16,7 @@ export function buildCommitteeRosterFromSelections({
   const byBucket = new Map<string, CommitteeRosterMember[]>();
   for (const selection of selections) {
     const bucket = rosterBucketKey({
+      asset: selection.asset,
       marketRegime: selection.marketRegime,
       period: selection.period,
     });

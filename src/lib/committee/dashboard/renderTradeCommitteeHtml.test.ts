@@ -20,6 +20,7 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).not.toContain('data-regime="all"');
     // The JSON payload script tag carries the row data verbatim.
     expect(html).toContain("rsi_mean_rev");
+    expect(html).toContain('data-asset="btc"');
     expect(html).toContain('data-period="15m"');
     // Top metric cards + the bucket-tile overview were removed — period
     // toggle is the page-level control and the roster derives its
@@ -61,7 +62,8 @@ function payloadFixture(): TradeCommitteePayload {
     },
     rows: [
       {
-        id: "5m|low_vol_ranging|rsi_mean_rev|1|{}",
+        id: "5m|btc|low_vol_ranging|rsi_mean_rev|1|{}",
+        asset: "btc",
         marketRegime: "low_vol_ranging",
         period: "5m",
         filterId: "rsi_mean_rev",

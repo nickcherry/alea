@@ -6,11 +6,11 @@ import type {
 
 /**
  * Apply the eligibility + ranking rules to a flat list of
- * `(candidate, regime)` stats and return the selected top-N distinct
- * filters per `(regime, period)`. Pure function — no DB, no IO — so the unit
- * tests can pin behavior without a Postgres dependency.
+ * `(candidate, asset, regime)` stats and return the selected top-N distinct
+ * filters per `(asset, regime, period)`. Pure function — no DB, no IO — so the
+ * unit tests can pin behavior without a Postgres dependency.
  *
- * Eligibility (per regime):
+ * Eligibility (per asset/regime):
  *   - `nEngagements ≥ minEngagements`
  *   - `winRate ≥ minAggregateWinRate`
  *   - `worstQuarterWinRate ≥ minWorstQuarterWinRate` when not null.
@@ -20,7 +20,7 @@ import type {
  *
  * Ranking: Wilson 95% lower bound desc, with `nEngagements` desc as
  * tie-break. Wilson LB punishes small samples in the ordering even
- * when they cleared the absolute eligibility bar, so a 20-engagement
+ * when they cleared the absolute eligibility bar, so a 90-engagement
  * 80% candidate gets in but ranks below a 500-engagement 60% candidate.
  */
 export function selectCommitteeCandidates({
@@ -33,7 +33,7 @@ export function selectCommitteeCandidates({
   const eligible = stats.filter((s) => isEligible({ stats: s, rules }));
   const byKey = new Map<string, CandidateRegimeStats[]>();
   for (const s of eligible) {
-    const key = `${s.period}|${s.marketRegime}`;
+    const key = `${s.asset}|${s.period}|${s.marketRegime}`;
     let list = byKey.get(key);
     if (list === undefined) {
       list = [];

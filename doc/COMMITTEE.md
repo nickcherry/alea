@@ -3,8 +3,8 @@
 The committee is what turns a roomful of small predictive filters
 into a single trade direction. At decision time it classifies the
 market regime, looks up which candidates qualified to vote in that
-regime, evaluates each one on the current bar window, and takes a
-trade decision from the filtered vote tally.
+asset/regime bucket, evaluates each one on the current bar window,
+and takes a trade decision from the filtered vote tally.
 
 The same logic drives the dry-run loop today and will drive live
 trading when it ships. There is no separate "live committee".
@@ -12,30 +12,30 @@ trading when it ships. There is no separate "live committee".
 ## Two phases
 
 **Selection** runs once, offline. The `committee:select` CLI scans
-regime-stratified training stats for the active training profile and
-writes the voter roster to a DB table tagged with that same profile.
+asset/regime-stratified training stats for the active training profile
+and writes the voter roster to a DB table tagged with that same profile.
 Selection is **manual** — operator runs it after a fresh
 `training:run` pass or a `regimes:backfill`.
 
 **Evaluation** runs at each configured trade-decision boundary,
 inside the dry-run / live loop. Dry-run defaults to `5m,15m`, and
 the CLI can override that set. Classify the bar's regime → look up
-the roster for `(regime, period)` → evaluate each candidate → apply
+the roster for `(asset, regime, period)` → evaluate each candidate → apply
 the shared trade decision policy.
 
 ## Selection: eligibility + ranking
 
-For a `(filter, config)` candidate to qualify for regime R's
-committee, **within that regime** it must clear:
+For a `(filter, config)` candidate to qualify for asset A and regime R's
+committee, **within that asset/regime bucket** it must clear:
 
-| Rule                       | Default | Why                                             |
-| -------------------------- | ------- | ----------------------------------------------- |
-| Min engagements in regime  | `≥ 20`  | Below this the WR is too noisy to act on        |
-| Aggregate WR in regime     | `≥ 53.8%` | Proves a base-rate edge over coin-flip          |
-| Worst-quarter WR in regime | `≥ 52%` | Rejects "one good year, several bad" candidates |
+| Rule                             | Default | Why                                             |
+| -------------------------------- | ------- | ----------------------------------------------- |
+| Min engagements in asset/regime  | `≥ 80`  | Below this the WR is too noisy to act on        |
+| Aggregate WR in asset/regime     | `≥ 56%` | Proves a base-rate edge over coin-flip          |
+| Worst-quarter WR in asset/regime | `≥ 52%` | Rejects "one good year, several bad" candidates |
 
-The worst-quarter check only applies to quarters with at least 10
-engagements inside this regime. Candidates with no quarter that meaningful
+The worst-quarter check only applies to quarters with at least 40
+engagements inside this asset/regime bucket. Candidates with no quarter that meaningful
 skip the check (sparse + high-WR is admissible).
 
 Defaults live in
@@ -44,20 +44,21 @@ Sweep experiments over these knobs live in
 [`SWEEPING.md`](./SWEEPING.md) and should be run through
 `bun alea backtest:sweep-committee` rather than by editing constants
 between trials.
-The eligibility rule is the same shape for every regime — there's
-no auto-relaxation for rare regimes today. If a regime ends up with
-< 10 qualifiers under the current rules, the committee will be
-smaller than the top-N cap.
+The eligibility rule is the same shape for every asset/regime bucket.
+There is no global fallback roster. If a bucket has fewer than 6
+qualifiers under the current rules, that bucket's committee is simply
+smaller than the top-N cap; if it has none, that asset/regime abstains.
 
 Qualifying candidates are **ranked by Wilson 95% lower bound desc**
 (with `nEngagements` desc as tie-break). Wilson LB punishes small samples
 in the ranking even after they cleared the absolute eligibility
-floor, so a 20-engagement 80% candidate gets admitted but ranks below a
+floor, so a 90-engagement 80% candidate gets admitted but ranks below a
 500-engagement 60% candidate. For each `filter_id`, keep only the
-highest-ranked config, then take the **top 17 distinct filters**.
+highest-ranked config, then take the **top 6 distinct filters**.
 
-Final selection: top 17 distinct filters per `(market_regime, period)`.
-With 4 regimes × 2 periods = 8 buckets, the table holds up to 136 rows.
+Final selection: top 6 distinct filters per `(asset, market_regime, period)`.
+With 5 assets × 4 regimes × 2 periods = 40 buckets, the table holds up
+to 240 rows.
 
 ```sh
 bun alea committee:select
@@ -71,11 +72,12 @@ consumer can warn when the roster is stale.
 ## `committee_selections` table
 
 Schema in
-[`202605120400_committee_selections`](../src/lib/db/migrations/202605120400_committee_selections.ts).
+[`202605121400_asset_scoped_committee_selections`](../src/lib/db/migrations/202605121400_asset_scoped_committee_selections.ts).
 
 | Column                                        | Meaning                                                           |
 | --------------------------------------------- | ----------------------------------------------------------------- |
 | `training_profile`                            | Outcome-label + research-window identity used to select the row   |
+| `asset`                                       | Crypto asset for this roster bucket                               |
 | `market_regime`                               | One of the four regime tags                                       |
 | `period`                                      | `5m` or `15m`                                                     |
 | `filter_id`, `filter_version`, `config_canon` | Candidate identity                                                |
@@ -85,8 +87,8 @@ Schema in
 | `worst_quarter_wr`                            | The worst quarter's WR, or null when none cleared the sample gate |
 | `selected_at_ms`                              | When `committee:select` produced this row                         |
 
-Primary key: `(market_regime, period, filter_id, filter_version, config_canon)`.
-Replacing the whole table on every run is cheap (≤ 160 rows
+Primary key: `(asset, market_regime, period, filter_id, filter_version, config_canon)`.
+Replacing the whole table on every run is cheap (≤ 240 rows
 in practice).
 
 Dry-run/live loaders only read rows whose `training_profile` matches
@@ -97,7 +99,7 @@ rebuilds training artifacts and runs `committee:select`.
 ## Evaluation
 
 The dry-run loop loads the table once at startup into an in-memory
-roster (`(regime, period) → selected candidate keys + stats`). See
+roster (`(asset, regime, period) → selected candidate keys + stats`). See
 [`loadCommitteeRoster`](../src/lib/committee/selection/loadCommitteeRoster.ts).
 
 At each configured period boundary the loop:
@@ -106,14 +108,14 @@ At each configured period boundary the loop:
    bar with Pyth's t-5s price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
-3. Looks up the roster bucket for `(marketRegime, period)`.
+3. Looks up the roster bucket for `(asset, marketRegime, period)`.
    - Empty bucket → abstain entirely.
 4. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
    Each selected candidate config's `predict` runs; votes are
    collected with the selection-time win rate.
 5. Collapse to at most one active vote per `filter_id`. If multiple
    configs for the same filter engage, the engaged config with the
-   highest selected-regime `win_rate` is the one that counts. Abstain
+   highest selected asset/regime `win_rate` is the one that counts. Abstain
    configs do not block a lower-WR engaged config for the same filter.
 6. Apply the trade decision constants: minimum non-abstain votes,
    consensus fraction, and tie handling.
@@ -208,5 +210,5 @@ position-sizing policy before testing live-like execution.
   the roster loader, and persistence.
 - [`src/bin/committee/select.ts`](../src/bin/committee/select.ts) —
   the `committee:select` CLI.
-- [`src/lib/db/migrations/202605120400_committee_selections.ts`](../src/lib/db/migrations/202605120400_committee_selections.ts) —
+- [`src/lib/db/migrations/202605121400_asset_scoped_committee_selections.ts`](../src/lib/db/migrations/202605121400_asset_scoped_committee_selections.ts) —
   schema.

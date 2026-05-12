@@ -1,5 +1,5 @@
 /*
- * Trade Committee dashboard - client-side period/regime scoping.
+ * Trade Committee dashboard - client-side asset/period/regime scoping.
  */
 (function () {
   "use strict";
@@ -17,9 +17,11 @@
 
   var rows = (payload && payload.rows) || [];
   var tbody = document.getElementById("committee-rows");
+  var assetTabs = document.querySelectorAll(".committee-asset-tab");
   var periodTabs = document.querySelectorAll(".committee-period-tab");
   var regimeTabs = document.querySelectorAll(".committee-regime-tab");
 
+  var currentAsset = "btc";
   var currentPeriod = "5m";
   var currentRegime = "low_vol_ranging";
 
@@ -31,6 +33,16 @@
   };
   var toneClass = alea.winRateToneClass;
   var familyLabelFor = alea.familyLabel;
+
+  Array.prototype.forEach.call(assetTabs, function (tab) {
+    tab.addEventListener("click", function () {
+      currentAsset = tab.dataset.asset;
+      Array.prototype.forEach.call(assetTabs, function (t) {
+        t.setAttribute("aria-selected", t === tab ? "true" : "false");
+      });
+      render();
+    });
+  });
 
   Array.prototype.forEach.call(periodTabs, function (tab) {
     tab.addEventListener("click", function () {
@@ -57,7 +69,11 @@
   function render() {
     if (!tbody) return;
     var visible = rows.filter(function (r) {
-      return r.period === currentPeriod && r.marketRegime === currentRegime;
+      return (
+        r.asset === currentAsset &&
+        r.period === currentPeriod &&
+        r.marketRegime === currentRegime
+      );
     });
     tbody.innerHTML = renderRows(visible);
   }
@@ -138,5 +154,4 @@
       "</div>"
     );
   }
-
 })();

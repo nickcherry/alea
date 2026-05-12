@@ -16,10 +16,10 @@ import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 
 /**
  * Registry inventory. The active dry-run committee is the
- * regime-scoped roster persisted in `committee_selections`; callers
- * pass that selected candidate list into `evaluateCommittee`. The
- * full registry remains useful for backtests, tests, and fallback
- * manual evaluations.
+ * asset/regime-scoped roster persisted in `committee_selections`; callers
+ * pass that selected candidate list into `evaluateCommittee`. The full
+ * registry is only used to hydrate persisted roster rows back into runnable
+ * filter configs.
  */
 export function listCommitteeCandidates(): readonly Candidate[] {
   return allCandidates();
@@ -37,15 +37,14 @@ export function evaluateCommittee({
   decisionRules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
   readonly bars: readonly FilterBar[];
-  readonly candidates?: readonly (Candidate | CommitteeCandidate)[];
+  readonly candidates: readonly (Candidate | CommitteeCandidate)[];
   readonly decisionRules?: CommitteeDecisionRules;
 }): {
   readonly decision: CommitteeDecision;
   readonly votes: readonly CandidateVote[];
 } {
-  const list = candidates ?? listCommitteeCandidates();
   const votes: CandidateVote[] = [];
-  for (const raw of list) {
+  for (const raw of candidates) {
     const voter = normalizeCommitteeCandidate({ value: raw });
     const cand = voter.candidate;
     const entry = getFilter(cand.filterId);

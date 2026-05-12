@@ -47,6 +47,13 @@ export function renderTradeCommitteeHtml({
           <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
           <button class="alea-pill-tab is-prominent committee-period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
         </div>
+        <div class="alea-pill-tabs" role="tablist" aria-label="Asset">
+          <button class="alea-pill-tab is-prominent committee-asset-tab" role="tab" data-asset="btc" aria-selected="true">BTC</button>
+          <button class="alea-pill-tab is-prominent committee-asset-tab" role="tab" data-asset="eth" aria-selected="false">ETH</button>
+          <button class="alea-pill-tab is-prominent committee-asset-tab" role="tab" data-asset="sol" aria-selected="false">SOL</button>
+          <button class="alea-pill-tab is-prominent committee-asset-tab" role="tab" data-asset="xrp" aria-selected="false">XRP</button>
+          <button class="alea-pill-tab is-prominent committee-asset-tab" role="tab" data-asset="doge" aria-selected="false">DOGE</button>
+        </div>
       </div>
 
       <section class="committee-section">
@@ -84,7 +91,7 @@ export function renderTradeCommitteeHtml({
                 {
                   label: "Bucket Cap",
                   value: `<= ${payload.selectionConfig.topN.toLocaleString()}`,
-                  tip: "Max candidates selected per timeframe/regime bucket.",
+                  tip: "Max candidates selected per asset/timeframe/regime bucket.",
                 },
                 {
                   label: "Ranking",

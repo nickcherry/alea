@@ -55,7 +55,7 @@ For each configured period, defaulting to `5m,15m`, and each of the
    subscription is already available when the simulated placement time
    arrives. If the observed predicted-side price is within the
    configured 50c window, and the average
-   selected-regime win rate of the effective winning voters is at
+   selected asset/regime win rate of the effective winning voters is at
    least the simulated limit price, place a pretend limit buy at
    `observed price + DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`. The runner
    then watches fresh predicted-side ask quotes until the target
@@ -89,13 +89,13 @@ At T-5s of each boundary, for each asset:
    in-flight bar with Pyth's t-5s price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
-3. Look up the roster bucket for `(regime, period)` in
+3. Look up the roster bucket for `(asset, regime, period)` in
    `committee_selections`. Empty bucket → abstain.
 4. Evaluate each rostered candidate's `predict` on the same bar
    window.
 5. Collapse votes to at most one active vote per `filter_id`. When
    multiple configs for a filter engage, the engaged config with the
-   highest selected-regime `win_rate` counts.
+   highest selected asset/regime `win_rate` counts.
 6. Require the shared minimum-vote and consensus settings from
    [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
    With today's defaults this is simple majority after filter collapse;
@@ -130,7 +130,7 @@ equal to the simulated limit price. Trade prints are intentionally not
 fill evidence, because seeing a trade does not prove our resting order
 would have been next in queue.
 
-The confidence gate uses the average selected-regime win rate across
+The confidence gate uses the average selected asset/regime win rate across
 the effective winning voters after the same one-vote-per-filter
 collapse used by the committee decision. A simulated order is skipped
 when `avg_confidence < limit_price`; in a zero-fee binary market this

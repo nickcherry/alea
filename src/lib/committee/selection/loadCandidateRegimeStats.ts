@@ -9,14 +9,13 @@ import {
 import { sql } from "kysely";
 
 /**
- * Pulls per-(candidate, regime) aggregates from
+ * Pulls per-(candidate, asset, regime) aggregates from
  * `filter_engagements ⋈ bar_regimes` and folds them down to a flat
  * list the selector consumes. One row per
- * `(filter_id, filter_version, config_canon, period, market_regime)`.
+ * `(filter_id, filter_version, config_canon, asset, period, market_regime)`.
  *
- * The candidate's regime stats are summed across every asset that
- * contributed a `run_hash` — same shape as the exploration page's
- * bucket logic. We compute aggregate counts AND the worst-quarter
+ * The candidate's regime stats are intentionally asset-scoped. We compute
+ * aggregate counts AND the worst-quarter
  * WR (with a sample-size guard) in a single CTE so the loader runs
  * in two SQL round trips: one for the (regime × quarter) grouped
  * counts, one for the run_hash → bucket index from `filter_runs`.
@@ -32,6 +31,7 @@ export async function loadCandidateRegimeStats({
     filter_id: string;
     filter_version: number;
     config_canon: string;
+    asset: string;
     period: string;
     market_regime: string;
     year: number;
@@ -43,6 +43,7 @@ export async function loadCandidateRegimeStats({
       fr.filter_id,
       fr.filter_version,
       fr.config_canon,
+      fr.asset,
       fr.period,
       br.market_regime,
       extract(year from to_timestamp(fe.ts_ms / 1000.0))::int as year,
@@ -57,7 +58,7 @@ export async function loadCandidateRegimeStats({
       and br.ts_ms = fe.ts_ms
     where br.market_regime is not null
       and fr.training_profile = ${TRAINING_PROFILE_ID}
-    group by fr.filter_id, fr.filter_version, fr.config_canon, fr.period,
+    group by fr.filter_id, fr.filter_version, fr.config_canon, fr.asset, fr.period,
              br.market_regime, year, quarter
   `.execute(db);
 
@@ -66,6 +67,7 @@ export async function loadCandidateRegimeStats({
     filterId: string;
     filterVersion: number;
     configCanon: string;
+    asset: string;
     period: string;
     marketRegime: string;
     aggEngagements: number;
@@ -85,13 +87,14 @@ export async function loadCandidateRegimeStats({
     }
     const nEngagements = Number(r.n_engagements);
     const nWins = Number(r.n_wins);
-    const key = JSON.stringify([activeKey, r.period, r.market_regime]);
+    const key = JSON.stringify([activeKey, r.asset, r.period, r.market_regime]);
     let b = byKey.get(key);
     if (b === undefined) {
       b = {
         filterId: r.filter_id,
         filterVersion: r.filter_version,
         configCanon: r.config_canon,
+        asset: r.asset,
         period: r.period,
         marketRegime: r.market_regime,
         aggEngagements: 0,
@@ -117,6 +120,7 @@ export async function loadCandidateRegimeStats({
       filterId: b.filterId,
       filterVersion: b.filterVersion,
       configCanon: b.configCanon,
+      asset: b.asset,
       period: b.period,
       marketRegime: b.marketRegime,
       nEngagements: b.aggEngagements,

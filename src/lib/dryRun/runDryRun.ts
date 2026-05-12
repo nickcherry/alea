@@ -355,7 +355,11 @@ async function makePrediction({
   const rosterCandidates: CommitteeCandidate[] = [];
   if (marketRegime !== null) {
     const bucket = roster.byBucket.get(
-      rosterBucketKey({ marketRegime, period: state.period }),
+      rosterBucketKey({
+        asset: state.asset,
+        marketRegime,
+        period: state.period,
+      }),
     );
     if (bucket !== undefined) {
       for (const member of bucket) {

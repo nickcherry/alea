@@ -1,12 +1,14 @@
 import type { CommitteeSelectionRules } from "@alea/lib/committee/selection/types";
 import type { FilterFamily } from "@alea/lib/filters/types";
 import type { MarketRegime } from "@alea/lib/regime/types";
+import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
 
 export type TradeCommitteePeriod = Extract<CandleTimeframe, "5m" | "15m">;
 
 export type TradeCommitteeCandidateRow = {
   readonly id: string;
+  readonly asset: Asset;
   readonly marketRegime: MarketRegime;
   readonly period: TradeCommitteePeriod;
   readonly filterId: string;

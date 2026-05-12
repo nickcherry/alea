@@ -18,23 +18,24 @@ export type CommitteeSelectionRules = {
    * the check entirely. */
   readonly minWorstQuarterWinRate: number;
   readonly worstQuarterMinEngagements: number;
-  /** Top-K cap per (regime, period). */
+  /** Top-K cap per (asset, regime, period). */
   readonly topN: number;
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
-  minEngagements: 20,
-  minAggregateWinRate: 0.538,
+  minEngagements: 80,
+  minAggregateWinRate: 0.56,
   minWorstQuarterWinRate: 0.52,
-  worstQuarterMinEngagements: 10,
-  topN: 17,
+  worstQuarterMinEngagements: 40,
+  topN: 6,
 };
 
-/** Inputs the ranking sees about a single (candidate, regime). */
+/** Inputs the ranking sees about a single (candidate, asset, regime). */
 export type CandidateRegimeStats = {
   readonly filterId: string;
   readonly filterVersion: number;
   readonly configCanon: string;
+  readonly asset: string;
   readonly period: string;
   readonly marketRegime: string;
   readonly nEngagements: number;

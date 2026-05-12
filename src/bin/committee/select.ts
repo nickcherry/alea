@@ -8,9 +8,9 @@ import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import pc from "picocolors";
 
 /**
- * Rebuilds the regime-scoped voter roster in `committee_selections`.
+ * Rebuilds the asset/regime-scoped voter roster in `committee_selections`.
  *
- * Reads the regime-stratified training stats from
+ * Reads the asset/regime-stratified training stats from
  * `filter_engagements ⋈ bar_regimes`, applies the eligibility +
  * top-N rules in `lib/committee/selection/`, and writes the result
  * in one transaction. The dry-run loop (and live trading, when it
@@ -23,15 +23,15 @@ import pc from "picocolors";
  *
  * No CLI flags yet — the thresholds in
  * `DEFAULT_COMMITTEE_SELECTION_RULES` are the contract. If we ever
- * need per-regime overrides, surface them as flags here so the
+ * need per-asset/regime overrides, surface them as flags here so the
  * library stays pure.
  */
 export const committeeSelectCommand = defineCommand({
   name: "committee:select",
   summary:
-    "Pick the top-N candidates per market regime and write committee_selections",
+    "Pick the top-N candidates per asset/regime and write committee_selections",
   description:
-    "Scans regime-stratified training stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min engagements, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (market_regime, period), and rewrites committee_selections.",
+    "Scans asset/regime-stratified training stats (filter_engagements ⋈ bar_regimes), applies the eligibility rules (min engagements, aggregate WR floor, worst-quarter WR floor), ranks the qualifiers by Wilson lower bound desc, takes the top N per (asset, market_regime, period), and rewrites committee_selections.",
   options: [],
   examples: ["bun alea committee:select"],
   output:
@@ -58,13 +58,13 @@ export const committeeSelectCommand = defineCommand({
       const selectedAtMs = Date.now();
       await persistCommitteeSelections({ db, selections, selectedAtMs });
 
-      // Per-(period, regime) breakdown of what landed on the
+      // Per-(asset, period, regime) breakdown of what landed on the
       // roster. Bullet line per group with the strongest entry
       // and the marginal entry so the operator can eyeball
       // whether the bar is well calibrated.
       const byKey = new Map<string, (typeof selections)[number][]>();
       for (const s of selections) {
-        const key = `${s.period}|${s.marketRegime}`;
+        const key = `${s.asset}|${s.period}|${s.marketRegime}`;
         const list = byKey.get(key) ?? [];
         list.push(s);
         byKey.set(key, list);
@@ -72,11 +72,12 @@ export const committeeSelectCommand = defineCommand({
       const keys = [...byKey.keys()].sort();
       for (const key of keys) {
         const list = byKey.get(key)!;
-        const [period, regime] = key.split("|");
+        const [asset, period, regime] = key.split("|");
         const top = list[0]!;
         const last = list[list.length - 1]!;
         io.writeStdout(
-          `  ${pc.bold((period ?? "?").padEnd(4))} ${pc.dim(regime ?? "?")} ` +
+          `  ${pc.bold((asset ?? "?").toUpperCase().padEnd(5))} ` +
+            `${pc.bold((period ?? "?").padEnd(4))} ${pc.dim(regime ?? "?")} ` +
             `${pc.green(`selected=${list.length}`)} ` +
             `${pc.dim("top=")}${(top.winRate * 100).toFixed(1)}% ${top.filterId} ` +
             `${pc.dim(`(${top.nEngagements.toLocaleString()} engagements)`)} ` +

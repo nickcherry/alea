@@ -1,5 +1,6 @@
 import "@alea/lib/filters/all";
 
+import { assetValues } from "@alea/constants/assets";
 import {
   TRAINING_WINDOW_END_INCLUSIVE_MS,
   TRAINING_WINDOW_START_POLICY,
@@ -21,8 +22,10 @@ import {
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { getFilter } from "@alea/lib/filters/registry";
 import type { MarketRegime } from "@alea/lib/regime/types";
+import type { Asset } from "@alea/types/assets";
 
 const PERIOD_ORDER: readonly TradeCommitteePeriod[] = ["5m", "15m"];
+const ASSET_ORDER: readonly Asset[] = assetValues;
 const REGIME_ORDER: readonly MarketRegime[] = [
   "low_vol_ranging",
   "low_vol_trending",
@@ -43,6 +46,7 @@ export async function loadTradeCommitteePayload({
     .selectFrom("committee_selections")
     .select([
       "market_regime",
+      "asset",
       "period",
       "filter_id",
       "filter_version",
@@ -61,20 +65,23 @@ export async function loadTradeCommitteePayload({
   const rows: TradeCommitteeCandidateRow[] = [];
   for (const r of selectionRows) {
     const period = parsePeriod({ value: r.period });
+    const asset = parseAsset({ value: r.asset });
     const marketRegime = parseMarketRegime({ value: r.market_regime });
-    if (period === null || marketRegime === null) {
+    if (period === null || asset === null || marketRegime === null) {
       continue;
     }
     const filter = getFilter(r.filter_id)?.filter;
     rows.push({
       id: [
         period,
+        asset,
         marketRegime,
         r.filter_id,
         String(r.filter_version),
         r.config_canon,
       ].join("|"),
       marketRegime,
+      asset,
       period,
       filterId: r.filter_id,
       filterVersion: r.filter_version,
@@ -123,6 +130,12 @@ function parsePeriod({
   return value === "5m" || value === "15m" ? value : null;
 }
 
+function parseAsset({ value }: { readonly value: string }): Asset | null {
+  return (assetValues as readonly string[]).includes(value)
+    ? (value as Asset)
+    : null;
+}
+
 function parseMarketRegime({
   value,
 }: {
@@ -146,6 +159,11 @@ function compareCommitteeRows(
     PERIOD_ORDER.indexOf(a.period) - PERIOD_ORDER.indexOf(b.period);
   if (periodDelta !== 0) {
     return periodDelta;
+  }
+  const assetDelta =
+    ASSET_ORDER.indexOf(a.asset) - ASSET_ORDER.indexOf(b.asset);
+  if (assetDelta !== 0) {
+    return assetDelta;
   }
   const regimeDelta =
     REGIME_ORDER.indexOf(a.marketRegime) - REGIME_ORDER.indexOf(b.marketRegime);

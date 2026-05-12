@@ -356,7 +356,11 @@ function replaySeries({
     const regimeBucket = getBucket(acc.byRegime, marketRegime, marketRegime);
     regimeBucket.decisionMoments += 1;
     const regimeBuckets = [...buckets, regimeBucket];
-    const bucket = rosterBucketKey({ marketRegime, period: series.period });
+    const bucket = rosterBucketKey({
+      asset: series.asset,
+      marketRegime,
+      period: series.period,
+    });
     const candidates = rosterCandidatesByBucket.get(bucket);
     if (candidates === undefined || candidates.length === 0) {
       increment(regimeBuckets, "emptyRosterMoments");
@@ -430,7 +434,11 @@ function bucketsForDecision({
     acc.total,
     getBucket(acc.byPeriod, period, period),
     getBucket(acc.byAsset, asset, asset.toUpperCase()),
-    getBucket(acc.byPeriodAsset, `${period}|${asset}`, `${period} ${asset.toUpperCase()}`),
+    getBucket(
+      acc.byPeriodAsset,
+      `${period}|${asset}`,
+      `${period} ${asset.toUpperCase()}`,
+    ),
   ];
   if (marketRegime !== null) {
     buckets.push(getBucket(acc.byRegime, marketRegime, marketRegime));
@@ -580,11 +588,7 @@ function finalizeEquityCurve({
 
 function utcDayStartMs({ ms }: { readonly ms: number }): number {
   const date = new Date(ms);
-  return Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-  );
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 }
 
 function dateKey({ dayStartMs }: { readonly dayStartMs: number }): string {

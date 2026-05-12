@@ -39,7 +39,7 @@ At each historical decision moment, the runner:
 
 1. Builds the trailing candle window for the asset/period.
 2. Classifies the current market regime.
-3. Loads the selected committee roster for `(regime, period)`.
+3. Loads the selected committee roster for `(asset, regime, period)`.
 4. Runs `evaluateCommittee`, including the shared one-vote-per-filter
    and consensus policy.
 5. Scores non-abstain decisions against the target candle's

@@ -30,6 +30,7 @@ export async function persistCommitteeSelections({
       .values(
         selections.map((s) => ({
           training_profile: TRAINING_PROFILE_ID,
+          asset: s.asset,
           market_regime: s.marketRegime,
           period: s.period,
           filter_id: s.filterId,

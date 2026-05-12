@@ -24,6 +24,7 @@ function stats(
   return {
     filterVersion: 1,
     configCanon: `${partial.filterId}-default`,
+    asset: "btc",
     period: "5m",
     marketRegime: "low_vol_ranging",
     nWins: Math.round(partial.nEngagements * partial.winRate),
@@ -127,7 +128,7 @@ describe("selectCommitteeCandidates", () => {
     ]);
   });
 
-  it("caps each (regime, period) bucket at topN independently", () => {
+  it("caps each (asset, regime, period) bucket at topN independently", () => {
     const five = (regime: string) =>
       Array.from({ length: 5 }, (_, i) =>
         stats({
@@ -148,6 +149,34 @@ describe("selectCommitteeCandidates", () => {
     }
     expect(byRegime.get("low_vol_ranging")).toBe(3);
     expect(byRegime.get("high_vol_ranging")).toBe(3);
+  });
+
+  it("selects separate rosters per asset", () => {
+    const result = selectCommitteeCandidates({
+      stats: [
+        stats({
+          asset: "btc",
+          filterId: "btc_a",
+          nEngagements: 100,
+          winRate: 0.6,
+          wilsonLow: 0.55,
+        }),
+        stats({
+          asset: "eth",
+          filterId: "eth_a",
+          nEngagements: 100,
+          winRate: 0.6,
+          wilsonLow: 0.55,
+        }),
+      ],
+      rules: { ...RULES, topN: 1 },
+    });
+
+    expect(result.map((r) => `${r.asset}:${r.filterId}`)).toEqual([
+      "btc:btc_a",
+      "eth:eth_a",
+    ]);
+    expect(result.map((r) => r.rank)).toEqual([1, 1]);
   });
 
   it("keeps only the best-ranked config per filter before applying topN", () => {

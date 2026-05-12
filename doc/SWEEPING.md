@@ -72,25 +72,25 @@ high-volume committee-selection clusters.
 
 These decide who is allowed onto the committee.
 
-| Lever | Meaning |
-| --- | --- |
-| `minEngagements` | How many historical calls a candidate needs before we trust it at all. |
-| `minAggregateWinRate` | Minimum overall win rate required to join the committee. |
-| `minWorstQuarterWinRate` | Minimum win rate in the candidate's weakest meaningful quarter. This rejects one-period wonders. |
-| `worstQuarterMinEngagements` | How many calls a quarter needs before it counts in the worst-quarter check. |
-| `topN` | Maximum candidates kept per `(market regime, timeframe)` bucket. |
-| ranking method | Sort qualified candidates by Wilson lower bound, then engagement count. This favors high WR but penalizes tiny samples. |
+| Lever                        | Meaning                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `minEngagements`             | How many historical calls a candidate needs before we trust it at all.                                                  |
+| `minAggregateWinRate`        | Minimum overall win rate required to join the committee.                                                                |
+| `minWorstQuarterWinRate`     | Minimum win rate in the candidate's weakest meaningful quarter. This rejects one-period wonders.                        |
+| `worstQuarterMinEngagements` | How many calls a quarter needs before it counts in the worst-quarter check.                                             |
+| `topN`                       | Maximum candidates kept per `(asset, market regime, timeframe)` bucket.                                                 |
+| ranking method               | Sort qualified candidates by Wilson lower bound, then engagement count. This favors high WR but penalizes tiny samples. |
 
 ## Voting Levers
 
 These decide whether the selected committee takes a trade.
 
-| Lever | Meaning |
-| --- | --- |
-| `minVotesToTrade` | How many filter-collapsed committee votes must engage before trading. |
-| `minConsensusFraction` | How much agreement the winning side needs. `0.60` means 60% of active votes must agree. |
-| `maxVotesPerFilter` | How many active votes one filter may contribute. This should usually stay at `1` so one filter family cannot dominate. |
-| filter tie-break | If multiple configs from the same filter vote, keep the one with higher selected-regime WR, then more engagements, then better rank. |
+| Lever                  | Meaning                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `minVotesToTrade`      | How many filter-collapsed committee votes must engage before trading.                                                                      |
+| `minConsensusFraction` | How much agreement the winning side needs. `0.60` means 60% of active votes must agree.                                                    |
+| `maxVotesPerFilter`    | How many active votes one filter may contribute. This should usually stay at `1` so one filter family cannot dominate.                     |
+| filter tie-break       | If multiple configs from the same filter vote, keep the one with higher selected asset/regime WR, then more engagements, then better rank. |
 
 ## Period Handling
 
@@ -105,6 +105,10 @@ Use the period breakdown to avoid overfitting one timeframe. A strong
 setting should usually improve, or at least not damage, both `5m` and
 `15m`. If a lever only helps one period, treat that as a hypothesis for
 future per-period settings, not an automatic production win.
+
+Committee selection is asset-scoped. The same sweep result should also be
+checked by asset because weak per-asset buckets can be hidden by strong BTC/ETH
+performance.
 
 ## Search Policy
 

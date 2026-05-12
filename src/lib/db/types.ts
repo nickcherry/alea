@@ -253,6 +253,7 @@ export interface PolymarketPriceSampleTable {
 
 export interface CommitteeSelectionTable {
   readonly training_profile: string;
+  readonly asset: string;
   readonly market_regime: string;
   readonly period: string;
   readonly filter_id: string;
