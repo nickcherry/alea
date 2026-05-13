@@ -86,8 +86,8 @@ export type DryRunLogEvent =
  * stops the scheduler and order simulator.
  *
  * Operations:
- *   1. Hydrate per-asset/per-period bar buffers from `candles` (most
- *      recent trade-decision history bars).
+ *   1. Hydrate per-asset/per-period bar buffers from fresh Pyth candles
+ *      (most recent trade-decision history bars).
  *   2. Shortly before each configured boundary, refresh recent Pyth
  *      candles into the in-memory buffer and synthesize the active
  *      candle from the latest one-shot Pyth price.
@@ -122,7 +122,6 @@ export async function runDryRun({
   for (const asset of assets) {
     for (const period of selectedPeriods) {
       const state = await hydrateTradeDecisionCandleState({
-        db,
         asset,
         period,
         limit: TRADE_DECISION_HYDRATE_BARS,

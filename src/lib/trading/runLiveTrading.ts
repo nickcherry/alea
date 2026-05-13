@@ -95,7 +95,6 @@ export async function runLiveTrading({
   for (const asset of assets) {
     for (const period of selectedPeriods) {
       const state = await hydrateTradeDecisionCandleState({
-        db,
         asset,
         period,
         limit: TRADE_DECISION_HYDRATE_BARS,

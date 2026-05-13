@@ -1,6 +1,7 @@
 import type { LatestPythPrice } from "@alea/lib/livePrices/pyth/fetchLatestPythPrices";
 import {
   getRefreshFetchStartMs,
+  hydrateTradeDecisionCandleState,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
   upsertFilterBars,
@@ -23,6 +24,31 @@ describe("upsertFilterBars", () => {
 });
 
 describe("refreshTradeDecisionCandleState", () => {
+  it("hydrates startup bars from fresh Pyth candles and drops the active partial bar", async () => {
+    const requested: Array<{ start: number; end: number }> = [];
+
+    const state = await hydrateTradeDecisionCandleState({
+      asset: "btc",
+      period: "5m",
+      limit: 3,
+      nowMs: 895_000,
+      fetchCandles: async ({ start, end }) => {
+        requested.push({ start: start.getTime(), end: end.getTime() });
+        return [
+          candle(0, 90, 100),
+          candle(300_000, 100, 108),
+          candle(600_000, 108, 111),
+        ];
+      },
+    });
+
+    expect(requested).toEqual([{ start: 0, end: 895_000 }]);
+    expect(state.bars.map((b) => [b.openTimeMs, b.open, b.close])).toEqual([
+      [0, 90, 100],
+      [300_000, 100, 108],
+    ]);
+  });
+
   it("uses a small recent fetch window after startup hydration", () => {
     const state = stateWithBars(
       Array.from({ length: 20 }, (_, index) =>

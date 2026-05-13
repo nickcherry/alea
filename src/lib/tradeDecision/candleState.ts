@@ -6,7 +6,6 @@ import {
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { fetchPythCandles } from "@alea/lib/candles/sources/pyth/fetchPythCandles";
-import type { DatabaseClient } from "@alea/lib/db/types";
 import type { FilterBar } from "@alea/lib/filters/types";
 import {
   fetchLatestPythPrices,
@@ -47,43 +46,39 @@ type FetchLatestPrices = (params: {
 }) => Promise<ReadonlyMap<Asset, LatestPythPrice>>;
 
 export async function hydrateTradeDecisionCandleState({
-  db,
   asset,
   period,
   limit = TRADE_DECISION_HYDRATE_BARS,
+  nowMs = Date.now(),
+  fetchCandles = fetchPythCandles,
 }: {
-  readonly db: DatabaseClient;
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly limit?: number;
+  readonly nowMs?: number;
+  readonly fetchCandles?: FetchCandles;
 }): Promise<TradeDecisionCandleState> {
-  const rows = await db
-    .selectFrom("candles")
-    .select(["timestamp", "open", "high", "low", "close", "volume"])
-    .where("source", "=", "pyth")
-    .where("product", "=", "spot")
-    .where("asset", "=", asset)
-    .where("timeframe", "=", period)
-    .orderBy("timestamp", "desc")
-    .limit(limit)
-    .execute();
+  const periodMs = resolutionTimeframeStepMs({ timeframe: period });
+  const currentOpenTimeMs = Math.floor(nowMs / periodMs) * periodMs;
+  const startMs = Math.max(0, currentOpenTimeMs - periodMs * (limit + 2));
+  const candles = await fetchCandles({
+    asset,
+    timeframe: period,
+    start: new Date(startMs),
+    end: new Date(nowMs),
+  });
+  const closedBars = candles
+    .map(candleToFilterBar)
+    .filter((bar) => bar.openTimeMs < currentOpenTimeMs);
   return {
     asset,
     period,
-    periodMs: resolutionTimeframeStepMs({ timeframe: period }),
-    bars: rows
-      .map((r) => ({
-        openTimeMs:
-          r.timestamp instanceof Date
-            ? r.timestamp.getTime()
-            : new Date(r.timestamp).getTime(),
-        open: r.open,
-        high: r.high,
-        low: r.low,
-        close: r.close,
-        volume: r.volume,
-      }))
-      .reverse(),
+    periodMs,
+    bars: upsertFilterBars({
+      existing: [],
+      incoming: closedBars,
+      limit,
+    }),
     lastPredictedBoundary: 0,
     lastRefreshedAtMs: null,
   };
