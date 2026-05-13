@@ -1,4 +1,3 @@
-import { DRY_RUN_ORDER_MAX_QUOTE_AGE_MS } from "@alea/constants/dryRun";
 import {
   averageWinningVoteConfidence,
   type DryRunMarketPriceState,
@@ -124,7 +123,7 @@ describe("resolveDryRunOrderPlacement", () => {
     });
   });
 
-  it("requires a fresh predicted-side ask for aggressive maker-buy pricing", () => {
+  it("places a 50c order when the predicted-side ask has not arrived yet", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.49, ask: 0.5 });
 
@@ -135,17 +134,40 @@ describe("resolveDryRunOrderPlacement", () => {
         nowMs: NOW_MS,
         confidence: 0.53,
       }),
-    ).toEqual({ status: "skipped_no_price" });
+    ).toEqual({
+      status: "placed",
+      observedPrice: 0.505,
+      limitPrice: 0.5,
+      confidence: 0.53,
+      fillPrice: null,
+    });
   });
 
-  it("skips when the book quote is too stale at placement time", () => {
+  it("places at 50c when no book quote has arrived at all", () => {
+    expect(
+      resolveDryRunOrderPlacement({
+        prediction: "u",
+        state: emptyState(),
+        nowMs: NOW_MS,
+        confidence: 0.53,
+      }),
+    ).toEqual({
+      status: "placed",
+      observedPrice: 0.5,
+      limitPrice: 0.5,
+      confidence: 0.53,
+      fillPrice: null,
+    });
+  });
+
+  it("uses the latest known book quote at placement time", () => {
     const state = emptyState();
     setQuote({
       state,
       side: "up",
       bid: 0.495,
       ask: 0.505,
-      atMs: NOW_MS - DRY_RUN_ORDER_MAX_QUOTE_AGE_MS - 1,
+      atMs: NOW_MS - 60_000,
     });
 
     expect(
@@ -155,7 +177,13 @@ describe("resolveDryRunOrderPlacement", () => {
         nowMs: NOW_MS,
         confidence: 0.54,
       }),
-    ).toEqual({ status: "skipped_no_price" });
+    ).toEqual({
+      status: "placed",
+      observedPrice: 0.5,
+      limitPrice: 0.504,
+      confidence: 0.54,
+      fillPrice: null,
+    });
   });
 });
 
@@ -190,10 +218,10 @@ describe("resolveDryRunOrderFill", () => {
     ).toBeNull();
   });
 
-  it("does not fill from stale ask evidence", () => {
+  it("fills from the latest known ask even when no newer quote arrived", () => {
     const state = emptyState();
     state.up.ask = 0.5;
-    state.up.askAtMs = NOW_MS - DRY_RUN_ORDER_MAX_QUOTE_AGE_MS - 1;
+    state.up.askAtMs = NOW_MS - 60_000;
 
     expect(
       resolveDryRunOrderFill({
@@ -202,7 +230,7 @@ describe("resolveDryRunOrderFill", () => {
         limitPrice: 0.505,
         nowMs: NOW_MS,
       }),
-    ).toBeNull();
+    ).toBe(0.5);
   });
 });
 

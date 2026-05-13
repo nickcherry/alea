@@ -149,8 +149,10 @@ export function renderDryRunHtml({
                 },
                 {
                   label: "Quote Max Age",
-                  value: `${(payload.decisionConfig.orderMaxQuoteAgeMs / 1000).toLocaleString()}s`,
-                  tip: "Maximum allowed age of the book/BBO snapshot used to price the order.",
+                  value: formatQuoteAgeLimit({
+                    value: payload.decisionConfig.orderMaxQuoteAgeMs,
+                  }),
+                  tip: "Book/BBO age cutoff used to price the simulated order.",
                 },
                 {
                   label: "Discovery Lead",
@@ -444,6 +446,8 @@ function renderOrderPriceBits({
 
 function formatOrderLimitPolicy({ value }: { readonly value: string }): string {
   switch (value) {
+    case "buy_predicted_side_one_tick_below_best_ask_or_50c_if_missing":
+      return "one tick below ask, 50c fallback";
     case "buy_predicted_side_one_tick_below_best_ask":
       return "one tick below ask";
     default:
@@ -474,6 +478,13 @@ function formatCents({ value }: { readonly value: number }): string {
 
 function formatMs({ value }: { readonly value: number }): string {
   return `${Math.max(0, Math.round(value)).toLocaleString()}ms`;
+}
+
+function formatQuoteAgeLimit({ value }: { readonly value: number }): string {
+  if (value >= Number.MAX_SAFE_INTEGER) {
+    return "no age cutoff";
+  }
+  return `${(value / 1000).toLocaleString()}s`;
 }
 
 /**

@@ -1,6 +1,7 @@
 import {
   DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
   DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
+  DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW,
   type DryRunOrderStatus,
@@ -16,6 +17,7 @@ import {
   isValidTokenPrice,
   type MarketDataTokenRoute,
   type MarketPriceState,
+  observedPredictedSidePrice,
   resolveMakerLimitBuyPlacement,
   roundPrice,
 } from "@alea/lib/trading/marketPriceState";
@@ -113,7 +115,12 @@ export function resolveDryRunOrderPlacement({
     defaultTickSize: DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
   });
   if (placement.status === "no_price") {
-    return { status: "skipped_no_price" };
+    return resolveNoQuotePlacement({
+      prediction,
+      state,
+      nowMs,
+      confidence,
+    });
   }
   if (placement.status === "price_window") {
     return {
@@ -144,6 +151,42 @@ export function resolveDryRunOrderPlacement({
     limitPrice: placement.limitPrice,
     confidence: placement.confidence,
     fillPrice,
+  };
+}
+
+function resolveNoQuotePlacement({
+  prediction,
+  state,
+  nowMs,
+  confidence,
+}: {
+  readonly prediction: "u" | "d";
+  readonly state: DryRunMarketPriceState;
+  readonly nowMs: number;
+  readonly confidence: number | null;
+}): DryRunOrderPlacementResolution {
+  const limitPrice = DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE;
+  const observedPrice =
+    observedPredictedSidePrice({
+      prediction,
+      state,
+      nowMs,
+      maxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
+    }) ?? limitPrice;
+  if (confidence === null || confidence < limitPrice) {
+    return {
+      status: "skipped_confidence",
+      observedPrice,
+      limitPrice,
+      confidence,
+    };
+  }
+  return {
+    status: "placed",
+    observedPrice,
+    limitPrice,
+    confidence,
+    fillPrice: null,
   };
 }
 

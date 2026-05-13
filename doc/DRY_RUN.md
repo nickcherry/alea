@@ -48,7 +48,7 @@ For each configured period, defaulting to `5m,15m`, and each of the
    regime classifier. Look up the committee roster for that period
    and regime. Apply the shared trade decision policy. If
    non-abstain, persist the decision; otherwise skip.
-4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 1s`
+4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0.1s`
    after the target Polymarket market opens, read the live UP/DOWN
    book/BBO market data for the predicted side. The runner
    pre-discovers current and next markets before entry so the market
@@ -57,8 +57,9 @@ For each configured period, defaulting to `5m,15m`, and each of the
    configured 50c window, and the average
    selected asset/regime win rate of the effective winning voters is at
    least the simulated limit price, place a pretend limit buy by
-   bidding one tick below the predicted-side best ask. The runner then
-   watches fresh predicted-side ask quotes until the target market closes.
+   bidding one tick below the predicted-side best ask, or at 50c if no
+   predicted-side ask has arrived yet. The runner then watches the
+   latest known predicted-side ask until the target market closes.
    If the simulated limit never becomes executable, the row is marked
    `unfilled`.
 5. **Score** — on later refreshes, once the target bar is present as
@@ -122,13 +123,14 @@ At T-5s of each boundary, for each asset:
 Dry-run order configuration lives in
 [`src/constants/dryRun.ts`](../src/constants/dryRun.ts).
 
-| Constant                           | Default | Meaning                                                       |
-| ---------------------------------- | ------: | ------------------------------------------------------------- |
-| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS` |  1000ms | Wait after the target market opens before simulating entry    |
-| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS` |      3c | Only consider predicted-side prices within `50c ± window`     |
-| `DRY_RUN_ORDER_DEFAULT_TICK_SIZE`  |      1c | Fallback tick when market metadata has not supplied one yet   |
-| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`   |  2000ms | Maximum book/BBO quote age at placement or fill evaluation    |
-| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS` | 30000ms | How early to pre-discover current and next Polymarket markets |
+| Constant                             |   Default | Meaning                                                           |
+| ------------------------------------ | --------: | ----------------------------------------------------------------- |
+| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`   |     100ms | Wait after the target market opens before simulating entry        |
+| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`   |        3c | Only consider predicted-side prices within `50c ± window`         |
+| `DRY_RUN_ORDER_DEFAULT_TICK_SIZE`    |        1c | Fallback tick when market metadata has not supplied one yet       |
+| `DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE` |       50c | Limit price when no predicted-side ask has arrived yet            |
+| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`     | unbounded | Use latest known quote; missing placement quotes fall back to 50c |
+| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`   |   30000ms | How early to pre-discover current and next Polymarket markets     |
 
 The order price uses the predicted outcome token: UP decisions look
 at the UP token, DOWN decisions look at the DOWN token. For a DOWN
@@ -136,14 +138,16 @@ decision that is equivalent to moving lower in normalized UP-price
 space, but the persisted order fields are always in predicted-side
 token price terms.
 
-Observed placement context comes from the midpoint of a fresh
+Observed placement context comes from the midpoint of the latest known
 predicted-side book/BBO quote when available. The simulated limit price
 is one tick below the predicted-side best ask: aggressive enough to be
 top-of-book when there is spread, but still maker-only because it does
-not cross the ask. The tick comes from Polymarket market metadata when
-available and falls back to one cent. Fill simulation is stricter: a
-pretend limit buy only fills when the predicted-side ask itself is fresh
-and less than or equal to the simulated limit price. Trade prints are
+not cross the ask. If the predicted-side ask has not arrived yet, the
+simulator still places the pretend order at 50c. The tick comes from
+Polymarket market metadata when available and falls back to one cent.
+Fill simulation is stricter about the price source: a pretend limit buy
+only fills when the predicted-side ask itself is known and less than or
+equal to the simulated limit price. Trade prints are
 intentionally not fill evidence, because seeing a trade does not prove
 our resting order would have been next in queue.
 

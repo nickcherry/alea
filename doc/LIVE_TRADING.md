@@ -41,7 +41,7 @@ For each asset/period:
    for a decision.
 4. If the decision is actionable, the order is scheduled for the
    exact market-open timestamp. There is no artificial live-trading
-   delay; the dry-run `1s` delay exists only to simulate expected
+   delay; the dry-run `100ms` delay exists only to simulate expected
    live latency.
 5. At market open, the runner uses the freshest book state and tries
    to submit immediately.

@@ -6,24 +6,30 @@
  */
 
 /** Delay after the target Polymarket window opens before simulating order placement. */
-export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 1 * 1000;
+export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 100;
 
 /** Maximum distance from 50c, in cents, where the simulated order is allowed. */
 export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
 
 /**
  * Limit price policy for simulated maker orders. The dry-run buys the
- * predicted-side token one tick below the predicted-side best ask. That is
- * the most aggressive buy we can model while still resting as maker-only.
+ * predicted-side token one tick below the predicted-side best ask. If no
+ * predicted-side ask has arrived, it falls back to a 50c maker bid.
  */
 export const DRY_RUN_ORDER_LIMIT_PRICE_POLICY =
-  "buy_predicted_side_one_tick_below_best_ask" as const;
+  "buy_predicted_side_one_tick_below_best_ask_or_50c_if_missing" as const;
+
+/** Fallback limit price when no predicted-side ask has arrived yet. */
+export const DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE = 0.5;
 
 /** Fallback tick size when discovery/WS metadata has not supplied one yet. */
 export const DRY_RUN_ORDER_DEFAULT_TICK_SIZE = 0.01;
 
-/** Maximum age for book/BBO quotes used at simulated placement/fill time. */
-export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = 2 * 1000;
+/**
+ * Dry-run uses the latest known book/BBO quote instead of expiring quotes by age.
+ * Missing placement quotes fall back to `DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE`.
+ */
+export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = Number.MAX_SAFE_INTEGER;
 
 /** How early the runner should discover target Polymarket markets. */
 export const DRY_RUN_MARKET_DISCOVERY_LEAD_MS = 30 * 1000;
