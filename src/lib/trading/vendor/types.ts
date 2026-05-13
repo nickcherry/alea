@@ -26,6 +26,7 @@ export type TradableMarket = {
   readonly vendorRef: string;
   readonly upRef: string;
   readonly downRef: string;
+  readonly tickSize?: number | null;
 };
 
 export type PriceLevel = {

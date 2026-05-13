@@ -1,4 +1,5 @@
 import {
+  DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
   DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW,
@@ -23,6 +24,7 @@ type TokenPriceState = {
   bidAtMs: number | null;
   ask: number | null;
   askAtMs: number | null;
+  tickSize: number | null;
 };
 
 export type DryRunMarketPriceState = {
@@ -109,7 +111,11 @@ export function resolveDryRunOrderPlacement({
   readonly nowMs: number;
   readonly confidence: number | null;
 }): DryRunOrderPlacementResolution {
-  const limitPrice = predictedSideBestBidPrice({ prediction, state, nowMs });
+  const limitPrice = predictedSideAggressiveMakerBuyPrice({
+    prediction,
+    state,
+    nowMs,
+  });
   if (limitPrice === null) {
     return { status: "skipped_no_price" };
   }
@@ -264,7 +270,7 @@ export function createDryRunOrderSimulator({
     const created: OrderSession = {
       key,
       market,
-      state: emptyMarketPriceState(),
+      state: emptyMarketPriceState({ tickSize: market.tickSize ?? null }),
       orderIds: new Set<string>(),
     };
     sessions.set(key, created);
@@ -679,6 +685,9 @@ function applyMarketDataEventToDryRunState({
     case "trade":
       break;
     case "tick-size-change":
+      if (isValidTickSize(event.newTickSize)) {
+        token.tickSize = event.newTickSize;
+      }
       break;
   }
 }
@@ -700,7 +709,7 @@ function observedPredictedSidePrice({
   );
 }
 
-function predictedSideBestBidPrice({
+function predictedSideAggressiveMakerBuyPrice({
   prediction,
   state,
   nowMs,
@@ -710,16 +719,28 @@ function predictedSideBestBidPrice({
   readonly nowMs: number;
 }): number | null {
   const target = prediction === "u" ? state.up : state.down;
-  if (!isFreshPrice({ atMs: target.bidAtMs, nowMs })) {
+  if (!isFreshPrice({ atMs: target.askAtMs, nowMs })) {
     return null;
   }
-  return isValidTokenPrice(target.bid) ? roundPrice(target.bid) : null;
+  if (!isValidTokenPrice(target.ask)) {
+    return null;
+  }
+  const tickSize = resolveTickSize({ tickSize: target.tickSize });
+  const limitPrice = roundDownToTick(target.ask - tickSize, tickSize);
+  if (limitPrice < tickSize || limitPrice > 1 - tickSize) {
+    return null;
+  }
+  return limitPrice;
 }
 
-function emptyMarketPriceState(): DryRunMarketPriceState {
+function emptyMarketPriceState({
+  tickSize = null,
+}: {
+  readonly tickSize?: number | null;
+} = {}): DryRunMarketPriceState {
   return {
-    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null },
-    down: { bid: null, bidAtMs: null, ask: null, askAtMs: null },
+    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize },
+    down: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize },
   };
 }
 
@@ -782,6 +803,18 @@ function isValidTokenPrice(value: number | null): value is number {
   return value !== null && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
+function isValidTickSize(value: number | null): value is number {
+  return value !== null && Number.isFinite(value) && value > 0 && value < 1;
+}
+
+function resolveTickSize({
+  tickSize,
+}: {
+  readonly tickSize: number | null;
+}): number {
+  return isValidTickSize(tickSize) ? tickSize : DRY_RUN_ORDER_DEFAULT_TICK_SIZE;
+}
+
 function isFreshPrice({
   atMs,
   nowMs,
@@ -798,6 +831,11 @@ function isFreshPrice({
 
 function roundPrice(value: number): number {
   return Math.max(0, Math.min(1, Number(value.toFixed(4))));
+}
+
+function roundDownToTick(value: number, tickSize: number): number {
+  const ticks = Math.floor((value + Number.EPSILON) / tickSize);
+  return roundPrice(ticks * tickSize);
 }
 
 function marketKey({

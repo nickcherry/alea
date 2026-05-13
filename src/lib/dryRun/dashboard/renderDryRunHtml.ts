@@ -362,40 +362,48 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
 function renderOrderCell(row: DryRunDashboardRecentRow): string {
   const status = row.orderStatus;
   if (status === "filled") {
-    return `<span class="dry-run-order filled">FILLED</span>${renderOrderPriceBits({
-      limitPrice: row.orderLimitPrice,
-      fillPrice: row.orderFillPrice,
-      confidence: row.orderConfidence,
-      decisionDurationMs: row.decisionDurationMs,
-      orderFillLatencyMs: row.orderFillLatencyMs,
-    })}`;
+    return `<span class="dry-run-order filled">FILLED</span>${renderOrderPriceBits(
+      {
+        limitPrice: row.orderLimitPrice,
+        fillPrice: row.orderFillPrice,
+        confidence: row.orderConfidence,
+        decisionDurationMs: row.decisionDurationMs,
+        orderFillLatencyMs: row.orderFillLatencyMs,
+      },
+    )}`;
   }
   if (status === "unfilled") {
-    return `<span class="dry-run-order unfilled">UNFILLED</span>${renderOrderPriceBits({
-      limitPrice: row.orderLimitPrice,
-      fillPrice: row.orderFillPrice,
-      confidence: row.orderConfidence,
-      decisionDurationMs: row.decisionDurationMs,
-      orderFillLatencyMs: row.orderFillLatencyMs,
-    })}`;
+    return `<span class="dry-run-order unfilled">UNFILLED</span>${renderOrderPriceBits(
+      {
+        limitPrice: row.orderLimitPrice,
+        fillPrice: row.orderFillPrice,
+        confidence: row.orderConfidence,
+        decisionDurationMs: row.decisionDurationMs,
+        orderFillLatencyMs: row.orderFillLatencyMs,
+      },
+    )}`;
   }
   if (status === "placed" || status === "pending_placement") {
-    return `<span class="dry-run-order pending">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits({
-      limitPrice: row.orderLimitPrice,
-      fillPrice: row.orderFillPrice,
-      confidence: row.orderConfidence,
-      decisionDurationMs: row.decisionDurationMs,
-      orderFillLatencyMs: row.orderFillLatencyMs,
-    })}`;
+    return `<span class="dry-run-order pending">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits(
+      {
+        limitPrice: row.orderLimitPrice,
+        fillPrice: row.orderFillPrice,
+        confidence: row.orderConfidence,
+        decisionDurationMs: row.decisionDurationMs,
+        orderFillLatencyMs: row.orderFillLatencyMs,
+      },
+    )}`;
   }
   if (status.startsWith("skipped")) {
-    return `<span class="dry-run-order skipped">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits({
-      limitPrice: row.orderLimitPrice,
-      fillPrice: row.orderFillPrice,
-      confidence: row.orderConfidence,
-      decisionDurationMs: row.decisionDurationMs,
-      orderFillLatencyMs: row.orderFillLatencyMs,
-    })}`;
+    return `<span class="dry-run-order skipped">${escapeHtml({ value: formatOrderStatus(status) })}</span>${renderOrderPriceBits(
+      {
+        limitPrice: row.orderLimitPrice,
+        fillPrice: row.orderFillPrice,
+        confidence: row.orderConfidence,
+        decisionDurationMs: row.decisionDurationMs,
+        orderFillLatencyMs: row.orderFillLatencyMs,
+      },
+    )}`;
   }
   return `<span class="alea-muted">${escapeHtml({ value: formatOrderStatus(status) })}</span>`;
 }
@@ -436,8 +444,8 @@ function renderOrderPriceBits({
 
 function formatOrderLimitPolicy({ value }: { readonly value: string }): string {
   switch (value) {
-    case "join_predicted_side_best_bid":
-      return "join best bid";
+    case "buy_predicted_side_one_tick_below_best_ask":
+      return "one tick below ask";
     default:
       return value.replaceAll("_", " ");
   }

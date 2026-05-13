@@ -6,18 +6,21 @@
  */
 
 /** Delay after the target Polymarket window opens before simulating order placement. */
-export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 3 * 1000;
+export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 1 * 1000;
 
 /** Maximum distance from 50c, in cents, where the simulated order is allowed. */
 export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
 
 /**
- * Limit price policy for simulated maker orders. The dry-run joins the
- * predicted-side best bid rather than crossing the spread or adding an
- * arbitrary offset to mid.
+ * Limit price policy for simulated maker orders. The dry-run buys the
+ * predicted-side token one tick below the predicted-side best ask. That is
+ * the most aggressive buy we can model while still resting as maker-only.
  */
 export const DRY_RUN_ORDER_LIMIT_PRICE_POLICY =
-  "join_predicted_side_best_bid" as const;
+  "buy_predicted_side_one_tick_below_best_ask" as const;
+
+/** Fallback tick size when discovery/WS metadata has not supplied one yet. */
+export const DRY_RUN_ORDER_DEFAULT_TICK_SIZE = 0.01;
 
 /** Maximum age for book/BBO quotes used at simulated placement/fill time. */
 export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = 2 * 1000;

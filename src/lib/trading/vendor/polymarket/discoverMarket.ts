@@ -74,7 +74,23 @@ export async function discoverPolymarketMarket({
     vendorRef: market.conditionId,
     upRef,
     downRef,
+    ...optionalTickSize({ value: market.orderPriceMinTickSize }),
   };
+}
+
+function optionalTickSize({
+  value,
+}: {
+  readonly value: string | number | undefined;
+}): { readonly tickSize: number } | Record<string, never> {
+  const parsed =
+    typeof value === "string" || typeof value === "number"
+      ? Number(value)
+      : null;
+  if (parsed === null || !Number.isFinite(parsed) || parsed <= 0) {
+    return {};
+  }
+  return { tickSize: parsed };
 }
 
 function parseStringArray(value: string | undefined): string[] | null {
@@ -104,6 +120,7 @@ const marketSchema = z
     conditionId: z.string(),
     outcomes: z.string().optional(),
     clobTokenIds: z.string().optional(),
+    orderPriceMinTickSize: z.union([z.string(), z.number()]).optional(),
   })
   .passthrough();
 

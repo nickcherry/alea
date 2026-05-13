@@ -341,8 +341,12 @@
     }
     if (empty) empty.style.display = "none";
 
-    var xs = cumulative.map(function (d) {
-      return Math.floor(d.tsMs / 1000);
+    // Use event order on the x-axis. Live decisions often share the
+    // same target candle timestamp across assets; a wall-clock axis with
+    // duplicate/tiny ranges produces unreadable future-year ticks. The
+    // hover tooltip still shows the actual target time.
+    var xs = cumulative.map(function (_d, idx) {
+      return idx + 1;
     });
     var ys = cumulative.map(function (d) {
       return d.cumWinRate;
@@ -381,6 +385,13 @@
             grid: { stroke: tokens.gridStroke, width: 1 },
             ticks: { stroke: tokens.axisTickStroke, width: 1 },
             font: tokens.axisFont,
+            space: 70,
+            values: function (_self, vals) {
+              return vals.map(function (v) {
+                var idx = Math.round(v);
+                return Math.abs(v - idx) < 0.001 && idx >= 1 ? "#" + idx : "";
+              });
+            },
           },
           {
             stroke: tokens.axisStroke,
@@ -421,10 +432,11 @@
                 "</span></div>";
               var hostRect = host.getBoundingClientRect();
               tooltip.style.left =
-                Math.min(hostRect.width - 240, Math.max(8, self.cursor.left + 12)) +
-                "px";
-              tooltip.style.top =
-                Math.max(8, self.cursor.top + 12) + "px";
+                Math.min(
+                  hostRect.width - 240,
+                  Math.max(8, self.cursor.left + 12),
+                ) + "px";
+              tooltip.style.top = Math.max(8, self.cursor.top + 12) + "px";
               tooltip.classList.add("visible");
             },
           ],

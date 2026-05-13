@@ -11,8 +11,14 @@ const NOW_MS = 1_800_000_003_000;
 
 function emptyState(): DryRunMarketPriceState {
   return {
-    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null },
-    down: { bid: null, bidAtMs: null, ask: null, askAtMs: null },
+    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize: null },
+    down: {
+      bid: null,
+      bidAtMs: null,
+      ask: null,
+      askAtMs: null,
+      tickSize: null,
+    },
   };
 }
 
@@ -22,21 +28,24 @@ function setQuote({
   bid,
   ask,
   atMs = NOW_MS,
+  tickSize = 0.001,
 }: {
   readonly state: DryRunMarketPriceState;
   readonly side: "up" | "down";
   readonly bid: number;
   readonly ask: number;
   readonly atMs?: number;
+  readonly tickSize?: number | null;
 }): void {
   state[side].bid = bid;
   state[side].bidAtMs = atMs;
   state[side].ask = ask;
   state[side].askAtMs = atMs;
+  state[side].tickSize = tickSize;
 }
 
 describe("resolveDryRunOrderPlacement", () => {
-  it("places a predicted-side buy at the same-side best bid when confidence clears the limit", () => {
+  it("places a predicted-side buy one tick below the same-side best ask when confidence clears the limit", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.495, ask: 0.505 });
 
@@ -50,9 +59,32 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toEqual({
       status: "placed",
       observedPrice: 0.5,
-      limitPrice: 0.495,
+      limitPrice: 0.504,
       confidence: 0.54,
       fillPrice: null,
+    });
+  });
+
+  it("falls back to the venue-style penny tick when no tick metadata is available", () => {
+    const state = emptyState();
+    setQuote({
+      state,
+      side: "up",
+      bid: 0.49,
+      ask: 0.5,
+      tickSize: null,
+    });
+
+    expect(
+      resolveDryRunOrderPlacement({
+        prediction: "u",
+        state,
+        nowMs: NOW_MS,
+        confidence: 0.54,
+      }),
+    ).toMatchObject({
+      status: "placed",
+      limitPrice: 0.49,
     });
   });
 
@@ -70,7 +102,7 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toMatchObject({
       status: "skipped_price_window",
       observedPrice: 0.54,
-      limitPrice: 0.535,
+      limitPrice: 0.544,
     });
   });
 
@@ -88,11 +120,11 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toMatchObject({
       status: "skipped_confidence",
       observedPrice: 0.52,
-      limitPrice: 0.515,
+      limitPrice: 0.524,
     });
   });
 
-  it("requires a fresh predicted-side bid for maker-style pricing", () => {
+  it("requires a fresh predicted-side ask for aggressive maker-buy pricing", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.49, ask: 0.5 });
 
