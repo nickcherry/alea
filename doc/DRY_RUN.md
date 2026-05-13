@@ -230,7 +230,7 @@ The CLI streams one line per event:
 13:21:05 hydrated 5m/btc bars=150
 13:21:05 hydrated 15m/btc bars=150
 ...
-13:21:05 loaded committee roster: 8 buckets, 520 candidates (selected_at=2026-05-13 15:22)
+13:21:05 loaded committee roster: 8 buckets, 592 candidates (selected_at=2026-05-13 15:35)
 13:21:05 ready
 13:24:55 UP     5m/eth   target=13:25 synth=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
 13:24:55 abstain 15m/btc   target=13:30 synth=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10

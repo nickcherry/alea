@@ -42,7 +42,7 @@ export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minAggregateWinRate: 0.56,
   minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 40,
-  topN: 12,
+  topN: 16,
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
@@ -59,7 +59,7 @@ export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
       assets: ["sol", "xrp", "doge"],
       periods: ["5m"],
       minAggregateWinRate: 0.58,
-      topN: 8,
+      topN: 12,
     },
   ],
 };

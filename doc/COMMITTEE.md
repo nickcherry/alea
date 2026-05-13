@@ -51,7 +51,7 @@ Scoped overrides:
 | Scope                   | Override                       | Why                                                      |
 | ----------------------- | ------------------------------ | -------------------------------------------------------- |
 | BTC/ETH, both periods   | Aggregate WR `≥ 55%`, top `20` | Adds volume where holdout performance has been strongest |
-| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `8`  | Tightens the noisiest weak-asset/timeframe slice         |
+| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `12` | Tightens the noisiest weak-asset/timeframe slice         |
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -67,7 +67,7 @@ filters.
 
 Final selection: top-N distinct filters per `(asset, market_regime, period)`.
 With the current base cap and overrides, the table usually holds about
-520 rows.
+590 rows.
 
 ```sh
 bun alea committee:select
@@ -97,7 +97,7 @@ Schema in
 | `selected_at_ms`                              | When `committee:select` produced this row                         |
 
 Primary key: `(asset, market_regime, period, filter_id, filter_version, config_canon)`.
-Replacing the whole table on every run is cheap (≤ 550 rows
+Replacing the whole table on every run is cheap (≤ 625 rows
 in practice).
 
 Dry-run/live loaders only read rows whose `training_profile` matches
