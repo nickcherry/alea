@@ -198,11 +198,12 @@ against the dry-run loop will behave identically in live trading.
 `bun alea backtest:run` sits between roster construction and dry-run.
 It uses the holdout window from
 [`src/constants/researchWindows.ts`](../src/constants/researchWindows.ts),
-replays the selected committee over historical Pyth candles, and
-scores directional prediction quality. It does not connect to
-Polymarket or simulate order-book fills; those questions belong to
-dry-run. The point is fast iteration on consensus, vote weighting, and
-position-sizing policy before testing live-like execution.
+replays the selected committee over aligned historical Pyth/Coinbase
+spot candles, and scores directional prediction quality against Pyth
+outcomes. It does not connect to Polymarket or simulate order-book
+fills; those questions belong to dry-run. The point is fast iteration
+on consensus, vote weighting, and position-sizing policy before
+testing live-like execution.
 
 ## Files
 

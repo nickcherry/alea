@@ -62,6 +62,7 @@ export async function hydrateTradeDecisionCandleState({
   nowMs = Date.now(),
   fetchCandles = fetchPythCandles,
   fetchCoinbaseBarsForHydrate = fetchHydrateCoinbaseCandles,
+  coinbaseFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
 }: {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
@@ -69,6 +70,7 @@ export async function hydrateTradeDecisionCandleState({
   readonly nowMs?: number;
   readonly fetchCandles?: FetchCandles;
   readonly fetchCoinbaseBarsForHydrate?: FetchCandles;
+  readonly coinbaseFetchTimeoutMs?: number;
 }): Promise<TradeDecisionCandleState> {
   const periodMs = resolutionTimeframeStepMs({ timeframe: period });
   const currentOpenTimeMs = Math.floor(nowMs / periodMs) * periodMs;
@@ -84,11 +86,15 @@ export async function hydrateTradeDecisionCandleState({
       start: new Date(startMs),
       end: new Date(nowMs),
     }),
-    fetchCoinbaseBarsForHydrate({
-      asset,
-      timeframe: period,
-      start: new Date(startMs),
-      end: new Date(nowMs),
+    fetchOptionalCandles({
+      fetchCandles: fetchCoinbaseBarsForHydrate,
+      params: {
+        asset,
+        timeframe: period,
+        start: new Date(startMs),
+        end: new Date(nowMs),
+      },
+      timeoutMs: coinbaseFetchTimeoutMs,
     }).catch(() => [] as readonly Candle[]),
   ]);
   const closedBars = candles
@@ -120,6 +126,7 @@ export async function refreshTradeDecisionCandleState({
   fetchCandles = fetchDecisionPythCandles,
   fetchCoinbaseBarsForRefresh = fetchDecisionCoinbaseCandles,
   fetchLatestPrices = fetchLatestPythPrices,
+  coinbaseFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
 }: {
   readonly state: TradeDecisionCandleState;
   readonly nowMs: number;
@@ -128,12 +135,20 @@ export async function refreshTradeDecisionCandleState({
   readonly fetchCandles?: FetchCandles;
   readonly fetchCoinbaseBarsForRefresh?: FetchCandles;
   readonly fetchLatestPrices?: FetchLatestPrices;
+  readonly coinbaseFetchTimeoutMs?: number;
 }): Promise<TradeDecisionCandleRefresh> {
   const currentOpenTimeMs = Math.floor(nowMs / state.periodMs) * state.periodMs;
-  const fetchStartMs = getRefreshFetchStartMs({
+  const pythFetchStartMs = getRefreshFetchStartMs({
     state,
     currentOpenTimeMs,
     limit,
+    source: "pyth",
+  });
+  const coinbaseFetchStartMs = getRefreshFetchStartMs({
+    state,
+    currentOpenTimeMs,
+    limit,
+    source: "coinbase",
   });
   // Fetch Pyth (canonical timeline + active bar synthesis) and
   // Coinbase (volume input for volume-source filters) concurrently.
@@ -143,14 +158,18 @@ export async function refreshTradeDecisionCandleState({
     fetchCandles({
       asset: state.asset,
       timeframe: state.period,
-      start: new Date(fetchStartMs),
+      start: new Date(pythFetchStartMs),
       end: new Date(nowMs),
     }),
-    fetchCoinbaseBarsForRefresh({
-      asset: state.asset,
-      timeframe: state.period,
-      start: new Date(fetchStartMs),
-      end: new Date(nowMs),
+    fetchOptionalCandles({
+      fetchCandles: fetchCoinbaseBarsForRefresh,
+      params: {
+        asset: state.asset,
+        timeframe: state.period,
+        start: new Date(coinbaseFetchStartMs),
+        end: new Date(nowMs),
+      },
+      timeoutMs: coinbaseFetchTimeoutMs,
     }).catch(() => [] as readonly Candle[]),
   ]);
   const fetchedBars = candles.map(candleToFilterBar);
@@ -250,21 +269,22 @@ export function getRefreshFetchStartMs({
   state,
   currentOpenTimeMs,
   limit,
+  source = "pyth",
 }: {
   readonly state: TradeDecisionCandleState;
   readonly currentOpenTimeMs: number;
   readonly limit: number;
+  readonly source?: "pyth" | "coinbase";
 }): number {
-  const fullHydrationStartMs =
-    currentOpenTimeMs - state.periodMs * (limit + 2);
-  if (state.bars.length < limit) {
+  const fullHydrationStartMs = currentOpenTimeMs - state.periodMs * (limit + 2);
+  const bars = source === "pyth" ? state.bars : state.coinbaseBars;
+  if (bars.length < limit) {
     return Math.max(0, fullHydrationStartMs);
   }
 
-  const latestKnownOpenTimeMs = state.bars.at(-1)?.openTimeMs ?? null;
+  const latestKnownOpenTimeMs = bars.at(-1)?.openTimeMs ?? null;
   const recentStartMs =
-    currentOpenTimeMs -
-    state.periodMs * TRADE_DECISION_REFRESH_LOOKBACK_BARS;
+    currentOpenTimeMs - state.periodMs * TRADE_DECISION_REFRESH_LOOKBACK_BARS;
   if (latestKnownOpenTimeMs === null) {
     return Math.max(0, fullHydrationStartMs);
   }
@@ -329,6 +349,32 @@ async function fetchHydrateCoinbaseCandles(params: {
   readonly end: Date;
 }): Promise<readonly Candle[]> {
   return fetchCoinbaseCandles(params);
+}
+
+async function fetchOptionalCandles({
+  fetchCandles,
+  params,
+  timeoutMs,
+}: {
+  readonly fetchCandles: FetchCandles;
+  readonly params: Parameters<FetchCandles>[0];
+  readonly timeoutMs: number;
+}): Promise<readonly Candle[]> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await new Promise<readonly Candle[]>((resolve, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(`optional candle fetch timed out after ${timeoutMs}ms`),
+        );
+      }, timeoutMs);
+      fetchCandles(params).then(resolve, reject);
+    });
+  } finally {
+    if (timer !== null) {
+      clearTimeout(timer);
+    }
+  }
 }
 
 function synthesizeActiveBar({

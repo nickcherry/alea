@@ -15,13 +15,14 @@
  * were removed. Later research intentionally reintroduced more
  * selective trend/continuation tests alongside the reversion-heavy
  * registry. The first May 2026 expansion pass was pruned after its
- * first full run: volume-dependent filters remain as implementations
- * but are unregistered until the training source carries volume, and
- * consistently sub-50 continuation/trend families were retired from
- * default training runs. Later round-2 research reactivated selected
- * OHLC-only continuation/failure/trend families with revised configs.
- * Later still, a third pass trimmed any filter whose default configs
- * produced no committee seat under the active selection profile.
+ * first full run because the original Pyth-only training source
+ * carried zero volume. Later source-aware training reintroduced
+ * selected volume filters on Coinbase spot bars while keeping Pyth as
+ * the outcome-label and price-filter source. Later round-2 research
+ * reactivated selected OHLC-only continuation/failure/trend families
+ * with revised configs. Later still, a third pass trimmed any filter
+ * whose default configs produced no committee seat under the active
+ * selection profile.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -43,32 +44,47 @@ import "@alea/lib/filters/cmoMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
 import "@alea/lib/filters/disparityIndexReversion";
 import "@alea/lib/filters/donchianReversion";
+import "@alea/lib/filters/effortVsResultFade";
 import "@alea/lib/filters/emaPosition";
 import "@alea/lib/filters/failedCloseBreakoutFade";
+import "@alea/lib/filters/freshVolumeImpulseFollow";
 import "@alea/lib/filters/heikinAshiReversion";
+import "@alea/lib/filters/highVolumeFailedBreakoutFade";
 import "@alea/lib/filters/hullMaPosition";
 import "@alea/lib/filters/insideBarFakeoutFade";
 import "@alea/lib/filters/internalBarStrengthMeanrev";
 import "@alea/lib/filters/keltnerReversion";
 import "@alea/lib/filters/lateVolumeClimaxFade";
 import "@alea/lib/filters/lowVolumeBreakoutFade";
+import "@alea/lib/filters/lowVolumeNodeTraverseFollow";
 import "@alea/lib/filters/macdHistogramTurnFade";
 import "@alea/lib/filters/madReversion";
 import "@alea/lib/filters/multiBarReturnFade";
 import "@alea/lib/filters/percentRankMeanRev";
+import "@alea/lib/filters/priceVolumeDisagreementFade";
 import "@alea/lib/filters/qstickBodyBiasFade";
 import "@alea/lib/filters/rangeExpansionFade";
+import "@alea/lib/filters/relvolContextMarkovDirection";
 import "@alea/lib/filters/rollingVwapBandReclaim";
+import "@alea/lib/filters/rollingVwapCrossFollow";
 import "@alea/lib/filters/rsiMeanRev";
 import "@alea/lib/filters/rsiVelocity";
+import "@alea/lib/filters/signedVolumeImbalanceFade";
 import "@alea/lib/filters/smaPosition";
 import "@alea/lib/filters/squeezeBreakoutFollow";
 import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochasticMeanRev";
+import "@alea/lib/filters/stoppingVolumeReversal";
 import "@alea/lib/filters/streakFade";
 import "@alea/lib/filters/supertrendRetestFollow";
 import "@alea/lib/filters/tsiMeanRev";
+import "@alea/lib/filters/volumeCompressionBreakoutFollow";
+import "@alea/lib/filters/volumeConfirmedBreakoutFollow";
+import "@alea/lib/filters/volumeDivergenceRetestFade";
 import "@alea/lib/filters/volumeDryupPullbackFollow";
+import "@alea/lib/filters/volumeGradientTrendFollow";
 import "@alea/lib/filters/volumeProfileValueAreaEdgeFade";
+import "@alea/lib/filters/volumeTaperExhaustionFade";
+import "@alea/lib/filters/volumeWeightedBodyPressureFollow";
 import "@alea/lib/filters/williamsRMeanRev";
 import "@alea/lib/filters/zscoreReversion";

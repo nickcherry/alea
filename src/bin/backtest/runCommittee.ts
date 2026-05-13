@@ -9,7 +9,7 @@ export const backtestRunCommand = defineCommand({
   name: "backtest:run",
   summary: "Replay the selected trade committee over the holdout window",
   description:
-    "Simulates historical trade committee decisions over the configured post-training holdout window using Pyth spot candles only. It does not connect to Polymarket and does not model order-book fills. Results are persisted to committee_backtest_runs, and the /backtest/ dashboard displays the latest run.",
+    "Simulates historical trade committee decisions over the configured post-training holdout window using Pyth spot as the canonical timeline/outcome source and Coinbase spot for volume-source filters. It does not connect to Polymarket and does not model order-book fills. Results are persisted to committee_backtest_runs, and the /backtest/ dashboard displays the latest run.",
   options: [],
   examples: ["bun alea backtest:run"],
   output:

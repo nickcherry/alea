@@ -6,9 +6,10 @@ one-off winner. The goal is to find stable neighborhoods where win
 rate improves while trade count stays useful.
 
 The sweep uses the same holdout replay as `backtest:run`: historical
-Pyth spot candles only, no Polymarket order book, no maker-fill model.
-It does not mutate production constants and it does not rewrite the
-live `committee_selections` roster.
+Pyth spot candles as the canonical timeline/outcome source, Coinbase
+spot candles for volume-source filters, no Polymarket order book, and
+no maker-fill model. It does not mutate production constants and it
+does not rewrite the live `committee_selections` roster.
 
 ## Objective
 

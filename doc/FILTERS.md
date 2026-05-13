@@ -20,6 +20,7 @@ type Filter<TConfig> = {
   readonly version: number; // bump on logic change
   readonly description: string; // lay-readable
   readonly family: FilterFamily; // strategy family tag
+  readonly barSource: "pyth" | "coinbase";
   readonly configSchema: z.ZodType<TConfig>;
   readonly requiredBars: (config: TConfig) => number;
   readonly predict: (
@@ -39,7 +40,12 @@ framework guarantees:
    "No-leak invariant" in [TRAINING.md](./TRAINING.md).
 2. `configSchema.parse(config)` is the only way the framework hands
    the filter a config. Defaults declared in the schema apply.
-3. The cache key for a `(filter, config)` pair is the candidate hash
+3. `barSource` decides which aligned candle stream the framework
+   slices before calling `predict`. Price-only filters should use
+   `"pyth"` because Pyth is the Polymarket-aligned settlement proxy.
+   Filters that read `volume` must use `"coinbase"` because Pyth bars
+   carry zero volume.
+4. The cache key for a `(filter, config)` pair is the candidate hash
    over `(id, version, configCanon)`. Bumping `version` invalidates
    every cached result for the filter.
 
@@ -86,10 +92,17 @@ regime is a separate concept; see [REGIMES.md](./REGIMES.md).
 ## Bar windows + the no-leak rule
 
 Every filter consumes a `FilterBar[]` (`openTimeMs`, `open`, `high`,
-`low`, `close`, `volume`). The training walker enforces no-leak by
-slicing the window before `predict` runs and only touching the next
-bar after the prediction is locked in. See [TRAINING.md](./TRAINING.md)
-for the exact mechanics.
+`low`, `close`, `volume`). Training, backtest, dry-run, and live
+trading all build an aligned bundle with Pyth as the canonical
+timeline and Coinbase spot looked up by the same open times. The
+framework slices the source named by `barSource` before `predict`
+runs; if a Coinbase-source filter has a missing bar in its window,
+that candidate abstains for the moment.
+
+The training walker enforces no-leak by slicing the window before
+`predict` runs and only touching the next Pyth bar after the
+prediction is locked in. See [TRAINING.md](./TRAINING.md) for the
+exact mechanics.
 
 A filter must not reach outside its `bars` argument. That includes:
 

@@ -78,6 +78,24 @@ describe("refreshTradeDecisionCandleState", () => {
     ).toBe(1_200_000);
   });
 
+  it("uses the Coinbase buffer when selecting Coinbase refresh windows", () => {
+    const state = stateWithBars(
+      Array.from({ length: 20 }, (_, index) =>
+        bar(index * 300_000, 90 + index, 100 + index),
+      ),
+    );
+    state.coinbaseBars = [bar(0, 90, 100), bar(1_200_000, 100, 101)];
+
+    expect(
+      getRefreshFetchStartMs({
+        state,
+        currentOpenTimeMs: 6_000_000,
+        limit: 20,
+        source: "coinbase",
+      }),
+    ).toBe(0);
+  });
+
   it("refreshes closed candles and synthesizes the active candle from the latest Pyth price", async () => {
     const state = stateWithBars([bar(0, 90, 100)]);
     const refreshed = await refreshTradeDecisionCandleState({
@@ -166,9 +184,29 @@ describe("refreshTradeDecisionCandleState", () => {
         new Map([["btc", latestPrice({ price: 113, publishTimeMs: 894_000 })]]),
     });
 
-    expect(refreshed.seriesForDecision?.coinbase.map((b) => b?.volume ?? null)).toEqual([
-      12, 8, 5,
+    expect(
+      refreshed.seriesForDecision?.coinbase.map((b) => b?.volume ?? null),
+    ).toEqual([12, 8, 5]);
+  });
+
+  it("keeps the decision path alive when Coinbase refresh times out", async () => {
+    const state = stateWithBars([bar(0, 90, 100)]);
+    const refreshed = await refreshTradeDecisionCandleState({
+      state,
+      nowMs: 895_000,
+      fetchCandles: async () => [candle(300_000, 100, 108)],
+      fetchCoinbaseBarsForRefresh: async () =>
+        new Promise<readonly Candle[]>(() => {}),
+      coinbaseFetchTimeoutMs: 1,
+      fetchLatestPrices: async () =>
+        new Map([["btc", latestPrice({ price: 113, publishTimeMs: 894_000 })]]),
+    });
+
+    expect(refreshed.syntheticBar?.close).toBe(113);
+    expect(refreshed.seriesForDecision?.pyth.map((b) => b.openTimeMs)).toEqual([
+      0, 300_000, 600_000,
     ]);
+    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null, null]);
   });
 });
 

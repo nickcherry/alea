@@ -1,13 +1,13 @@
 # Dry Run
 
 The dry-run loop is the bridge between offline committee backtests
-and real trading: a long-running process that keeps recent Pyth
-candles in memory, refreshes them just before each market boundary,
-synthesizes the active candle from the latest Pyth price, asks the
-committee to predict the next bar, and persists every decision to
-`dry_run_decisions`. No real orders are placed. The loop also
-simulates whether a configured post-open Polymarket order would have
-been eligible, placed, filled, or left unfilled.
+and real trading: a long-running process that keeps recent Pyth and
+Coinbase spot candles in memory, refreshes them just before each
+market boundary, synthesizes the active Pyth candle from the latest
+Pyth price, asks the committee to predict the next bar, and persists
+every decision to `dry_run_decisions`. No real orders are placed. The
+loop also simulates whether a configured post-open Polymarket order
+would have been eligible, placed, filled, or left unfilled.
 
 Run it:
 
@@ -32,21 +32,25 @@ For each configured period, defaulting to `5m,15m`, and each of the
 5 supported assets (`btc`, `eth`, `sol`, `xrp`, `doge`):
 
 1. **Hydrate** — load the most recent
-   `TRADE_DECISION_HYDRATE_BARS` closed bars for that period from
-   `candles` (pyth-spot canonical series). The current value, 150,
-   is wider than the classifier's 100-bar window and the deepest
-   filter's `requiredBars`, so the first decision always has enough
-   history.
+   `TRADE_DECISION_HYDRATE_BARS` closed bars for that period for
+   both sources. Pyth is the canonical price/settlement-proxy series;
+   Coinbase spot carries volume for filters whose `barSource` is
+   `"coinbase"`. The current value, 150, is wider than the
+   classifier's 100-bar window and the deepest filter's
+   `requiredBars`, so the first decision always has enough history
+   when the source has coverage.
 2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
-   configured period boundary, fetch recent Pyth candles for that
-   asset/period and upsert them into the in-memory buffer by candle
-   open time. Canonical fetched candles overwrite any older in-memory
-   copy, and the buffer is pruned back to the hydrate limit.
+   configured period boundary, fetch recent Pyth and Coinbase spot
+   candles for that asset/period and upsert them into separate
+   in-memory buffers by candle open time. Pyth refresh failures skip
+   the decision; Coinbase refresh failures are soft, so volume-source
+   filters abstain while Pyth-source filters can still vote.
 3. **Synthesize + predict** — fetch the latest one-shot Pyth price,
    combine it with the active Pyth candle when available, and build a
-   synthetic active candle for the about-to-finalize bar. Run the
-   regime classifier. Look up the committee roster for that period
-   and regime. Apply the shared trade decision policy. If
+   synthetic active candle for the about-to-finalize bar. Align the
+   Coinbase buffer to the Pyth open-time timeline. Run the regime
+   classifier on Pyth bars. Look up the committee roster for that
+   period and regime. Apply the shared trade decision policy. If
    non-abstain, persist the decision; otherwise skip.
 4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0.1s`
    after the target Polymarket market opens, read the live UP/DOWN
@@ -69,26 +73,30 @@ For each configured period, defaulting to `5m,15m`, and each of the
 The runner is single-threaded by design: all state lives in the
 closure, no locking. Persistence is the only external side effect.
 
-## Pyth snapshot contract
+## Candle Snapshot Contract
 
 Dry-run no longer keeps a Pyth candle websocket alive. It only needs a
 decision snapshot a few seconds before each market opens, so the
 runtime uses direct fetch/reconcile instead:
 
-1. Startup hydrates the latest closed bars from the local `candles`
-   table.
+1. Startup hydrates Pyth and Coinbase spot closed bars into parallel
+   rolling buffers.
 2. At decision time, [`candleState.ts`](../src/lib/tradeDecision/candleState.ts)
    fetches recent Pyth Benchmark candles for the specific
    asset/period and upserts them into memory with no duplicate open
    times. This decision-time fetch uses a short timeout and no
    backoff retries; slow backfills should not hold the trading loop
    through the boundary.
-3. It then fetches a one-shot latest Pyth price via
+3. It also fetches recent Coinbase spot candles into the Coinbase
+   buffer. Coinbase is optional at decision time: if it errors,
+   times out, or has an open-time gap inside a filter window, only
+   the Coinbase-source filters abstain.
+4. It then fetches a one-shot latest Pyth price via
    [`fetchLatestPythPrices`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts).
    If that price is older than
    `TRADE_DECISION_MAX_PRICE_AGE_MS`, the decision is skipped instead
    of trading stale state.
-4. If Pyth has already returned the active partial candle, its
+5. If Pyth has already returned the active partial candle, its
    open/high/low are used and the latest price becomes the synthetic
    close. If not, the prior closed candle's close is used as the
    fallback open and the latest price defines the active bar's close.
@@ -107,8 +115,10 @@ At T-5s of each boundary, for each asset:
    hydration makes this an edge case in practice.
 3. Look up the roster bucket for `(asset, regime, period)` in
    `committee_selections`. Empty bucket → abstain.
-4. Evaluate each rostered candidate's `predict` on the same bar
-   window.
+4. Evaluate each rostered candidate's `predict` on the trailing bar
+   window from its declared source: Pyth for price filters, Coinbase
+   spot for volume filters. Coinbase gaps become abstains for that
+   candidate.
 5. Collapse votes to at most one active vote per `filter_id`. When
    multiple configs for a filter engage, the engaged config with the
    highest selected asset/regime `win_rate` counts.

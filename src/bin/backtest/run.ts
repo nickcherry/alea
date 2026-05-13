@@ -30,9 +30,9 @@ type SupportedPeriod = (typeof SUPPORTED_PERIODS)[number];
  * (candidate, period, asset) tuples already have an exact active-profile
  * row for that window.
  *
- * Side effects: reads `candles` (pyth/spot only — that's the
- * source we backfilled for the new framework), upserts into
- * `filter_runs`. No network.
+ * Side effects: reads `candles` (Pyth spot for the canonical
+ * timeline/outcomes, Coinbase spot for volume-source filters),
+ * upserts into `filter_runs`. No network.
  */
 export const trainingRunCommand = defineCommand({
   name: "training:run",
@@ -92,7 +92,7 @@ export const trainingRunCommand = defineCommand({
   output:
     "One line per (filter, config, period, asset): engagement count, win count, win rate.",
   sideEffects:
-    "Reads `candles` (pyth/spot only). Upserts into `filter_runs`. No network.",
+    "Reads `candles` (Pyth spot plus Coinbase spot). Upserts into `filter_runs`. No network.",
   async run({ io, options }) {
     const candidates = allCandidates();
     const restrictTo =
@@ -186,7 +186,11 @@ async function loadTrainingSeries({
   });
 }
 
-function countNonNull<T>({ arr }: { readonly arr: readonly (T | null)[] }): number {
+function countNonNull<T>({
+  arr,
+}: {
+  readonly arr: readonly (T | null)[];
+}): number {
   let n = 0;
   for (const v of arr) {
     if (v !== null) {

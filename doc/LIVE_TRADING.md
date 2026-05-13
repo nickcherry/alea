@@ -1,10 +1,10 @@
 # Live Trading
 
 `bun alea trading:run` is the real-money version of the committee
-runner. It uses the same candle refresh, regime classification,
-committee roster, one-vote-per-filter aggregation, and confidence
-gate as dry-run. The difference is execution: actionable decisions
-place real Polymarket orders.
+runner. It uses the same source-aware candle refresh, regime
+classification, committee roster, one-vote-per-filter aggregation,
+and confidence gate as dry-run. The difference is execution:
+actionable decisions place real Polymarket orders.
 
 Run it:
 
@@ -32,13 +32,18 @@ or after rotating credentials.
 
 For each asset/period:
 
-1. The runner hydrates recent Pyth bars from `candles`.
+1. The runner hydrates recent Pyth and Coinbase spot bars into
+   parallel in-memory buffers. Pyth is the canonical timeline;
+   Coinbase supplies volume for filters that declare
+   `barSource: "coinbase"`.
 2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 60s` before the
    next market opens, it resolves the next Polymarket slug and
    subscribes to both UP and DOWN token books.
-3. At `T-5s`, it refreshes recent Pyth candles, fetches the latest
-   Pyth price, synthesizes the active candle, and asks the committee
-   for a decision.
+3. At `T-5s`, it refreshes recent Pyth and Coinbase spot candles,
+   fetches the latest Pyth price, synthesizes the active Pyth candle,
+   aligns Coinbase bars to the Pyth timestamps, and asks the
+   committee for a decision. Coinbase failures are soft; Pyth failures
+   or stale latest Pyth prices skip the decision.
 4. If the decision is actionable, the order is scheduled for the
    exact market-open timestamp. There is no artificial live-trading
    delay; the dry-run `100ms` delay exists only to simulate expected

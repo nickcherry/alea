@@ -1,13 +1,18 @@
 # Alea
 
 Filter-committee research toolkit for Polymarket crypto up/down
-markets. Alea trains deterministic Pyth-candle filters, selects an
-asset/regime-aware trade committee, replays that committee over a
-holdout window, and runs the same voting path in dry-run/live trading.
+markets. Alea trains deterministic filters over aligned Pyth and
+Coinbase spot candles, selects an asset/regime-aware trade committee,
+replays that committee over a holdout window, and runs the same voting
+path in dry-run/live trading.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
 fees and roughly 1:1 risk/reward, win rate is the edge.
+
+Pyth remains the canonical price and outcome-label source because it
+closes closest to Polymarket settlement. Coinbase spot supplies volume
+for filters that declare `barSource: "coinbase"`.
 
 The candle store can also ingest `1m` and `1h` bars for research and
 source-comparison work. Those are data-only today; trading, committee
