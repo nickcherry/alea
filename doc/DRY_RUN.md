@@ -1,12 +1,13 @@
 # Dry Run
 
 The dry-run loop is the bridge between offline committee backtests
-and real trading: a long-running process that streams live Pyth ticks, builds
-synthetic bars at the boundary, asks the committee to predict the
-next bar, and persists every decision to `dry_run_decisions`. No
-real orders are placed. The loop also simulates whether a configured
-post-open Polymarket order would have been eligible, placed, filled,
-or left unfilled.
+and real trading: a long-running process that keeps recent Pyth
+candles in memory, refreshes them just before each market boundary,
+synthesizes the active candle from the latest Pyth price, asks the
+committee to predict the next bar, and persists every decision to
+`dry_run_decisions`. No real orders are placed. The loop also
+simulates whether a configured post-open Polymarket order would have
+been eligible, placed, filled, or left unfilled.
 
 Run it:
 
@@ -36,18 +37,17 @@ For each configured period, defaulting to `5m,15m`, and each of the
    is wider than the classifier's 100-bar window and the deepest
    filter's `requiredBars`, so the first decision always has enough
    history.
-2. **Subscribe** — open one Pyth Hermes SSE stream for all 5 assets
-   (multi-id query — one socket, all feeds). Ticks update an
-   in-memory bar accumulator per asset/period: each tick's price
-   advances `high` / `low` / `close` of the current bar; crossing
-   that period's boundary finalizes the just-closed bar and starts a
-   new one.
-3. **Predict** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
-   configured period boundary, snapshot the current Pyth price as
-   the synthetic close of the about-to-finalize bar. Run the regime
-   classifier. Look up the committee roster for that period and
-   regime. Apply the shared trade decision policy. If non-abstain,
-   persist the decision; otherwise skip.
+2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
+   configured period boundary, fetch recent Pyth candles for that
+   asset/period and upsert them into the in-memory buffer by candle
+   open time. Canonical fetched candles overwrite any older in-memory
+   copy, and the buffer is pruned back to the hydrate limit.
+3. **Synthesize + predict** — fetch the latest one-shot Pyth price,
+   combine it with the active Pyth candle when available, and build a
+   synthetic active candle for the about-to-finalize bar. Run the
+   regime classifier. Look up the committee roster for that period
+   and regime. Apply the shared trade decision policy. If
+   non-abstain, persist the decision; otherwise skip.
 4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 1s`
    after the target Polymarket market opens, read the live UP/DOWN
    book/BBO market data for the predicted side. The runner
@@ -61,25 +61,40 @@ For each configured period, defaulting to `5m,15m`, and each of the
    watches fresh predicted-side ask quotes until the target market closes.
    If the simulated limit never becomes executable, the row is marked
    `unfilled`.
-5. **Score** — when a closed bar's actual close arrives (via the
-   normal tick-driven finalize on the next bar's first tick),
-   compare to the prediction. Update the pending row's
-   `actual_close` + `won`.
+5. **Score** — on later refreshes, once the target bar is present as
+   a closed Pyth candle in the in-memory buffer, compare its close to
+   the prediction. Update the pending row's `actual_close` + `won`.
 
 The runner is single-threaded by design: all state lives in the
 closure, no locking. Persistence is the only external side effect.
 
-## Pyth stream contract
+## Pyth snapshot contract
 
-[`streamPythHermes`](../src/lib/livePrices/pyth/streamPythHermes.ts)
-is the SSE wrapper. Auto-reconnect with exponential backoff (1s →
-30s cap), a stale-event watchdog (15s of silence triggers a
-reconnect), and graceful handling of Hermes's 24h voluntary close.
+Dry-run no longer keeps a Pyth candle websocket alive. It only needs a
+decision snapshot a few seconds before each market opens, so the
+runtime uses direct fetch/reconcile instead:
 
-Multi-asset subscription is cheap: one socket, all 5 assets
-interleaved into the same event stream. Each tick is dispatched per
-asset; the dry-run loop maintains a separate bar accumulator per
-asset.
+1. Startup hydrates the latest closed bars from the local `candles`
+   table.
+2. At decision time, [`candleState.ts`](../src/lib/tradeDecision/candleState.ts)
+   fetches recent Pyth Benchmark candles for the specific
+   asset/period and upserts them into memory with no duplicate open
+   times. This decision-time fetch uses a short timeout and no
+   backoff retries; slow backfills should not hold the trading loop
+   through the boundary.
+3. It then fetches a one-shot latest Pyth price via
+   [`fetchLatestPythPrices`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts).
+   If that price is older than
+   `TRADE_DECISION_MAX_PRICE_AGE_MS`, the decision is skipped instead
+   of trading stale state.
+4. If Pyth has already returned the active partial candle, its
+   open/high/low are used and the latest price becomes the synthetic
+   close. If not, the prior closed candle's close is used as the
+   fallback open and the latest price defines the active bar's close.
+
+The remaining websocket in dry-run is the Polymarket market-data
+stream used by order simulation. That stream is about fillability and
+book state, not committee candle construction.
 
 ## Committee evaluation
 
@@ -202,23 +217,24 @@ The CLI streams one line per event:
 13:21:05 hydrated 15m/btc bars=150
 ...
 13:21:05 loaded committee roster: 8 buckets, 80 candidates (selected_at=2026-05-11 13:18)
-13:21:05 connected
+13:21:05 ready
 13:24:55 UP     5m/eth   target=13:25 synth=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
 13:24:55 abstain 15m/btc   target=13:30 synth=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10
 ...
 13:25:01 WIN  5m/eth   bar=13:20 pred=u open=2329.42 close=2330.27
 ```
 
-Event kinds: `hydrated`, `roster`, `connected` / `disconnected`,
-`decision`, `order`, `outcome`, `error`. See
+Event kinds: `hydrated`, `roster`, `ready`, `decision`, `order`,
+`outcome`, `error`. See
 [`bin/dry/run.ts`](../src/bin/dry/run.ts) for the styling
 contract.
 
 ## Failure modes
 
-- **Stream drops** — auto-reconnect with backoff. Decisions miss
-  during the gap; in-flight bar accumulators recover on the next
-  tick. Logged as `disconnected` + `connected`.
+- **Pyth refresh/latest failure** — the decision is skipped if recent
+  candles cannot be fetched, the latest price is missing, or the
+  latest price is stale. Logged as `error`; the next boundary retries
+  with fresh fetches.
 - **Stale committee roster** — the CLI startup line shows
   `selected_at`. If that's days old and the training artifact set has
   since expanded, the live committee is voting with an outdated
@@ -244,16 +260,15 @@ loader + renderer.
 
 - [`src/lib/dryRun/runDryRun.ts`](../src/lib/dryRun/runDryRun.ts) —
   the main loop.
+- [`src/lib/tradeDecision/candleState.ts`](../src/lib/tradeDecision/candleState.ts) —
+  shared hydrate/refresh/synthesize candle state for dry-run and live
+  trade decisions.
 - [`src/lib/dryRun/orderSimulation.ts`](../src/lib/dryRun/orderSimulation.ts) —
   post-open dry-run order placement + fill simulation.
 - [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts) —
   shared current/next-window market discovery cache.
-- [`src/lib/dryRun/loadRecentBars.ts`](../src/lib/dryRun/loadRecentBars.ts) —
-  hydration query.
-- [`src/lib/dryRun/types.ts`](../src/lib/dryRun/types.ts) — internal
-  shapes.
+- [`src/lib/livePrices/pyth/fetchLatestPythPrices.ts`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts) —
+  one-shot Hermes latest-price fetcher.
 - [`src/lib/dryRun/dashboard/`](../src/lib/dryRun/dashboard/) —
   payload loader + HTML renderer.
 - [`src/bin/dry/run.ts`](../src/bin/dry/run.ts) — the CLI.
-- [`src/lib/livePrices/pyth/streamPythHermes.ts`](../src/lib/livePrices/pyth/streamPythHermes.ts) —
-  Pyth SSE wrapper with reconnect + watchdog.

@@ -15,13 +15,11 @@ const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
 
 /**
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
- * the `candles` table, subscribes to Pyth Hermes ticks for every
- * registered asset, and runs the committee on every configured
- * period boundary (snapshotting the Pyth price 5 seconds before the
- * boundary as the synthetic close of the about-to-finalize bar).
- * Decisions land in `dry_run_decisions`; the configured post-open
- * Polymarket order is simulated; outcomes are scored once the target
- * bar finalizes.
+ * the `candles` table, refreshes recent Pyth candles before each
+ * configured period boundary, synthesizes the active candle from the
+ * latest Pyth price, and runs the committee. Decisions land in
+ * `dry_run_decisions`; the configured post-open Polymarket order is
+ * simulated; outcomes are scored once the target bar finalizes.
  *
  * Stays running until SIGINT / SIGTERM. Intended to live in a
  * long-running tmux / background session.
@@ -30,7 +28,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run the committee in dry-run mode against live Pyth prices",
   description:
-    "Long-running process. Hydrates bar history from `candles`, subscribes to Pyth Hermes for live ticks, and at T-5s of each configured boundary runs the committee to predict the next bar's direction. Predictions land in `dry_run_decisions`; the configured post-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles at T-5s of each configured boundary, synthesizes the active candle from the latest Pyth price, and runs the committee to predict the next bar's direction. Predictions land in `dry_run_decisions`; the configured post-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",
@@ -57,7 +55,7 @@ export const dryRunCommand = defineCommand({
   output:
     "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",
   sideEffects:
-    "Opens Pyth Hermes and Polymarket market-data connections. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
+    "Fetches Pyth candles/latest prices and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
   async run({ io, options }) {
     io.writeStdout(
       `${pc.bold("dry:run")} ${pc.dim(`periods=${options.periods.join(",")} assets=${assetValues.join(",")}`)}\n\n`,
@@ -90,13 +88,8 @@ export const dryRunCommand = defineCommand({
                 `${pc.dim(ts)} ${pc.green("hydrated")} ${event.period}/${event.asset} ${pc.dim("bars=" + event.barCount)}\n`,
               );
               break;
-            case "connected":
-              io.writeStdout(`${pc.dim(ts)} ${pc.green("connected")}\n`);
-              break;
-            case "disconnected":
-              io.writeStdout(
-                `${pc.dim(ts)} ${pc.yellow("disconnected")} ${pc.dim(event.reason)}\n`,
-              );
+            case "ready":
+              io.writeStdout(`${pc.dim(ts)} ${pc.green("ready")}\n`);
               break;
             case "roster": {
               const stale =

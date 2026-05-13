@@ -26,9 +26,9 @@ const maxCandlesPerPage = 9000;
  * for the rare case where the limit doesn't clear on the first wait
  * (other clients hitting the same shared limit).
  */
-const maxRateLimitRetries = 8;
-const rateLimitInitialBackoffMs = 30_000;
-const rateLimitMaxBackoffMs = 60_000;
+const defaultMaxRateLimitRetries = 8;
+const defaultRateLimitInitialBackoffMs = 30_000;
+const defaultRateLimitMaxBackoffMs = 60_000;
 
 /**
  * Pyth's TradingView shim occasionally hangs a request without responding.
@@ -36,13 +36,17 @@ const rateLimitMaxBackoffMs = 60_000;
  * empty-message error. Abort our own at 30s and treat it as a transient
  * failure — the same backoff path 429s use.
  */
-const requestTimeoutMs = 30_000;
+const defaultRequestTimeoutMs = 30_000;
 
 type FetchPythCandlesParams = {
   readonly asset: Asset;
   readonly timeframe: CandleTimeframe;
   readonly start: Date;
   readonly end: Date;
+  readonly requestTimeoutMs?: number;
+  readonly maxRateLimitRetries?: number;
+  readonly rateLimitInitialBackoffMs?: number;
+  readonly rateLimitMaxBackoffMs?: number;
 };
 
 /**
@@ -63,6 +67,10 @@ export async function fetchPythCandles({
   timeframe,
   start,
   end,
+  requestTimeoutMs = defaultRequestTimeoutMs,
+  maxRateLimitRetries = defaultMaxRateLimitRetries,
+  rateLimitInitialBackoffMs = defaultRateLimitInitialBackoffMs,
+  rateLimitMaxBackoffMs = defaultRateLimitMaxBackoffMs,
 }: FetchPythCandlesParams): Promise<readonly Candle[]> {
   const symbol = pythSymbol({ asset });
   const resolution = pythResolution({ timeframe });
@@ -86,6 +94,10 @@ export async function fetchPythCandles({
       symbol,
       timeframe,
       windowLabel: `${nextStartSec}..${pageEndSec}`,
+      requestTimeoutMs,
+      maxRateLimitRetries,
+      rateLimitInitialBackoffMs,
+      rateLimitMaxBackoffMs,
     });
     const raw = await response.json();
     const header = headerSchema.parse(raw);
@@ -164,21 +176,33 @@ async function fetchWithRateLimitRetry({
   symbol,
   timeframe,
   windowLabel,
+  requestTimeoutMs,
+  maxRateLimitRetries,
+  rateLimitInitialBackoffMs,
+  rateLimitMaxBackoffMs,
 }: {
   readonly url: string;
   readonly symbol: string;
   readonly timeframe: CandleTimeframe;
   readonly windowLabel: string;
+  readonly requestTimeoutMs: number;
+  readonly maxRateLimitRetries: number;
+  readonly rateLimitInitialBackoffMs: number;
+  readonly rateLimitMaxBackoffMs: number;
 }): Promise<Response> {
   for (let attempt = 0; attempt <= maxRateLimitRetries; attempt++) {
     let response: Response;
     try {
-      response = await fetchWithTimeout(url);
+      response = await fetchWithTimeout({ url, requestTimeoutMs });
     } catch (err) {
       // AbortError (timeout) or network error — treat as transient and
       // retry with the same backoff schedule a 429 uses.
       if (attempt < maxRateLimitRetries) {
-        await sleepWithJitter({ attempt });
+        await sleepWithJitter({
+          attempt,
+          initialBackoffMs: rateLimitInitialBackoffMs,
+          maxBackoffMs: rateLimitMaxBackoffMs,
+        });
         continue;
       }
       throw new Error(
@@ -191,7 +215,11 @@ async function fetchWithRateLimitRetry({
     if (response.status === 429 && attempt < maxRateLimitRetries) {
       // Drain the body so the connection is reusable, then back off.
       await response.text();
-      await sleepWithJitter({ attempt });
+      await sleepWithJitter({
+        attempt,
+        initialBackoffMs: rateLimitInitialBackoffMs,
+        maxBackoffMs: rateLimitMaxBackoffMs,
+      });
       continue;
     }
     const body = await response.text();
@@ -204,7 +232,13 @@ async function fetchWithRateLimitRetry({
   );
 }
 
-async function fetchWithTimeout(url: string): Promise<Response> {
+async function fetchWithTimeout({
+  url,
+  requestTimeoutMs,
+}: {
+  readonly url: string;
+  readonly requestTimeoutMs: number;
+}): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
   try {
@@ -219,16 +253,17 @@ async function fetchWithTimeout(url: string): Promise<Response> {
 
 async function sleepWithJitter({
   attempt,
+  initialBackoffMs,
+  maxBackoffMs,
 }: {
   readonly attempt: number;
+  readonly initialBackoffMs: number;
+  readonly maxBackoffMs: number;
 }): Promise<void> {
   // Exponential growth capped at 60s, plus jitter up to half the base wait
   // so concurrent workers don't all retry on the same tick after the
   // rolling-window resets.
-  const baseMs = Math.min(
-    rateLimitInitialBackoffMs * 2 ** attempt,
-    rateLimitMaxBackoffMs,
-  );
+  const baseMs = Math.min(initialBackoffMs * 2 ** attempt, maxBackoffMs);
   const totalMs = baseMs + Math.random() * (baseMs / 2);
   await new Promise((resolve) => setTimeout(resolve, totalMs));
 }

@@ -48,6 +48,20 @@ export const TRADE_DECISION_LEAD_TIME_MS = 5 * 1000;
 export const TRADE_DECISION_HYDRATE_BARS = 150;
 
 /**
+ * Maximum tolerated age for the one-shot Pyth price used to synthesize
+ * the active candle at decision time. Pyth publishes frequently; older
+ * snapshots usually mean Hermes or our network path is stale enough to
+ * skip the decision instead of trading on stale state.
+ */
+export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
+
+/**
+ * Decision-time candle refresh must fail fast: waiting through the
+ * normal sync/backfill retry policy would miss the market boundary.
+ */
+export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
+
+/**
  * A single filter may have multiple selected configs in a regime
  * bucket, but it can contribute only one active vote to a trade.
  */

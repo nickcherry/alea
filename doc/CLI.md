@@ -36,7 +36,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `committee:*`
   `committee:select` — picks the top-N candidates per `(asset, market_regime, period)` from asset/regime-stratified training stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
 - `dry:*`
-  `dry:run` — long-running process that streams live Pyth ticks, classifies the current regime, runs the rostered committee for `5m,15m` by default (override with `--periods`), persists decisions to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
+  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active bar from the latest Pyth price, classifies the current regime, runs the rostered committee for `5m,15m` by default (override with `--periods`), persists decisions to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
   `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, `/exploration/`, `/committee/`, `/backtest/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`

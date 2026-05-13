@@ -20,18 +20,20 @@ import {
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import { loadRecentBars } from "@alea/lib/dryRun/loadRecentBars";
 import {
   averageWinningVoteConfidence,
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
-import type { DryRunAssetState } from "@alea/lib/dryRun/types";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
-import { streamPythHermes } from "@alea/lib/livePrices/pyth/streamPythHermes";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
+import {
+  hydrateTradeDecisionCandleState,
+  refreshTradeDecisionCandleState,
+  type TradeDecisionCandleState,
+} from "@alea/lib/tradeDecision/candleState";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
@@ -53,8 +55,7 @@ export type DryRunLogEvent =
       readonly period: TradeDecisionPeriod;
       readonly barCount: number;
     }
-  | { readonly kind: "connected" }
-  | { readonly kind: "disconnected"; readonly reason: string }
+  | { readonly kind: "ready" }
   | {
       readonly kind: "roster";
       readonly bucketCount: number;
@@ -89,19 +90,16 @@ export type DryRunLogEvent =
 
 /**
  * Starts the dry-run loop. Returns a handle whose `.stop()` cleanly
- * unsubscribes the Pyth stream and stops the scheduler.
+ * stops the scheduler and order simulator.
  *
  * Operations:
  *   1. Hydrate per-asset/per-period bar buffers from `candles` (most
  *      recent trade-decision history bars).
- *   2. Subscribe to Pyth Hermes for the requested assets. Each
- *      tick updates every configured period's current-bar accumulator;
- *      tick boundary transitions finalize the just-closed bar AND
- *      score any pending decisions whose target was that bar.
- *   3. Schedule a tick that fires before each configured boundary:
- *      snapshot the current Pyth price as the synthetic close of the
- *      about-to-finalize bar, build a synthetic bar object, run the
- *      committee, and persist the decision if it's not an abstain.
+ *   2. Shortly before each configured boundary, refresh recent Pyth
+ *      candles into the in-memory buffer and synthesize the active
+ *      candle from the latest one-shot Pyth price.
+ *   3. Run the committee against that refreshed/synthetic bar set and
+ *      persist the decision if it's not an abstain.
  *   4. For non-abstain decisions, simulate the configured post-open
  *      Polymarket order and track whether it fills before expiry.
  *
@@ -119,36 +117,26 @@ export async function runDryRun({
     periods.length === 0
       ? [...TRADE_DECISION_DEFAULT_PERIODS]
       : Array.from(new Set(periods));
-  const states = new Map<string, DryRunAssetState>();
-  const statesByAsset = new Map<Asset, DryRunAssetState[]>();
-  const statesByPeriod = new Map<TradeDecisionPeriod, DryRunAssetState[]>();
-  for (const asset of assets) {
-    statesByAsset.set(asset, []);
-  }
+  const states = new Map<string, TradeDecisionCandleState>();
+  const statesByPeriod = new Map<
+    TradeDecisionPeriod,
+    TradeDecisionCandleState[]
+  >();
   for (const period of selectedPeriods) {
     statesByPeriod.set(period, []);
   }
   // Hydrate.
   for (const asset of assets) {
     for (const period of selectedPeriods) {
-      const bars = await loadRecentBars({
+      const state = await hydrateTradeDecisionCandleState({
         db,
         asset,
         period,
         limit: TRADE_DECISION_HYDRATE_BARS,
       });
-      const state: DryRunAssetState = {
-        asset,
-        period,
-        periodMs: resolutionTimeframeStepMs({ timeframe: period }),
-        bars,
-        currentBar: null,
-        lastPredictedBoundary: 0,
-      };
       states.set(dryRunStateKey({ asset, period }), state);
-      statesByAsset.get(asset)?.push(state);
       statesByPeriod.get(period)?.push(state);
-      log({ kind: "hydrated", asset, period, barCount: bars.length });
+      log({ kind: "hydrated", asset, period, barCount: state.bars.length });
     }
   }
   const candidates = listCommitteeCandidates();
@@ -193,65 +181,7 @@ export async function runDryRun({
     marketDiscovery,
     log: (event) => log(event),
   });
-
-  const handle = streamPythHermes({
-    assets: [...assets],
-    onTick: (tick) => {
-      const assetStates = statesByAsset.get(tick.asset);
-      if (assetStates === undefined) {
-        return;
-      }
-      for (const state of assetStates) {
-        // Boundary the tick belongs to for this period.
-        const boundary =
-          Math.floor(tick.publishTimeMs / state.periodMs) * state.periodMs;
-        if (state.currentBar === null) {
-          state.currentBar = {
-            openTimeMs: boundary,
-            open: tick.price,
-            high: tick.price,
-            low: tick.price,
-            close: tick.price,
-          };
-          continue;
-        }
-        if (state.currentBar.openTimeMs !== boundary) {
-          // Bar boundary crossed: finalize the just-closed bar.
-          finalizeAndScore({
-            db,
-            state,
-            closedBar: { ...state.currentBar, volume: 0 },
-            pendingByState,
-            log,
-          }).catch((e) =>
-            log({
-              kind: "error",
-              message: `finalize/score failed: ${String(e)}`,
-            }),
-          );
-          state.currentBar = {
-            openTimeMs: boundary,
-            open: tick.price,
-            high: tick.price,
-            low: tick.price,
-            close: tick.price,
-          };
-          continue;
-        }
-        // In-progress bar: update HL + latest close.
-        if (tick.price > state.currentBar.high) {
-          state.currentBar.high = tick.price;
-        }
-        if (tick.price < state.currentBar.low) {
-          state.currentBar.low = tick.price;
-        }
-        state.currentBar.close = tick.price;
-      }
-    },
-    onConnect: () => log({ kind: "connected" }),
-    onDisconnect: (reason) => log({ kind: "disconnected", reason }),
-    onError: (err) => log({ kind: "error", message: err.message }),
-  });
+  log({ kind: "ready" });
 
   // Scheduler loop — checks roughly every second whether we've
   // crossed into the predict-now window.
@@ -277,11 +207,49 @@ export async function runDryRun({
               if (state.lastPredictedBoundary >= nextBoundary) {
                 continue;
               }
+              let refreshed: Awaited<
+                ReturnType<typeof refreshTradeDecisionCandleState>
+              >;
+              try {
+                refreshed = await refreshTradeDecisionCandleState({
+                  state,
+                  nowMs: now,
+                  limit: TRADE_DECISION_HYDRATE_BARS,
+                });
+              } catch (e) {
+                log({
+                  kind: "error",
+                  message: `candle refresh failed ${state.period}/${state.asset}: ${String(e)}`,
+                });
+                continue;
+              }
+              await scorePendingDecisions({
+                db,
+                state,
+                pendingByState,
+                log,
+              });
+              if (
+                refreshed.syntheticBar === null ||
+                refreshed.barsForDecision === null
+              ) {
+                const reason =
+                  refreshed.priceAgeMs === null
+                    ? "missing latest Pyth price"
+                    : `latest Pyth price stale (${refreshed.priceAgeMs}ms old)`;
+                log({
+                  kind: "error",
+                  message: `skip decision ${state.period}/${state.asset}: ${reason}`,
+                });
+                continue;
+              }
               state.lastPredictedBoundary = nextBoundary;
               await makePrediction({
                 db,
                 state,
                 targetTsMs: nextBoundary,
+                bars: refreshed.barsForDecision,
+                synthBar: refreshed.syntheticBar,
                 roster,
                 candidatesByKey,
                 pendingByState,
@@ -305,7 +273,6 @@ export async function runDryRun({
     async stop(): Promise<void> {
       running = false;
       await orderSimulator.stop();
-      await handle.stop();
     },
   };
 }
@@ -314,6 +281,8 @@ async function makePrediction({
   db,
   state,
   targetTsMs,
+  bars,
+  synthBar,
   roster,
   candidatesByKey,
   pendingByState,
@@ -321,8 +290,10 @@ async function makePrediction({
   log,
 }: {
   readonly db: DatabaseClient;
-  readonly state: DryRunAssetState;
+  readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
+  readonly bars: readonly FilterBar[];
+  readonly synthBar: FilterBar;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
   readonly pendingByState: Map<string, Map<number, string>>;
@@ -330,23 +301,6 @@ async function makePrediction({
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   const decisionStartedAtMs = Date.now();
-  // Build a synthetic CLOSED bar for the bar that's about to end.
-  // We take the current bar accumulator and treat its latest close
-  // as the bar's close — this is the "5s before" snapshot.
-  const cur = state.currentBar;
-  if (cur === null) {
-    // No live ticks yet; we can't synthesise a bar. Skip.
-    return;
-  }
-  const synthBar: FilterBar = {
-    openTimeMs: cur.openTimeMs,
-    open: cur.open,
-    high: cur.high,
-    low: cur.low,
-    close: cur.close,
-    volume: 0,
-  };
-  const bars: readonly FilterBar[] = [...state.bars, synthBar];
   const marketRegime = classifyMarketRegime({ bars });
   // Regime-scoped voter set: only candidates whose training record
   // qualified for THIS regime get to vote on this bar. If the
@@ -406,7 +360,7 @@ async function makePrediction({
     period: state.period,
     tsMs: targetTsMs,
     prediction: persistedPrediction,
-    synthClose: cur.close,
+    synthClose: synthBar.close,
     marketRegime,
     rosterSize: rosterCandidates.length,
     up: decision.up,
@@ -451,7 +405,7 @@ async function makePrediction({
       asset: state.asset,
       period: state.period,
       prediction,
-      synth_open: cur.close,
+      synth_open: synthBar.close,
       regime_votes: JSON.stringify({
         up: decision.up,
         down: decision.down,
@@ -512,7 +466,7 @@ async function recordDecisionAttempt({
   decisionId,
 }: {
   readonly db: DatabaseClient;
-  readonly state: DryRunAssetState;
+  readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
   readonly decisionStartedAtMs: number;
   readonly decisionCompletedAtMs: number;
@@ -545,37 +499,56 @@ async function recordDecisionAttempt({
     .execute();
 }
 
-async function finalizeAndScore({
+async function scorePendingDecisions({
   db,
   state,
-  closedBar,
   pendingByState,
   log,
 }: {
   readonly db: DatabaseClient;
-  readonly state: DryRunAssetState;
-  readonly closedBar: FilterBar;
+  readonly state: TradeDecisionCandleState;
   readonly pendingByState: Map<string, Map<number, string>>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
-  // Append the bar to the rolling buffer; trim to avoid unbounded
-  // growth.
-  state.bars.push(closedBar);
-  if (state.bars.length > TRADE_DECISION_HYDRATE_BARS * 2) {
-    state.bars = state.bars.slice(-TRADE_DECISION_HYDRATE_BARS);
-  }
-  // Score any pending decisions whose target was THIS bar.
   const pending = pendingByState.get(
     dryRunStateKey({ asset: state.asset, period: state.period }),
   );
   if (pending === undefined) {
     return;
   }
-  const decisionId = pending.get(closedBar.openTimeMs);
-  if (decisionId === undefined) {
-    return;
+  const barsByOpenTime = new Map<number, FilterBar>();
+  for (const bar of state.bars) {
+    barsByOpenTime.set(bar.openTimeMs, bar);
   }
-  pending.delete(closedBar.openTimeMs);
+  for (const [targetTsMs, decisionId] of [...pending.entries()]) {
+    const closedBar = barsByOpenTime.get(targetTsMs);
+    if (closedBar === undefined) {
+      continue;
+    }
+    pending.delete(targetTsMs);
+    await scoreDecision({
+      db,
+      state,
+      decisionId,
+      closedBar,
+      log,
+    });
+  }
+}
+
+async function scoreDecision({
+  db,
+  state,
+  decisionId,
+  closedBar,
+  log,
+}: {
+  readonly db: DatabaseClient;
+  readonly state: TradeDecisionCandleState;
+  readonly decisionId: string;
+  readonly closedBar: FilterBar;
+  readonly log: (event: DryRunLogEvent) => void;
+}): Promise<void> {
   // Tie handling matches the backtest: close == open ⇒ "up".
   const actualUp = closedBar.close >= closedBar.open;
   // Look up the prediction so we know how to score.
