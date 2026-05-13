@@ -329,6 +329,7 @@ async function makePrediction({
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
+  const decisionStartedAtMs = Date.now();
   // Build a synthetic CLOSED bar for the bar that's about to end.
   // We take the current bar accumulator and treat its latest close
   // as the bar's close — this is the "5s before" snapshot.
@@ -391,17 +392,20 @@ async function makePrediction({
       .filter((vote) => vote.prediction === decision.prediction)
       .map((vote) => vote.selection.winRate),
   });
+  const decisionCompletedAtMs = Date.now();
+  const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
+  const persistedPrediction =
+    decision.prediction === null
+      ? null
+      : decision.prediction === "up"
+        ? "u"
+        : "d";
   log({
     kind: "decision",
     asset: state.asset,
     period: state.period,
     tsMs: targetTsMs,
-    prediction:
-      decision.prediction === null
-        ? null
-        : decision.prediction === "up"
-          ? "u"
-          : "d",
+    prediction: persistedPrediction,
     synthClose: cur.close,
     marketRegime,
     rosterSize: rosterCandidates.length,
@@ -410,6 +414,21 @@ async function makePrediction({
     abstain: decision.abstain,
   });
   if (decision.prediction === null) {
+    await recordDecisionAttempt({
+      db,
+      state,
+      targetTsMs,
+      decisionStartedAtMs,
+      decisionCompletedAtMs,
+      decisionDurationMs,
+      prediction: null,
+      marketRegime,
+      rosterSize: rosterCandidates.length,
+      up: decision.up,
+      down: decision.down,
+      abstain: decision.abstain,
+      decisionId: null,
+    });
     return;
   }
   const prediction = decision.prediction === "up" ? "u" : "d";
@@ -440,9 +459,27 @@ async function makePrediction({
         avgWinningVoteConfidence: orderConfidence,
       }),
       market_regime: marketRegime,
+      decision_started_at_ms: decisionStartedAtMs,
+      decision_completed_at_ms: decisionCompletedAtMs,
+      decision_duration_ms: decisionDurationMs,
     })
     .returning("id")
     .executeTakeFirstOrThrow();
+  await recordDecisionAttempt({
+    db,
+    state,
+    targetTsMs,
+    decisionStartedAtMs,
+    decisionCompletedAtMs,
+    decisionDurationMs,
+    prediction,
+    marketRegime,
+    rosterSize: rosterCandidates.length,
+    up: decision.up,
+    down: decision.down,
+    abstain: decision.abstain,
+    decisionId: String(inserted.id),
+  });
   const pending = pendingByState.get(
     dryRunStateKey({ asset: state.asset, period: state.period }),
   );
@@ -457,6 +494,55 @@ async function makePrediction({
     targetTsMs,
     confidence: orderConfidence,
   });
+}
+
+async function recordDecisionAttempt({
+  db,
+  state,
+  targetTsMs,
+  decisionStartedAtMs,
+  decisionCompletedAtMs,
+  decisionDurationMs,
+  prediction,
+  marketRegime,
+  rosterSize,
+  up,
+  down,
+  abstain,
+  decisionId,
+}: {
+  readonly db: DatabaseClient;
+  readonly state: DryRunAssetState;
+  readonly targetTsMs: number;
+  readonly decisionStartedAtMs: number;
+  readonly decisionCompletedAtMs: number;
+  readonly decisionDurationMs: number;
+  readonly prediction: "u" | "d" | null;
+  readonly marketRegime: MarketRegime | null;
+  readonly rosterSize: number;
+  readonly up: number;
+  readonly down: number;
+  readonly abstain: number;
+  readonly decisionId: string | null;
+}): Promise<void> {
+  await db
+    .insertInto("dry_run_decision_attempts")
+    .values({
+      ts_ms: targetTsMs,
+      asset: state.asset,
+      period: state.period,
+      decision_started_at_ms: decisionStartedAtMs,
+      decision_completed_at_ms: decisionCompletedAtMs,
+      decision_duration_ms: decisionDurationMs,
+      prediction,
+      market_regime: marketRegime,
+      roster_size: rosterSize,
+      up_votes: up,
+      down_votes: down,
+      abstain_votes: abstain,
+      dry_run_decision_id: decisionId,
+    })
+    .execute();
 }
 
 async function finalizeAndScore({

@@ -136,14 +136,16 @@ export function renderDryRunHtml({
                   tip: "Wait after the target market opens before placing the simulated order.",
                 },
                 {
-                  label: "50c Window",
-                  value: `±${payload.decisionConfig.orderPriceWindowCents.toLocaleString()}c`,
-                  tip: "Acceptable distance from 50c on the observed predicted-side price.",
+                  label: "Limit Price",
+                  value: formatOrderLimitPolicy({
+                    value: payload.decisionConfig.orderLimitPricePolicy,
+                  }),
+                  tip: "How the simulated limit-buy price is chosen.",
                 },
                 {
-                  label: "Limit Offset",
-                  value: `+${payload.decisionConfig.orderLimitOffsetCents.toLocaleString()}c`,
-                  tip: "Offset above the observed predicted-side price used to price the limit order.",
+                  label: "50c Window",
+                  value: `±${payload.decisionConfig.orderPriceWindowCents.toLocaleString()}c`,
+                  tip: "Acceptable distance from 50c on the simulated limit price.",
                 },
                 {
                   label: "Quote Max Age",
@@ -364,6 +366,8 @@ function renderOrderCell(row: DryRunDashboardRecentRow): string {
       limitPrice: row.orderLimitPrice,
       fillPrice: row.orderFillPrice,
       confidence: row.orderConfidence,
+      decisionDurationMs: row.decisionDurationMs,
+      orderFillLatencyMs: row.orderFillLatencyMs,
     })}`;
   }
   if (status === "unfilled") {
@@ -371,6 +375,8 @@ function renderOrderCell(row: DryRunDashboardRecentRow): string {
       limitPrice: row.orderLimitPrice,
       fillPrice: row.orderFillPrice,
       confidence: row.orderConfidence,
+      decisionDurationMs: row.decisionDurationMs,
+      orderFillLatencyMs: row.orderFillLatencyMs,
     })}`;
   }
   if (status === "placed" || status === "pending_placement") {
@@ -378,6 +384,8 @@ function renderOrderCell(row: DryRunDashboardRecentRow): string {
       limitPrice: row.orderLimitPrice,
       fillPrice: row.orderFillPrice,
       confidence: row.orderConfidence,
+      decisionDurationMs: row.decisionDurationMs,
+      orderFillLatencyMs: row.orderFillLatencyMs,
     })}`;
   }
   if (status.startsWith("skipped")) {
@@ -385,6 +393,8 @@ function renderOrderCell(row: DryRunDashboardRecentRow): string {
       limitPrice: row.orderLimitPrice,
       fillPrice: row.orderFillPrice,
       confidence: row.orderConfidence,
+      decisionDurationMs: row.decisionDurationMs,
+      orderFillLatencyMs: row.orderFillLatencyMs,
     })}`;
   }
   return `<span class="alea-muted">${escapeHtml({ value: formatOrderStatus(status) })}</span>`;
@@ -394,10 +404,14 @@ function renderOrderPriceBits({
   limitPrice,
   fillPrice,
   confidence,
+  decisionDurationMs,
+  orderFillLatencyMs,
 }: {
   readonly limitPrice: number | null;
   readonly fillPrice: number | null;
   readonly confidence: number | null;
+  readonly decisionDurationMs: number | null;
+  readonly orderFillLatencyMs: number | null;
 }): string {
   const bits: string[] = [];
   if (limitPrice !== null) {
@@ -409,9 +423,24 @@ function renderOrderPriceBits({
   if (confidence !== null) {
     bits.push(`conf ${formatCents({ value: confidence })}`);
   }
+  if (decisionDurationMs !== null) {
+    bits.push(`dec ${formatMs({ value: decisionDurationMs })}`);
+  }
+  if (orderFillLatencyMs !== null) {
+    bits.push(`fill wait ${formatMs({ value: orderFillLatencyMs })}`);
+  }
   return bits.length === 0
     ? ""
     : `<span class="dry-run-order-detail">${escapeHtml({ value: bits.join(" · ") })}</span>`;
+}
+
+function formatOrderLimitPolicy({ value }: { readonly value: string }): string {
+  switch (value) {
+    case "join_predicted_side_best_bid":
+      return "join best bid";
+    default:
+      return value.replaceAll("_", " ");
+  }
 }
 
 function formatOrderStatus(status: string): string {
@@ -433,6 +462,10 @@ function formatOrderStatus(status: string): string {
 
 function formatCents({ value }: { readonly value: number }): string {
   return `${(value * 100).toFixed(1)}c`;
+}
+
+function formatMs({ value }: { readonly value: number }): string {
+  return `${Math.max(0, Math.round(value)).toLocaleString()}ms`;
 }
 
 /**

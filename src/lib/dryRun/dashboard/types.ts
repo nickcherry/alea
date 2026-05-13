@@ -40,8 +40,8 @@ export type DryRunDecisionConfig = {
   readonly minConsensusFraction: number;
   readonly filterTieBreak: string;
   readonly orderPlacementDelayMs: number;
+  readonly orderLimitPricePolicy: string;
   readonly orderPriceWindowCents: number;
-  readonly orderLimitOffsetCents: number;
   readonly orderMaxQuoteAgeMs: number;
   readonly marketDiscoveryLeadMs: number;
 };
@@ -74,6 +74,8 @@ export type DryRunDashboardRecentRow = {
   readonly orderLimitPrice: number | null;
   readonly orderConfidence: number | null;
   readonly orderFillPrice: number | null;
+  readonly decisionDurationMs: number | null;
+  readonly orderFillLatencyMs: number | null;
 };
 
 export type DryRunDashboardRegimeAggregate = {

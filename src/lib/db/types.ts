@@ -141,6 +141,17 @@ export interface DryRunDecisionTable {
   readonly actual_close: number | null;
   readonly won: number | null;
   readonly market_regime: string | null;
+  readonly decision_started_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly decision_completed_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+  readonly decision_duration_ms: number | null;
   readonly order_status: Generated<DryRunOrderStatus>;
   readonly order_placed_at_ms: ColumnType<
     string | null,
@@ -156,7 +167,41 @@ export interface DryRunDecisionTable {
     string | number | bigint | null
   >;
   readonly order_fill_price: number | null;
+  readonly order_fill_latency_ms: number | null;
   readonly order_expires_at_ms: ColumnType<
+    string | null,
+    string | number | bigint | null,
+    string | number | bigint | null
+  >;
+}
+
+export interface DryRunDecisionAttemptTable {
+  readonly id: Generated<string>;
+  readonly ts_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly asset: string;
+  readonly period: string;
+  readonly decision_started_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly decision_completed_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly decision_duration_ms: number;
+  readonly prediction: "u" | "d" | null;
+  readonly market_regime: string | null;
+  readonly roster_size: number;
+  readonly up_votes: number;
+  readonly down_votes: number;
+  readonly abstain_votes: number;
+  readonly dry_run_decision_id: ColumnType<
     string | null,
     string | number | bigint | null,
     string | number | bigint | null
@@ -325,6 +370,7 @@ export interface Database {
   readonly filter_runs: FilterRunTable;
   readonly filter_engagements: FilterEngagementTable;
   readonly dry_run_decisions: DryRunDecisionTable;
+  readonly dry_run_decision_attempts: DryRunDecisionAttemptTable;
   readonly bar_regimes: BarRegimeTable;
   readonly committee_selections: CommitteeSelectionTable;
   readonly committee_backtest_runs: CommitteeBacktestRunTable;

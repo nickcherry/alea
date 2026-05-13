@@ -2,7 +2,7 @@ import "@alea/lib/filters/all";
 
 import {
   DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
-  DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
+  DRY_RUN_ORDER_LIMIT_PRICE_POLICY,
   DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
@@ -94,6 +94,8 @@ type DryRunDecisionRow = {
   readonly order_limit_price: number | null;
   readonly order_confidence: number | null;
   readonly order_fill_price: number | null;
+  readonly decision_duration_ms: number | null;
+  readonly order_fill_latency_ms: number | null;
 };
 
 export async function loadDryRunPayload({
@@ -126,6 +128,8 @@ export async function loadDryRunPayload({
       "order_limit_price",
       "order_confidence",
       "order_fill_price",
+      "decision_duration_ms",
+      "order_fill_latency_ms",
     ])
     .orderBy("ts_ms", "desc")
     .execute();
@@ -150,6 +154,8 @@ export async function loadDryRunPayload({
       orderLimitPrice: r.order_limit_price,
       orderConfidence: r.order_confidence,
       orderFillPrice: r.order_fill_price,
+      decisionDurationMs: r.decision_duration_ms,
+      orderFillLatencyMs: r.order_fill_latency_ms,
     }));
 
   const candidateCount = listCommitteeCandidates().length;
@@ -173,8 +179,8 @@ export async function loadDryRunPayload({
       minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
       filterTieBreak: TRADE_DECISION_FILTER_TIE_BREAK,
       orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
+      orderLimitPricePolicy: DRY_RUN_ORDER_LIMIT_PRICE_POLICY,
       orderPriceWindowCents: DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
-      orderLimitOffsetCents: DRY_RUN_ORDER_LIMIT_OFFSET_CENTS,
       orderMaxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
       marketDiscoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
     },

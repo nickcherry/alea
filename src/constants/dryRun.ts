@@ -11,8 +11,13 @@ export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 3 * 1000;
 /** Maximum distance from 50c, in cents, where the simulated order is allowed. */
 export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
 
-/** Limit-buy offset above the observed predicted-side token price, in cents. */
-export const DRY_RUN_ORDER_LIMIT_OFFSET_CENTS = 0.5;
+/**
+ * Limit price policy for simulated maker orders. The dry-run joins the
+ * predicted-side best bid rather than crossing the spread or adding an
+ * arbitrary offset to mid.
+ */
+export const DRY_RUN_ORDER_LIMIT_PRICE_POLICY =
+  "join_predicted_side_best_bid" as const;
 
 /** Maximum age for book/BBO quotes used at simulated placement/fill time. */
 export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = 2 * 1000;
@@ -23,10 +28,6 @@ export const DRY_RUN_MARKET_DISCOVERY_LEAD_MS = 30 * 1000;
 /** Same as `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`, expressed as a 0..1 token price. */
 export const DRY_RUN_ORDER_PRICE_WINDOW =
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS / 100;
-
-/** Same as `DRY_RUN_ORDER_LIMIT_OFFSET_CENTS`, expressed as a 0..1 token price. */
-export const DRY_RUN_ORDER_LIMIT_OFFSET =
-  DRY_RUN_ORDER_LIMIT_OFFSET_CENTS / 100;
 
 export const DRY_RUN_ORDER_STATUS_VALUES = [
   "untracked",

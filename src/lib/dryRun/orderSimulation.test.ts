@@ -36,7 +36,7 @@ function setQuote({
 }
 
 describe("resolveDryRunOrderPlacement", () => {
-  it("places a predicted-side buy above the observed midpoint when confidence clears the limit", () => {
+  it("places a predicted-side buy at the same-side best bid when confidence clears the limit", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.495, ask: 0.505 });
 
@@ -48,11 +48,11 @@ describe("resolveDryRunOrderPlacement", () => {
         confidence: 0.54,
       }),
     ).toEqual({
-      status: "filled",
+      status: "placed",
       observedPrice: 0.5,
-      limitPrice: 0.505,
+      limitPrice: 0.495,
       confidence: 0.54,
-      fillPrice: 0.505,
+      fillPrice: null,
     });
   });
 
@@ -70,7 +70,7 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toMatchObject({
       status: "skipped_price_window",
       observedPrice: 0.54,
-      limitPrice: 0.545,
+      limitPrice: 0.535,
     });
   });
 
@@ -83,16 +83,16 @@ describe("resolveDryRunOrderPlacement", () => {
         prediction: "u",
         state,
         nowMs: NOW_MS,
-        confidence: 0.522,
+        confidence: 0.512,
       }),
     ).toMatchObject({
       status: "skipped_confidence",
       observedPrice: 0.52,
-      limitPrice: 0.525,
+      limitPrice: 0.515,
     });
   });
 
-  it("can infer the predicted-side price from the opposite token", () => {
+  it("requires a fresh predicted-side bid for maker-style pricing", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.49, ask: 0.5 });
 
@@ -103,11 +103,7 @@ describe("resolveDryRunOrderPlacement", () => {
         nowMs: NOW_MS,
         confidence: 0.53,
       }),
-    ).toMatchObject({
-      status: "placed",
-      observedPrice: 0.505,
-      limitPrice: 0.51,
-    });
+    ).toEqual({ status: "skipped_no_price" });
   });
 
   it("skips when the book quote is too stale at placement time", () => {

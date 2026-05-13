@@ -1,5 +1,4 @@
 import {
-  DRY_RUN_ORDER_LIMIT_OFFSET,
   DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW,
@@ -110,13 +109,14 @@ export function resolveDryRunOrderPlacement({
   readonly nowMs: number;
   readonly confidence: number | null;
 }): DryRunOrderPlacementResolution {
-  const observed = observedPredictedSidePrice({ prediction, state, nowMs });
-  if (observed === null) {
+  const limitPrice = predictedSideBestBidPrice({ prediction, state, nowMs });
+  if (limitPrice === null) {
     return { status: "skipped_no_price" };
   }
 
-  const limitPrice = roundPrice(observed + DRY_RUN_ORDER_LIMIT_OFFSET);
-  if (Math.abs(observed - 0.5) > DRY_RUN_ORDER_PRICE_WINDOW) {
+  const observed =
+    observedPredictedSidePrice({ prediction, state, nowMs }) ?? limitPrice;
+  if (Math.abs(limitPrice - 0.5) > DRY_RUN_ORDER_PRICE_WINDOW) {
     return {
       status: "skipped_price_window",
       observedPrice: observed,
@@ -481,6 +481,7 @@ export function createDryRunOrderSimulator({
         order_filled_at_ms:
           placement.status === "filled" ? order.orderAtMs : null,
         order_fill_price: placement.fillPrice,
+        order_fill_latency_ms: placement.status === "filled" ? 0 : null,
       })
       .where("id", "=", order.decisionId)
       .execute();
@@ -533,12 +534,14 @@ export function createDryRunOrderSimulator({
       return;
     }
     order.status = "filled";
+    const filledAtMs = Math.max(eventAtMs, order.orderAtMs);
     await db
       .updateTable("dry_run_decisions")
       .set({
         order_status: "filled",
-        order_filled_at_ms: Math.max(eventAtMs, order.orderAtMs),
+        order_filled_at_ms: filledAtMs,
         order_fill_price: fillPrice,
+        order_fill_latency_ms: filledAtMs - order.orderAtMs,
       })
       .where("id", "=", order.decisionId)
       .execute();
@@ -564,14 +567,20 @@ export function createDryRunOrderSimulator({
     readonly fillPrice: number | null;
   }): Promise<void> => {
     order.status = status;
+    const update: {
+      order_status: DryRunOrderStatus;
+      order_observed_price: number | null;
+      order_limit_price: number | null;
+      order_fill_price: number | null;
+    } = {
+      order_status: status,
+      order_observed_price: observedPrice,
+      order_limit_price: limitPrice,
+      order_fill_price: fillPrice,
+    };
     await db
       .updateTable("dry_run_decisions")
-      .set({
-        order_status: status,
-        order_observed_price: observedPrice,
-        order_limit_price: limitPrice,
-        order_fill_price: fillPrice,
-      })
+      .set(update)
       .where("id", "=", order.decisionId)
       .execute();
     logOrder({ order, observedPrice, limitPrice, fillPrice });
@@ -689,6 +698,22 @@ function observedPredictedSidePrice({
     midPrice({ state: target, nowMs }) ??
     invertPrice(midPrice({ state: opposite, nowMs }))
   );
+}
+
+function predictedSideBestBidPrice({
+  prediction,
+  state,
+  nowMs,
+}: {
+  readonly prediction: "u" | "d";
+  readonly state: DryRunMarketPriceState;
+  readonly nowMs: number;
+}): number | null {
+  const target = prediction === "u" ? state.up : state.down;
+  if (!isFreshPrice({ atMs: target.bidAtMs, nowMs })) {
+    return null;
+  }
+  return isValidTokenPrice(target.bid) ? roundPrice(target.bid) : null;
 }
 
 function emptyMarketPriceState(): DryRunMarketPriceState {
