@@ -52,7 +52,7 @@ export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
       label: "BTC/ETH volume lift",
       assets: ["btc", "eth"],
       minAggregateWinRate: 0.55,
-      topN: 16,
+      topN: 20,
     },
     {
       label: "Weak-asset 5m quality gate",
