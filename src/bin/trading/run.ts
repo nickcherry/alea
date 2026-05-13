@@ -1,4 +1,5 @@
 import { assetValues } from "@alea/constants/assets";
+import { env } from "@alea/constants/env";
 import {
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_SUPPORTED_PERIODS,
@@ -7,6 +8,13 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
+import {
+  createAxiomTelemetrySink,
+  createTelemetryRunId,
+  defaultTelemetryFields,
+  detectGitSha,
+} from "@alea/lib/telemetry/axiom";
+import { liveTradingLogEventToTelemetry } from "@alea/lib/telemetry/liveTrading";
 import { runLiveTrading } from "@alea/lib/trading/runLiveTrading";
 import pc from "picocolors";
 import { z } from "zod";
@@ -49,13 +57,32 @@ export const tradingRunCommand = defineCommand({
     io.writeStdout(
       `${pc.bold("trading:run")} ${pc.dim(`periods=${options.periods.join(",")} assets=${assetValues.join(",")}`)}\n\n`,
     );
+    const runId = createTelemetryRunId();
+    const telemetry = createAxiomTelemetrySink({
+      apiKey: env.axiomApiKey,
+      dataset: env.axiomDataset,
+      domain: env.axiomDomain,
+      defaultFields: defaultTelemetryFields({
+        runId,
+        gitSha: detectGitSha(),
+      }),
+    });
+    io.writeStdout(
+      `${pc.dim("telemetry:")} ${telemetry.enabled ? pc.green("axiom enabled") : pc.yellow("axiom disabled")} dataset=${telemetry.dataset} spool=${telemetry.spoolPath}\n\n`,
+    );
     const db = createDatabase();
     let handle: Awaited<ReturnType<typeof runLiveTrading>> | null = null;
+    let stopped = false;
     const stop = async (): Promise<void> => {
+      if (stopped) {
+        return;
+      }
+      stopped = true;
       if (handle !== null) {
         await handle.stop();
         handle = null;
       }
+      await telemetry.close();
       await destroyDatabase(db);
     };
     process.on("SIGINT", () => {
@@ -70,6 +97,11 @@ export const tradingRunCommand = defineCommand({
         assets: [...assetValues],
         periods: options.periods,
         log: (event) => {
+          try {
+            telemetry.emit(liveTradingLogEventToTelemetry(event));
+          } catch {
+            // Telemetry must never interfere with live trading.
+          }
           const ts = new Date().toISOString().slice(11, 19);
           switch (event.kind) {
             case "hydrated":
@@ -109,8 +141,12 @@ export const tradingRunCommand = defineCommand({
                 event.confidence === null
                   ? "-"
                   : `${(event.confidence * 100).toFixed(1)}c`;
+              const priceAge =
+                event.priceAgeMs === null
+                  ? ""
+                  : ` priceAge=${event.priceAgeMs}ms`;
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain + " conf=" + confidence)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain + " conf=" + confidence + priceAge)}\n`,
               );
               break;
             }
@@ -129,6 +165,9 @@ export const tradingRunCommand = defineCommand({
               break;
             }
             case "live-order": {
+              if (event.status === "attempting") {
+                break;
+              }
               const tag =
                 event.status === "placed"
                   ? pc.green("PLACED")

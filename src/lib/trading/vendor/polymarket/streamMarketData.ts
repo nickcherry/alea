@@ -10,7 +10,7 @@ import type {
 import { z } from "zod";
 
 const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 30_000] as const;
-const HEARTBEAT_INTERVAL_MS = 8_000;
+const HEARTBEAT_INTERVAL_MS = 20_000;
 
 export function streamPolymarketMarketData({
   markets,
@@ -253,7 +253,7 @@ export function parsePolymarketMarketDataEvents({
         vendorRef: frame.data.market ?? frame.data.condition_id ?? "",
         winningOutcomeRef: outcomeRef,
         winningSide:
-          outcomeRef === null ? null : tokenIdToSide.get(outcomeRef) ?? null,
+          outcomeRef === null ? null : (tokenIdToSide.get(outcomeRef) ?? null),
         atMs: parseAtMs(frame.data.timestamp),
       });
     }

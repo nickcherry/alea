@@ -4,21 +4,13 @@ import {
   resolveDryRunOrderFill,
   resolveDryRunOrderPlacement,
 } from "@alea/lib/dryRun/orderSimulation";
+import { emptyMarketPriceState } from "@alea/lib/trading/marketPriceState";
 import { describe, expect, it } from "bun:test";
 
 const NOW_MS = 1_800_000_003_000;
 
 function emptyState(): DryRunMarketPriceState {
-  return {
-    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize: null },
-    down: {
-      bid: null,
-      bidAtMs: null,
-      ask: null,
-      askAtMs: null,
-      tickSize: null,
-    },
-  };
+  return emptyMarketPriceState();
 }
 
 function setQuote({

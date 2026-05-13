@@ -62,9 +62,26 @@ describe("createPolymarketMarketDiscoveryCache", () => {
 
     await Promise.resolve();
 
-    expect(seen).toEqual([
-      "btc:5m:1800000000",
-      "btc:5m:1800000300",
-    ]);
+    expect(seen).toEqual(["btc:5m:1800000000", "btc:5m:1800000300"]);
+  });
+
+  it("backs off repeated misses instead of rediscovering immediately", async () => {
+    let calls = 0;
+    const cache = createPolymarketMarketDiscoveryCache({
+      retryMs: 1_000,
+      discover: async () => {
+        calls += 1;
+        return null;
+      },
+    });
+    const input = {
+      asset: "btc" as const,
+      timeframe: "5m" as const,
+      windowStartTsMs: 1_800_000_000_000,
+    };
+
+    expect(await cache.getOrDiscover(input)).toBeNull();
+    expect(await cache.getOrDiscover(input)).toBeNull();
+    expect(calls).toBe(1);
   });
 });

@@ -19,6 +19,12 @@ import { regimesBackfillCommand } from "@alea/bin/regimes/backfill";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
+import {
+  telemetryBookDepthCommand,
+  telemetryOrdersCommand,
+  telemetryQueryCommand,
+  telemetryRejectsCommand,
+} from "@alea/bin/telemetry/query";
 import { tradingHydrateLifetimePnlCommand } from "@alea/bin/trading/hydrateLifetimePnl";
 import { tradingPerformanceCommand } from "@alea/bin/trading/performance";
 import { tradingRunCommand } from "@alea/bin/trading/run";
@@ -45,6 +51,10 @@ const cli = createCli({
     reliabilityChartCommand,
     regimesBackfillCommand,
     telegramTestCommand,
+    telemetryQueryCommand,
+    telemetryRejectsCommand,
+    telemetryBookDepthCommand,
+    telemetryOrdersCommand,
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,

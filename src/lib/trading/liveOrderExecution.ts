@@ -3,11 +3,15 @@ import {
   LIVE_TRADING_MAX_ORDER_ATTEMPTS,
   LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
   LIVE_TRADING_ORDER_MAX_QUOTE_AGE_MS,
+  LIVE_TRADING_ORDER_MAX_RETRY_DELAY_MS,
   LIVE_TRADING_ORDER_MIN_RETRY_WINDOW_MS,
   LIVE_TRADING_ORDER_NO_QUOTE_REFERENCE_PRICE,
   LIVE_TRADING_ORDER_PRICE_WINDOW,
+  LIVE_TRADING_ORDER_RATE_LIMIT_RETRY_BASE_MS,
   LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS,
   LIVE_TRADING_ORDER_RETRY_DELAY_MS,
+  LIVE_TRADING_ORDER_TRANSIENT_RETRY_BASE_MS,
+  LIVE_TRADING_SESSION_GRACE_MS,
   STAKE_USD,
 } from "@alea/constants/trading";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
@@ -21,6 +25,7 @@ import {
   resolveMakerLimitBuyPlacement,
   resolveTickSize,
   roundDownToTick,
+  summarizePredictedSideBook,
 } from "@alea/lib/trading/marketPriceState";
 import type { PolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import { streamPolymarketMarketData } from "@alea/lib/trading/vendor/polymarket/streamMarketData";
@@ -39,12 +44,27 @@ import {
 
 export type LiveTradingOrderStatus =
   | "scheduled"
+  | "attempting"
   | "placed"
   | "skipped_no_market"
   | "skipped_no_price"
   | "skipped_price_window"
   | "skipped_confidence"
   | "rejected";
+
+export type LiveTradingOrderFailureKind =
+  | "post_only_cross"
+  | "rate_limited"
+  | "not_ready"
+  | "not_found"
+  | "server_error"
+  | "auth"
+  | "balance_or_allowance"
+  | "invalid_order"
+  | "closed_or_banned"
+  | "network_or_unknown"
+  | "terminal"
+  | "unknown";
 
 export type LiveTradingOrderLogEvent = {
   readonly kind: "live-order";
@@ -58,7 +78,35 @@ export type LiveTradingOrderLogEvent = {
   readonly limitPrice: number | null;
   readonly confidence: number | null;
   readonly orderId: string | null;
+  readonly marketRef: string | null;
+  readonly tokenRef: string | null;
+  readonly oppositeTokenRef: string | null;
+  readonly failureStatus: number | null;
+  readonly failureKind: LiveTradingOrderFailureKind | null;
+  readonly postDurationMs: number | null;
+  readonly predictedBestBid: number | null;
+  readonly predictedBestAsk: number | null;
+  readonly predictedSpread: number | null;
+  readonly predictedBidAgeMs: number | null;
+  readonly predictedAskAgeMs: number | null;
+  readonly predictedBookAgeMs: number | null;
+  readonly predictedBidLevels: number | null;
+  readonly predictedAskLevels: number | null;
+  readonly predictedBidDepthAtLimitUsd: number | null;
+  readonly predictedBidDepthAboveLimitUsd: number | null;
+  readonly predictedBidDepthAtOrAboveLimitUsd: number | null;
+  readonly predictedAskDepthAtBestUsd: number | null;
+  readonly predictedAskDepthWithin1cUsd: number | null;
+  readonly predictedAskDepthWithin2cUsd: number | null;
+  readonly oppositeBestBid: number | null;
+  readonly oppositeBestAsk: number | null;
+  readonly oppositeSpread: number | null;
   readonly message: string | null;
+};
+
+type LiveTradingErrorLogEvent = {
+  readonly kind: "error";
+  readonly message: string;
 };
 
 export type LiveTradingMarketLogEvent =
@@ -103,7 +151,10 @@ export function createLiveOrderExecutor({
   readonly client: ClobClient;
   readonly marketDiscovery: PolymarketMarketDiscoveryCache;
   readonly log: (
-    event: LiveTradingOrderLogEvent | LiveTradingMarketLogEvent,
+    event:
+      | LiveTradingOrderLogEvent
+      | LiveTradingMarketLogEvent
+      | LiveTradingErrorLogEvent,
   ) => void;
   readonly streamMarketData?: StreamMarketData;
   readonly now?: () => number;
@@ -296,9 +347,16 @@ export function createLiveOrderExecutor({
     scheduled.set(key, order);
     void ensureMarketSession({ asset, period, targetTsMs }).catch(() => null);
     logOrder({ order, status: "scheduled", attempt: null });
-    void placeScheduledOrder({ order }).finally(() => {
-      scheduled.delete(key);
-    });
+    void placeScheduledOrder({ order })
+      .catch((error) => {
+        log({
+          kind: "error",
+          message: `live order placement failed ${period}/${asset}: ${String(error)}`,
+        });
+      })
+      .finally(() => {
+        scheduled.delete(key);
+      });
   };
 
   const placeScheduledOrder = async ({
@@ -311,179 +369,216 @@ export function createLiveOrderExecutor({
       nowMs: now(),
     });
     let postOnlyLimitCap: number | null = null;
-    for (
-      let attempt = 1;
-      attempt <= LIVE_TRADING_MAX_ORDER_ATTEMPTS;
-      attempt++
-    ) {
-      if (stopped) {
-        return;
-      }
-      const session = await ensureMarketSession({
-        asset: order.asset,
-        period: order.period,
-        targetTsMs: order.targetTsMs,
-      });
-      if (session === null) {
-        if (
-          !shouldRetryOrderPlacement({
-            attempt,
-            retryUntilMs,
-            nowMs: now(),
-          })
-        ) {
-          logOrder({
-            order,
-            status: "skipped_no_market",
-            attempt,
-            message: "target market was not discovered before placement",
-          });
+    try {
+      for (
+        let attempt = 1;
+        attempt <= LIVE_TRADING_MAX_ORDER_ATTEMPTS;
+        attempt++
+      ) {
+        if (stopped) {
           return;
         }
-        await sleep(LIVE_TRADING_ORDER_RETRY_DELAY_MS);
-        continue;
-      }
+        const session = await ensureMarketSession({
+          asset: order.asset,
+          period: order.period,
+          targetTsMs: order.targetTsMs,
+        });
+        if (session === null) {
+          if (
+            !shouldRetryOrderPlacement({
+              attempt,
+              retryUntilMs,
+              nowMs: now(),
+            })
+          ) {
+            logOrder({
+              order,
+              status: "skipped_no_market",
+              attempt,
+              message: "target market was not discovered before placement",
+            });
+            return;
+          }
+          await sleep(LIVE_TRADING_ORDER_RETRY_DELAY_MS);
+          continue;
+        }
 
-      const placement = resolveMakerLimitBuyPlacement({
-        prediction: order.prediction,
-        state: session.state,
-        nowMs: now(),
-        confidence: order.confidence,
-        priceWindow: LIVE_TRADING_ORDER_PRICE_WINDOW,
-        maxQuoteAgeMs: LIVE_TRADING_ORDER_MAX_QUOTE_AGE_MS,
-        defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
-        fallbackLimitPrice: predictedSideOneTickBelowReferencePrice({
+        const placement = resolveMakerLimitBuyPlacement({
           prediction: order.prediction,
           state: session.state,
-          referencePrice: LIVE_TRADING_ORDER_NO_QUOTE_REFERENCE_PRICE,
+          nowMs: now(),
+          confidence: order.confidence,
+          priceWindow: LIVE_TRADING_ORDER_PRICE_WINDOW,
+          maxQuoteAgeMs: LIVE_TRADING_ORDER_MAX_QUOTE_AGE_MS,
           defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
-        }),
-      });
-      const cappedPlacement = applyPostOnlyLimitCap({
-        placement,
-        maxLimitPrice: postOnlyLimitCap,
-        tickSize: resolveTickSize({
-          tickSize: session.market.tickSize ?? null,
-          defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
-        }),
-        priceWindow: LIVE_TRADING_ORDER_PRICE_WINDOW,
-      });
-      if (cappedPlacement.status === "no_price") {
-        if (
-          !shouldRetryOrderPlacement({
-            attempt,
-            retryUntilMs,
-            nowMs: now(),
-          })
-        ) {
+          fallbackLimitPrice: predictedSideOneTickBelowReferencePrice({
+            prediction: order.prediction,
+            state: session.state,
+            referencePrice: LIVE_TRADING_ORDER_NO_QUOTE_REFERENCE_PRICE,
+            defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
+          }),
+        });
+        const cappedPlacement = applyPostOnlyLimitCap({
+          placement,
+          maxLimitPrice: postOnlyLimitCap,
+          tickSize: resolveTickSize({
+            tickSize: session.market.tickSize ?? null,
+            defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
+          }),
+          priceWindow: LIVE_TRADING_ORDER_PRICE_WINDOW,
+        });
+        if (cappedPlacement.status === "no_price") {
+          if (
+            !shouldRetryOrderPlacement({
+              attempt,
+              retryUntilMs,
+              nowMs: now(),
+            })
+          ) {
+            logOrder({
+              order,
+              status: "skipped_no_price",
+              attempt,
+              session,
+              message: "no fresh predicted-side ask",
+            });
+            return;
+          }
+          await sleep(LIVE_TRADING_ORDER_RETRY_DELAY_MS);
+          continue;
+        }
+        if (cappedPlacement.status === "price_window") {
           logOrder({
             order,
-            status: "skipped_no_price",
+            status: "skipped_price_window",
             attempt,
-            message: "no fresh predicted-side ask",
+            placement: cappedPlacement,
+            session,
           });
           return;
         }
-        await sleep(LIVE_TRADING_ORDER_RETRY_DELAY_MS);
-        continue;
-      }
-      if (cappedPlacement.status === "price_window") {
-        logOrder({
-          order,
-          status: "skipped_price_window",
-          attempt,
-          placement: cappedPlacement,
-        });
-        return;
-      }
-      if (cappedPlacement.status === "confidence") {
-        logOrder({
-          order,
-          status: "skipped_confidence",
-          attempt,
-          placement: cappedPlacement,
-        });
-        return;
-      }
+        if (cappedPlacement.status === "confidence") {
+          logOrder({
+            order,
+            status: "skipped_confidence",
+            attempt,
+            placement: cappedPlacement,
+            session,
+          });
+          return;
+        }
 
-      const request = buildLiveMakerLimitBuyOrder({
-        market: session.market,
-        period: order.period,
-        prediction: order.prediction,
-        targetTsMs: order.targetTsMs,
-        limitPrice: cappedPlacement.limitPrice,
-      });
-      try {
-        const response = await client.createAndPostOrder(
-          request.userOrder,
-          request.options,
-          OrderType.GTD,
-          true,
-        );
-        const postFailure = extractPostOrderFailure(response);
-        if (postFailure === null) {
-          logOrder({
-            order,
-            status: "placed",
+        const request = buildLiveMakerLimitBuyOrder({
+          market: session.market,
+          period: order.period,
+          prediction: order.prediction,
+          targetTsMs: order.targetTsMs,
+          limitPrice: cappedPlacement.limitPrice,
+        });
+        logOrder({
+          order,
+          status: "attempting",
+          attempt,
+          placement: cappedPlacement,
+          session,
+        });
+        let retryDelayMs = LIVE_TRADING_ORDER_RETRY_DELAY_MS;
+        const postStartedAtMs = now();
+        try {
+          const response = await client.createAndPostOrder(
+            request.userOrder,
+            request.options,
+            OrderType.GTD,
+            true,
+          );
+          const postDurationMs = Math.max(0, now() - postStartedAtMs);
+          const postFailure = extractPostOrderFailure(response);
+          if (postFailure === null) {
+            logOrder({
+              order,
+              status: "placed",
+              attempt,
+              placement: cappedPlacement,
+              session,
+              orderId: extractOrderId(response),
+              postDurationMs,
+              message: previewResponse(response),
+            });
+            return;
+          }
+          const retryAction = classifyPostOrderFailure(postFailure);
+          retryDelayMs = retryDelayForPostFailure({
+            failure: postFailure,
             attempt,
-            placement: cappedPlacement,
-            orderId: extractOrderId(response),
-            message: previewResponse(response),
           });
-          return;
-        }
-        const retryAction = classifyPostOrderFailure(postFailure);
-        if (retryAction === "post_only_cross") {
-          postOnlyLimitCap = nextPostOnlyLimitCap({
-            market: session.market,
-            limitPrice: cappedPlacement.limitPrice,
-          });
-        }
-        if (
-          retryAction === "terminal" ||
-          !shouldRetryOrderPlacement({
+          if (retryAction === "post_only_cross") {
+            postOnlyLimitCap = nextPostOnlyLimitCap({
+              market: session.market,
+              limitPrice: cappedPlacement.limitPrice,
+            });
+          }
+          if (
+            retryAction === "terminal" ||
+            !shouldRetryOrderPlacement({
+              attempt,
+              retryUntilMs,
+              nowMs: now(),
+            })
+          ) {
+            logOrder({
+              order,
+              status: "rejected",
+              attempt,
+              placement: cappedPlacement,
+              session,
+              failure: postFailure,
+              postDurationMs,
+              message: postFailure.message,
+            });
+            return;
+          }
+        } catch (error) {
+          const postDurationMs = Math.max(0, now() - postStartedAtMs);
+          const postFailure = postOrderFailureFromError(error);
+          const retryAction = classifyPostOrderFailure(postFailure);
+          retryDelayMs = retryDelayForPostFailure({
+            failure: postFailure,
             attempt,
-            retryUntilMs,
-            nowMs: now(),
-          })
-        ) {
-          logOrder({
-            order,
-            status: "rejected",
-            attempt,
-            placement: cappedPlacement,
-            message: postFailure.message,
           });
-          return;
+          if (retryAction === "post_only_cross") {
+            postOnlyLimitCap = nextPostOnlyLimitCap({
+              market: session.market,
+              limitPrice: cappedPlacement.limitPrice,
+            });
+          }
+          if (
+            retryAction === "terminal" ||
+            !shouldRetryOrderPlacement({
+              attempt,
+              retryUntilMs,
+              nowMs: now(),
+            })
+          ) {
+            logOrder({
+              order,
+              status: "rejected",
+              attempt,
+              placement: cappedPlacement,
+              session,
+              failure: postFailure,
+              postDurationMs,
+              message: postFailure.message,
+            });
+            return;
+          }
         }
-      } catch (error) {
-        const postFailure = postOrderFailureFromError(error);
-        const retryAction = classifyPostOrderFailure(postFailure);
-        if (retryAction === "post_only_cross") {
-          postOnlyLimitCap = nextPostOnlyLimitCap({
-            market: session.market,
-            limitPrice: cappedPlacement.limitPrice,
-          });
-        }
-        if (
-          retryAction === "terminal" ||
-          !shouldRetryOrderPlacement({
-            attempt,
-            retryUntilMs,
-            nowMs: now(),
-          })
-        ) {
-          logOrder({
-            order,
-            status: "rejected",
-            attempt,
-            placement: cappedPlacement,
-            message: postFailure.message,
-          });
-          return;
-        }
+        await sleep(retryDelayMs);
       }
-      await sleep(LIVE_TRADING_ORDER_RETRY_DELAY_MS);
+    } catch (error) {
+      log({
+        kind: "error",
+        message: `unexpected live order placement error ${order.period}/${order.asset}: ${String(error)}`,
+      });
     }
   };
 
@@ -494,7 +589,7 @@ export function createLiveOrderExecutor({
   }): void => {
     let changed = false;
     for (const [key, session] of sessions.entries()) {
-      if (nowMs <= session.expiresAtMs + 5_000) {
+      if (nowMs <= session.expiresAtMs + LIVE_TRADING_SESSION_GRACE_MS) {
         continue;
       }
       sessions.delete(key);
@@ -524,6 +619,9 @@ export function createLiveOrderExecutor({
     status,
     attempt,
     placement,
+    session = null,
+    failure = null,
+    postDurationMs = null,
     orderId = null,
     message = null,
   }: {
@@ -534,9 +632,35 @@ export function createLiveOrderExecutor({
       MakerLimitBuyPlacement,
       { status: "no_price" }
     >;
+    readonly session?: OrderSession | null;
+    readonly failure?: PostOrderFailure | null;
+    readonly postDurationMs?: number | null;
     readonly orderId?: string | null;
     readonly message?: string | null;
   }): void {
+    const tokenRef =
+      session === null
+        ? null
+        : order.prediction === "u"
+          ? session.market.upRef
+          : session.market.downRef;
+    const oppositeTokenRef =
+      session === null
+        ? null
+        : order.prediction === "u"
+          ? session.market.downRef
+          : session.market.upRef;
+    const book =
+      session === null
+        ? null
+        : summarizePredictedSideBook({
+            prediction: order.prediction,
+            state: session.state,
+            limitPrice: placement?.limitPrice ?? null,
+            nowMs: now(),
+            maxQuoteAgeMs: LIVE_TRADING_ORDER_MAX_QUOTE_AGE_MS,
+            defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
+          });
     log({
       kind: "live-order",
       asset: order.asset,
@@ -549,6 +673,32 @@ export function createLiveOrderExecutor({
       limitPrice: placement?.limitPrice ?? null,
       confidence: placement?.confidence ?? order.confidence,
       orderId,
+      marketRef: session?.market.vendorRef ?? null,
+      tokenRef,
+      oppositeTokenRef,
+      failureStatus: failure?.status ?? null,
+      failureKind:
+        failure === null ? null : classifyPostOrderFailureKind(failure),
+      postDurationMs,
+      predictedBestBid: book?.predictedBestBid ?? null,
+      predictedBestAsk: book?.predictedBestAsk ?? null,
+      predictedSpread: book?.predictedSpread ?? null,
+      predictedBidAgeMs: book?.predictedBidAgeMs ?? null,
+      predictedAskAgeMs: book?.predictedAskAgeMs ?? null,
+      predictedBookAgeMs: book?.predictedBookAgeMs ?? null,
+      predictedBidLevels: book?.predictedBidLevels ?? null,
+      predictedAskLevels: book?.predictedAskLevels ?? null,
+      predictedBidDepthAtLimitUsd: book?.predictedBidDepthAtLimitUsd ?? null,
+      predictedBidDepthAboveLimitUsd:
+        book?.predictedBidDepthAboveLimitUsd ?? null,
+      predictedBidDepthAtOrAboveLimitUsd:
+        book?.predictedBidDepthAtOrAboveLimitUsd ?? null,
+      predictedAskDepthAtBestUsd: book?.predictedAskDepthAtBestUsd ?? null,
+      predictedAskDepthWithin1cUsd: book?.predictedAskDepthWithin1cUsd ?? null,
+      predictedAskDepthWithin2cUsd: book?.predictedAskDepthWithin2cUsd ?? null,
+      oppositeBestBid: book?.oppositeBestBid ?? null,
+      oppositeBestAsk: book?.oppositeBestAsk ?? null,
+      oppositeSpread: book?.oppositeSpread ?? null,
       message,
     });
   }
@@ -568,8 +718,11 @@ export function buildLiveMakerLimitBuyOrder({
   readonly limitPrice: number;
 }): {
   readonly userOrder: UserOrderV2;
-  readonly options: { readonly tickSize: TickSize; readonly negRisk?: boolean };
+  readonly options: { readonly tickSize: TickSize; readonly negRisk: boolean };
 } {
+  if (!Number.isFinite(limitPrice) || limitPrice <= 0 || limitPrice >= 1) {
+    throw new Error(`invalid live order limit price: ${limitPrice}`);
+  }
   const tokenID = prediction === "u" ? market.upRef : market.downRef;
   const periodMs = resolutionTimeframeStepMs({ timeframe: period });
   const userOrder: UserOrderV2 = {
@@ -588,9 +741,7 @@ export function buildLiveMakerLimitBuyOrder({
           defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
         }),
       ),
-      ...(market.negRisk === undefined || market.negRisk === null
-        ? {}
-        : { negRisk: market.negRisk }),
+      negRisk: market.negRisk ?? false,
     },
   };
 }
@@ -637,6 +788,9 @@ function applyPostOnlyLimitCap({
     Math.min(placement.limitPrice, maxLimitPrice),
     tickSize,
   );
+  if (!Number.isFinite(limitPrice)) {
+    return { status: "no_price" };
+  }
   if (limitPrice < tickSize || limitPrice > 1 - tickSize) {
     return { status: "no_price" };
   }
@@ -671,7 +825,7 @@ function nextPostOnlyLimitCap({
     defaultTickSize: LIVE_TRADING_ORDER_DEFAULT_TICK_SIZE,
   });
   const next = roundDownToTick(limitPrice - tickSize, tickSize);
-  return next > 0 && next < 1 ? next : null;
+  return Number.isFinite(next) && next > 0 && next < 1 ? next : null;
 }
 
 function shouldRetryOrderPlacement({
@@ -739,6 +893,26 @@ function classifyPostOrderFailure({
   status,
   message,
 }: PostOrderFailure): PostOrderRetryAction {
+  const kind = classifyPostOrderFailureKind({ status, message });
+  if (kind === "post_only_cross") {
+    return "post_only_cross";
+  }
+  if (
+    kind === "auth" ||
+    kind === "balance_or_allowance" ||
+    kind === "invalid_order" ||
+    kind === "closed_or_banned" ||
+    kind === "terminal"
+  ) {
+    return "terminal";
+  }
+  return "retry";
+}
+
+function classifyPostOrderFailureKind({
+  status,
+  message,
+}: PostOrderFailure): LiveTradingOrderFailureKind {
   const lower = message.toLowerCase();
   if (
     (lower.includes("post-only") && lower.includes("cross")) ||
@@ -747,42 +921,81 @@ function classifyPostOrderFailure({
   ) {
     return "post_only_cross";
   }
+  if (lower.includes("not enough balance") || lower.includes("allowance")) {
+    return "balance_or_allowance";
+  }
   if (
-    lower.includes("not enough balance") ||
-    lower.includes("allowance") ||
     lower.includes("owner has to be") ||
     lower.includes("signer address") ||
-    lower.includes("banned") ||
-    lower.includes("closed only") ||
-    lower.includes("invalid payload") ||
     lower.includes("invalid signature") ||
-    lower.includes("invalid expiration") ||
-    lower.includes("breaks minimum tick size") ||
-    lower.includes("lower than the minimum") ||
     status === 401
   ) {
-    return "terminal";
+    return "auth";
+  }
+  if (lower.includes("banned") || lower.includes("closed only")) {
+    return "closed_or_banned";
+  }
+  if (
+    lower.includes("invalid payload") ||
+    lower.includes("invalid expiration") ||
+    lower.includes("breaks minimum tick size") ||
+    lower.includes("lower than the minimum")
+  ) {
+    return "invalid_order";
   }
   if (
     lower.includes("not yet ready") ||
     lower.includes("too early") ||
+    status === 425
+  ) {
+    return "not_ready";
+  }
+  if (
+    lower.includes("rate limit") ||
+    lower.includes("too many requests") ||
+    status === 429
+  ) {
+    return "rate_limited";
+  }
+  if (lower.includes("not found") || status === 404) {
+    return "not_found";
+  }
+  if (
     lower.includes("matching engine") ||
     lower.includes("temporarily") ||
     lower.includes("service unavailable") ||
     lower.includes("internal server") ||
-    lower.includes("rate limit") ||
-    lower.includes("too many requests") ||
-    lower.includes("context canceled") ||
-    lower.includes("not found") ||
-    status === null ||
-    status === 404 ||
-    status === 425 ||
-    status === 429 ||
     (status !== null && status >= 500 && status < 600)
   ) {
-    return "retry";
+    return "server_error";
   }
-  return status === 400 ? "terminal" : "retry";
+  if (lower.includes("context canceled") || status === null) {
+    return "network_or_unknown";
+  }
+  return status === 400 ? "terminal" : "unknown";
+}
+
+function retryDelayForPostFailure({
+  failure,
+  attempt,
+}: {
+  readonly failure: PostOrderFailure;
+  readonly attempt: number;
+}): number {
+  const kind = classifyPostOrderFailureKind(failure);
+  if (kind === "rate_limited") {
+    return Math.min(
+      LIVE_TRADING_ORDER_MAX_RETRY_DELAY_MS,
+      LIVE_TRADING_ORDER_RATE_LIMIT_RETRY_BASE_MS * attempt,
+    );
+  }
+  if (kind === "server_error" || kind === "network_or_unknown") {
+    return Math.min(
+      LIVE_TRADING_ORDER_MAX_RETRY_DELAY_MS,
+      LIVE_TRADING_ORDER_TRANSIENT_RETRY_BASE_MS * attempt,
+    );
+  }
+  return LIVE_TRADING_ORDER_RETRY_DELAY_MS;
 }
 
 function extractOrderId(response: unknown): string | null {

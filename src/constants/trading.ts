@@ -55,3 +55,15 @@ export const LIVE_TRADING_ORDER_MIN_RETRY_WINDOW_MS = 1000;
 
 /** Delay between failed live order placement retries. */
 export const LIVE_TRADING_ORDER_RETRY_DELAY_MS = 50;
+
+/** First retry delay after venue rate limiting. Scales linearly by attempt. */
+export const LIVE_TRADING_ORDER_RATE_LIMIT_RETRY_BASE_MS = 500;
+
+/** First retry delay after transient 5xx/network style venue failures. */
+export const LIVE_TRADING_ORDER_TRANSIENT_RETRY_BASE_MS = 250;
+
+/** Upper bound for adaptive live-order retry sleeps. */
+export const LIVE_TRADING_ORDER_MAX_RETRY_DELAY_MS = 2_000;
+
+/** Keep recently closed market sessions briefly so late frames can settle. */
+export const LIVE_TRADING_SESSION_GRACE_MS = 5_000;

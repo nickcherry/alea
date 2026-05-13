@@ -28,15 +28,18 @@ type MarketDiscoveryInput = {
 export function createPolymarketMarketDiscoveryCache({
   discover = discoverPolymarketMarket,
   retryMs = 10_000,
+  maxRetryMs = 30_000,
   signal,
 }: {
   readonly discover?: DiscoverMarket;
   readonly retryMs?: number;
+  readonly maxRetryMs?: number;
   readonly signal?: AbortSignal;
 } = {}): PolymarketMarketDiscoveryCache {
   const markets = new Map<string, TradableMarket>();
   const inflight = new Map<string, Promise<TradableMarket | null>>();
   const nextAttemptAt = new Map<string, number>();
+  const retryDelayByKey = new Map<string, number>();
 
   const get = (input: MarketDiscoveryInput): TradableMarket | null =>
     markets.get(marketKey(input)) ?? null;
@@ -70,13 +73,14 @@ export function createPolymarketMarketDiscoveryCache({
         if (market !== null) {
           markets.set(key, market);
           nextAttemptAt.delete(key);
+          retryDelayByKey.delete(key);
           return market;
         }
-        nextAttemptAt.set(key, Date.now() + retryMs);
+        recordFailure({ key });
         return null;
       })
       .catch(() => {
-        nextAttemptAt.set(key, Date.now() + retryMs);
+        recordFailure({ key });
         return null;
       })
       .finally(() => {
@@ -107,6 +111,12 @@ export function createPolymarketMarketDiscoveryCache({
   };
 
   return { warm, get, getOrDiscover };
+
+  function recordFailure({ key }: { readonly key: string }): void {
+    const delayMs = retryDelayByKey.get(key) ?? retryMs;
+    nextAttemptAt.set(key, Date.now() + delayMs);
+    retryDelayByKey.set(key, Math.min(maxRetryMs, delayMs * 2));
+  }
 }
 
 function marketKey({

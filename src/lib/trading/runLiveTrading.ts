@@ -67,6 +67,7 @@ export type LiveTradingLogEvent =
       readonly tsMs: number;
       readonly prediction: "u" | "d" | null;
       readonly synthClose: number;
+      readonly priceAgeMs: number | null;
       readonly marketRegime: MarketRegime | null;
       readonly rosterSize: number;
       readonly up: number;
@@ -222,12 +223,12 @@ async function processDueLiveDecision({
     if (refreshed === null) {
       return;
     }
-    state.lastPredictedBoundary = targetTsMs;
     await makeLiveDecision({
       state,
       targetTsMs,
       series: refreshed.seriesForDecision,
       synthBar: refreshed.syntheticBar,
+      priceAgeMs: refreshed.priceAgeMs,
       roster,
       candidatesByKey,
       orderExecutor,
@@ -254,6 +255,7 @@ async function refreshStateForDecision({
 }): Promise<{
   readonly seriesForDecision: AlignedBarSeries;
   readonly syntheticBar: FilterBar;
+  readonly priceAgeMs: number | null;
 } | null> {
   try {
     const refreshed = await refreshTradeDecisionCandleState({
@@ -279,6 +281,7 @@ async function refreshStateForDecision({
     return {
       seriesForDecision: refreshed.seriesForDecision,
       syntheticBar: refreshed.syntheticBar,
+      priceAgeMs: refreshed.priceAgeMs,
     };
   } catch (e) {
     log({
@@ -294,6 +297,7 @@ async function makeLiveDecision({
   targetTsMs,
   series,
   synthBar,
+  priceAgeMs,
   roster,
   candidatesByKey,
   orderExecutor,
@@ -303,6 +307,7 @@ async function makeLiveDecision({
   readonly targetTsMs: number;
   readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
+  readonly priceAgeMs: number | null;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
@@ -315,6 +320,7 @@ async function makeLiveDecision({
     roster,
     candidatesByKey,
   });
+  state.lastPredictedBoundary = targetTsMs;
   log({
     kind: "decision",
     asset: state.asset,
@@ -322,6 +328,7 @@ async function makeLiveDecision({
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
     synthClose: synthBar.close,
+    priceAgeMs,
     marketRegime: evaluated.marketRegime,
     rosterSize: evaluated.rosterSize,
     up: evaluated.up,

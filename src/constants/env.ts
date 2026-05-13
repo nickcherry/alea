@@ -36,6 +36,18 @@ export const env = {
   get polymarketFunderAddress(): string | undefined {
     return optionalEnv("POLYMARKET_FUNDER_ADDRESS");
   },
+  get axiomApiKey(): string | undefined {
+    return optionalEnv("AXIOM_API_KEY");
+  },
+  get axiomQueryApiKey(): string | undefined {
+    return optionalEnv("AXIOM_QUERY_API_KEY") ?? optionalEnv("AXIOM_API_KEY");
+  },
+  get axiomDataset(): string {
+    return optionalEnv("AXIOM_DATASET") ?? "alea-live";
+  },
+  get axiomDomain(): string {
+    return optionalEnv("AXIOM_DOMAIN") ?? "https://api.axiom.co";
+  },
 };
 
 function optionalEnv(name: string): string | undefined {

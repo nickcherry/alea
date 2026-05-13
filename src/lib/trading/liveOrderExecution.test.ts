@@ -44,7 +44,19 @@ describe("buildLiveMakerLimitBuyOrder", () => {
     expect(request.userOrder.tokenID).toBe("UP");
     expect(request.userOrder.size).toBe(40);
     expect(request.userOrder.expiration).toBe(2700);
-    expect(request.options).toEqual({ tickSize: "0.01" });
+    expect(request.options).toEqual({ tickSize: "0.01", negRisk: false });
+  });
+
+  it("rejects non-finite limit prices before reaching the SDK", () => {
+    expect(() =>
+      buildLiveMakerLimitBuyOrder({
+        market: market({ tickSize: 0.01, negRisk: false }),
+        period: "5m",
+        prediction: "u",
+        targetTsMs: 1_800_000,
+        limitPrice: Number.NaN,
+      }),
+    ).toThrow(/invalid live order limit price/);
   });
 });
 
@@ -121,6 +133,40 @@ describe("createLiveOrderExecutor", () => {
 
     await waitFor(() => calls.length === 2);
     expect(calls.map((call) => call.userOrder.price)).toEqual([0.5, 0.49]);
+  });
+
+  it("backs off rate-limit rejections before retrying", async () => {
+    const calls: PostedOrder[] = [];
+    const sleeps: number[] = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [
+          { success: false, error: "too many requests", status: 429 },
+          { success: true, orderID: "order-3" },
+        ],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+      }),
+      log: () => {},
+      now: () => 1_795_000,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      streamMarketData: fakeStreamMarketData(),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: 0.6,
+    });
+
+    await waitFor(() => calls.length === 2);
+    expect(sleeps[0]).toBe(500);
   });
 });
 

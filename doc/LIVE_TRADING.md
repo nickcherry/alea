@@ -24,9 +24,43 @@ Required environment:
 - `POLYMARKET_PRIVATE_KEY`
 - `POLYMARKET_FUNDER_ADDRESS`
 - `DATABASE_URL` if not using the local default
+- `AXIOM_API_KEY` to stream live telemetry to Axiom
+- `AXIOM_QUERY_API_KEY` optional read-scoped Axiom token for terminal
+  telemetry queries; falls back to `AXIOM_API_KEY`
+- `AXIOM_DATASET` optional, defaults to `alea-live`
+- `AXIOM_DOMAIN` optional, defaults to `https://api.axiom.co`
+
+The Axiom dataset must exist before the trader starts. `AXIOM_API_KEY`
+needs ingest permission for that dataset. Terminal query commands need
+read/query permission, either on the same token or via
+`AXIOM_QUERY_API_KEY`.
 
 Run `bun alea polymarket:auth-check` before launching on a fresh host
 or after rotating credentials.
+
+## Telemetry
+
+When `AXIOM_API_KEY` is present, `trading:run` streams structured
+live telemetry to Axiom and also writes every event to a local NDJSON
+spool under `tmp/telemetry/live/`. Telemetry is best-effort and never
+blocks order placement; if Axiom is unavailable, the local spool is
+the fallback artifact.
+
+The live event stream captures runner hydration, roster load, each
+committee decision, market stream state, order scheduling, every live
+post attempt, and final order placement/rejection/skips. Order-attempt
+events include BBO, spread, quote age, token/market refs, post latency,
+failure kind/status, and summarized book depth around the posted
+limit.
+
+Terminal query helpers:
+
+```sh
+bun alea telemetry:orders --since now-24h
+bun alea telemetry:rejects --since now-24h --by asset,period,failureKind
+bun alea telemetry:book-depth --since now-6h --by asset,period,prediction
+bun alea telemetry:query --apl "['alea-live'] | limit 10"
+```
 
 ## Timing
 
@@ -81,6 +115,11 @@ post-only cross rejection ratchets the next attempt down by one tick
 even if no fresher WebSocket quote has arrived. There is no retry after
 price-band or confidence failure.
 
+Rate-limit and transient venue failures use adaptive retry sleeps
+instead of the normal 50ms placement retry delay. This avoids turning
+a Polymarket 429 or short 5xx incident into a request storm across
+all live asset/period loops.
+
 The live path is still intentionally maker-only. Switching to FAK/FOK
 or non-post-only taker entry would raise fill probability, but it is a
 different EV and fee decision than the current near-50c maker strategy.
@@ -91,6 +130,12 @@ Live trading does not write local trade/fill rows. Once Polymarket
 confirms order creation, Alea is done with that order. Polymarket is
 the source of truth for open orders, fills, positions, and PnL. The
 local DB is used for candle history and committee selection only.
+
+SIGINT/SIGTERM stops the scheduler, clears not-yet-started scheduled
+orders, closes the market-data WebSocket, and flushes telemetry. The
+Polymarket SDK does not expose an abort signal for an already in-flight
+`createAndPostOrder` call, so a request that was already sent may still
+complete at the venue during shutdown.
 
 ## Files
 

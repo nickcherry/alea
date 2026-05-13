@@ -208,6 +208,29 @@ describe("refreshTradeDecisionCandleState", () => {
     ]);
     expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null, null]);
   });
+
+  it("times out latest Pyth price fetches in the decision path", async () => {
+    const state = stateWithBars([bar(0, 90, 100)]);
+
+    let caught: unknown = null;
+    try {
+      await refreshTradeDecisionCandleState({
+        state,
+        nowMs: 895_000,
+        fetchCandles: async () => [candle(300_000, 100, 108)],
+        fetchCoinbaseBarsForRefresh: async () => [],
+        fetchLatestPrices: async () =>
+          new Promise<
+            ReadonlyMap<TradeDecisionCandleState["asset"], LatestPythPrice>
+          >(() => {}),
+        latestPriceFetchTimeoutMs: 1,
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(String(caught)).toMatch(/latest Pyth price fetch timed out/);
+  });
 });
 
 function stateWithBars(

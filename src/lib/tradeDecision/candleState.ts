@@ -53,6 +53,7 @@ export type FetchCandles = (params: {
 
 type FetchLatestPrices = (params: {
   readonly assets: readonly Asset[];
+  readonly signal?: AbortSignal;
 }) => Promise<ReadonlyMap<Asset, LatestPythPrice>>;
 
 export async function hydrateTradeDecisionCandleState({
@@ -127,6 +128,7 @@ export async function refreshTradeDecisionCandleState({
   fetchCoinbaseBarsForRefresh = fetchDecisionCoinbaseCandles,
   fetchLatestPrices = fetchLatestPythPrices,
   coinbaseFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
+  latestPriceFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
 }: {
   readonly state: TradeDecisionCandleState;
   readonly nowMs: number;
@@ -136,6 +138,7 @@ export async function refreshTradeDecisionCandleState({
   readonly fetchCoinbaseBarsForRefresh?: FetchCandles;
   readonly fetchLatestPrices?: FetchLatestPrices;
   readonly coinbaseFetchTimeoutMs?: number;
+  readonly latestPriceFetchTimeoutMs?: number;
 }): Promise<TradeDecisionCandleRefresh> {
   const currentOpenTimeMs = Math.floor(nowMs / state.periodMs) * state.periodMs;
   const pythFetchStartMs = getRefreshFetchStartMs({
@@ -192,7 +195,11 @@ export async function refreshTradeDecisionCandleState({
   });
   state.lastRefreshedAtMs = nowMs;
 
-  const latestPrices = await fetchLatestPrices({ assets: [state.asset] });
+  const latestPrices = await fetchLatestPricesWithTimeout({
+    fetchLatestPrices,
+    assets: [state.asset],
+    timeoutMs: latestPriceFetchTimeoutMs,
+  });
   const latestPrice = latestPrices.get(state.asset) ?? null;
   if (latestPrice === null) {
     return {
@@ -370,6 +377,36 @@ async function fetchOptionalCandles({
       }, timeoutMs);
       fetchCandles(params).then(resolve, reject);
     });
+  } finally {
+    if (timer !== null) {
+      clearTimeout(timer);
+    }
+  }
+}
+
+async function fetchLatestPricesWithTimeout({
+  fetchLatestPrices,
+  assets,
+  timeoutMs,
+}: {
+  readonly fetchLatestPrices: FetchLatestPrices;
+  readonly assets: readonly Asset[];
+  readonly timeoutMs: number;
+}): Promise<ReadonlyMap<Asset, LatestPythPrice>> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      fetchLatestPrices({ assets, signal: controller.signal }),
+      new Promise<ReadonlyMap<Asset, LatestPythPrice>>((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(
+            new Error(`latest Pyth price fetch timed out after ${timeoutMs}ms`),
+          );
+        }, timeoutMs);
+      }),
+    ]);
   } finally {
     if (timer !== null) {
       clearTimeout(timer);
