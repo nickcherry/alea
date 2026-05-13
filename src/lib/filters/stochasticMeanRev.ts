@@ -32,6 +32,7 @@ type Config = z.infer<typeof configSchema>;
 export const stochasticMeanRev: Filter<Config> = {
   id: "stochastic_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Mean reversion on the Stochastic %K oscillator. Engages UP when %K ≤ `oversold`, DOWN when ≥ `overbought`. %K is normalized against the trailing high-low range, not (like RSI) against the period's gain/loss distribution — head-to-head with `rsi_meanrev` tells us which normalization basis carries the reversion signal.",

@@ -17,6 +17,7 @@ type Config = z.infer<typeof configSchema>;
 export const donchianReversion: Filter<Config> = {
   id: "donchian_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Engages UP when the latest close is at or below the trailing N-bar low, DOWN when at or above the trailing N-bar high. Pure raw-extreme channel reversion, no volatility scaling.",

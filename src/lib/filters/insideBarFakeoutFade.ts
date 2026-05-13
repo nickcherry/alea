@@ -15,6 +15,7 @@ type Config = z.infer<typeof configSchema>;
 export const insideBarFakeoutFade: Filter<Config> = {
   id: "inside_bar_fakeout_fade",
   version: 1,
+  barSource: "pyth",
   family: "compression_failure",
   description:
     "Fades failed inside-bar breakouts. If the latest bar sweeps outside the mother range but closes back inside with enough wick rejection, predict the opposite direction.",

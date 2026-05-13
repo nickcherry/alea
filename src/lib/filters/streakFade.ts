@@ -36,6 +36,7 @@ type Config = z.infer<typeof configSchema>;
 export const streakFade: Filter<Config> = {
   id: "streak_fade",
   version: 1,
+  barSource: "pyth",
   family: "velocity_fade",
   description:
     "Engages opposite the most recent run of same-color bars once the streak length reaches `minStreak`. Direct inverse of the deleted `prior_bar_carry` filter — that one bet on continuation and lost monotonically with longer streaks; this bets on reversal and should win progressively more.",

@@ -33,6 +33,7 @@ type Config = z.infer<typeof configSchema>;
 export const bollingerPercentB: Filter<Config> = {
   id: "bollinger_percent_b",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Bollinger %B reversion. %B reads as 0 at the lower band, 1 at the upper band, negative below the lower band, > 1 above the upper band. Engages UP when %B ≤ `lowerEnter`, DOWN when %B ≥ `upperEnter`. Continuous-threshold sibling of `bollinger_reversion`: that one engages the instant the close crosses; this one lets you tune 'how far past' the band counts as a signal.",

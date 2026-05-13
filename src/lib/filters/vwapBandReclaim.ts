@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const vwapBandReclaim: Filter<Config> = {
   id: "vwap_band_reclaim",
   version: 1,
+  barSource: "coinbase",
   family: "volume_weighted_reversion",
   description:
     "VWAP-band reclaim confirmation. After one or more closes outside a rolling VWAP z-band, a close back inside the band predicts continued reversion.",

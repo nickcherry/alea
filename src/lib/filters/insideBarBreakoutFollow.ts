@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const insideBarBreakoutFollow: Filter<Config> = {
   id: "inside_bar_breakout_follow",
   version: 2,
+  barSource: "pyth",
   family: "compression_continuation",
   description:
     "Continuation after inside-bar compression. When the latest decisive candle breaks the mother bar high, predict UP; a decisive break below the mother low predicts DOWN.",

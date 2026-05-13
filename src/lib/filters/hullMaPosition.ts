@@ -39,6 +39,7 @@ type Config = z.infer<typeof configSchema>;
 export const hullMaPosition: Filter<Config> = {
   id: "hull_ma_position",
   version: 1,
+  barSource: "pyth",
   family: "ma_position",
   description:
     "Mean reversion against a Hull Moving Average. Hull MA reduces lag vs. SMA/EMA via stacked WMAs; tests whether the less-laggy baseline gives a cleaner reversion signal.",

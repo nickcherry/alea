@@ -20,6 +20,7 @@ type Config = z.infer<typeof configSchema>;
 export const bodyClimaxFade: Filter<Config> = {
   id: "body_climax_fade",
   version: 1,
+  barSource: "pyth",
   family: "candle_exhaustion",
   description:
     "Fades body-only climax candles. The latest open-to-close body must dwarf recent bodies and clear ATR/body-share gates; green climax predicts DOWN and red climax predicts UP.",

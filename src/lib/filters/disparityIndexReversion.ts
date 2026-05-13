@@ -25,6 +25,7 @@ type Config = z.infer<typeof configSchema>;
 export const disparityIndexReversion: Filter<Config> = {
   id: "disparity_index_reversion",
   version: 1,
+  barSource: "pyth",
   family: "ma_position",
   description:
     "Mean reversion on the Disparity Index — percent distance between close and its EMA. Continuous-threshold formulation of the same hypothesis as `ema_position` revert mode.",

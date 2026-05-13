@@ -31,6 +31,7 @@ type Config = z.infer<typeof configSchema>;
 export const zscoreReversion: Filter<Config> = {
   id: "zscore_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Continuous-threshold reversion on the close's z-score vs trailing mean. Engages UP when z ≤ -`threshold`, DOWN when z ≥ +`threshold`. Equivalent to `bollinger_reversion` at `threshold = multiplier`, but with the threshold exposed as a continuous knob so we can find where the reversion edge actually peaks rather than locking to the textbook 2σ.",

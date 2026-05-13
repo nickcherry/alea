@@ -12,6 +12,7 @@ type Config = z.infer<typeof configSchema>;
 export const supertrendFlipFollow: Filter<Config> = {
   id: "supertrend_flip_follow",
   version: 1,
+  barSource: "pyth",
   family: "trend_flip_continuation",
   description:
     "ATR trailing-stop trend flip. When Supertrend flips bullish on the latest closed candle, predict UP; when it flips bearish, predict DOWN.",

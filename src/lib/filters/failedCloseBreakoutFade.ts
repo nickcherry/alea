@@ -18,6 +18,7 @@ type Config = z.infer<typeof configSchema>;
 export const failedCloseBreakoutFade: Filter<Config> = {
   id: "failed_close_breakout_fade",
   version: 1,
+  barSource: "pyth",
   family: "structure_reversion",
   description:
     "Fades failed close-breakouts. A prior bar must close beyond its trailing channel by at least `minBreakAtr`; if the latest close gets back inside within `failureBars`, predict reversal.",

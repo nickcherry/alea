@@ -12,6 +12,7 @@ type Config = z.infer<typeof configSchema>;
 export const balanceOfPowerMeanrev: Filter<Config> = {
   id: "balance_of_power_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "body_location_oscillator",
   description:
     "Balance of Power mean reversion. A strongly positive average BOP predicts DOWN; a strongly negative average predicts UP.",

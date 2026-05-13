@@ -11,8 +11,12 @@ import {
   type CommitteeDecision,
   UNKNOWN_COMMITTEE_SELECTION_VOTE_STATS,
 } from "@alea/lib/committee/types";
+import {
+  type AlignedBarSeries,
+  selectTrailingFilterWindow,
+} from "@alea/lib/filters/barSeries";
 import { allCandidates, getFilter } from "@alea/lib/filters/registry";
-import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import type { Candidate } from "@alea/lib/filters/types";
 
 /**
  * Registry inventory. The active dry-run committee is the
@@ -26,17 +30,19 @@ export function listCommitteeCandidates(): readonly Candidate[] {
 }
 
 /**
- * Evaluate a candidate roster on a bar window. Each candidate's
- * `predict` runs on the same window; votes are collected and passed
- * to `aggregateCommittee`. Bars too short to meet a filter's
- * `requiredBars` are treated as abstain.
+ * Evaluate a candidate roster against an aligned bar bundle. Each
+ * candidate's `predict` runs on the trailing window in its declared
+ * `barSource` — so a price filter receives Pyth bars and a volume
+ * filter receives Coinbase bars in the same decision. Bars too short
+ * to meet a filter's `requiredBars`, or a Coinbase gap inside the
+ * window, are treated as abstain.
  */
 export function evaluateCommittee({
-  bars,
+  series,
   candidates,
   decisionRules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
   readonly candidates: readonly (Candidate | CommitteeCandidate)[];
   readonly decisionRules?: CommitteeDecisionRules;
 }): {
@@ -52,12 +58,14 @@ export function evaluateCommittee({
       continue;
     }
     const need = entry.filter.requiredBars(cand.config);
+    const window = selectTrailingFilterWindow({
+      series,
+      filter: entry.filter,
+      requiredBars: need,
+    });
     let prediction = null as ReturnType<typeof entry.filter.predict>;
-    if (bars.length >= need) {
-      // Pass only the trailing `need` bars so the filter sees what
-      // it'd see in training, replay, or live evaluation.
-      const slice = bars.slice(bars.length - need);
-      prediction = entry.filter.predict(cand.config, slice);
+    if (window !== null) {
+      prediction = entry.filter.predict(cand.config, window);
     }
     votes.push({ candidate: cand, prediction, selection: voter.selection });
   }

@@ -40,6 +40,7 @@ describe("refreshTradeDecisionCandleState", () => {
           candle(600_000, 108, 111),
         ];
       },
+      fetchCoinbaseBarsForHydrate: async () => [],
     });
 
     expect(requested).toEqual([{ start: 0, end: 895_000 }]);
@@ -86,6 +87,7 @@ describe("refreshTradeDecisionCandleState", () => {
         candle(300_000, 100, 108),
         candle(600_000, 108, 111, 112, 107),
       ],
+      fetchCoinbaseBarsForRefresh: async () => [],
       fetchLatestPrices: async () =>
         new Map([["btc", latestPrice({ price: 115, publishTimeMs: 894_000 })]]),
     });
@@ -102,9 +104,11 @@ describe("refreshTradeDecisionCandleState", () => {
       close: 115,
       volume: 0,
     });
-    expect(refreshed.barsForDecision?.map((b) => b.openTimeMs)).toEqual([
+    expect(refreshed.seriesForDecision?.pyth.map((b) => b.openTimeMs)).toEqual([
       0, 300_000, 600_000,
     ]);
+    // No Coinbase bars returned by fetcher → every aligned slot is null.
+    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null, null]);
   });
 
   it("uses prior close when Pyth has not returned a partial active candle", async () => {
@@ -113,6 +117,7 @@ describe("refreshTradeDecisionCandleState", () => {
       state,
       nowMs: 895_000,
       fetchCandles: async () => [candle(300_000, 100, 108)],
+      fetchCoinbaseBarsForRefresh: async () => [],
       fetchLatestPrices: async () =>
         new Map([["btc", latestPrice({ price: 104, publishTimeMs: 894_000 })]]),
     });
@@ -134,13 +139,36 @@ describe("refreshTradeDecisionCandleState", () => {
       nowMs: 895_000,
       maxPriceAgeMs: 15_000,
       fetchCandles: async () => [candle(300_000, 100, 108)],
+      fetchCoinbaseBarsForRefresh: async () => [],
       fetchLatestPrices: async () =>
         new Map([["btc", latestPrice({ price: 104, publishTimeMs: 870_000 })]]),
     });
 
     expect(refreshed.priceAgeMs).toBe(25_000);
     expect(refreshed.syntheticBar).toBeNull();
-    expect(refreshed.barsForDecision).toBeNull();
+    expect(refreshed.seriesForDecision).toBeNull();
+  });
+
+  it("aligns coinbase bars by openTimeMs into the bundle", async () => {
+    const state = stateWithBars([bar(0, 90, 100)]);
+    state.coinbaseBars = [
+      { openTimeMs: 0, open: 90, high: 101, low: 89, close: 100, volume: 12 },
+    ];
+    const refreshed = await refreshTradeDecisionCandleState({
+      state,
+      nowMs: 895_000,
+      fetchCandles: async () => [candle(300_000, 100, 108)],
+      fetchCoinbaseBarsForRefresh: async () => [
+        coinbaseCandle(300_000, 100, 108, 8),
+        coinbaseCandle(600_000, 108, 113, 5),
+      ],
+      fetchLatestPrices: async () =>
+        new Map([["btc", latestPrice({ price: 113, publishTimeMs: 894_000 })]]),
+    });
+
+    expect(refreshed.seriesForDecision?.coinbase.map((b) => b?.volume ?? null)).toEqual([
+      12, 8, 5,
+    ]);
   });
 });
 
@@ -152,6 +180,7 @@ function stateWithBars(
     period: "5m",
     periodMs: 300_000,
     bars: [...bars],
+    coinbaseBars: [],
     lastPredictedBoundary: 0,
     lastRefreshedAtMs: null,
   };
@@ -190,6 +219,26 @@ function candle(
     low,
     close,
     volume: 0,
+  };
+}
+
+function coinbaseCandle(
+  openTimeMs: number,
+  open: number,
+  close: number,
+  volume: number,
+): Candle {
+  return {
+    source: "coinbase",
+    asset: "btc",
+    product: "spot",
+    timeframe: "5m",
+    timestamp: new Date(openTimeMs),
+    open,
+    high: Math.max(open, close),
+    low: Math.min(open, close),
+    close,
+    volume,
   };
 }
 

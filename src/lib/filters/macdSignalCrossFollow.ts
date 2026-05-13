@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const macdSignalCrossFollow: Filter<Config> = {
   id: "macd_signal_cross_follow",
   version: 1,
+  barSource: "pyth",
   family: "momentum_cross_continuation",
   description:
     "Follows MACD signal-line crosses. A histogram cross above zero predicts UP; a cross below zero predicts DOWN, optionally requiring histogram size versus ATR.",

@@ -20,6 +20,7 @@ type Config = z.infer<typeof configSchema>;
 export const narrowRangeBreakoutFollow: Filter<Config> = {
   id: "narrow_range_breakout_follow",
   version: 2,
+  barSource: "pyth",
   family: "compression_continuation",
   description:
     "Continuation after a narrow-range pause. If the prior candle is the narrowest in `nrLookback` bars and the latest candle breaks it decisively, follow the breakout direction.",

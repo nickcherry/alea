@@ -7,12 +7,13 @@ import {
   TRAINING_WINDOW_START_POLICY,
 } from "@alea/constants/researchWindows";
 import { runBacktestForCandidate } from "@alea/lib/backtest/runBacktest";
+import { loadAlignedBarSeries } from "@alea/lib/candles/loadAlignedBarSeries";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import { allCandidates } from "@alea/lib/filters/registry";
-import type { FilterBar } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -116,15 +117,18 @@ export const trainingRunCommand = defineCommand({
     try {
       for (const period of options.periods) {
         for (const asset of options.assets) {
-          const bars = await loadBars({ db, asset, period });
-          if (bars.length < 2) {
+          const series = await loadTrainingSeries({ db, asset, period });
+          if (series.pyth.length < 2) {
             io.writeStdout(
-              `  ${pc.yellow(`skip ${period}/${asset}: only ${bars.length} bars`)}\n`,
+              `  ${pc.yellow(`skip ${period}/${asset}: only ${series.pyth.length} pyth bars`)}\n`,
             );
             continue;
           }
+          const coinbaseCovered = countNonNull({
+            arr: series.coinbase,
+          });
           io.writeStdout(
-            `${pc.bold(`${period}/${asset}`)} ${pc.dim(`bars=${bars.length}`)}\n`,
+            `${pc.bold(`${period}/${asset}`)} ${pc.dim(`bars=${series.pyth.length}  coinbase=${coinbaseCovered}`)}\n`,
           );
           for (const cand of selected) {
             const result = await runBacktestForCandidate({
@@ -132,7 +136,7 @@ export const trainingRunCommand = defineCommand({
               candidate: cand,
               period,
               asset,
-              bars,
+              series,
             });
             const tag = result.fromCache ? pc.dim("(cached)") : pc.green("•");
             const upWr =
@@ -165,7 +169,7 @@ export const trainingRunCommand = defineCommand({
   },
 });
 
-async function loadBars({
+async function loadTrainingSeries({
   db,
   asset,
   period,
@@ -173,28 +177,23 @@ async function loadBars({
   readonly db: ReturnType<typeof createDatabase>;
   readonly asset: Asset;
   readonly period: SupportedPeriod;
-}): Promise<readonly FilterBar[]> {
-  const rows = await db
-    .selectFrom("candles")
-    .select(["timestamp", "open", "high", "low", "close", "volume"])
-    .where("source", "=", "pyth")
-    .where("product", "=", "spot")
-    .where("asset", "=", asset)
-    .where("timeframe", "=", period)
-    .where("timestamp", "<", new Date(TRAINING_WINDOW_END_EXCLUSIVE_MS))
-    .orderBy("timestamp", "asc")
-    .execute();
-  return rows.map((r) => ({
-    openTimeMs:
-      r.timestamp instanceof Date
-        ? r.timestamp.getTime()
-        : new Date(r.timestamp).getTime(),
-    open: r.open,
-    high: r.high,
-    low: r.low,
-    close: r.close,
-    volume: r.volume,
-  }));
+}): Promise<AlignedBarSeries> {
+  return loadAlignedBarSeries({
+    db,
+    asset,
+    timeframe: period,
+    windowEndExclusiveMs: TRAINING_WINDOW_END_EXCLUSIVE_MS,
+  });
+}
+
+function countNonNull<T>({ arr }: { readonly arr: readonly (T | null)[] }): number {
+  let n = 0;
+  for (const v of arr) {
+    if (v !== null) {
+      n += 1;
+    }
+  }
+  return n;
 }
 
 function formatTrainingWindowForCli(): string {

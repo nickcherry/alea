@@ -23,6 +23,7 @@ type Config = z.infer<typeof configSchema>;
 export const bollingerReversion: Filter<Config> = {
   id: "bollinger_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Two-sided Bollinger Band reversion. Engages UP when the latest close pierces or touches the lower band (mean − `multiplier` × stddev over `period` bars), DOWN when it pierces or touches the upper band. Abstains between the bands. Same mean-reversion bet as `rsi_meanrev` but the threshold scales with recent volatility instead of recent gain/loss balance.",

@@ -21,6 +21,7 @@ type Config = z.infer<typeof configSchema>;
 export const volumeClimaxFade: Filter<Config> = {
   id: "volume_climax_fade",
   version: 1,
+  barSource: "coinbase",
   family: "volume_exhaustion",
   description:
     "Fades high-volume range/body climaxes. A large bullish body on high relative volume predicts DOWN; a large bearish body predicts UP.",

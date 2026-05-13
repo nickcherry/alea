@@ -18,6 +18,7 @@ type Config = z.infer<typeof configSchema>;
 export const emaPullbackTrendFollow: Filter<Config> = {
   id: "ema_pullback_trend_follow",
   version: 1,
+  barSource: "pyth",
   family: "trend_pullback_continuation",
   description:
     "Follows EMA-trend pullback recoveries. A sloped EMA defines trend; a latest retest near the EMA that closes back in trend direction predicts continuation.",

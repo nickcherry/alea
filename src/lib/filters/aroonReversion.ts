@@ -40,6 +40,7 @@ type Config = z.infer<typeof configSchema>;
 export const aroonReversion: Filter<Config> = {
   id: "aroon_reversion",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Reversion on Aroon Up/Down asymmetry. Engages DOWN when AroonUp clears `upTrigger` (recent new high just printed) AND AroonDown sits below `downTrigger` (no recent low). Symmetric for UP. Tests whether the TIME-domain extreme reading carries the same reversion signal as the magnitude-domain oscillators.",

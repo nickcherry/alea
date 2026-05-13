@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const macdHistogramTurnFade: Filter<Config> = {
   id: "macd_histogram_turn_fade",
   version: 1,
+  barSource: "pyth",
   family: "momentum_exhaustion",
   description:
     "Fades extreme MACD histogram turns. A positive extreme rolling toward zero predicts DOWN; a negative extreme rolling toward zero predicts UP.",

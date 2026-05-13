@@ -1,11 +1,15 @@
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
-import type { DatabaseClient } from "@alea/lib/db/types";
+import {
+  type AlignedBarSeries,
+  selectFilterWindow,
+} from "@alea/lib/filters/barSeries";
 import { runHash } from "@alea/lib/filters/hash";
 import { getFilter } from "@alea/lib/filters/registry";
-import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import type { Candidate } from "@alea/lib/filters/types";
 import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
 import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
+import type { DatabaseClient } from "@alea/lib/db/types";
 
 export type BacktestStats = {
   readonly nBars: number;
@@ -83,21 +87,21 @@ export async function runBacktestForCandidate({
   candidate,
   period,
   asset,
-  bars,
+  series,
 }: {
   readonly db: DatabaseClient;
   readonly candidate: Candidate;
   readonly period: CandleTimeframe;
   readonly asset: Asset;
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
 }): Promise<RunBacktestResult> {
-  if (bars.length < 2) {
+  if (series.pyth.length < 2) {
     throw new Error(
-      `training pass needs at least 2 bars, got ${bars.length} for ${candidate.filterId}/${period}/${asset}`,
+      `training pass needs at least 2 bars, got ${series.pyth.length} for ${candidate.filterId}/${period}/${asset}`,
     );
   }
-  const rangeFirstMs = bars[0]!.openTimeMs;
-  const rangeLastMs = bars[bars.length - 1]!.openTimeMs;
+  const rangeFirstMs = series.pyth[0]!.openTimeMs;
+  const rangeLastMs = series.pyth[series.pyth.length - 1]!.openTimeMs;
   const rh = runHash({
     candidateHash: candidate.candidateHash,
     period,
@@ -145,9 +149,16 @@ export async function runBacktestForCandidate({
     throw new Error(`unknown filter id ${candidate.filterId}`);
   }
   const requiredBars = entry.filter.requiredBars(candidate.config);
-  const { stats, engagements } = walkBars({
-    bars,
+  const { stats, engagements } = walkSeries({
+    series,
     requiredBars,
+    selectWindow: (endInclusive) =>
+      selectFilterWindow({
+        series,
+        filter: entry.filter,
+        endInclusive,
+        requiredBars,
+      }),
     predict: (window) => entry.filter.predict(candidate.config, window),
   });
 
@@ -263,23 +274,36 @@ export function isUsableTrainingCache({
 }
 
 /**
- * Pure walker. Iterates `bars` from index `requiredBars - 1` to
- * `bars.length - 2` (each step needs a "next bar" to score against),
- * runs `predict` on the trailing window (which ends at and includes
- * bar `i` — never bar `i + 1`), and records the outcome.
+ * Pure walker. Iterates the canonical Pyth timeline from index
+ * `requiredBars - 1` to `pyth.length - 2` (each step needs a "next
+ * bar" to score against), asks `selectWindow` for the trailing
+ * window in the filter's declared source, and runs `predict` on it.
+ *
+ * If `selectWindow` returns `null` (e.g. a Coinbase gap for a volume
+ * filter) the bar is skipped — same effect as the filter abstaining.
+ *
+ * Outcome labeling ALWAYS reads from `series.pyth[i + 1]`, regardless
+ * of the filter's input source. Pyth is the Polymarket-aligned
+ * outcome proxy; we judge every filter against the same outcome
+ * series so price-only and volume filters are directly comparable.
  *
  * Target bars whose close is inside the configured percent threshold
- * around open are treated as ambiguous and skipped. That keeps tiny
- * Pyth-only moves from becoming false precision in the training set.
+ * around open are treated as ambiguous and skipped.
  */
-function walkBars({
-  bars,
+function walkSeries({
+  series,
   requiredBars,
+  selectWindow,
   predict,
 }: {
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
   readonly requiredBars: number;
-  readonly predict: (window: readonly FilterBar[]) => "up" | "down" | null;
+  readonly selectWindow: (
+    endInclusive: number,
+  ) => readonly import("@alea/lib/filters/types").FilterBar[] | null;
+  readonly predict: (
+    window: readonly import("@alea/lib/filters/types").FilterBar[],
+  ) => "up" | "down" | null;
 }): {
   readonly stats: BacktestStats;
   readonly engagements: readonly BacktestEngagement[];
@@ -289,15 +313,19 @@ function walkBars({
   let nEngagementsDown = 0;
   let nWinsDown = 0;
   const engagements: BacktestEngagement[] = [];
+  const pyth = series.pyth;
   const start = Math.max(requiredBars - 1, 0);
-  const end = bars.length - 2; // need bar[i+1] for outcome
+  const end = pyth.length - 2; // need bar[i+1] for outcome
   for (let i = start; i <= end; i += 1) {
-    const window = bars.slice(i - requiredBars + 1, i + 1);
+    const window = selectWindow(i);
+    if (window === null) {
+      continue;
+    }
     const pred = predict(window);
     if (pred === null) {
       continue;
     }
-    const next = bars[i + 1]!;
+    const next = pyth[i + 1]!;
     const actual = resolveTrainingOutcomeDirection({
       open: next.open,
       close: next.close,
@@ -325,7 +353,7 @@ function walkBars({
   }
   return {
     stats: {
-      nBars: bars.length,
+      nBars: pyth.length,
       nEngagementsUp,
       nWinsUp,
       nEngagementsDown,

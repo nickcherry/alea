@@ -21,6 +21,7 @@ type Config = z.infer<typeof configSchema>;
 export const rsiMeanRev: Filter<Config> = {
   id: "rsi_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Classic two-sided RSI mean reversion. Engages UP when the latest RSI is at or below `oversold` (the indicator says 'price has fallen too far, expect a bounce'), DOWN when it's at or above `overbought` (the inverse), abstains when RSI sits in the neutral band between the two. RSI is computed with Wilder smoothing — the canonical formula TradingView and most charting tools use.",

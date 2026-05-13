@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const efficiencyRatioContinuation: Filter<Config> = {
   id: "efficiency_ratio_continuation",
   version: 1,
+  barSource: "pyth",
   family: "trend_quality",
   description:
     "Follows clean directional paths. If Kaufman's efficiency ratio is high and the net move over `length` bars clears `minNetMovePct`, predict continuation in that direction.",

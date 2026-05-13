@@ -18,6 +18,7 @@ import {
 } from "@alea/constants/tradeDecision";
 import { STAKE_USD } from "@alea/constants/trading";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
+import { loadAlignedBarSeries } from "@alea/lib/candles/loadAlignedBarSeries";
 import { evaluateCommittee } from "@alea/lib/committee/runCommittee";
 import {
   candidateRosterKey,
@@ -27,8 +28,8 @@ import {
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import { allCandidates } from "@alea/lib/filters/registry";
-import type { FilterBar } from "@alea/lib/filters/types";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
@@ -120,7 +121,7 @@ type MutableEquityPoint = {
 type LoadedBars = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -242,32 +243,14 @@ async function loadBacktestBars({
   for (const period of TRADE_DECISION_DEFAULT_PERIODS) {
     const warmupMs = TRADE_DECISION_HYDRATE_BARS * periodMs[period];
     for (const asset of assetValues) {
-      const rows = await db
-        .selectFrom("candles")
-        .select(["timestamp", "open", "high", "low", "close", "volume"])
-        .where("source", "=", "pyth")
-        .where("product", "=", "spot")
-        .where("asset", "=", asset)
-        .where("timeframe", "=", period)
-        .where("timestamp", ">=", new Date(BACKTEST_WINDOW_START_MS - warmupMs))
-        .where("timestamp", "<", new Date(windowEndExclusiveMs))
-        .orderBy("timestamp", "asc")
-        .execute();
-      loaded.push({
+      const series = await loadAlignedBarSeries({
+        db,
         asset,
-        period,
-        bars: rows.map((r) => ({
-          openTimeMs:
-            r.timestamp instanceof Date
-              ? r.timestamp.getTime()
-              : new Date(r.timestamp).getTime(),
-          open: r.open,
-          high: r.high,
-          low: r.low,
-          close: r.close,
-          volume: r.volume,
-        })),
+        timeframe: period,
+        windowStartMs: BACKTEST_WINDOW_START_MS - warmupMs,
+        windowEndExclusiveMs,
       });
+      loaded.push({ asset, period, series });
     }
   }
   return loaded;
@@ -326,8 +309,10 @@ function replaySeries({
   readonly acc: ReturnType<typeof createAccumulator>;
   readonly decisionRules: CommitteeDecisionRules;
 }): void {
-  for (let i = 0; i < series.bars.length - 1; i += 1) {
-    const target = series.bars[i + 1]!;
+  const pyth = series.series.pyth;
+  const coinbase = series.series.coinbase;
+  for (let i = 0; i < pyth.length - 1; i += 1) {
+    const target = pyth[i + 1]!;
     if (target.openTimeMs < BACKTEST_WINDOW_START_MS) {
       continue;
     }
@@ -343,11 +328,14 @@ function replaySeries({
     });
     increment(buckets, "decisionMoments");
 
-    const window = series.bars.slice(
-      Math.max(0, i - TRADE_DECISION_HYDRATE_BARS + 1),
-      i + 1,
-    );
-    const marketRegime = classifyMarketRegime({ bars: window });
+    const startIdx = Math.max(0, i - TRADE_DECISION_HYDRATE_BARS + 1);
+    const pythWindow = pyth.slice(startIdx, i + 1);
+    const coinbaseWindow = coinbase.slice(startIdx, i + 1);
+    const trailingSeries = {
+      pyth: pythWindow,
+      coinbase: coinbaseWindow,
+    };
+    const marketRegime = classifyMarketRegime({ bars: pythWindow });
     if (marketRegime === null) {
       increment(buckets, "noRegimeMoments");
       continue;
@@ -368,7 +356,7 @@ function replaySeries({
     }
 
     const { decision } = evaluateCommittee({
-      bars: window,
+      series: trailingSeries,
       candidates,
       decisionRules,
     });
