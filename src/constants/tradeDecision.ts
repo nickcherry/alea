@@ -48,6 +48,13 @@ export const TRADE_DECISION_LEAD_TIME_MS = 5 * 1000;
 export const TRADE_DECISION_HYDRATE_BARS = 150;
 
 /**
+ * Once startup hydration has populated the in-memory bar window, decision-time
+ * refreshes only need the recent tail plus any missed bars. Keeping this small
+ * reduces Pyth timeout risk in the T-5s decision path.
+ */
+export const TRADE_DECISION_REFRESH_LOOKBACK_BARS = 8;
+
+/**
  * Maximum tolerated age for the one-shot Pyth price used to synthesize
  * the active candle at decision time. Pyth publishes frequently; older
  * snapshots usually mean Hermes or our network path is stale enough to

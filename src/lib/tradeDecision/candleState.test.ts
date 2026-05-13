@@ -1,5 +1,6 @@
 import type { LatestPythPrice } from "@alea/lib/livePrices/pyth/fetchLatestPythPrices";
 import {
+  getRefreshFetchStartMs,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
   upsertFilterBars,
@@ -22,6 +23,34 @@ describe("upsertFilterBars", () => {
 });
 
 describe("refreshTradeDecisionCandleState", () => {
+  it("uses a small recent fetch window after startup hydration", () => {
+    const state = stateWithBars(
+      Array.from({ length: 20 }, (_, index) =>
+        bar(index * 300_000, 90 + index, 100 + index),
+      ),
+    );
+
+    expect(
+      getRefreshFetchStartMs({
+        state,
+        currentOpenTimeMs: 6_000_000,
+        limit: 20,
+      }),
+    ).toBe(3_600_000);
+  });
+
+  it("fetches from the last known bar when the in-memory state has a gap", () => {
+    const state = stateWithBars([bar(0, 90, 100), bar(1_200_000, 100, 101)]);
+
+    expect(
+      getRefreshFetchStartMs({
+        state,
+        currentOpenTimeMs: 6_000_000,
+        limit: 2,
+      }),
+    ).toBe(1_200_000);
+  });
+
   it("refreshes closed candles and synthesizes the active candle from the latest Pyth price", async () => {
     const state = stateWithBars([bar(0, 90, 100)]);
     const refreshed = await refreshTradeDecisionCandleState({

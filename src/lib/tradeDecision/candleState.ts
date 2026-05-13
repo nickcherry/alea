@@ -2,6 +2,7 @@ import {
   TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_MAX_PRICE_AGE_MS,
+  TRADE_DECISION_REFRESH_LOOKBACK_BARS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { fetchPythCandles } from "@alea/lib/candles/sources/pyth/fetchPythCandles";
@@ -104,10 +105,11 @@ export async function refreshTradeDecisionCandleState({
   readonly fetchLatestPrices?: FetchLatestPrices;
 }): Promise<TradeDecisionCandleRefresh> {
   const currentOpenTimeMs = Math.floor(nowMs / state.periodMs) * state.periodMs;
-  const fetchStartMs = Math.max(
-    0,
-    currentOpenTimeMs - state.periodMs * (limit + 2),
-  );
+  const fetchStartMs = getRefreshFetchStartMs({
+    state,
+    currentOpenTimeMs,
+    limit,
+  });
   const candles = await fetchCandles({
     asset: state.asset,
     timeframe: state.period,
@@ -170,6 +172,31 @@ export async function refreshTradeDecisionCandleState({
     barsForDecision:
       syntheticBar === null ? null : [...state.bars, syntheticBar],
   };
+}
+
+export function getRefreshFetchStartMs({
+  state,
+  currentOpenTimeMs,
+  limit,
+}: {
+  readonly state: TradeDecisionCandleState;
+  readonly currentOpenTimeMs: number;
+  readonly limit: number;
+}): number {
+  const fullHydrationStartMs =
+    currentOpenTimeMs - state.periodMs * (limit + 2);
+  if (state.bars.length < limit) {
+    return Math.max(0, fullHydrationStartMs);
+  }
+
+  const latestKnownOpenTimeMs = state.bars.at(-1)?.openTimeMs ?? null;
+  const recentStartMs =
+    currentOpenTimeMs -
+    state.periodMs * TRADE_DECISION_REFRESH_LOOKBACK_BARS;
+  if (latestKnownOpenTimeMs === null) {
+    return Math.max(0, fullHydrationStartMs);
+  }
+  return Math.max(0, Math.min(latestKnownOpenTimeMs, recentStartMs));
 }
 
 export function upsertFilterBars({
