@@ -123,7 +123,7 @@ describe("resolveDryRunOrderPlacement", () => {
     });
   });
 
-  it("places a 50c order when the predicted-side ask has not arrived yet", () => {
+  it("places one tick below 50c when the predicted-side ask has not arrived yet", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.49, ask: 0.5 });
 
@@ -137,13 +137,13 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toEqual({
       status: "placed",
       observedPrice: 0.505,
-      limitPrice: 0.5,
+      limitPrice: 0.49,
       confidence: 0.53,
       fillPrice: null,
     });
   });
 
-  it("places at 50c when no book quote has arrived at all", () => {
+  it("places one tick below 50c when no book quote has arrived at all", () => {
     expect(
       resolveDryRunOrderPlacement({
         prediction: "u",
@@ -154,7 +154,7 @@ describe("resolveDryRunOrderPlacement", () => {
     ).toEqual({
       status: "placed",
       observedPrice: 0.5,
-      limitPrice: 0.5,
+      limitPrice: 0.49,
       confidence: 0.53,
       fillPrice: null,
     });

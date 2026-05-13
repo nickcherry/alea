@@ -2,11 +2,11 @@
  * Dry-run execution simulation knobs. These are deliberately separate
  * from the shared trade-decision constants: dry/live must agree on
  * when a signal is actionable, while dry-run has extra assumptions
- * about the pretend order we would have sent after the market opened.
+ * about the pretend order we would send after the committee decision.
  */
 
-/** Delay after the target Polymarket window opens before simulating order placement. */
-export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 100;
+/** Delay after the committee decision before simulating order placement. */
+export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0;
 
 /** Maximum distance from 50c, in cents, where the simulated order is allowed. */
 export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
@@ -14,20 +14,21 @@ export const DRY_RUN_ORDER_PRICE_WINDOW_CENTS = 3;
 /**
  * Limit price policy for simulated maker orders. The dry-run buys the
  * predicted-side token one tick below the predicted-side best ask. If no
- * predicted-side ask has arrived, it falls back to a 50c maker bid.
+ * predicted-side ask has arrived, it falls back to one tick below 50c.
  */
 export const DRY_RUN_ORDER_LIMIT_PRICE_POLICY =
-  "buy_predicted_side_one_tick_below_best_ask_or_50c_if_missing" as const;
+  "buy_predicted_side_one_tick_below_best_ask_or_one_tick_below_50c_if_missing" as const;
 
-/** Fallback limit price when no predicted-side ask has arrived yet. */
-export const DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE = 0.5;
+/** Reference price for no-quote fallback maker orders. */
+export const DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE = 0.5;
 
 /** Fallback tick size when discovery/WS metadata has not supplied one yet. */
 export const DRY_RUN_ORDER_DEFAULT_TICK_SIZE = 0.01;
 
 /**
  * Dry-run uses the latest known book/BBO quote instead of expiring quotes by age.
- * Missing placement quotes fall back to `DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE`.
+ * Missing placement quotes fall back one tick below
+ * `DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE`.
  */
 export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = Number.MAX_SAFE_INTEGER;
 

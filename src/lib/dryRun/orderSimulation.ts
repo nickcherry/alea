@@ -1,7 +1,7 @@
 import {
   DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
   DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
-  DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE,
+  DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE,
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW,
   type DryRunOrderStatus,
@@ -18,6 +18,7 @@ import {
   type MarketDataTokenRoute,
   type MarketPriceState,
   observedPredictedSidePrice,
+  predictedSideOneTickBelowReferencePrice,
   resolveMakerLimitBuyPlacement,
   roundPrice,
 } from "@alea/lib/trading/marketPriceState";
@@ -165,14 +166,22 @@ function resolveNoQuotePlacement({
   readonly nowMs: number;
   readonly confidence: number | null;
 }): DryRunOrderPlacementResolution {
-  const limitPrice = DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE;
+  const limitPrice = predictedSideOneTickBelowReferencePrice({
+    prediction,
+    state,
+    referencePrice: DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE,
+    defaultTickSize: DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
+  });
+  if (limitPrice === null) {
+    return { status: "skipped_no_price" };
+  }
   const observedPrice =
     observedPredictedSidePrice({
       prediction,
       state,
       nowMs,
       maxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
-    }) ?? limitPrice;
+    }) ?? DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE;
   if (confidence === null || confidence < limitPrice) {
     return {
       status: "skipped_confidence",
@@ -373,7 +382,7 @@ export function createDryRunOrderSimulator({
       period,
       prediction,
       targetTsMs,
-      orderAtMs: targetTsMs + DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
+      orderAtMs: Date.now() + DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
       expiresAtMs: targetTsMs + stepMs,
       confidence,
       marketKey: null,
@@ -393,43 +402,55 @@ export function createDryRunOrderSimulator({
       .execute();
 
     if (attachCachedMarket({ order })) {
+      if (Date.now() >= order.orderAtMs) {
+        await placeOrder({ order });
+      }
       return;
     }
 
     const key = marketKey({ asset, period, targetTsMs });
-    void marketDiscovery
-      .getOrDiscover({
+    try {
+      const market = await marketDiscovery.getOrDiscover({
         asset,
         timeframe: period,
         windowStartTsMs: targetTsMs,
-      })
-      .then((market) => {
-        if (
-          stopped ||
-          market === null ||
-          terminalOrderStatuses.has(order.status)
-        ) {
-          return;
-        }
-        order.marketKey = key;
-        ensureSession({ market, key }).orderIds.add(decisionId);
-      })
-      .catch(() => {
-        if (
-          stopped ||
-          Date.now() < order.orderAtMs ||
-          terminalOrderStatuses.has(order.status)
-        ) {
-          return;
-        }
-        void markTerminal({
-          order,
-          status: "skipped_no_market",
-          observedPrice: null,
-          limitPrice: null,
-          fillPrice: null,
-        });
       });
+      if (stopped || terminalOrderStatuses.has(order.status)) {
+        return;
+      }
+      if (market === null) {
+        if (Date.now() >= order.orderAtMs) {
+          await markTerminal({
+            order,
+            status: "skipped_no_market",
+            observedPrice: null,
+            limitPrice: null,
+            fillPrice: null,
+          });
+        }
+        return;
+      }
+      order.marketKey = key;
+      ensureSession({ market, key }).orderIds.add(decisionId);
+      if (Date.now() >= order.orderAtMs) {
+        await placeOrder({ order });
+      }
+    } catch {
+      if (
+        stopped ||
+        Date.now() < order.orderAtMs ||
+        terminalOrderStatuses.has(order.status)
+      ) {
+        return;
+      }
+      await markTerminal({
+        order,
+        status: "skipped_no_market",
+        observedPrice: null,
+        limitPrice: null,
+        fillPrice: null,
+      });
+    }
   };
 
   const tick = async ({ nowMs }: { readonly nowMs: number }): Promise<void> => {

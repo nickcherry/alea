@@ -6,7 +6,7 @@ Coinbase spot candles in memory, refreshes them just before each
 market boundary, synthesizes the active Pyth candle from the latest
 Pyth price, asks the committee to predict the next bar, and persists
 every decision to `dry_run_decisions`. No real orders are placed. The
-loop also simulates whether a configured post-open Polymarket order
+loop also simulates whether a configured pre-open Polymarket order
 would have been eligible, placed, filled, or left unfilled.
 
 Run it:
@@ -39,7 +39,7 @@ For each configured period, defaulting to `5m,15m`, and each of the
    classifier's 100-bar window and the deepest filter's
    `requiredBars`, so the first decision always has enough history
    when the source has coverage.
-2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 5s` before each
+2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 30s` before each
    configured period boundary, fetch recent Pyth and Coinbase spot
    candles for that asset/period and upsert them into separate
    in-memory buffers by candle open time. Pyth refresh failures skip
@@ -52,17 +52,17 @@ For each configured period, defaulting to `5m,15m`, and each of the
    classifier on Pyth bars. Look up the committee roster for that
    period and regime. Apply the shared trade decision policy. If
    non-abstain, persist the decision; otherwise skip.
-4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0.1s`
-   after the target Polymarket market opens, read the live UP/DOWN
-   book/BBO market data for the predicted side. The runner
-   pre-discovers current and next markets before entry so the market
-   subscription is already available when the simulated placement time
-   arrives. If the observed predicted-side price is within the
+4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0s`
+   after the committee decision, read the live UP/DOWN book/BBO
+   market data for the predicted side. The runner pre-discovers
+   current and next markets before entry so the market subscription is
+   already available when the simulated placement time arrives. If the
+   observed predicted-side price is within the
    configured 50c window, and the average
    selected asset/regime win rate of the effective winning voters is at
    least the simulated limit price, place a pretend limit buy by
-   bidding one tick below the predicted-side best ask, or at 50c if no
-   predicted-side ask has arrived yet. The runner then watches the
+   bidding one tick below the predicted-side best ask, or one tick
+   below 50c if no predicted-side ask has arrived yet. The runner then watches the
    latest known predicted-side ask until the target market closes.
    If the simulated limit never becomes executable, the row is marked
    `unfilled`.
@@ -107,10 +107,10 @@ book state, not committee candle construction.
 
 ## Committee evaluation
 
-At T-5s of each boundary, for each asset:
+At T-30s of each boundary, for each asset:
 
 1. Classify the regime from the bar window (real history + the
-   in-flight bar with Pyth's t-5s price as the synthetic close).
+   in-flight bar with Pyth's t-30s price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
 3. Look up the roster bucket for `(asset, regime, period)` in
@@ -133,14 +133,14 @@ At T-5s of each boundary, for each asset:
 Dry-run order configuration lives in
 [`src/constants/dryRun.ts`](../src/constants/dryRun.ts).
 
-| Constant                             |   Default | Meaning                                                           |
-| ------------------------------------ | --------: | ----------------------------------------------------------------- |
-| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`   |     100ms | Wait after the target market opens before simulating entry        |
-| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`   |        3c | Only consider predicted-side prices within `50c ± window`         |
-| `DRY_RUN_ORDER_DEFAULT_TICK_SIZE`    |        1c | Fallback tick when market metadata has not supplied one yet       |
-| `DRY_RUN_ORDER_NO_QUOTE_LIMIT_PRICE` |       50c | Limit price when no predicted-side ask has arrived yet            |
-| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`     | unbounded | Use latest known quote; missing placement quotes fall back to 50c |
-| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`   |   30000ms | How early to pre-discover current and next Polymarket markets     |
+| Constant                                 |   Default | Meaning                                                                       |
+| ---------------------------------------- | --------: | ----------------------------------------------------------------------------- |
+| `DRY_RUN_ORDER_PLACEMENT_DELAY_MS`       |       0ms | Wait after the committee decision before simulating entry                     |
+| `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`       |        3c | Only consider predicted-side prices within `50c ± window`                     |
+| `DRY_RUN_ORDER_DEFAULT_TICK_SIZE`        |        1c | Fallback tick when market metadata has not supplied one yet                   |
+| `DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE` |   50c ref | Reference price used to bid one tick lower when no ask has arrived            |
+| `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`         | unbounded | Use latest known quote; missing placement quotes fall back one tick below 50c |
+| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`       |   30000ms | How early to pre-discover current and next Polymarket markets                 |
 
 The order price uses the predicted outcome token: UP decisions look
 at the UP token, DOWN decisions look at the DOWN token. For a DOWN
@@ -196,7 +196,7 @@ and the `market_regime` column added by
 | `decided_at_ms`         | Wall-clock when the prediction was made                              |
 | `asset`, `period`       | Self-explanatory                                                     |
 | `prediction`            | `'u'` or `'d'`                                                       |
-| `synth_open`            | Pyth price snapshotted at T-5s — used as the bar's synthetic open    |
+| `synth_open`            | Pyth price snapshotted at T-30s — used as the bar's synthetic open   |
 | `regime_votes`          | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
 | `actual_close`          | Filled in once the target bar settles                                |
 | `won`                   | 0/1, null until scored                                               |
@@ -278,7 +278,7 @@ loader + renderer.
   shared hydrate/refresh/synthesize candle state for dry-run and live
   trade decisions.
 - [`src/lib/dryRun/orderSimulation.ts`](../src/lib/dryRun/orderSimulation.ts) —
-  post-open dry-run order placement + fill simulation.
+  pre-open dry-run order placement + fill simulation.
 - [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts) —
   shared current/next-window market discovery cache.
 - [`src/lib/livePrices/pyth/fetchLatestPythPrices.ts`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts) —

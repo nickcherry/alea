@@ -39,7 +39,7 @@ export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
  * How long before the target candle opens the loop snapshots the
  * live price and makes its decision.
  */
-export const TRADE_DECISION_LEAD_TIME_MS = 5 * 1000;
+export const TRADE_DECISION_LEAD_TIME_MS = 30 * 1000;
 
 /**
  * Closed bars hydrated at startup. This must cover the regime
@@ -50,7 +50,7 @@ export const TRADE_DECISION_HYDRATE_BARS = 150;
 /**
  * Once startup hydration has populated the in-memory bar window, decision-time
  * refreshes only need the recent tail plus any missed bars. Keeping this small
- * reduces Pyth timeout risk in the T-5s decision path.
+ * reduces Pyth timeout risk in the decision path.
  */
 export const TRADE_DECISION_REFRESH_LOOKBACK_BARS = 8;
 

@@ -105,6 +105,7 @@ export function resolveMakerLimitBuyPlacement({
   priceWindow,
   maxQuoteAgeMs,
   defaultTickSize,
+  fallbackLimitPrice = null,
 }: {
   readonly prediction: "u" | "d";
   readonly state: MarketPriceState;
@@ -113,14 +114,16 @@ export function resolveMakerLimitBuyPlacement({
   readonly priceWindow: number;
   readonly maxQuoteAgeMs: number;
   readonly defaultTickSize: number;
+  readonly fallbackLimitPrice?: number | null;
 }): MakerLimitBuyPlacement {
-  const limitPrice = predictedSideAggressiveMakerBuyPrice({
-    prediction,
-    state,
-    nowMs,
-    maxQuoteAgeMs,
-    defaultTickSize,
-  });
+  const limitPrice =
+    predictedSideAggressiveMakerBuyPrice({
+      prediction,
+      state,
+      nowMs,
+      maxQuoteAgeMs,
+      defaultTickSize,
+    }) ?? normalizeFallbackLimitPrice({ fallbackLimitPrice });
   if (limitPrice === null) {
     return { status: "no_price" };
   }
@@ -213,6 +216,32 @@ export function resolveTickSize({
   return isValidTickSize(tickSize) ? tickSize : defaultTickSize;
 }
 
+export function predictedSideOneTickBelowReferencePrice({
+  prediction,
+  state,
+  referencePrice,
+  defaultTickSize,
+}: {
+  readonly prediction: "u" | "d";
+  readonly state: MarketPriceState;
+  readonly referencePrice: number;
+  readonly defaultTickSize: number;
+}): number | null {
+  if (!isValidTokenPrice(referencePrice)) {
+    return null;
+  }
+  const target = prediction === "u" ? state.up : state.down;
+  const tickSize = resolveTickSize({
+    tickSize: target.tickSize,
+    defaultTickSize,
+  });
+  const limitPrice = roundDownToTick(referencePrice - tickSize, tickSize);
+  if (limitPrice < tickSize || limitPrice > 1 - tickSize) {
+    return null;
+  }
+  return limitPrice;
+}
+
 export function isFreshPrice({
   atMs,
   nowMs,
@@ -290,11 +319,23 @@ function normalizePrice(value: number | null): number | null {
   return isValidTokenPrice(value) ? value : null;
 }
 
+function normalizeFallbackLimitPrice({
+  fallbackLimitPrice,
+}: {
+  readonly fallbackLimitPrice: number | null;
+}): number | null {
+  return isValidTokenPrice(fallbackLimitPrice) &&
+    fallbackLimitPrice > 0 &&
+    fallbackLimitPrice < 1
+    ? roundPrice(fallbackLimitPrice)
+    : null;
+}
+
 function isValidTickSize(value: number | null): value is number {
   return value !== null && Number.isFinite(value) && value > 0 && value < 1;
 }
 
-function roundDownToTick(value: number, tickSize: number): number {
+export function roundDownToTick(value: number, tickSize: number): number {
   const ticks = Math.floor((value + Number.EPSILON) / tickSize);
   return roundPrice(ticks * tickSize);
 }

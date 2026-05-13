@@ -133,7 +133,7 @@ export function renderDryRunHtml({
                 {
                   label: "Placement Delay",
                   value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
-                  tip: "Wait after the target market opens before placing the simulated order.",
+                  tip: "Wait after the committee decision before placing the simulated order.",
                 },
                 {
                   label: "Limit Price",

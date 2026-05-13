@@ -1,6 +1,15 @@
-import { buildLiveMakerLimitBuyOrder } from "@alea/lib/trading/liveOrderExecution";
-import type { TradableMarket } from "@alea/lib/trading/vendor/types";
-import { Side } from "@polymarket/clob-client-v2";
+import {
+  buildLiveMakerLimitBuyOrder,
+  createLiveOrderExecutor,
+} from "@alea/lib/trading/liveOrderExecution";
+import type { PolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
+import type {
+  MarketDataEvent,
+  MarketDataStreamCallbacks,
+  MarketDataStreamHandle,
+  TradableMarket,
+} from "@alea/lib/trading/vendor/types";
+import { type ClobClient, OrderType, Side } from "@polymarket/clob-client-v2";
 import { describe, expect, it } from "bun:test";
 
 describe("buildLiveMakerLimitBuyOrder", () => {
@@ -39,6 +48,82 @@ describe("buildLiveMakerLimitBuyOrder", () => {
   });
 });
 
+describe("createLiveOrderExecutor", () => {
+  it("starts placement immediately after a pre-open decision with one tick below 50c when no quote is available", async () => {
+    const calls: PostedOrder[] = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [{ success: true, orderID: "order-1" }],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+      }),
+      log: () => {},
+      now: () => 1_795_000,
+      sleep: async () => {},
+      streamMarketData: fakeStreamMarketData(),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: 0.6,
+    });
+
+    await waitFor(() => calls.length === 1);
+    expect(calls[0]?.userOrder.price).toBe(0.49);
+    expect(calls[0]?.orderType).toBe(OrderType.GTD);
+    expect(calls[0]?.postOnly).toBe(true);
+  });
+
+  it("ratchets a post-only cross rejection down one tick and resubmits", async () => {
+    const calls: PostedOrder[] = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [
+          {
+            success: false,
+            error: "invalid post-only order: order crosses book",
+            status: 400,
+          },
+          { success: true, orderID: "order-2" },
+        ],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+      }),
+      log: () => {},
+      now: () => 1_795_000,
+      sleep: async () => {},
+      streamMarketData: fakeStreamMarketData([
+        {
+          kind: "best-bid-ask",
+          vendorRef: "COND",
+          outcomeRef: "UP",
+          bestBid: 0.5,
+          bestAsk: 0.51,
+          atMs: 1_795_000,
+        },
+      ]),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: 0.6,
+    });
+
+    await waitFor(() => calls.length === 2);
+    expect(calls.map((call) => call.userOrder.price)).toEqual([0.5, 0.49]);
+  });
+});
+
 function market({
   tickSize,
   negRisk,
@@ -54,4 +139,65 @@ function market({
     tickSize,
     negRisk,
   };
+}
+
+type CreateAndPostOrderArgs = Parameters<ClobClient["createAndPostOrder"]>;
+
+type PostedOrder = {
+  readonly userOrder: CreateAndPostOrderArgs[0];
+  readonly orderType: CreateAndPostOrderArgs[2];
+  readonly postOnly: CreateAndPostOrderArgs[3];
+};
+
+function fakeClient({
+  calls,
+  responses,
+}: {
+  readonly calls: PostedOrder[];
+  readonly responses: unknown[];
+}): ClobClient {
+  let responseIndex = 0;
+  return {
+    createAndPostOrder: async (...args: CreateAndPostOrderArgs) => {
+      const [userOrder, _options, orderType, postOnly] = args;
+      calls.push({ userOrder, orderType, postOnly });
+      return responses[responseIndex++] ?? { success: true };
+    },
+  } as unknown as ClobClient;
+}
+
+function fakeMarketDiscovery({
+  market: discoveredMarket,
+}: {
+  readonly market: TradableMarket;
+}): PolymarketMarketDiscoveryCache {
+  return {
+    warm: () => {},
+    get: () => discoveredMarket,
+    getOrDiscover: async () => discoveredMarket,
+  };
+}
+
+function fakeStreamMarketData(events: readonly MarketDataEvent[] = []): (
+  input: {
+    readonly markets: readonly TradableMarket[];
+  } & MarketDataStreamCallbacks,
+) => MarketDataStreamHandle {
+  return ({ onEvent, onConnect }) => {
+    onConnect?.();
+    for (const event of events) {
+      onEvent(event);
+    }
+    return { stop: async () => {} };
+  };
+}
+
+async function waitFor(predicate: () => boolean): Promise<void> {
+  for (let i = 0; i < 50; i += 1) {
+    if (predicate()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  throw new Error("condition was not met");
 }

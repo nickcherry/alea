@@ -36,20 +36,26 @@ For each asset/period:
    parallel in-memory buffers. Pyth is the canonical timeline;
    Coinbase supplies volume for filters that declare
    `barSource: "coinbase"`.
-2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 60s` before the
+2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 5m` before the
    next market opens, it resolves the next Polymarket slug and
-   subscribes to both UP and DOWN token books.
-3. At `T-5s`, it refreshes recent Pyth and Coinbase spot candles,
-   fetches the latest Pyth price, synthesizes the active Pyth candle,
-   aligns Coinbase bars to the Pyth timestamps, and asks the
-   committee for a decision. Coinbase failures are soft; Pyth failures
-   or stale latest Pyth prices skip the decision.
-4. If the decision is actionable, the order is scheduled for the
-   exact market-open timestamp. There is no artificial live-trading
-   delay; the dry-run `100ms` delay exists only to simulate expected
-   live latency.
-5. At market open, the runner uses the freshest book state and tries
-   to submit immediately.
+   subscribes to both UP and DOWN token books. Polymarket currently
+   exposes these books much earlier, but 5 minutes keeps the hot path
+   settled without carrying a day of subscriptions.
+3. At `T-30s`, it refreshes recent Pyth and Coinbase spot candles for
+   every due asset/period concurrently, fetches the latest Pyth price,
+   synthesizes the active Pyth candle, aligns Coinbase bars to the
+   Pyth timestamps, and asks the committee for a decision. Coinbase
+   failures are soft; Pyth failures or stale latest Pyth prices skip
+   the decision.
+4. If the decision is actionable, live placement starts immediately.
+   Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
+   `15m` crypto up/down markets were already `active`, `accepting`,
+   and serving books before their window opened. The live path treats
+   that as permission to rest the maker order before the candle starts.
+5. If Polymarket rejects the order as too early / not ready, returns
+   `404`/`425`/`429`/`5xx`, or the request fails transiently, the
+   runner retries aggressively through the target boundary and for
+   `LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS = 2500ms` after open.
 
 ## Order Policy
 
@@ -58,6 +64,7 @@ Live trading only places predicted-side maker buys:
 - UP decision: buy the UP token.
 - DOWN decision: buy the DOWN token.
 - Limit price: one tick below the predicted-side best ask.
+- No predicted-side ask yet: one tick below 50c.
 - Order type: `GTD` post-only.
 - Expiration: target market close.
 - Notional: `STAKE_USD`.
@@ -67,10 +74,16 @@ Live trading only places predicted-side maker buys:
   least the limit price.
 
 If placement is rejected or the book moves, the runner recomputes from
-the latest book and retries up to
-`LIVE_TRADING_MAX_ORDER_ATTEMPTS = 10`, as long as the recomputed
-order remains inside the price band and passes the confidence gate.
-There is no retry after price-band or confidence failure.
+the latest known book and retries up to
+`LIVE_TRADING_MAX_ORDER_ATTEMPTS = 800`, as long as the recomputed
+order remains inside the price band and passes the confidence gate. A
+post-only cross rejection ratchets the next attempt down by one tick
+even if no fresher WebSocket quote has arrived. There is no retry after
+price-band or confidence failure.
+
+The live path is still intentionally maker-only. Switching to FAK/FOK
+or non-post-only taker entry would raise fill probability, but it is a
+different EV and fee decision than the current near-50c maker strategy.
 
 ## Persistence
 
@@ -85,6 +98,6 @@ local DB is used for candle history and committee selection only.
 - [`src/lib/trading/runLiveTrading.ts`](../src/lib/trading/runLiveTrading.ts) —
   live scheduler and shared committee decision path.
 - [`src/lib/trading/liveOrderExecution.ts`](../src/lib/trading/liveOrderExecution.ts) —
-  market pre-subscription, post-open order retries, and order posting.
+  market pre-subscription, pre-open order posting, and retry handling.
 - [`src/lib/trading/marketPriceState.ts`](../src/lib/trading/marketPriceState.ts) —
   shared Polymarket book/BBO state and maker-pricing logic.

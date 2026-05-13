@@ -3,7 +3,7 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * Adds dry-run execution simulation columns. `won` remains the signal
- * correctness field; these columns describe whether the post-open
+ * correctness field; these columns describe whether the live-like
  * pretend order was eligible, placed, filled, or left unfilled.
  */
 export async function up(db: Kysely<Database>): Promise<void> {

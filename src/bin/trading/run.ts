@@ -17,7 +17,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live committee trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, makes committee decisions at T-5s, and places real post-only maker GTD orders immediately at market open. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, makes committee decisions at T-30s, and starts real post-only maker GTD order placement immediately after each actionable pre-open decision. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
   options: [
     defineValueOption({
       key: "periods",

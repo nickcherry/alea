@@ -75,12 +75,30 @@ The canonical URL set lives in
   `market_resolved` is the official-first settlement event for paths that need
   venue resolution. REST resolution remains the fallback if the websocket event
   is missed.
-- Current live order placement is maker-only. At market open, the runner signs
-  and posts `createAndPostOrder(..., OrderType.GTD, postOnly=true)`: a
-  predicted-side BUY one tick below the best ask, expiring at that market's
-  close. It retries quickly up to 10 times after rejection or stale/missing
-  book state, but only while the recomputed price remains inside the configured
-  50c band and passes the confidence gate.
+- Current live order placement is maker-only. On 2026-05-13, public probes of
+  current/next BTC crypto windows found Gamma returning future `5m` and `15m`
+  events with `active=true`, `accepting=true`, token IDs, and CLOB books out to
+  roughly 23h48m ahead; the next aligned windows after that had no event. A
+  live canary posted a post-only BTC `5m` BUY at 1c about 6m52s before the
+  target window opened, received `success=true` / `status=live`, then canceled
+  cleanly with zero open orders left. Live trading therefore signs and posts
+  `createAndPostOrder(..., OrderType.GTD, postOnly=true)` immediately after the
+  `T-30s` committee decision instead of waiting for the boundary. It buys the
+  predicted-side token one tick below the best ask, or one tick below 50c if no
+  predicted-side ask has arrived, expiring at that market's close.
+- Pre-market books are not empty placeholders. In the same 2026-05-13 snapshot,
+  far-ahead markets clustered near 50c with 1c-4c spreads; within the last
+  couple minutes before open, mids had already moved with the underlying, e.g.
+  next-window `5m` UP mids across BTC/ETH/SOL/XRP/DOGE ranged roughly
+  50.5c-55.5c and next-window `15m` ranged roughly 50.0c-56.5c, with DOGE 15m
+  especially wide.
+- If Polymarket starts rejecting pre-open orders, the relevant order errors are
+  retryable rather than fatal: market-not-ready, `404`/`not found`, `425` too
+  early, `429`, `5xx`, and transient network failures. A post-only cross
+  rejection is also retryable, but the next attempt is capped one tick below the
+  rejected limit so the bot can recover without waiting for a fresh WebSocket
+  book frame. Balance/allowance, auth/signature, banned/closed-only, malformed
+  payload, tick-size, and minimum-size errors are terminal operator problems.
 - Live trading does not consume the user WebSocket for fill tracking. Once the
   CLOB confirms order creation, Polymarket remains the source of truth for open
   orders, fills, positions, and PnL.

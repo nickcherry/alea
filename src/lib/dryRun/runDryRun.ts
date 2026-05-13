@@ -95,7 +95,7 @@ export type DryRunLogEvent =
  *      candle from the latest one-shot Pyth price.
  *   3. Run the committee against that refreshed/synthetic bar set and
  *      persist the decision if it's not an abstain.
- *   4. For non-abstain decisions, simulate the configured post-open
+ *   4. For non-abstain decisions, simulate the configured pre-open
  *      Polymarket order and track whether it fills before expiry.
  *
  * The dry-run loop is single-threaded by design — all state lives

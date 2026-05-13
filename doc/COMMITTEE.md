@@ -114,7 +114,7 @@ roster (`(asset, regime, period) → selected candidate keys + stats`). See
 At each configured period boundary the loop:
 
 1. Builds the synthetic bar window (real history + the in-flight
-   bar with Pyth's t-5s price as the synthetic close).
+   bar with Pyth's t-30s price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
 3. Looks up the roster bucket for `(asset, marketRegime, period)`.
@@ -143,7 +143,7 @@ Critical decision settings live in
 | ---------------------------------- | ---------: | ----------------------------------------------------------------------------------- |
 | `TRADE_DECISION_DEFAULT_PERIODS`   |  `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
 | `TRADE_DECISION_SUPPORTED_PERIODS` |  `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
-| `TRADE_DECISION_LEAD_TIME_MS`      |     `5000` | Snapshot/live decision lead before target candle open                               |
+| `TRADE_DECISION_LEAD_TIME_MS`      |    `30000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
 | `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `2` | Minimum non-abstain votes after filter collapse                                     |
@@ -184,7 +184,7 @@ modes is what happens with an actionable decision:
 
 - Dry-run today: persist to `dry_run_decisions`, no real order placed.
 - Dry-run execution simulation: the same persisted decision plus a
-  pretend post-open Polymarket order whose fill status is tracked.
+  pretend pre-open Polymarket order whose fill status is tracked.
 - Live: the same decision path plus real post-only maker order
   placement through `trading:run`. The committee path is unchanged.
   Live trading does not persist local trade/fill rows after order

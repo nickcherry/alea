@@ -147,6 +147,7 @@ export async function runLiveTrading({
           discoveryLeadMs: LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
         });
         let nextFireTime = now + 1000;
+        const dueDecisions: Promise<void>[] = [];
         for (const period of selectedPeriods) {
           const periodMs = resolutionTimeframeStepMs({ timeframe: period });
           const nextBoundary = Math.ceil(now / periodMs) * periodMs;
@@ -159,28 +160,21 @@ export async function runLiveTrading({
             if (state.lastPredictedBoundary >= nextBoundary) {
               continue;
             }
-            const refreshed = await refreshStateForDecision({
-              state,
-              now,
-              fetchCandles,
-              log,
-            });
-            if (refreshed === null) {
-              continue;
-            }
-            state.lastPredictedBoundary = nextBoundary;
-            await makeLiveDecision({
-              state,
-              targetTsMs: nextBoundary,
-              series: refreshed.seriesForDecision,
-              synthBar: refreshed.syntheticBar,
-              roster,
-              candidatesByKey,
-              orderExecutor,
-              log,
-            });
+            dueDecisions.push(
+              processDueLiveDecision({
+                state,
+                now,
+                fetchCandles,
+                targetTsMs: nextBoundary,
+                roster,
+                candidatesByKey,
+                orderExecutor,
+                log,
+              }),
+            );
           }
         }
+        await Promise.all(dueDecisions);
         const sleepMs = Math.max(100, Math.min(nextFireTime - now + 1, 1000));
         await new Promise((resolve) => setTimeout(resolve, sleepMs));
       } catch (e) {
@@ -197,6 +191,54 @@ export async function runLiveTrading({
       await orderExecutor.stop();
     },
   };
+}
+
+async function processDueLiveDecision({
+  state,
+  now,
+  fetchCandles,
+  targetTsMs,
+  roster,
+  candidatesByKey,
+  orderExecutor,
+  log,
+}: {
+  readonly state: TradeDecisionCandleState;
+  readonly now: number;
+  readonly fetchCandles: FetchCandles;
+  readonly targetTsMs: number;
+  readonly roster: CommitteeRoster;
+  readonly candidatesByKey: ReadonlyMap<string, Candidate>;
+  readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
+  readonly log: (event: LiveTradingLogEvent) => void;
+}): Promise<void> {
+  try {
+    const refreshed = await refreshStateForDecision({
+      state,
+      now,
+      fetchCandles,
+      log,
+    });
+    if (refreshed === null) {
+      return;
+    }
+    state.lastPredictedBoundary = targetTsMs;
+    await makeLiveDecision({
+      state,
+      targetTsMs,
+      series: refreshed.seriesForDecision,
+      synthBar: refreshed.syntheticBar,
+      roster,
+      candidatesByKey,
+      orderExecutor,
+      log,
+    });
+  } catch (e) {
+    log({
+      kind: "error",
+      message: `decision failed ${state.period}/${state.asset}: ${String(e)}`,
+    });
+  }
 }
 
 async function refreshStateForDecision({
