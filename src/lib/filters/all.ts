@@ -20,6 +20,8 @@
  * consistently sub-50 continuation/trend families were retired from
  * default training runs. Later round-2 research reactivated selected
  * OHLC-only continuation/failure/trend families with revised configs.
+ * Later still, a third pass trimmed any filter whose default configs
+ * produced no committee seat under the active selection profile.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -29,7 +31,6 @@
  * filter registry, is responsible for assembling confluence across
  * independent signals.
  */
-import "@alea/lib/filters/adxDiExhaustionFade";
 import "@alea/lib/filters/aroonReversion";
 import "@alea/lib/filters/atrBurstFade";
 import "@alea/lib/filters/balanceOfPowerMeanrev";
@@ -37,42 +38,32 @@ import "@alea/lib/filters/bodyClimaxFade";
 import "@alea/lib/filters/bollingerPercentB";
 import "@alea/lib/filters/bollingerRecovery";
 import "@alea/lib/filters/bollingerReversion";
-import "@alea/lib/filters/candleDirectionImbalanceFade";
 import "@alea/lib/filters/cciMeanRev";
 import "@alea/lib/filters/cmoMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
 import "@alea/lib/filters/disparityIndexReversion";
 import "@alea/lib/filters/donchianReversion";
 import "@alea/lib/filters/emaPosition";
-import "@alea/lib/filters/engulfingReversal";
 import "@alea/lib/filters/failedCloseBreakoutFade";
-import "@alea/lib/filters/fisherTransformReversal";
-import "@alea/lib/filters/fractalRejectionFade";
 import "@alea/lib/filters/heikinAshiReversion";
 import "@alea/lib/filters/hullMaPosition";
 import "@alea/lib/filters/insideBarFakeoutFade";
+import "@alea/lib/filters/internalBarStrengthMeanrev";
 import "@alea/lib/filters/keltnerReversion";
-import "@alea/lib/filters/linearRegressionSlopeFade";
-import "@alea/lib/filters/liquiditySweepReversal";
-import "@alea/lib/filters/localBodyAutocorrDirection";
 import "@alea/lib/filters/macdHistogramTurnFade";
 import "@alea/lib/filters/madReversion";
 import "@alea/lib/filters/multiBarReturnFade";
 import "@alea/lib/filters/percentRankMeanRev";
-import "@alea/lib/filters/pinBarReversal";
 import "@alea/lib/filters/qstickBodyBiasFade";
 import "@alea/lib/filters/rangeExpansionFade";
-import "@alea/lib/filters/rsiDivergence";
 import "@alea/lib/filters/rsiMeanRev";
 import "@alea/lib/filters/rsiVelocity";
 import "@alea/lib/filters/smaPosition";
 import "@alea/lib/filters/squeezeBreakoutFollow";
 import "@alea/lib/filters/stdevChannelReversion";
-import "@alea/lib/filters/stochRsiMeanRev";
 import "@alea/lib/filters/stochasticMeanRev";
 import "@alea/lib/filters/streakFade";
 import "@alea/lib/filters/supertrendRetestFollow";
 import "@alea/lib/filters/tsiMeanRev";
-import "@alea/lib/filters/volatilityBurstFade";
 import "@alea/lib/filters/williamsRMeanRev";
 import "@alea/lib/filters/zscoreReversion";

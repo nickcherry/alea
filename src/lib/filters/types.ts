@@ -77,6 +77,7 @@ export type FilterFamily =
   | "compression_failure"
   | "volatility_compression_continuation"
   | "candle_momentum_continuation"
+  | "candle_location_reversion"
   | "candle_exhaustion"
   | "micro_structure_continuation"
   | "swing_structure_continuation"
