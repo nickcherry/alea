@@ -39,7 +39,7 @@ export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
  * How long before the target candle opens the loop snapshots the
  * live price and makes its decision.
  */
-export const TRADE_DECISION_LEAD_TIME_MS = 30 * 1000;
+export const TRADE_DECISION_LEAD_TIME_MS = 90 * 1000;
 
 /**
  * Closed bars hydrated at startup. This must cover the regime

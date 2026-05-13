@@ -25,7 +25,7 @@ export function currentWindowStartMs({
 /**
  * Returns the start of the next 5m window strictly after `nowMs`.
  * Useful for scheduling "wake me at the top of the next bar" timers
- * and for pre-fetching the upcoming Polymarket market 30s ahead.
+ * and for pre-fetching the upcoming Polymarket market before it opens.
  */
 export function nextWindowStartMs({
   nowMs,

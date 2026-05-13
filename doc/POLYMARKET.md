@@ -83,7 +83,7 @@ The canonical URL set lives in
   target window opened, received `success=true` / `status=live`, then canceled
   cleanly with zero open orders left. Live trading therefore signs and posts
   `createAndPostOrder(..., OrderType.GTD, postOnly=true)` immediately after the
-  `T-30s` committee decision instead of waiting for the boundary. It buys the
+  `T-90s` committee decision instead of waiting for the boundary. It buys the
   predicted-side token one tick below the best ask, or one tick below 50c if no
   predicted-side ask has arrived, expiring at that market's close.
 - Pre-market books are not empty placeholders. In the same 2026-05-13 snapshot,

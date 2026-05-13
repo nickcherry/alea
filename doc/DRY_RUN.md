@@ -39,7 +39,7 @@ For each configured period, defaulting to `5m,15m`, and each of the
    classifier's 100-bar window and the deepest filter's
    `requiredBars`, so the first decision always has enough history
    when the source has coverage.
-2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 30s` before each
+2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 90s` before each
    configured period boundary, fetch recent Pyth and Coinbase spot
    candles for that asset/period and upsert them into separate
    in-memory buffers by candle open time. Pyth refresh failures skip
@@ -74,7 +74,7 @@ closure, no locking. Persistence is the only external side effect.
 ## Candle Snapshot Contract
 
 Dry-run no longer keeps a Pyth candle websocket alive. It only needs a
-decision snapshot a few seconds before each market opens, so the
+decision snapshot shortly before each market opens, so the
 runtime uses direct fetch/reconcile instead:
 
 1. Startup hydrates Pyth and Coinbase spot closed bars into parallel
@@ -105,10 +105,10 @@ book state, not committee candle construction.
 
 ## Committee evaluation
 
-At T-30s of each boundary, for each asset:
+At T-90s of each boundary, for each asset:
 
 1. Classify the regime from the bar window (real history + the
-   in-flight bar with Pyth's t-30s price as the synthetic close).
+   in-flight bar with Pyth's t-90s price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
 3. Look up the roster bucket for `(asset, regime, period)` in
@@ -191,7 +191,7 @@ and the `market_regime` column added by
 | `decided_at_ms`         | Wall-clock when the prediction was made                              |
 | `asset`, `period`       | Self-explanatory                                                     |
 | `prediction`            | `'u'` or `'d'`                                                       |
-| `synth_open`            | Pyth price snapshotted at T-30s — used as the bar's synthetic open   |
+| `synth_open`            | Pyth price snapshotted at T-90s — used as the bar's synthetic open   |
 | `regime_votes`          | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
 | `actual_close`          | Filled in once the target bar settles                                |
 | `won`                   | 0/1, null until scored                                               |
