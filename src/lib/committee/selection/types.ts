@@ -42,7 +42,7 @@ export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minAggregateWinRate: 0.56,
   minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 40,
-  topN: 6,
+  topN: 12,
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
@@ -52,14 +52,14 @@ export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
       label: "BTC/ETH volume lift",
       assets: ["btc", "eth"],
       minAggregateWinRate: 0.55,
-      topN: 8,
+      topN: 16,
     },
     {
       label: "Weak-asset 5m quality gate",
       assets: ["sol", "xrp", "doge"],
       periods: ["5m"],
       minAggregateWinRate: 0.58,
-      topN: 4,
+      topN: 8,
     },
   ],
 };

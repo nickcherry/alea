@@ -48,10 +48,10 @@ between trials.
 
 Scoped overrides:
 
-| Scope                   | Override                      | Why                                                      |
-| ----------------------- | ----------------------------- | -------------------------------------------------------- |
-| BTC/ETH, both periods   | Aggregate WR `≥ 55%`, top `8` | Adds volume where holdout performance has been strongest |
-| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `4` | Tightens the noisiest weak-asset/timeframe slice         |
+| Scope                   | Override                       | Why                                                      |
+| ----------------------- | ------------------------------ | -------------------------------------------------------- |
+| BTC/ETH, both periods   | Aggregate WR `≥ 55%`, top `16` | Adds volume where holdout performance has been strongest |
+| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `8`  | Tightens the noisiest weak-asset/timeframe slice         |
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -67,7 +67,7 @@ filters.
 
 Final selection: top-N distinct filters per `(asset, market_regime, period)`.
 With the current base cap and overrides, the table usually holds about
-240 rows.
+470 rows.
 
 ```sh
 bun alea committee:select
@@ -97,7 +97,7 @@ Schema in
 | `selected_at_ms`                              | When `committee:select` produced this row                         |
 
 Primary key: `(asset, market_regime, period, filter_id, filter_version, config_canon)`.
-Replacing the whole table on every run is cheap (≤ 240 rows
+Replacing the whole table on every run is cheap (≤ 500 rows
 in practice).
 
 Dry-run/live loaders only read rows whose `training_profile` matches
@@ -146,14 +146,16 @@ Critical decision settings live in
 | `TRADE_DECISION_LEAD_TIME_MS`      |    `30000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `2` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `3` | Minimum non-abstain votes after filter collapse                                     |
 | `MIN_COMMITTEE_CONSENSUS_FRACTION` |      `0.5` | Winning side must hold at least this share; ties still abstain                      |
 | `TRADE_DECISION_FILTER_TIE_BREAK`  | highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
 With the current constants, the final decision is simple majority
-after filter-level vote collapse, with at least two engaged filters
-required. Changing `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both
-dry-run and live.
+after filter-level vote collapse, with at least three engaged filters
+required. The wider selection caps intentionally pair with this higher
+vote gate so breadth only becomes an actionable trade when multiple
+independent filters agree. Changing `MIN_COMMITTEE_VOTES_TO_TRADE`
+changes that for both dry-run and live.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See

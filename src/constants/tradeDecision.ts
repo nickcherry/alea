@@ -75,7 +75,7 @@ export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
 export const MAX_COMMITTEE_VOTES_PER_FILTER = 1;
 
 /** Minimum non-abstain, filter-collapsed votes required to trade. */
-export const MIN_COMMITTEE_VOTES_TO_TRADE = 2;
+export const MIN_COMMITTEE_VOTES_TO_TRADE = 3;
 
 /**
  * Minimum share of non-abstain votes that the winning side must
