@@ -75,6 +75,7 @@ export async function discoverPolymarketMarket({
     upRef,
     downRef,
     ...optionalTickSize({ value: market.orderPriceMinTickSize }),
+    ...optionalNegRisk({ value: market.negRisk ?? market.neg_risk }),
   };
 }
 
@@ -91,6 +92,14 @@ function optionalTickSize({
     return {};
   }
   return { tickSize: parsed };
+}
+
+function optionalNegRisk({
+  value,
+}: {
+  readonly value: boolean | undefined;
+}): { readonly negRisk: boolean } | Record<string, never> {
+  return typeof value === "boolean" ? { negRisk: value } : {};
 }
 
 function parseStringArray(value: string | undefined): string[] | null {
@@ -121,6 +130,8 @@ const marketSchema = z
     outcomes: z.string().optional(),
     clobTokenIds: z.string().optional(),
     orderPriceMinTickSize: z.union([z.string(), z.number()]).optional(),
+    negRisk: z.boolean().optional(),
+    neg_risk: z.boolean().optional(),
   })
   .passthrough();
 

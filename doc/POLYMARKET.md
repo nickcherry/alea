@@ -60,43 +60,30 @@ The canonical URL set lives in
   the reliability experiment maps every requested `<asset>/usd` symbol.
 - CLOB `/book?token_id=<tokenId>` is public and returns bid/ask level arrays
   with string prices and sizes. Alea scans levels and picks best bid/ask
-  rather than trusting array order. Book responses also carry
-  `min_order_size`, `tick_size`, and `neg_risk`; the adapter merges those with
-  the `/clob-markets` metadata before placement. The adapter now preserves the
-  parsed depth levels as well as top-of-book so taker dry-run and live paths
-  can walk the chosen ask book before entry. The legacy maker simulator also
-  uses the bid levels to estimate queue ahead.
+  rather than trusting array order. Gamma market discovery carries token IDs,
+  condition IDs, tick size, and sometimes `neg_risk`; the SDK can fetch missing
+  per-token metadata when signing.
 - `marketDiscoveryCache` centralizes current/next-window Gamma slug discovery
-  and deduplicates concurrent lookups. Dry-run uses it now; live trading should
-  share it so order placement has already resolved condition/token ids before
-  the target window opens.
+  and deduplicates concurrent lookups. Dry-run and live trading share it so
+  order placement has already resolved condition/token IDs before the target
+  window opens.
 - The public market WebSocket subscription sends
   `{ type: "market", assets_ids: [...tokenIds], custom_feature_enabled: true }`.
-  Dry-run consumes `book`/`best_bid_ask` for executable quote state and treats
-  `last_trade_price` as non-fill evidence; a simulated limit buy fills only
-  when the fresh predicted-side ask is at or below the configured limit.
+  Dry-run and live trading consume `book`/`best_bid_ask` for executable quote
+  state and treat `last_trade_price` as non-fill evidence.
   `tick_size_change` remains operator-visible venue metadata, and
   `market_resolved` is the official-first settlement event for paths that need
   venue resolution. REST resolution remains the fallback if the websocket event
   is missed.
-- Current live order placement is FAK taker BUY. The adapter caps the order at
-  the just-in-time book walk's worst consumed ask, rejects expected fills below
-  the venue minimum, signs a market BUY, and posts it as
-  `createAndPostMarketOrder(..., OrderType.FAK)`. Immediately after a
-  successful FAK post, the runner hydrates venue state so an immediate fill
-  is not missed if the user websocket lags. The legacy maker path still posts
-  GTD post-only orders and translates known post-only rejection phrases into
-  `PostOnlyRejectionError`.
-- Legacy maker dry order preparation uses the same Polymarket tick/size/GTD
-  validation as maker live order placement but stops before signing or posting.
-  This is exposed as `Vendor.prepareMakerLimitBuy` and is safe without wallet
-  credentials.
-- The user WebSocket subscription uses `markets` populated with condition IDs,
-  not token IDs. Fill frames are normalized into Alea's vendor-agnostic
-  `FillEvent` shape. The stream sends `PING` heartbeats, ignores `PONG`, and
-  handles V2 `maker_orders` frames that omit top-level fill price/size fields.
-  When those maker-order legs belong to our taker fill, Alea keeps the
-  leg-level prices/sizes and applies the top-level taker fee rate to each leg.
+- Current live order placement is maker-only. At market open, the runner signs
+  and posts `createAndPostOrder(..., OrderType.GTD, postOnly=true)`: a
+  predicted-side BUY one tick below the best ask, expiring at that market's
+  close. It retries quickly up to 10 times after rejection or stale/missing
+  book state, but only while the recomputed price remains inside the configured
+  50c band and passes the confidence gate.
+- Live trading does not consume the user WebSocket for fill tracking. Once the
+  CLOB confirms order creation, Polymarket remains the source of truth for open
+  orders, fills, positions, and PnL.
 - CLOB trade fees are normalized from the venue's fee curve:
   `shares * (fee_rate_bps / 10000) * price * (1 - price)`, rounded to five
   decimal places. Trades reported as `trader_side=MAKER` are treated as

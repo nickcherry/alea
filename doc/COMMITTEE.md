@@ -48,10 +48,10 @@ between trials.
 
 Scoped overrides:
 
-| Scope | Override | Why |
-| --- | --- | --- |
-| BTC/ETH, both periods | Aggregate WR `≥ 55%`, top `8` | Adds volume where holdout performance has been strongest |
-| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `4` | Tightens the noisiest weak-asset/timeframe slice |
+| Scope                   | Override                      | Why                                                      |
+| ----------------------- | ----------------------------- | -------------------------------------------------------- |
+| BTC/ETH, both periods   | Aggregate WR `≥ 55%`, top `8` | Adds volume where holdout performance has been strongest |
+| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `4` | Tightens the noisiest weak-asset/timeframe slice         |
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -185,8 +185,10 @@ modes is what happens with an actionable decision:
 - Dry-run today: persist to `dry_run_decisions`, no real order placed.
 - Dry-run execution simulation: the same persisted decision plus a
   pretend post-open Polymarket order whose fill status is tracked.
-- Live (when it ships): the same decision path plus real order
-  placement. The committee path is unchanged.
+- Live: the same decision path plus real post-only maker order
+  placement through `trading:run`. The committee path is unchanged.
+  Live trading does not persist local trade/fill rows after order
+  creation; Polymarket remains the source of truth.
 
 The implication for testing: anything that's safe to validate
 against the dry-run loop will behave identically in live trading.

@@ -56,6 +56,7 @@ starts at `2026-04-01T00:00:00.000Z` and runs through yesterday UTC.
 - [Filters](./doc/FILTERS.md) — filter contract and registry.
 - [How To Work With Nick](./doc/HOW_TO_WORK_WITH_NICK.md) — collaboration preferences.
 - [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — feed-latency research.
+- [Live Trading](./doc/LIVE_TRADING.md) — real Polymarket order placement.
 - [Market Capture](./doc/MARKET_CAPTURE.md) — long-running market tape capture.
 - [Polymarket](./doc/POLYMARKET.md) — Polymarket integration and price paths.
 - [Proxy Accuracy](./doc/PROXY.md) — Pyth vs Polymarket settlement agreement.

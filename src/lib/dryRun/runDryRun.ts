@@ -7,33 +7,26 @@ import {
   TRADE_DECISION_LEAD_TIME_MS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
-import { selectEffectiveCommitteeVotes } from "@alea/lib/committee/aggregate";
-import {
-  evaluateCommittee,
-  listCommitteeCandidates,
-} from "@alea/lib/committee/runCommittee";
+import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import {
   candidateRosterKey,
   type CommitteeRoster,
   loadCommitteeRoster,
-  rosterBucketKey,
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
-import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
-  averageWinningVoteConfidence,
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
-import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import {
   hydrateTradeDecisionCandleState,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
+import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDecision";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
@@ -301,73 +294,29 @@ async function makePrediction({
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   const decisionStartedAtMs = Date.now();
-  const marketRegime = classifyMarketRegime({ bars });
-  // Regime-scoped voter set: only candidates whose training record
-  // qualified for THIS regime get to vote on this bar. If the
-  // classifier can't decide a regime (early-history, can't happen
-  // post-hydration in practice) we abstain entirely — no decision,
-  // no DB row.
-  const rosterCandidates: CommitteeCandidate[] = [];
-  if (marketRegime !== null) {
-    const bucket = roster.byBucket.get(
-      rosterBucketKey({
-        asset: state.asset,
-        marketRegime,
-        period: state.period,
-      }),
-    );
-    if (bucket !== undefined) {
-      for (const member of bucket) {
-        const cand = candidatesByKey.get(member.key);
-        if (cand !== undefined) {
-          rosterCandidates.push({
-            candidate: cand,
-            selection: {
-              winRate: member.winRate,
-              nEngagements: member.nEngagements,
-              rank: member.rank,
-            },
-          });
-        }
-      }
-    }
-  }
-  const { decision, votes } =
-    rosterCandidates.length === 0
-      ? {
-          decision: { prediction: null, up: 0, down: 0, abstain: 0 } as const,
-          votes: [],
-        }
-      : evaluateCommittee({ bars, candidates: rosterCandidates });
-  const effectiveVotes = selectEffectiveCommitteeVotes({ votes });
-  const orderConfidence = averageWinningVoteConfidence({
-    prediction: decision.prediction,
-    winRates: effectiveVotes
-      .filter((vote) => vote.prediction === decision.prediction)
-      .map((vote) => vote.selection.winRate),
+  const evaluated = evaluateTradeDecision({
+    asset: state.asset,
+    period: state.period,
+    bars,
+    roster,
+    candidatesByKey,
   });
   const decisionCompletedAtMs = Date.now();
   const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
-  const persistedPrediction =
-    decision.prediction === null
-      ? null
-      : decision.prediction === "up"
-        ? "u"
-        : "d";
   log({
     kind: "decision",
     asset: state.asset,
     period: state.period,
     tsMs: targetTsMs,
-    prediction: persistedPrediction,
+    prediction: evaluated.prediction,
     synthClose: synthBar.close,
-    marketRegime,
-    rosterSize: rosterCandidates.length,
-    up: decision.up,
-    down: decision.down,
-    abstain: decision.abstain,
+    marketRegime: evaluated.marketRegime,
+    rosterSize: evaluated.rosterSize,
+    up: evaluated.up,
+    down: evaluated.down,
+    abstain: evaluated.abstain,
   });
-  if (decision.prediction === null) {
+  if (evaluated.prediction === null) {
     await recordDecisionAttempt({
       db,
       state,
@@ -376,16 +325,16 @@ async function makePrediction({
       decisionCompletedAtMs,
       decisionDurationMs,
       prediction: null,
-      marketRegime,
-      rosterSize: rosterCandidates.length,
-      up: decision.up,
-      down: decision.down,
-      abstain: decision.abstain,
+      marketRegime: evaluated.marketRegime,
+      rosterSize: evaluated.rosterSize,
+      up: evaluated.up,
+      down: evaluated.down,
+      abstain: evaluated.abstain,
       decisionId: null,
     });
     return;
   }
-  const prediction = decision.prediction === "up" ? "u" : "d";
+  const prediction = evaluated.prediction;
   // Persist. The target bar's open = targetTsMs (i.e. the upcoming
   // period boundary). Its open price is approximately the current
   // Pyth price (close of the bar we just synthesised). We persist
@@ -407,12 +356,12 @@ async function makePrediction({
       prediction,
       synth_open: synthBar.close,
       regime_votes: JSON.stringify({
-        up: decision.up,
-        down: decision.down,
-        abstain: decision.abstain,
-        avgWinningVoteConfidence: orderConfidence,
+        up: evaluated.up,
+        down: evaluated.down,
+        abstain: evaluated.abstain,
+        avgWinningVoteConfidence: evaluated.orderConfidence,
       }),
-      market_regime: marketRegime,
+      market_regime: evaluated.marketRegime,
       decision_started_at_ms: decisionStartedAtMs,
       decision_completed_at_ms: decisionCompletedAtMs,
       decision_duration_ms: decisionDurationMs,
@@ -427,11 +376,11 @@ async function makePrediction({
     decisionCompletedAtMs,
     decisionDurationMs,
     prediction,
-    marketRegime,
-    rosterSize: rosterCandidates.length,
-    up: decision.up,
-    down: decision.down,
-    abstain: decision.abstain,
+    marketRegime: evaluated.marketRegime,
+    rosterSize: evaluated.rosterSize,
+    up: evaluated.up,
+    down: evaluated.down,
+    abstain: evaluated.abstain,
     decisionId: String(inserted.id),
   });
   const pending = pendingByState.get(
@@ -446,7 +395,7 @@ async function makePrediction({
     period: state.period,
     prediction,
     targetTsMs,
-    confidence: orderConfidence,
+    confidence: evaluated.orderConfidence,
   });
 }
 

@@ -21,6 +21,7 @@ import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
 import { tradingHydrateLifetimePnlCommand } from "@alea/bin/trading/hydrateLifetimePnl";
 import { tradingPerformanceCommand } from "@alea/bin/trading/performance";
+import { tradingRunCommand } from "@alea/bin/trading/run";
 import { createCli } from "@alea/lib/cli/createCli";
 
 const cli = createCli({
@@ -47,6 +48,7 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
+    tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,
   ],

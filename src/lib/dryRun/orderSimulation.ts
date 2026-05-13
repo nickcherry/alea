@@ -9,28 +9,25 @@ import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { FilterPrediction } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
+import {
+  applyMarketDataEventToMarketPriceState,
+  emptyMarketPriceState,
+  isFreshPrice,
+  isValidTokenPrice,
+  type MarketDataTokenRoute,
+  type MarketPriceState,
+  resolveMakerLimitBuyPlacement,
+  roundPrice,
+} from "@alea/lib/trading/marketPriceState";
 import type { PolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import { streamPolymarketMarketData } from "@alea/lib/trading/vendor/polymarket/streamMarketData";
 import type {
-  MarketDataEvent,
   MarketDataStreamHandle,
-  PriceLevel,
   TradableMarket,
 } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 
-type TokenPriceState = {
-  bid: number | null;
-  bidAtMs: number | null;
-  ask: number | null;
-  askAtMs: number | null;
-  tickSize: number | null;
-};
-
-export type DryRunMarketPriceState = {
-  up: TokenPriceState;
-  down: TokenPriceState;
-};
+export type DryRunMarketPriceState = MarketPriceState;
 
 export type DryRunOrderPlacementResolution =
   | {
@@ -85,11 +82,6 @@ type OrderSession = {
   readonly orderIds: Set<string>;
 };
 
-type TokenRoute = {
-  readonly state: DryRunMarketPriceState;
-  readonly side: "up" | "down";
-};
-
 const terminalOrderStatuses: ReadonlySet<DryRunOrderStatus> = new Set([
   "skipped_no_market",
   "skipped_no_price",
@@ -111,45 +103,46 @@ export function resolveDryRunOrderPlacement({
   readonly nowMs: number;
   readonly confidence: number | null;
 }): DryRunOrderPlacementResolution {
-  const limitPrice = predictedSideAggressiveMakerBuyPrice({
+  const placement = resolveMakerLimitBuyPlacement({
     prediction,
     state,
     nowMs,
+    confidence,
+    priceWindow: DRY_RUN_ORDER_PRICE_WINDOW,
+    maxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
+    defaultTickSize: DRY_RUN_ORDER_DEFAULT_TICK_SIZE,
   });
-  if (limitPrice === null) {
+  if (placement.status === "no_price") {
     return { status: "skipped_no_price" };
   }
-
-  const observed =
-    observedPredictedSidePrice({ prediction, state, nowMs }) ?? limitPrice;
-  if (Math.abs(limitPrice - 0.5) > DRY_RUN_ORDER_PRICE_WINDOW) {
+  if (placement.status === "price_window") {
     return {
       status: "skipped_price_window",
-      observedPrice: observed,
-      limitPrice,
-      confidence,
+      observedPrice: placement.observedPrice,
+      limitPrice: placement.limitPrice,
+      confidence: placement.confidence,
     };
   }
-  if (confidence === null || confidence < limitPrice) {
+  if (placement.status === "confidence") {
     return {
       status: "skipped_confidence",
-      observedPrice: observed,
-      limitPrice,
-      confidence,
+      observedPrice: placement.observedPrice,
+      limitPrice: placement.limitPrice,
+      confidence: placement.confidence,
     };
   }
 
   const fillPrice = resolveDryRunOrderFill({
     prediction,
     state,
-    limitPrice,
+    limitPrice: placement.limitPrice,
     nowMs,
   });
   return {
     status: fillPrice === null ? "placed" : "filled",
-    observedPrice: observed,
-    limitPrice,
-    confidence,
+    observedPrice: placement.observedPrice,
+    limitPrice: placement.limitPrice,
+    confidence: placement.confidence,
     fillPrice,
   };
 }
@@ -166,7 +159,13 @@ export function resolveDryRunOrderFill({
   readonly nowMs: number;
 }): number | null {
   const token = prediction === "u" ? state.up : state.down;
-  if (!isFreshPrice({ atMs: token.askAtMs, nowMs })) {
+  if (
+    !isFreshPrice({
+      atMs: token.askAtMs,
+      nowMs,
+      maxAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
+    })
+  ) {
     return null;
   }
   return isValidTokenPrice(token.ask) && token.ask <= limitPrice
@@ -216,7 +215,7 @@ export function createDryRunOrderSimulator({
 } {
   const orders = new Map<string, PendingDryRunOrder>();
   const sessions = new Map<string, OrderSession>();
-  const tokenRoutes = new Map<string, TokenRoute>();
+  const tokenRoutes = new Map<string, MarketDataTokenRoute>();
   let streamHandle: MarketDataStreamHandle | null = null;
   let stopped = false;
 
@@ -250,7 +249,7 @@ export function createDryRunOrderSimulator({
     streamHandle = streamPolymarketMarketData({
       markets,
       onEvent: (event) => {
-        applyMarketDataEventToDryRunState({ event, tokenRoutes });
+        applyMarketDataEventToMarketPriceState({ event, tokenRoutes });
         void fillPlacedOrders({ eventAtMs: event.atMs });
       },
     });
@@ -648,194 +647,6 @@ export function createDryRunOrderSimulator({
       }
     },
   };
-}
-
-function applyMarketDataEventToDryRunState({
-  event,
-  tokenRoutes,
-}: {
-  readonly event: MarketDataEvent;
-  readonly tokenRoutes: ReadonlyMap<string, TokenRoute>;
-}): void {
-  if (event.kind === "resolved") {
-    return;
-  }
-  if (event.outcomeRef === null) {
-    return;
-  }
-  const route = tokenRoutes.get(event.outcomeRef);
-  if (route === undefined) {
-    return;
-  }
-  const token = route.side === "up" ? route.state.up : route.state.down;
-  switch (event.kind) {
-    case "book":
-      token.bid = bestBid(event.bids);
-      token.bidAtMs = event.atMs;
-      token.ask = bestAsk(event.asks);
-      token.askAtMs = event.atMs;
-      break;
-    case "best-bid-ask":
-      token.bid = normalizePrice(event.bestBid);
-      token.bidAtMs = event.atMs;
-      token.ask = normalizePrice(event.bestAsk);
-      token.askAtMs = event.atMs;
-      break;
-    case "price-change":
-    case "trade":
-      break;
-    case "tick-size-change":
-      if (isValidTickSize(event.newTickSize)) {
-        token.tickSize = event.newTickSize;
-      }
-      break;
-  }
-}
-
-function observedPredictedSidePrice({
-  prediction,
-  state,
-  nowMs,
-}: {
-  readonly prediction: "u" | "d";
-  readonly state: DryRunMarketPriceState;
-  readonly nowMs: number;
-}): number | null {
-  const target = prediction === "u" ? state.up : state.down;
-  const opposite = prediction === "u" ? state.down : state.up;
-  return (
-    midPrice({ state: target, nowMs }) ??
-    invertPrice(midPrice({ state: opposite, nowMs }))
-  );
-}
-
-function predictedSideAggressiveMakerBuyPrice({
-  prediction,
-  state,
-  nowMs,
-}: {
-  readonly prediction: "u" | "d";
-  readonly state: DryRunMarketPriceState;
-  readonly nowMs: number;
-}): number | null {
-  const target = prediction === "u" ? state.up : state.down;
-  if (!isFreshPrice({ atMs: target.askAtMs, nowMs })) {
-    return null;
-  }
-  if (!isValidTokenPrice(target.ask)) {
-    return null;
-  }
-  const tickSize = resolveTickSize({ tickSize: target.tickSize });
-  const limitPrice = roundDownToTick(target.ask - tickSize, tickSize);
-  if (limitPrice < tickSize || limitPrice > 1 - tickSize) {
-    return null;
-  }
-  return limitPrice;
-}
-
-function emptyMarketPriceState({
-  tickSize = null,
-}: {
-  readonly tickSize?: number | null;
-} = {}): DryRunMarketPriceState {
-  return {
-    up: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize },
-    down: { bid: null, bidAtMs: null, ask: null, askAtMs: null, tickSize },
-  };
-}
-
-function bestBid(levels: readonly PriceLevel[]): number | null {
-  let best: number | null = null;
-  for (const level of levels) {
-    const price = normalizePrice(level.price);
-    if (price === null) {
-      continue;
-    }
-    if (best === null || price > best) {
-      best = price;
-    }
-  }
-  return best;
-}
-
-function bestAsk(levels: readonly PriceLevel[]): number | null {
-  let best: number | null = null;
-  for (const level of levels) {
-    const price = normalizePrice(level.price);
-    if (price === null) {
-      continue;
-    }
-    if (best === null || price < best) {
-      best = price;
-    }
-  }
-  return best;
-}
-
-function midPrice({
-  state,
-  nowMs,
-}: {
-  readonly state: TokenPriceState;
-  readonly nowMs: number;
-}): number | null {
-  if (
-    state.bid === null ||
-    state.ask === null ||
-    state.ask < state.bid ||
-    !isFreshPrice({ atMs: state.bidAtMs, nowMs }) ||
-    !isFreshPrice({ atMs: state.askAtMs, nowMs })
-  ) {
-    return null;
-  }
-  return roundPrice((state.bid + state.ask) / 2);
-}
-
-function invertPrice(value: number | null): number | null {
-  return value === null ? null : roundPrice(1 - value);
-}
-
-function normalizePrice(value: number | null): number | null {
-  return isValidTokenPrice(value) ? value : null;
-}
-
-function isValidTokenPrice(value: number | null): value is number {
-  return value !== null && Number.isFinite(value) && value >= 0 && value <= 1;
-}
-
-function isValidTickSize(value: number | null): value is number {
-  return value !== null && Number.isFinite(value) && value > 0 && value < 1;
-}
-
-function resolveTickSize({
-  tickSize,
-}: {
-  readonly tickSize: number | null;
-}): number {
-  return isValidTickSize(tickSize) ? tickSize : DRY_RUN_ORDER_DEFAULT_TICK_SIZE;
-}
-
-function isFreshPrice({
-  atMs,
-  nowMs,
-}: {
-  readonly atMs: number | null;
-  readonly nowMs: number;
-}): boolean {
-  return (
-    atMs !== null &&
-    atMs <= nowMs &&
-    nowMs - atMs <= DRY_RUN_ORDER_MAX_QUOTE_AGE_MS
-  );
-}
-
-function roundPrice(value: number): number {
-  return Math.max(0, Math.min(1, Number(value.toFixed(4))));
-}
-
-function roundDownToTick(value: number, tickSize: number): number {
-  const ticks = Math.floor((value + Number.EPSILON) / tickSize);
-  return roundPrice(ticks * tickSize);
 }
 
 function marketKey({
