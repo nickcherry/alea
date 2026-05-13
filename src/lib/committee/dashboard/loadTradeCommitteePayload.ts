@@ -16,8 +16,8 @@ import {
   type TradeCommitteePeriod,
 } from "@alea/lib/committee/dashboard/types";
 import {
-  type CommitteeSelectionRules,
-  DEFAULT_COMMITTEE_SELECTION_RULES,
+  type CommitteeSelectionProfile,
+  DEFAULT_COMMITTEE_SELECTION_PROFILE,
 } from "@alea/lib/committee/selection/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { getFilter } from "@alea/lib/filters/registry";
@@ -36,11 +36,11 @@ const REGIME_ORDER: readonly MarketRegime[] = [
 export async function loadTradeCommitteePayload({
   db,
   now = () => Date.now(),
-  rules = DEFAULT_COMMITTEE_SELECTION_RULES,
+  profile = DEFAULT_COMMITTEE_SELECTION_PROFILE,
 }: {
   readonly db: DatabaseClient;
   readonly now?: () => number;
-  readonly rules?: CommitteeSelectionRules;
+  readonly profile?: CommitteeSelectionProfile;
 }): Promise<TradeCommitteePayload> {
   const selectionRows = await db
     .selectFrom("committee_selections")
@@ -109,7 +109,8 @@ export async function loadTradeCommitteePayload({
     rowCount: rows.length,
     uniqueFilterCount: filterIds.size,
     selectionConfig: {
-      ...rules,
+      ...profile.baseRules,
+      ruleOverrides: profile.ruleOverrides,
       trainingProfileId: TRAINING_PROFILE_ID,
       trainingOutcomeProfileId: TRAINING_OUTCOME_PROFILE_ID,
       trainingOutcomeMinAbsMovePct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,

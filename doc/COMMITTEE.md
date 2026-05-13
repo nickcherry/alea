@@ -26,7 +26,8 @@ the shared trade decision policy.
 ## Selection: eligibility + ranking
 
 For a `(filter, config)` candidate to qualify for asset A and regime R's
-committee, **within that asset/regime bucket** it must clear:
+committee, **within that asset/regime bucket** it must clear the base
+rules, then any matching scoped override:
 
 | Rule                             | Default | Why                                             |
 | -------------------------------- | ------- | ----------------------------------------------- |
@@ -39,26 +40,34 @@ engagements inside this asset/regime bucket. Candidates with no quarter that mea
 skip the check (sparse + high-WR is admissible).
 
 Defaults live in
-[`DEFAULT_COMMITTEE_SELECTION_RULES`](../src/lib/committee/selection/types.ts).
+[`DEFAULT_COMMITTEE_SELECTION_PROFILE`](../src/lib/committee/selection/types.ts).
 Sweep experiments over these knobs live in
 [`SWEEPING.md`](./SWEEPING.md) and should be run through
 `bun alea backtest:sweep-committee` rather than by editing constants
 between trials.
-The eligibility rule is the same shape for every asset/regime bucket.
-There is no global fallback roster. If a bucket has fewer than 6
-qualifiers under the current rules, that bucket's committee is simply
-smaller than the top-N cap; if it has none, that asset/regime abstains.
+
+Scoped overrides:
+
+| Scope | Override | Why |
+| --- | --- | --- |
+| BTC/ETH, both periods | Aggregate WR `≥ 55%`, top `8` | Adds volume where holdout performance has been strongest |
+| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `4` | Tightens the noisiest weak-asset/timeframe slice |
+
+There is no global fallback roster. If a bucket has fewer qualifiers
+than its top-N cap, that bucket's committee is simply smaller than the
+cap; if it has none, that asset/regime abstains.
 
 Qualifying candidates are **ranked by Wilson 95% lower bound desc**
 (with `nEngagements` desc as tie-break). Wilson LB punishes small samples
 in the ranking even after they cleared the absolute eligibility
 floor, so a 90-engagement 80% candidate gets admitted but ranks below a
 500-engagement 60% candidate. For each `filter_id`, keep only the
-highest-ranked config, then take the **top 6 distinct filters**.
+highest-ranked config, then take the bucket's configured top-N distinct
+filters.
 
-Final selection: top 6 distinct filters per `(asset, market_regime, period)`.
-With 5 assets × 4 regimes × 2 periods = 40 buckets, the table holds up
-to 240 rows.
+Final selection: top-N distinct filters per `(asset, market_regime, period)`.
+With the current base cap and overrides, the table usually holds about
+240 rows.
 
 ```sh
 bun alea committee:select

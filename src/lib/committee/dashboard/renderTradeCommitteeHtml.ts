@@ -1,4 +1,5 @@
 import type { TradeCommitteePayload } from "@alea/lib/committee/dashboard/types";
+import type { CommitteeSelectionRuleOverride } from "@alea/lib/committee/selection/types";
 import {
   aleaBrandMark,
   aleaDesignSystemHead,
@@ -100,6 +101,20 @@ export function renderTradeCommitteeHtml({
                 },
               ],
             })}
+            ${
+              payload.selectionConfig.ruleOverrides.length === 0
+                ? ""
+                : renderConfigGroup({
+                    title: "Scoped Overrides",
+                    items: payload.selectionConfig.ruleOverrides.map(
+                      (override) => ({
+                        label: override.label,
+                        value: formatSelectionOverride({ override }),
+                        tip: "Applied after the base selection rules for matching asset/timeframe buckets.",
+                      }),
+                    ),
+                  })
+            }
             ${renderConfigGroup({
               title: "Training",
               items: [
@@ -191,6 +206,31 @@ function formatTrainingStartPolicy({
 
 function formatUtcDate({ ms }: { readonly ms: number }): string {
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+function formatSelectionOverride({
+  override,
+}: {
+  readonly override: CommitteeSelectionRuleOverride;
+}): string {
+  const scope = [
+    override.assets?.map((asset) => asset.toUpperCase()).join("/") ??
+      "all assets",
+    override.periods?.join("/") ?? "all periods",
+  ].join(" ");
+  const values = [
+    override.minEngagements === undefined
+      ? null
+      : `eng>=${override.minEngagements.toLocaleString()}`,
+    override.minAggregateWinRate === undefined
+      ? null
+      : `agg>=${formatPercent({ value: override.minAggregateWinRate })}`,
+    override.minWorstQuarterWinRate === undefined
+      ? null
+      : `wq>=${formatPercent({ value: override.minWorstQuarterWinRate })}`,
+    override.topN === undefined ? null : `top<=${override.topN}`,
+  ].filter((value): value is string => value !== null);
+  return `${scope}: ${values.join(", ")}`;
 }
 
 type ConfigItem = {

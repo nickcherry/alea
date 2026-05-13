@@ -79,6 +79,7 @@ These decide who is allowed onto the committee.
 | `minWorstQuarterWinRate`     | Minimum win rate in the candidate's weakest meaningful quarter. This rejects one-period wonders.                        |
 | `worstQuarterMinEngagements` | How many calls a quarter needs before it counts in the worst-quarter check.                                             |
 | `topN`                       | Maximum candidates kept per `(asset, market regime, timeframe)` bucket.                                                 |
+| scoped overrides             | Asset/timeframe-specific versions of the same knobs, used only when a broad cluster is strong enough to justify it.     |
 | ranking method               | Sort qualified candidates by Wilson lower bound, then engagement count. This favors high WR but penalizes tiny samples. |
 
 ## Voting Levers

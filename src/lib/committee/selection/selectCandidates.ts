@@ -1,5 +1,7 @@
 import type {
   CandidateRegimeStats,
+  CommitteeSelectionProfile,
+  CommitteeSelectionRuleOverride,
   CommitteeSelectionRules,
   SelectedCandidate,
 } from "@alea/lib/committee/selection/types";
@@ -26,11 +28,21 @@ import type {
 export function selectCommitteeCandidates({
   stats,
   rules,
+  profile = {
+    baseRules: rules,
+    ruleOverrides: [],
+  },
 }: {
   readonly stats: readonly CandidateRegimeStats[];
   readonly rules: CommitteeSelectionRules;
+  readonly profile?: CommitteeSelectionProfile;
 }): readonly SelectedCandidate[] {
-  const eligible = stats.filter((s) => isEligible({ stats: s, rules }));
+  const eligible = stats.filter((s) =>
+    isEligible({
+      stats: s,
+      rules: rulesForStats({ stats: s, profile }),
+    }),
+  );
   const byKey = new Map<string, CandidateRegimeStats[]>();
   for (const s of eligible) {
     const key = `${s.asset}|${s.period}|${s.marketRegime}`;
@@ -44,12 +56,77 @@ export function selectCommitteeCandidates({
   const out: SelectedCandidate[] = [];
   for (const list of byKey.values()) {
     list.sort(compareCandidateStats);
-    const top = keepBestConfigPerFilter({ sorted: list }).slice(0, rules.topN);
+    const first = list[0];
+    if (first === undefined) {
+      continue;
+    }
+    const bucketRules = rulesForStats({ stats: first, profile });
+    const top = keepBestConfigPerFilter({ sorted: list }).slice(
+      0,
+      bucketRules.topN,
+    );
     for (let i = 0; i < top.length; i++) {
       out.push({ ...top[i]!, rank: i + 1 });
     }
   }
   return out;
+}
+
+function rulesForStats({
+  stats,
+  profile,
+}: {
+  readonly stats: CandidateRegimeStats;
+  readonly profile: CommitteeSelectionProfile;
+}): CommitteeSelectionRules {
+  let out = profile.baseRules;
+  for (const override of profile.ruleOverrides) {
+    if (matchesOverride({ stats, override })) {
+      out = applyOverride({ rules: out, override });
+    }
+  }
+  return out;
+}
+
+function matchesOverride({
+  stats,
+  override,
+}: {
+  readonly stats: CandidateRegimeStats;
+  readonly override: CommitteeSelectionRuleOverride;
+}): boolean {
+  return (
+    matchesOptionalList({ value: stats.asset, list: override.assets }) &&
+    matchesOptionalList({ value: stats.period, list: override.periods })
+  );
+}
+
+function matchesOptionalList({
+  value,
+  list,
+}: {
+  readonly value: string;
+  readonly list?: readonly string[];
+}): boolean {
+  return list === undefined || list.includes(value);
+}
+
+function applyOverride({
+  rules,
+  override,
+}: {
+  readonly rules: CommitteeSelectionRules;
+  readonly override: CommitteeSelectionRuleOverride;
+}): CommitteeSelectionRules {
+  return {
+    ...rules,
+    minEngagements: override.minEngagements ?? rules.minEngagements,
+    minAggregateWinRate:
+      override.minAggregateWinRate ?? rules.minAggregateWinRate,
+    minWorstQuarterWinRate:
+      override.minWorstQuarterWinRate ?? rules.minWorstQuarterWinRate,
+    topN: override.topN ?? rules.topN,
+  };
 }
 
 function compareCandidateStats(

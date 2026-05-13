@@ -179,6 +179,69 @@ describe("selectCommitteeCandidates", () => {
     expect(result.map((r) => r.rank)).toEqual([1, 1]);
   });
 
+  it("applies scoped selection overrides by asset and period", () => {
+    const result = selectCommitteeCandidates({
+      stats: [
+        stats({
+          asset: "btc",
+          period: "5m",
+          filterId: "btc_loose_a",
+          nEngagements: 100,
+          winRate: 0.525,
+          wilsonLow: 0.55,
+        }),
+        stats({
+          asset: "btc",
+          period: "5m",
+          filterId: "btc_loose_b",
+          nEngagements: 100,
+          winRate: 0.525,
+          wilsonLow: 0.54,
+        }),
+        stats({
+          asset: "sol",
+          period: "5m",
+          filterId: "sol_not_strong_enough",
+          nEngagements: 100,
+          winRate: 0.56,
+          wilsonLow: 0.56,
+        }),
+        stats({
+          asset: "sol",
+          period: "15m",
+          filterId: "sol_15m_base",
+          nEngagements: 100,
+          winRate: 0.56,
+          wilsonLow: 0.56,
+        }),
+      ],
+      rules: RULES,
+      profile: {
+        baseRules: RULES,
+        ruleOverrides: [
+          {
+            label: "loosen btc",
+            assets: ["btc"],
+            minAggregateWinRate: 0.52,
+            topN: 2,
+          },
+          {
+            label: "tighten sol 5m",
+            assets: ["sol"],
+            periods: ["5m"],
+            minAggregateWinRate: 0.58,
+          },
+        ],
+      },
+    });
+
+    expect(result.map((r) => `${r.asset}:${r.period}:${r.filterId}`)).toEqual([
+      "btc:5m:btc_loose_a",
+      "btc:5m:btc_loose_b",
+      "sol:15m:sol_15m_base",
+    ]);
+  });
+
   it("keeps only the best-ranked config per filter before applying topN", () => {
     const result = selectCommitteeCandidates({
       stats: [

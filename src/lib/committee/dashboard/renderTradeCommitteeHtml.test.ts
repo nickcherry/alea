@@ -32,6 +32,8 @@ describe("renderTradeCommitteeHtml", () => {
     expect(html).not.toContain("committee-bucket-tile");
     expect(html).toContain("Bucket Cap");
     expect(html).toContain("Aggregate WR Floor");
+    expect(html).toContain("Scoped Overrides");
+    expect(html).toContain("BTC/ETH volume lift");
     expect(html).toContain("Wilson low desc");
     expect(html).toContain("pyth-open-close-min-abs-move-pct-v1:0.02");
     expect(html).toContain("earliest candle -&gt; 2026-03-31");
@@ -51,6 +53,14 @@ function payloadFixture(): TradeCommitteePayload {
       minWorstQuarterWinRate: 0.5,
       worstQuarterMinEngagements: 10,
       topN: 10,
+      ruleOverrides: [
+        {
+          label: "BTC/ETH volume lift",
+          assets: ["btc", "eth"],
+          minAggregateWinRate: 0.55,
+          topN: 8,
+        },
+      ],
       trainingProfileId:
         "pyth-open-close-min-abs-move-pct-v1:0.02|train-earliest-through-2026-q1__backtest-2026-q2-through-yesterday-v1",
       trainingOutcomeProfileId: "pyth-open-close-min-abs-move-pct-v1:0.02",

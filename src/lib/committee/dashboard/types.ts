@@ -1,4 +1,7 @@
-import type { CommitteeSelectionRules } from "@alea/lib/committee/selection/types";
+import type {
+  CommitteeSelectionRuleOverride,
+  CommitteeSelectionRules,
+} from "@alea/lib/committee/selection/types";
 import type { FilterFamily } from "@alea/lib/filters/types";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import type { Asset } from "@alea/types/assets";
@@ -26,6 +29,7 @@ export type TradeCommitteeCandidateRow = {
 };
 
 export type TradeCommitteeSelectionConfig = CommitteeSelectionRules & {
+  readonly ruleOverrides: readonly CommitteeSelectionRuleOverride[];
   readonly trainingProfileId: string;
   readonly trainingOutcomeProfileId: string;
   readonly trainingOutcomeMinAbsMovePct: number;

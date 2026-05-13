@@ -22,12 +22,46 @@ export type CommitteeSelectionRules = {
   readonly topN: number;
 };
 
+export type CommitteeSelectionRuleOverride = {
+  readonly label: string;
+  readonly assets?: readonly string[];
+  readonly periods?: readonly string[];
+  readonly minEngagements?: number;
+  readonly minAggregateWinRate?: number;
+  readonly minWorstQuarterWinRate?: number;
+  readonly topN?: number;
+};
+
+export type CommitteeSelectionProfile = {
+  readonly baseRules: CommitteeSelectionRules;
+  readonly ruleOverrides: readonly CommitteeSelectionRuleOverride[];
+};
+
 export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minEngagements: 80,
   minAggregateWinRate: 0.56,
   minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 40,
   topN: 6,
+};
+
+export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
+  baseRules: DEFAULT_COMMITTEE_SELECTION_RULES,
+  ruleOverrides: [
+    {
+      label: "BTC/ETH volume lift",
+      assets: ["btc", "eth"],
+      minAggregateWinRate: 0.55,
+      topN: 8,
+    },
+    {
+      label: "Weak-asset 5m quality gate",
+      assets: ["sol", "xrp", "doge"],
+      periods: ["5m"],
+      minAggregateWinRate: 0.58,
+      topN: 4,
+    },
+  ],
 };
 
 /** Inputs the ranking sees about a single (candidate, asset, regime). */

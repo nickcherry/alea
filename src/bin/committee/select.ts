@@ -2,7 +2,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { loadCandidateRegimeStats } from "@alea/lib/committee/selection/loadCandidateRegimeStats";
 import { persistCommitteeSelections } from "@alea/lib/committee/selection/persistSelections";
 import { selectCommitteeCandidates } from "@alea/lib/committee/selection/selectCandidates";
-import { DEFAULT_COMMITTEE_SELECTION_RULES } from "@alea/lib/committee/selection/types";
+import { DEFAULT_COMMITTEE_SELECTION_PROFILE } from "@alea/lib/committee/selection/types";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import pc from "picocolors";
@@ -22,8 +22,8 @@ import pc from "picocolors";
  * `regimes:backfill` (which feeds new `bar_regimes` tags).
  *
  * No CLI flags yet — the thresholds in
- * `DEFAULT_COMMITTEE_SELECTION_RULES` are the contract. If we ever
- * need per-asset/regime overrides, surface them as flags here so the
+ * `DEFAULT_COMMITTEE_SELECTION_PROFILE` is the contract. If we ever
+ * need ad hoc profile overrides, surface them as flags here so the
  * library stays pure.
  */
 export const committeeSelectCommand = defineCommand({
@@ -40,21 +40,34 @@ export const committeeSelectCommand = defineCommand({
     "Truncates and rewrites the `committee_selections` table inside a single transaction.",
   async run({ io }) {
     io.writeStdout(`${pc.bold("committee:select")}\n\n`);
-    const rules = DEFAULT_COMMITTEE_SELECTION_RULES;
+    const profile = DEFAULT_COMMITTEE_SELECTION_PROFILE;
+    const rules = profile.baseRules;
     io.writeStdout(
-      `${pc.dim("rules:")} minEngagements=${rules.minEngagements} ` +
+      `${pc.dim("base rules:")} minEngagements=${rules.minEngagements} ` +
         `aggWR>=${(rules.minAggregateWinRate * 100).toFixed(1)}% ` +
         `worstQ WR>=${(rules.minWorstQuarterWinRate * 100).toFixed(1)}% ` +
         `(q>=${rules.worstQuarterMinEngagements} engagements) ` +
         `top=${rules.topN}\n\n`,
     );
+    for (const override of profile.ruleOverrides) {
+      io.writeStdout(
+        `${pc.dim("override:")} ${override.label} ` +
+          `${formatScope({ values: override.assets, fallback: "all assets" })} ` +
+          `${formatScope({ values: override.periods, fallback: "all periods" })} ` +
+          formatOverrideValues({ override }) +
+          "\n",
+      );
+    }
+    if (profile.ruleOverrides.length > 0) {
+      io.writeStdout("\n");
+    }
     const db = createDatabase();
     try {
       const stats = await loadCandidateRegimeStats({
         db,
         worstQuarterMinEngagements: rules.worstQuarterMinEngagements,
       });
-      const selections = selectCommitteeCandidates({ stats, rules });
+      const selections = selectCommitteeCandidates({ stats, rules, profile });
       const selectedAtMs = Date.now();
       await persistCommitteeSelections({ db, selections, selectedAtMs });
 
@@ -92,3 +105,33 @@ export const committeeSelectCommand = defineCommand({
     }
   },
 });
+
+function formatScope({
+  values,
+  fallback,
+}: {
+  readonly values?: readonly string[];
+  readonly fallback: string;
+}): string {
+  return `[${values?.join(",") ?? fallback}]`;
+}
+
+function formatOverrideValues({
+  override,
+}: {
+  readonly override: (typeof DEFAULT_COMMITTEE_SELECTION_PROFILE.ruleOverrides)[number];
+}): string {
+  const values = [
+    override.minEngagements === undefined
+      ? null
+      : `minEngagements=${override.minEngagements}`,
+    override.minAggregateWinRate === undefined
+      ? null
+      : `aggWR>=${(override.minAggregateWinRate * 100).toFixed(1)}%`,
+    override.minWorstQuarterWinRate === undefined
+      ? null
+      : `worstQ WR>=${(override.minWorstQuarterWinRate * 100).toFixed(1)}%`,
+    override.topN === undefined ? null : `top=${override.topN}`,
+  ].filter((value): value is string => value !== null);
+  return values.join(" ");
+}
