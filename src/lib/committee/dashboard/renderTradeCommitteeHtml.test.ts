@@ -62,7 +62,7 @@ function payloadFixture(): TradeCommitteePayload {
         },
       ],
       trainingProfileId:
-        "pyth-open-close-min-abs-move-pct-v1:0.02|train-earliest-through-2026-q1__backtest-2026-q2-through-yesterday-v1",
+        "pyth-open-close-min-abs-move-pct-v1:0.02|target-lead-bars-v1:1|train-earliest-through-2026-q1__backtest-2026-q2-through-yesterday-v1",
       trainingOutcomeProfileId: "pyth-open-close-min-abs-move-pct-v1:0.02",
       trainingOutcomeMinAbsMovePct: 0.02,
       trainingWindowStartPolicy: "earliest_available_candle",

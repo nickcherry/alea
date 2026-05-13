@@ -1,4 +1,3 @@
-import type { LatestPythPrice } from "@alea/lib/livePrices/pyth/fetchLatestPythPrices";
 import {
   getRefreshFetchStartMs,
   hydrateTradeDecisionCandleState,
@@ -96,7 +95,7 @@ describe("refreshTradeDecisionCandleState", () => {
     ).toBe(0);
   });
 
-  it("refreshes closed candles and synthesizes the active candle from the latest Pyth price", async () => {
+  it("refreshes closed candles and builds the decision series without the active candle", async () => {
     const state = stateWithBars([bar(0, 90, 100)]);
     const refreshed = await refreshTradeDecisionCandleState({
       state,
@@ -106,65 +105,18 @@ describe("refreshTradeDecisionCandleState", () => {
         candle(600_000, 108, 111, 112, 107),
       ],
       fetchCoinbaseBarsForRefresh: async () => [],
-      fetchLatestPrices: async () =>
-        new Map([["btc", latestPrice({ price: 115, publishTimeMs: 894_000 })]]),
     });
 
     expect(state.bars.map((b) => [b.openTimeMs, b.open, b.close])).toEqual([
       [0, 90, 100],
       [300_000, 100, 108],
     ]);
-    expect(refreshed.syntheticBar).toEqual({
-      openTimeMs: 600_000,
-      open: 108,
-      high: 115,
-      low: 107,
-      close: 115,
-      volume: 0,
-    });
+    expect(refreshed.referenceBar?.openTimeMs).toBe(300_000);
     expect(refreshed.seriesForDecision?.pyth.map((b) => b.openTimeMs)).toEqual([
-      0, 300_000, 600_000,
+      0, 300_000,
     ]);
     // No Coinbase bars returned by fetcher → every aligned slot is null.
-    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null, null]);
-  });
-
-  it("uses prior close when Pyth has not returned a partial active candle", async () => {
-    const state = stateWithBars([bar(0, 90, 100)]);
-    const refreshed = await refreshTradeDecisionCandleState({
-      state,
-      nowMs: 895_000,
-      fetchCandles: async () => [candle(300_000, 100, 108)],
-      fetchCoinbaseBarsForRefresh: async () => [],
-      fetchLatestPrices: async () =>
-        new Map([["btc", latestPrice({ price: 104, publishTimeMs: 894_000 })]]),
-    });
-
-    expect(refreshed.syntheticBar).toEqual({
-      openTimeMs: 600_000,
-      open: 108,
-      high: 108,
-      low: 104,
-      close: 104,
-      volume: 0,
-    });
-  });
-
-  it("does not synthesize a decision bar from a stale latest price", async () => {
-    const state = stateWithBars([bar(0, 90, 100)]);
-    const refreshed = await refreshTradeDecisionCandleState({
-      state,
-      nowMs: 895_000,
-      maxPriceAgeMs: 15_000,
-      fetchCandles: async () => [candle(300_000, 100, 108)],
-      fetchCoinbaseBarsForRefresh: async () => [],
-      fetchLatestPrices: async () =>
-        new Map([["btc", latestPrice({ price: 104, publishTimeMs: 870_000 })]]),
-    });
-
-    expect(refreshed.priceAgeMs).toBe(25_000);
-    expect(refreshed.syntheticBar).toBeNull();
-    expect(refreshed.seriesForDecision).toBeNull();
+    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null]);
   });
 
   it("aligns coinbase bars by openTimeMs into the bundle", async () => {
@@ -180,13 +132,11 @@ describe("refreshTradeDecisionCandleState", () => {
         coinbaseCandle(300_000, 100, 108, 8),
         coinbaseCandle(600_000, 108, 113, 5),
       ],
-      fetchLatestPrices: async () =>
-        new Map([["btc", latestPrice({ price: 113, publishTimeMs: 894_000 })]]),
     });
 
     expect(
       refreshed.seriesForDecision?.coinbase.map((b) => b?.volume ?? null),
-    ).toEqual([12, 8, 5]);
+    ).toEqual([12, 8]);
   });
 
   it("keeps the decision path alive when Coinbase refresh times out", async () => {
@@ -198,38 +148,12 @@ describe("refreshTradeDecisionCandleState", () => {
       fetchCoinbaseBarsForRefresh: async () =>
         new Promise<readonly Candle[]>(() => {}),
       coinbaseFetchTimeoutMs: 1,
-      fetchLatestPrices: async () =>
-        new Map([["btc", latestPrice({ price: 113, publishTimeMs: 894_000 })]]),
     });
 
-    expect(refreshed.syntheticBar?.close).toBe(113);
     expect(refreshed.seriesForDecision?.pyth.map((b) => b.openTimeMs)).toEqual([
-      0, 300_000, 600_000,
+      0, 300_000,
     ]);
-    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null, null]);
-  });
-
-  it("times out latest Pyth price fetches in the decision path", async () => {
-    const state = stateWithBars([bar(0, 90, 100)]);
-
-    let caught: unknown = null;
-    try {
-      await refreshTradeDecisionCandleState({
-        state,
-        nowMs: 895_000,
-        fetchCandles: async () => [candle(300_000, 100, 108)],
-        fetchCoinbaseBarsForRefresh: async () => [],
-        fetchLatestPrices: async () =>
-          new Promise<
-            ReadonlyMap<TradeDecisionCandleState["asset"], LatestPythPrice>
-          >(() => {}),
-        latestPriceFetchTimeoutMs: 1,
-      });
-    } catch (error) {
-      caught = error;
-    }
-
-    expect(String(caught)).toMatch(/latest Pyth price fetch timed out/);
+    expect(refreshed.seriesForDecision?.coinbase).toEqual([null, null]);
   });
 });
 
@@ -300,21 +224,5 @@ function coinbaseCandle(
     low: Math.min(open, close),
     close,
     volume,
-  };
-}
-
-function latestPrice({
-  price,
-  publishTimeMs,
-}: {
-  readonly price: number;
-  readonly publishTimeMs: number;
-}): LatestPythPrice {
-  return {
-    asset: "btc",
-    price,
-    conf: 0,
-    publishTimeMs,
-    receivedAtMs: publishTimeMs,
   };
 }

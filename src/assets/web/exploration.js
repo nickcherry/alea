@@ -59,7 +59,7 @@
     config: "Exact knob values for this candidate.",
     engagements: "How many times this config made a call.",
     winRate:
-      "How often this config's call matched the next bar. ▲ = UP calls, ▼ = DOWN calls.",
+      "How often this config's call matched the target bar. ▲ = UP calls, ▼ = DOWN calls.",
     minQwr:
       "Worst quarterly win rate. Helps spot edges that only worked briefly.",
     maxQwr: "Best quarterly win rate.",

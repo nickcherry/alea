@@ -97,7 +97,11 @@ function matchesOverride({
 }): boolean {
   return (
     matchesOptionalList({ value: stats.asset, list: override.assets }) &&
-    matchesOptionalList({ value: stats.period, list: override.periods })
+    matchesOptionalList({ value: stats.period, list: override.periods }) &&
+    matchesOptionalList({
+      value: stats.marketRegime,
+      list: override.marketRegimes,
+    })
   );
 }
 

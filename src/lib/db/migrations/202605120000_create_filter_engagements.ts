@@ -12,7 +12,7 @@ import { type Kysely, sql } from "kysely";
  * open-time of the candle being PREDICTED — i.e. the candle whose
  * direction the filter is voting on, NOT the candle the filter last
  * saw. `direction` is the filter's vote ('u' or 'd'); `won` is 1
- * iff the next bar's close was on the predicted side (with
+ * iff the target bar's close was on the predicted side (with
  * close == open rounding to 'u' — see runBacktest).
  *
  * The (run_hash, ts_ms) primary key gives both uniqueness and an

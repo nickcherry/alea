@@ -1,7 +1,6 @@
 import {
   TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
   TRADE_DECISION_HYDRATE_BARS,
-  TRADE_DECISION_MAX_PRICE_AGE_MS,
   TRADE_DECISION_REFRESH_LOOKBACK_BARS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
@@ -12,10 +11,6 @@ import {
   type AlignedBarSeries,
 } from "@alea/lib/filters/barSeries";
 import type { FilterBar } from "@alea/lib/filters/types";
-import {
-  fetchLatestPythPrices,
-  type LatestPythPrice,
-} from "@alea/lib/livePrices/pyth/fetchLatestPythPrices";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { Asset } from "@alea/types/assets";
 import type { Candle } from "@alea/types/candles";
@@ -38,9 +33,7 @@ export type TradeDecisionCandleRefresh = {
   readonly currentOpenTimeMs: number;
   readonly fetchedBarCount: number;
   readonly closedBarCount: number;
-  readonly latestPrice: LatestPythPrice | null;
-  readonly priceAgeMs: number | null;
-  readonly syntheticBar: FilterBar | null;
+  readonly referenceBar: FilterBar | null;
   readonly seriesForDecision: AlignedBarSeries | null;
 };
 
@@ -50,11 +43,6 @@ export type FetchCandles = (params: {
   readonly start: Date;
   readonly end: Date;
 }) => Promise<readonly Candle[]>;
-
-type FetchLatestPrices = (params: {
-  readonly assets: readonly Asset[];
-  readonly signal?: AbortSignal;
-}) => Promise<ReadonlyMap<Asset, LatestPythPrice>>;
 
 export async function hydrateTradeDecisionCandleState({
   asset,
@@ -123,22 +111,16 @@ export async function refreshTradeDecisionCandleState({
   state,
   nowMs,
   limit = TRADE_DECISION_HYDRATE_BARS,
-  maxPriceAgeMs = TRADE_DECISION_MAX_PRICE_AGE_MS,
   fetchCandles = fetchDecisionPythCandles,
   fetchCoinbaseBarsForRefresh = fetchDecisionCoinbaseCandles,
-  fetchLatestPrices = fetchLatestPythPrices,
   coinbaseFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
-  latestPriceFetchTimeoutMs = TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
 }: {
   readonly state: TradeDecisionCandleState;
   readonly nowMs: number;
   readonly limit?: number;
-  readonly maxPriceAgeMs?: number;
   readonly fetchCandles?: FetchCandles;
   readonly fetchCoinbaseBarsForRefresh?: FetchCandles;
-  readonly fetchLatestPrices?: FetchLatestPrices;
   readonly coinbaseFetchTimeoutMs?: number;
-  readonly latestPriceFetchTimeoutMs?: number;
 }): Promise<TradeDecisionCandleRefresh> {
   const currentOpenTimeMs = Math.floor(nowMs / state.periodMs) * state.periodMs;
   const pythFetchStartMs = getRefreshFetchStartMs({
@@ -153,8 +135,8 @@ export async function refreshTradeDecisionCandleState({
     limit,
     source: "coinbase",
   });
-  // Fetch Pyth (canonical timeline + active bar synthesis) and
-  // Coinbase (volume input for volume-source filters) concurrently.
+  // Fetch Pyth (canonical timeline) and Coinbase (volume input for
+  // volume-source filters) concurrently.
   // Coinbase fetch failure is soft — volume filters abstain on this
   // decision moment if the bundle can't be assembled.
   const [candles, coinbaseCandles] = await Promise.all([
@@ -194,69 +176,18 @@ export async function refreshTradeDecisionCandleState({
     limit,
   });
   state.lastRefreshedAtMs = nowMs;
-
-  const latestPrices = await fetchLatestPricesWithTimeout({
-    fetchLatestPrices,
-    assets: [state.asset],
-    timeoutMs: latestPriceFetchTimeoutMs,
-  });
-  const latestPrice = latestPrices.get(state.asset) ?? null;
-  if (latestPrice === null) {
+  const referenceBar = state.bars.at(-1) ?? null;
+  if (referenceBar === null) {
     return {
       currentOpenTimeMs,
       fetchedBarCount: fetchedBars.length,
       closedBarCount: closedBars.length,
-      latestPrice,
-      priceAgeMs: null,
-      syntheticBar: null,
+      referenceBar,
       seriesForDecision: null,
     };
   }
-
-  const priceAgeMs = Math.max(0, nowMs - latestPrice.publishTimeMs);
-  if (priceAgeMs > maxPriceAgeMs) {
-    return {
-      currentOpenTimeMs,
-      fetchedBarCount: fetchedBars.length,
-      closedBarCount: closedBars.length,
-      latestPrice,
-      priceAgeMs,
-      syntheticBar: null,
-      seriesForDecision: null,
-    };
-  }
-
-  const partialBar =
-    fetchedBars.find((bar) => bar.openTimeMs === currentOpenTimeMs) ?? null;
-  const syntheticBar = synthesizeActiveBar({
-    currentOpenTimeMs,
-    partialBar,
-    priorClose: state.bars.at(-1)?.close ?? null,
-    price: latestPrice.price,
-  });
-  if (syntheticBar === null) {
-    return {
-      currentOpenTimeMs,
-      fetchedBarCount: fetchedBars.length,
-      closedBarCount: closedBars.length,
-      latestPrice,
-      priceAgeMs,
-      syntheticBar: null,
-      seriesForDecision: null,
-    };
-  }
-  // Coinbase active bar: take the partial bar Coinbase returned for
-  // the open period (the Advanced Trade API serves partial 5m/15m
-  // bars). If absent, the active slot is null and volume filters
-  // abstain for this boundary.
-  const coinbasePartial =
-    fetchedCoinbaseBars.find((bar) => bar.openTimeMs === currentOpenTimeMs) ??
-    null;
-  const pythSeries = [...state.bars, syntheticBar];
-  const coinbaseSeries = [
-    ...state.coinbaseBars,
-    ...(coinbasePartial === null ? [] : [coinbasePartial]),
-  ];
+  const pythSeries = [...state.bars];
+  const coinbaseSeries = [...state.coinbaseBars];
   const seriesForDecision = alignBarSeries({
     pyth: pythSeries,
     coinbase: coinbaseSeries,
@@ -265,9 +196,7 @@ export async function refreshTradeDecisionCandleState({
     currentOpenTimeMs,
     fetchedBarCount: fetchedBars.length,
     closedBarCount: closedBars.length,
-    latestPrice,
-    priceAgeMs,
-    syntheticBar,
+    referenceBar,
     seriesForDecision,
   };
 }
@@ -382,68 +311,4 @@ async function fetchOptionalCandles({
       clearTimeout(timer);
     }
   }
-}
-
-async function fetchLatestPricesWithTimeout({
-  fetchLatestPrices,
-  assets,
-  timeoutMs,
-}: {
-  readonly fetchLatestPrices: FetchLatestPrices;
-  readonly assets: readonly Asset[];
-  readonly timeoutMs: number;
-}): Promise<ReadonlyMap<Asset, LatestPythPrice>> {
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  try {
-    return await Promise.race([
-      fetchLatestPrices({ assets, signal: controller.signal }),
-      new Promise<ReadonlyMap<Asset, LatestPythPrice>>((_, reject) => {
-        timer = setTimeout(() => {
-          controller.abort();
-          reject(
-            new Error(`latest Pyth price fetch timed out after ${timeoutMs}ms`),
-          );
-        }, timeoutMs);
-      }),
-    ]);
-  } finally {
-    if (timer !== null) {
-      clearTimeout(timer);
-    }
-  }
-}
-
-function synthesizeActiveBar({
-  currentOpenTimeMs,
-  partialBar,
-  priorClose,
-  price,
-}: {
-  readonly currentOpenTimeMs: number;
-  readonly partialBar: FilterBar | null;
-  readonly priorClose: number | null;
-  readonly price: number;
-}): FilterBar | null {
-  if (partialBar !== null) {
-    return {
-      openTimeMs: currentOpenTimeMs,
-      open: partialBar.open,
-      high: Math.max(partialBar.high, price),
-      low: Math.min(partialBar.low, price),
-      close: price,
-      volume: partialBar.volume,
-    };
-  }
-  if (priorClose === null) {
-    return null;
-  }
-  return {
-    openTimeMs: currentOpenTimeMs,
-    open: priorClose,
-    high: Math.max(priorClose, price),
-    low: Math.min(priorClose, price),
-    close: price,
-    volume: 0,
-  };
 }

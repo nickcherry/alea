@@ -16,6 +16,7 @@ import {
   TRADE_DECISION_LEAD_TIME_MS,
   TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
+  TRADE_DECISION_TARGET_LEAD_BARS,
 } from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -85,6 +86,7 @@ type DryRunDecisionRow = {
   readonly period: string;
   readonly prediction: "u" | "d";
   readonly synth_open: number;
+  readonly actual_open: number | null;
   readonly actual_close: number | null;
   readonly won: number | null;
   readonly market_regime: string | null;
@@ -119,6 +121,7 @@ export async function loadDryRunPayload({
       "period",
       "prediction",
       "synth_open",
+      "actual_open",
       "actual_close",
       "won",
       "market_regime",
@@ -146,6 +149,7 @@ export async function loadDryRunPayload({
       period: r.period,
       prediction: r.prediction,
       synthOpen: r.synth_open,
+      actualOpen: r.actual_open,
       actualClose: r.actual_close,
       won: r.won,
       marketRegime: r.market_regime,
@@ -173,6 +177,7 @@ export async function loadDryRunPayload({
       period: TRADE_DECISION_PRIMARY_PERIOD,
       supportedPeriods: TRADE_DECISION_SUPPORTED_PERIODS,
       leadTimeMs: TRADE_DECISION_LEAD_TIME_MS,
+      targetLeadBars: TRADE_DECISION_TARGET_LEAD_BARS,
       hydratedBars: TRADE_DECISION_HYDRATE_BARS,
       maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
       minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,

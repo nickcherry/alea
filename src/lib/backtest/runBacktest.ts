@@ -1,15 +1,16 @@
+import { TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS } from "@alea/constants/tradeDecision";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
+import type { DatabaseClient } from "@alea/lib/db/types";
 import {
   type AlignedBarSeries,
   selectFilterWindow,
 } from "@alea/lib/filters/barSeries";
 import { runHash } from "@alea/lib/filters/hash";
 import { getFilter } from "@alea/lib/filters/registry";
-import type { Candidate } from "@alea/lib/filters/types";
+import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
 import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
-import type { DatabaseClient } from "@alea/lib/db/types";
 
 export type BacktestStats = {
   readonly nBars: number;
@@ -23,9 +24,10 @@ export type BacktestStats = {
  * One row to insert into `filter_engagements`. Kept separate from
  * the aggregate counts so we can chunk these into the DB.
  *
- * `tsMs` is the open-time of the candle being PREDICTED (bar i+1),
- * NOT the candle the filter last saw. `direction` is the vote;
- * `won` is 1 iff the realised training direction matched. Tiny
+ * `tsMs` is the open-time of the candle being PREDICTED, not the
+ * candle the filter last saw. With the current one-candle lead, a
+ * window ending at bars[i] predicts bars[i + 2]. `direction` is the
+ * vote; `won` is 1 iff the realised training direction matched. Tiny
  * open-to-close moves inside the configured ambiguity band do not
  * produce engagement rows.
  */
@@ -58,23 +60,22 @@ const ENGAGEMENT_INSERT_CHUNK = 5000;
 
 /**
  * Walks a series of CLOSED bars and asks one candidate's filter to
- * predict at each bar boundary. At bar `i` (after it has closed),
+ * predict from a whole-candle lead. At bar `i` (after it has closed),
  * the filter sees `bars[i - N + 1 .. i]` (length N = requiredBars)
- * and predicts the direction of `bars[i + 1]`'s open→close move.
+ * and predicts the direction of `bars[i + 2]`'s open->close move.
  *
  * **No data leakage**: the prediction window is sliced *exclusive*
- * of `bars[i + 1]`, and the outcome (next bar's close vs open) is
- * only read AFTER the prediction is locked in. Filters never see
- * the bar they're voting on.
+ * of the hidden candle and target candle, and the outcome (target
+ * bar's close vs open) is only read AFTER the prediction is locked
+ * in. Filters never see the bar they're voting on.
  *
  * **Ambiguous outcomes**: Pyth is not the Polymarket settlement feed,
  * so target bars whose open-to-close move is inside the configured
  * training threshold are ignored. The prediction still happened, but
  * it does not contribute a win or loss to the training stats.
  *
- * The last bar in the series can't be a prediction subject (no
- * next bar to score against), so the loop stops at
- * `bars.length - 1`.
+ * The last target-offset bars in the series can't be prediction
+ * subjects, so the loop stops before it would run out of target bars.
  *
  * Caching: the row in `filter_runs` keyed by `runHash` is the
  * authoritative cache only when its stored range exactly matches the
@@ -275,14 +276,14 @@ export function isUsableTrainingCache({
 
 /**
  * Pure walker. Iterates the canonical Pyth timeline from index
- * `requiredBars - 1` to `pyth.length - 2` (each step needs a "next
- * bar" to score against), asks `selectWindow` for the trailing
+ * `requiredBars - 1` through the final index with a target-offset
+ * bar to score against, asks `selectWindow` for the trailing
  * window in the filter's declared source, and runs `predict` on it.
  *
  * If `selectWindow` returns `null` (e.g. a Coinbase gap for a volume
  * filter) the bar is skipped — same effect as the filter abstaining.
  *
- * Outcome labeling ALWAYS reads from `series.pyth[i + 1]`, regardless
+ * Outcome labeling ALWAYS reads from the offset target Pyth bar, regardless
  * of the filter's input source. Pyth is the Polymarket-aligned
  * outcome proxy; we judge every filter against the same outcome
  * series so price-only and volume filters are directly comparable.
@@ -290,7 +291,7 @@ export function isUsableTrainingCache({
  * Target bars whose close is inside the configured percent threshold
  * around open are treated as ambiguous and skipped.
  */
-function walkSeries({
+export function walkSeries({
   series,
   requiredBars,
   selectWindow,
@@ -298,12 +299,8 @@ function walkSeries({
 }: {
   readonly series: AlignedBarSeries;
   readonly requiredBars: number;
-  readonly selectWindow: (
-    endInclusive: number,
-  ) => readonly import("@alea/lib/filters/types").FilterBar[] | null;
-  readonly predict: (
-    window: readonly import("@alea/lib/filters/types").FilterBar[],
-  ) => "up" | "down" | null;
+  readonly selectWindow: (endInclusive: number) => readonly FilterBar[] | null;
+  readonly predict: (window: readonly FilterBar[]) => "up" | "down" | null;
 }): {
   readonly stats: BacktestStats;
   readonly engagements: readonly BacktestEngagement[];
@@ -315,7 +312,7 @@ function walkSeries({
   const engagements: BacktestEngagement[] = [];
   const pyth = series.pyth;
   const start = Math.max(requiredBars - 1, 0);
-  const end = pyth.length - 2; // need bar[i+1] for outcome
+  const end = pyth.length - 1 - TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS;
   for (let i = start; i <= end; i += 1) {
     const window = selectWindow(i);
     if (window === null) {
@@ -325,7 +322,7 @@ function walkSeries({
     if (pred === null) {
       continue;
     }
-    const next = pyth[i + 1]!;
+    const next = pyth[i + TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS]!;
     const actual = resolveTrainingOutcomeDirection({
       open: next.open,
       close: next.close,

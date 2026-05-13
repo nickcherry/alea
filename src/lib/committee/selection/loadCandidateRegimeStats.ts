@@ -1,3 +1,7 @@
+import {
+  TRADE_DECISION_PERIOD_MS,
+  TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS,
+} from "@alea/constants/tradeDecision";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { CandidateRegimeStats } from "@alea/lib/committee/selection/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -13,6 +17,8 @@ import { sql } from "kysely";
  * `filter_engagements ⋈ bar_regimes` and folds them down to a flat
  * list the selector consumes. One row per
  * `(filter_id, filter_version, config_canon, asset, period, market_regime)`.
+ * The engagement timestamp is the target candle open, so the regime join
+ * shifts back to the last candle visible at decision time.
  *
  * The candidate's regime stats are intentionally asset-scoped. We compute
  * aggregate counts AND the worst-quarter
@@ -55,7 +61,13 @@ export async function loadCandidateRegimeStats({
     join bar_regimes br
       on br.asset = fr.asset
       and br.period = fr.period
-      and br.ts_ms = fe.ts_ms
+      and br.ts_ms = fe.ts_ms - (
+        case fr.period
+          when '5m' then ${TRADE_DECISION_PERIOD_MS["5m"] * TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS}
+          when '15m' then ${TRADE_DECISION_PERIOD_MS["15m"] * TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS}
+          else 0
+        end
+      )
     where br.market_regime is not null
       and fr.training_profile = ${TRAINING_PROFILE_ID}
     group by fr.filter_id, fr.filter_version, fr.config_canon, fr.asset, fr.period,

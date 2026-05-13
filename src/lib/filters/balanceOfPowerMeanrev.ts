@@ -53,4 +53,3 @@ registerFilter({
     { length: 7, threshold: 0.45 },
   ],
 });
-

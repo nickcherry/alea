@@ -1,3 +1,7 @@
+import {
+  TRADE_DECISION_PERIOD_MS,
+  TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS,
+} from "@alea/constants/tradeDecision";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { sql } from "kysely";
@@ -14,9 +18,10 @@ export type RegimeAggregateRow = {
 
 /**
  * Per-(run_hash, market_regime, direction, year, quarter) engagement/win
- * counts. Joins `filter_engagements` with `bar_regimes` on
- * (asset, period, ts_ms); filter_engagements doesn't carry
- * asset/period directly so we go through `filter_runs`.
+ * counts. `filter_engagements.ts_ms` is the target candle open, so the
+ * join shifts back to the last candle visible at decision time.
+ * `filter_engagements` doesn't carry asset/period directly, so we go
+ * through `filter_runs`.
  */
 export async function loadRegimeAggregates({
   db,
@@ -45,7 +50,13 @@ export async function loadRegimeAggregates({
     join bar_regimes br
       on br.asset = fr.asset
       and br.period = fr.period
-      and br.ts_ms = fe.ts_ms
+      and br.ts_ms = fe.ts_ms - (
+        case fr.period
+          when '5m' then ${TRADE_DECISION_PERIOD_MS["5m"] * TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS}
+          when '15m' then ${TRADE_DECISION_PERIOD_MS["15m"] * TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS}
+          else 0
+        end
+      )
     where br.market_regime is not null
       and fr.training_profile = ${TRAINING_PROFILE_ID}
     group by fe.run_hash, br.market_regime, fe.direction, year, quarter

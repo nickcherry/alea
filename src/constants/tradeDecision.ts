@@ -1,3 +1,6 @@
+import type { MarketRegime } from "@alea/lib/regime/types";
+import type { Asset } from "@alea/types/assets";
+
 /**
  * Source-of-truth knobs for turning committee votes into an
  * actionable trade decision. Dry-run and live trading must read
@@ -16,10 +19,30 @@ export const TRADE_DECISION_SUPPORTED_PERIODS = ["5m", "15m"] as const;
 export type TradeDecisionPeriod =
   (typeof TRADE_DECISION_SUPPORTED_PERIODS)[number];
 
+export type CommitteeDecisionPolicyId =
+  | "base"
+  | "shape-v1"
+  | "shape-v2"
+  | "shape-v3"
+  | "shape-v4"
+  | "shape-v5";
+
+export type CommitteeDecisionContext = {
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly marketRegime: MarketRegime;
+};
+
 export type CommitteeDecisionRules = {
   readonly maxVotesPerFilter: number;
   readonly minVotesToTrade: number;
   readonly minConsensusFraction: number;
+  readonly policyId?: CommitteeDecisionPolicyId;
+};
+
+export const TRADE_DECISION_PERIOD_MS: Record<TradeDecisionPeriod, number> = {
+  "5m": 5 * 60 * 1000,
+  "15m": 15 * 60 * 1000,
 };
 
 /**
@@ -36,10 +59,42 @@ export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
 
 /**
- * How long before the target candle opens the loop snapshots the
- * live price and makes its decision.
+ * Whole closed-candle periods between order placement and the target
+ * candle open. A value of 1 means the 5m target from 2:20-2:25 is
+ * decided at 2:15 from bars ending at 2:15 or earlier.
  */
-export const TRADE_DECISION_LEAD_TIME_MS = 90 * 1000;
+export const TRADE_DECISION_TARGET_LEAD_BARS = 1;
+
+/**
+ * Training labels are indexed from the last candle visible to a filter.
+ * With one hidden candle before target, a window ending at bars[i]
+ * scores bars[i + 2].
+ */
+export const TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS =
+  TRADE_DECISION_TARGET_LEAD_BARS + 1;
+
+/**
+ * Persisted on derived training artifacts so rows produced under a
+ * different decision-timing contract are never mixed.
+ */
+export const TRADE_DECISION_TIMING_PROFILE_ID = `target-lead-bars-v1:${TRADE_DECISION_TARGET_LEAD_BARS}`;
+
+export function tradeDecisionLeadTimeMs({
+  period,
+}: {
+  readonly period: TradeDecisionPeriod;
+}): number {
+  return TRADE_DECISION_PERIOD_MS[period] * TRADE_DECISION_TARGET_LEAD_BARS;
+}
+
+/**
+ * Primary-period display value retained for payloads that still expect a
+ * single millisecond lead. Scheduling must call `tradeDecisionLeadTimeMs`
+ * because 5m and 15m now intentionally differ.
+ */
+export const TRADE_DECISION_LEAD_TIME_MS = tradeDecisionLeadTimeMs({
+  period: TRADE_DECISION_PRIMARY_PERIOD,
+});
 
 /**
  * Closed bars hydrated at startup. This must cover the regime
@@ -55,14 +110,6 @@ export const TRADE_DECISION_HYDRATE_BARS = 150;
 export const TRADE_DECISION_REFRESH_LOOKBACK_BARS = 8;
 
 /**
- * Maximum tolerated age for the one-shot Pyth price used to synthesize
- * the active candle at decision time. Pyth publishes frequently; older
- * snapshots usually mean Hermes or our network path is stale enough to
- * skip the decision instead of trading on stale state.
- */
-export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
-
-/**
  * Decision-time candle refresh must fail fast: waiting through the
  * normal sync/backfill retry policy would miss the market boundary.
  */
@@ -75,7 +122,7 @@ export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
 export const MAX_COMMITTEE_VOTES_PER_FILTER = 1;
 
 /** Minimum non-abstain, filter-collapsed votes required to trade. */
-export const MIN_COMMITTEE_VOTES_TO_TRADE = 3;
+export const MIN_COMMITTEE_VOTES_TO_TRADE = 2;
 
 /**
  * Minimum share of non-abstain votes that the winning side must
@@ -83,10 +130,14 @@ export const MIN_COMMITTEE_VOTES_TO_TRADE = 3;
  */
 export const MIN_COMMITTEE_CONSENSUS_FRACTION = 0.5;
 
+export const COMMITTEE_DECISION_POLICY_ID: CommitteeDecisionPolicyId =
+  "shape-v5";
+
 export const DEFAULT_COMMITTEE_DECISION_RULES: CommitteeDecisionRules = {
   maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
   minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
   minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
+  policyId: COMMITTEE_DECISION_POLICY_ID,
 };
 
 export const TRADE_DECISION_FILTER_TIE_BREAK =

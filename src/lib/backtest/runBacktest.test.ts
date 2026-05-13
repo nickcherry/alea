@@ -1,4 +1,9 @@
-import { isUsableTrainingCache } from "@alea/lib/backtest/runBacktest";
+import {
+  isUsableTrainingCache,
+  walkSeries,
+} from "@alea/lib/backtest/runBacktest";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
+import type { FilterBar } from "@alea/lib/filters/types";
 import { describe, expect, it } from "bun:test";
 
 describe("isUsableTrainingCache", () => {
@@ -51,3 +56,40 @@ describe("isUsableTrainingCache", () => {
     ).toBe(false);
   });
 });
+
+describe("walkSeries", () => {
+  it("scores the candle after one fully hidden candle", () => {
+    const series: AlignedBarSeries = {
+      pyth: [
+        bar(0, 100, 101),
+        bar(300_000, 101, 102),
+        bar(600_000, 102, 104),
+        bar(900_000, 104, 100),
+      ],
+      coinbase: [null, null, null, null],
+    };
+
+    const walked = walkSeries({
+      series,
+      requiredBars: 1,
+      selectWindow: (endInclusive) => [series.pyth[endInclusive]!],
+      predict: (window) => (window[0]!.openTimeMs === 0 ? "up" : "down"),
+    });
+
+    expect(walked.engagements).toEqual([
+      { tsMs: 600_000, direction: "u", won: 1 },
+      { tsMs: 900_000, direction: "d", won: 1 },
+    ]);
+  });
+});
+
+function bar(openTimeMs: number, open: number, close: number): FilterBar {
+  return {
+    openTimeMs,
+    open,
+    high: Math.max(open, close),
+    low: Math.min(open, close),
+    close,
+    volume: 0,
+  };
+}

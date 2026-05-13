@@ -47,9 +47,11 @@ function payloadFixture(): BacktestDashboardPayload {
       assets: ["btc", "eth"],
       tradeDecisionConfig: {
         hydrateBars: 150,
+        targetLeadBars: 1,
         maxVotesPerFilter: 1,
         minVotesToTrade: 1,
         minConsensusFraction: 0.5,
+        policyId: "shape-v2",
       },
       roster: {
         selectedAtMs: Date.UTC(2026, 4, 12, 11),

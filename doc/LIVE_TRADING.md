@@ -70,17 +70,15 @@ For each asset/period:
    parallel in-memory buffers. Pyth is the canonical timeline;
    Coinbase supplies volume for filters that declare
    `barSource: "coinbase"`.
-2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 5m` before the
-   next market opens, it resolves the next Polymarket slug and
-   subscribes to both UP and DOWN token books. Polymarket currently
-   exposes these books much earlier, but 5 minutes keeps the hot path
-   settled without carrying a day of subscriptions.
-3. At `T-90s`, it refreshes recent Pyth and Coinbase spot candles for
-   every due asset/period concurrently, fetches the latest Pyth price,
-   synthesizes the active Pyth candle, aligns Coinbase bars to the
-   Pyth timestamps, and asks the committee for a decision. Coinbase
-   failures are soft; Pyth failures or stale latest Pyth prices skip
-   the decision.
+2. Before the target market opens, it resolves the next Polymarket slug
+   and subscribes to both UP and DOWN token books. The effective
+   discovery lead is at least the trade decision lead, so `15m` markets
+   are discovered before the one-candle-early decision fires.
+3. One whole candle before target open, it refreshes recent Pyth and
+   Coinbase spot candles for every due asset/period concurrently, omits
+   the in-flight candle, aligns Coinbase bars to the closed Pyth
+   timestamps, and asks the committee for a decision. Coinbase failures
+   are soft; Pyth refresh failures skip the decision.
 4. If the decision is actionable, live placement starts immediately.
    Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
    `15m` crypto up/down markets were already `active`, `accepting`,

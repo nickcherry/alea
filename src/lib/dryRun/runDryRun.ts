@@ -4,7 +4,7 @@ import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
 import {
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
-  TRADE_DECISION_LEAD_TIME_MS,
+  tradeDecisionLeadTimeMs,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
@@ -63,7 +63,7 @@ export type DryRunLogEvent =
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d" | null;
-      readonly synthClose: number;
+      readonly referenceClose: number;
       readonly marketRegime: MarketRegime | null;
       readonly rosterSize: number;
       readonly up: number;
@@ -90,11 +90,10 @@ export type DryRunLogEvent =
  * Operations:
  *   1. Hydrate per-asset/per-period bar buffers from fresh Pyth candles
  *      (most recent trade-decision history bars).
- *   2. Shortly before each configured boundary, refresh recent Pyth
- *      candles into the in-memory buffer and synthesize the active
- *      candle from the latest one-shot Pyth price.
- *   3. Run the committee against that refreshed/synthetic bar set and
- *      persist the decision if it's not an abstain.
+ *   2. One whole candle before the target boundary, refresh recent Pyth
+ *      candles into the in-memory buffer.
+ *   3. Run the committee against closed bars only and persist the
+ *      decision if it's not an abstain.
  *   4. For non-abstain decisions, simulate the configured pre-open
  *      Polymarket order and track whether it fills before expiry.
  *
@@ -189,14 +188,17 @@ export async function runDryRun({
           assets,
           timeframes: selectedPeriods,
           nowMs: now,
-          discoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
+          discoveryLeadMs: Math.max(
+            DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
+            maxTradeDecisionLeadTimeMs({ periods: selectedPeriods }),
+          ),
         });
         await orderSimulator.tick({ nowMs: now });
         let nextFireTime = now + 1000;
         for (const period of selectedPeriods) {
           const periodMs = resolutionTimeframeStepMs({ timeframe: period });
-          const nextBoundary = Math.ceil(now / periodMs) * periodMs;
-          const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
+          const nextBoundary = Math.floor(now / periodMs) * periodMs + periodMs;
+          const fireTime = nextBoundary - tradeDecisionLeadTimeMs({ period });
           nextFireTime = Math.min(nextFireTime, fireTime);
           if (now >= fireTime) {
             for (const state of statesByPeriod.get(period) ?? []) {
@@ -226,17 +228,10 @@ export async function runDryRun({
                 pendingByState,
                 log,
               });
-              if (
-                refreshed.syntheticBar === null ||
-                refreshed.seriesForDecision === null
-              ) {
-                const reason =
-                  refreshed.priceAgeMs === null
-                    ? "missing latest Pyth price"
-                    : `latest Pyth price stale (${refreshed.priceAgeMs}ms old)`;
+              if (refreshed.seriesForDecision === null) {
                 log({
                   kind: "error",
-                  message: `skip decision ${state.period}/${state.asset}: ${reason}`,
+                  message: `skip decision ${state.period}/${state.asset}: missing closed Pyth bars`,
                 });
                 continue;
               }
@@ -246,7 +241,7 @@ export async function runDryRun({
                 state,
                 targetTsMs: nextBoundary,
                 series: refreshed.seriesForDecision,
-                synthBar: refreshed.syntheticBar,
+                referenceBar: refreshed.referenceBar,
                 roster,
                 candidatesByKey,
                 pendingByState,
@@ -279,7 +274,7 @@ async function makePrediction({
   state,
   targetTsMs,
   series,
-  synthBar,
+  referenceBar,
   roster,
   candidatesByKey,
   pendingByState,
@@ -290,7 +285,7 @@ async function makePrediction({
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
   readonly series: AlignedBarSeries;
-  readonly synthBar: FilterBar;
+  readonly referenceBar: FilterBar | null;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
   readonly pendingByState: Map<string, Map<number, string>>;
@@ -307,13 +302,14 @@ async function makePrediction({
   });
   const decisionCompletedAtMs = Date.now();
   const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
+  const referenceClose = referenceBar?.close ?? series.pyth.at(-1)?.close ?? 0;
   log({
     kind: "decision",
     asset: state.asset,
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
-    synthClose: synthBar.close,
+    referenceClose,
     marketRegime: evaluated.marketRegime,
     rosterSize: evaluated.rosterSize,
     up: evaluated.up,
@@ -339,12 +335,9 @@ async function makePrediction({
     return;
   }
   const prediction = evaluated.prediction;
-  // Persist. The target bar's open = targetTsMs (i.e. the upcoming
-  // period boundary). Its open price is approximately the current
-  // Pyth price (close of the bar we just synthesised). We persist
-  // that as `synth_open` because it's both the synthetic close of
-  // the prior bar AND the open we're betting the next bar moves away
-  // from.
+  // Persist. `synth_open` is a legacy column name; with the one-candle
+  // lead it stores the latest closed Pyth price visible at decision time,
+  // while actual target open is filled in later during scoring.
   //
   // `regime_votes` keeps its legacy column name but stores the
   // filter-collapsed decision tally — `{up, down, abstain}`. Old
@@ -358,7 +351,7 @@ async function makePrediction({
       asset: state.asset,
       period: state.period,
       prediction,
-      synth_open: synthBar.close,
+      synth_open: referenceClose,
       regime_votes: JSON.stringify({
         up: evaluated.up,
         down: evaluated.down,
@@ -515,6 +508,7 @@ async function scoreDecision({
   await db
     .updateTable("dry_run_decisions")
     .set({
+      actual_open: closedBar.open,
       actual_close: closedBar.close,
       won,
     })
@@ -530,6 +524,17 @@ async function scoreDecision({
     actualOpen: closedBar.open,
     won: won === 1,
   });
+}
+
+function maxTradeDecisionLeadTimeMs({
+  periods,
+}: {
+  readonly periods: readonly TradeDecisionPeriod[];
+}): number {
+  return periods.reduce(
+    (max, period) => Math.max(max, tradeDecisionLeadTimeMs({ period })),
+    0,
+  );
 }
 
 function dryRunStateKey({

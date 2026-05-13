@@ -26,23 +26,25 @@ DB and uses a half-open upper bound of
 `2026-03-31T23:59:59.999Z`.
 
 Each training pass loads an aligned Pyth/Coinbase bundle. Pyth spot
-defines the canonical timeline and labels the next-bar outcome;
+defines the canonical timeline and labels the target outcome;
 Coinbase spot is only the input source for filters whose
 `barSource` is `"coinbase"`. If Coinbase has a gap inside one of
 those filters' required windows, that moment is treated as an
 abstain for the candidate rather than a win or loss.
 
-`TRAINING_PROFILE_ID` combines the outcome-labeling rule with the
-research-window identity. Changing either invalidates old `filter_runs`
-and old committee rosters until `training:run` and `committee:select`
-are refreshed.
+`TRAINING_PROFILE_ID` combines the outcome-labeling rule, decision-timing
+contract, and research-window identity. Changing any of those invalidates
+old `filter_runs` and old committee rosters until `training:run` and
+`committee:select` are refreshed.
 
 ## No-Leak Invariant
 
 At bar `i`, a filter sees `bars[i - requiredBars + 1 .. i]` from its
-declared source; the target bar is the Pyth bar at `bars[i + 1]` and
-is only read after the prediction is locked in. Tiny Pyth moves are
-treated as ambiguous via
+declared source. One whole candle is hidden before the target, so the
+target bar is the Pyth bar at `bars[i + 2]` and is only read after the
+prediction is locked in. For example, a `5m` decision for the
+`2:20-2:25` target candle uses bars closed by `2:15`; it does not see
+the `2:15-2:20` candle. Tiny Pyth moves are treated as ambiguous via
 `TRAINING_OUTCOME_MIN_ABS_MOVE_PCT` and do not create
 `filter_engagements` rows.
 

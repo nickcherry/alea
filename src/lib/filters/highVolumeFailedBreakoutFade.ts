@@ -1,8 +1,4 @@
-import {
-  highestHigh,
-  lowestLow,
-  meanVolume,
-} from "@alea/lib/filters/_barMath";
+import { highestHigh, lowestLow, meanVolume } from "@alea/lib/filters/_barMath";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
 import { computeAtrSeries } from "@alea/lib/indicators/atr";
@@ -122,15 +118,87 @@ export const highVolumeFailedBreakoutFade: Filter<Config> = {
 registerFilter({
   filter: highVolumeFailedBreakoutFade as Filter<unknown>,
   defaultConfigs: () => [
-    { lookback: 20, volLength: 20, relVolMin: 1.8, atrLength: 14, minSweepAtr: 0.05, maxCloseBeyondAtr: 0, minRejectionFrac: 0.4 },
-    { lookback: 20, volLength: 20, relVolMin: 2.5, atrLength: 14, minSweepAtr: 0.1, maxCloseBeyondAtr: 0, minRejectionFrac: 0.45 },
-    { lookback: 50, volLength: 50, relVolMin: 2.0, atrLength: 14, minSweepAtr: 0.1, maxCloseBeyondAtr: 0.03, minRejectionFrac: 0.4 },
-    { lookback: 14, volLength: 20, relVolMin: 3.0, atrLength: 7, minSweepAtr: 0.05, maxCloseBeyondAtr: 0, minRejectionFrac: 0.5 },
-    { lookback: 30, volLength: 50, relVolMin: 2.2, atrLength: 20, minSweepAtr: 0.15, maxCloseBeyondAtr: 0.05, minRejectionFrac: 0.45 },
+    {
+      lookback: 20,
+      volLength: 20,
+      relVolMin: 1.8,
+      atrLength: 14,
+      minSweepAtr: 0.05,
+      maxCloseBeyondAtr: 0,
+      minRejectionFrac: 0.4,
+    },
+    {
+      lookback: 20,
+      volLength: 20,
+      relVolMin: 2.5,
+      atrLength: 14,
+      minSweepAtr: 0.1,
+      maxCloseBeyondAtr: 0,
+      minRejectionFrac: 0.45,
+    },
+    {
+      lookback: 50,
+      volLength: 50,
+      relVolMin: 2.0,
+      atrLength: 14,
+      minSweepAtr: 0.1,
+      maxCloseBeyondAtr: 0.03,
+      minRejectionFrac: 0.4,
+    },
+    {
+      lookback: 14,
+      volLength: 20,
+      relVolMin: 3.0,
+      atrLength: 7,
+      minSweepAtr: 0.05,
+      maxCloseBeyondAtr: 0,
+      minRejectionFrac: 0.5,
+    },
+    {
+      lookback: 30,
+      volLength: 50,
+      relVolMin: 2.2,
+      atrLength: 20,
+      minSweepAtr: 0.15,
+      maxCloseBeyondAtr: 0.05,
+      minRejectionFrac: 0.45,
+    },
     // Push longer lookbacks + slight close-beyond tolerance + moderate relVol.
-    { lookback: 80, volLength: 50, relVolMin: 1.8, atrLength: 14, minSweepAtr: 0.1, maxCloseBeyondAtr: 0.05, minRejectionFrac: 0.4 },
-    { lookback: 60, volLength: 50, relVolMin: 2.0, atrLength: 14, minSweepAtr: 0.12, maxCloseBeyondAtr: 0.04, minRejectionFrac: 0.42 },
-    { lookback: 40, volLength: 50, relVolMin: 1.7, atrLength: 14, minSweepAtr: 0.08, maxCloseBeyondAtr: 0.03, minRejectionFrac: 0.38 },
-    { lookback: 50, volLength: 50, relVolMin: 2.4, atrLength: 20, minSweepAtr: 0.12, maxCloseBeyondAtr: 0.05, minRejectionFrac: 0.45 },
+    {
+      lookback: 80,
+      volLength: 50,
+      relVolMin: 1.8,
+      atrLength: 14,
+      minSweepAtr: 0.1,
+      maxCloseBeyondAtr: 0.05,
+      minRejectionFrac: 0.4,
+    },
+    {
+      lookback: 60,
+      volLength: 50,
+      relVolMin: 2.0,
+      atrLength: 14,
+      minSweepAtr: 0.12,
+      maxCloseBeyondAtr: 0.04,
+      minRejectionFrac: 0.42,
+    },
+    {
+      lookback: 40,
+      volLength: 50,
+      relVolMin: 1.7,
+      atrLength: 14,
+      minSweepAtr: 0.08,
+      maxCloseBeyondAtr: 0.03,
+      minRejectionFrac: 0.38,
+    },
+    {
+      lookback: 50,
+      volLength: 50,
+      relVolMin: 2.4,
+      atrLength: 20,
+      minSweepAtr: 0.12,
+      maxCloseBeyondAtr: 0.05,
+      minRejectionFrac: 0.45,
+    },
   ],
 });

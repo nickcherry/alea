@@ -217,6 +217,7 @@ function formatSelectionOverride({
     override.assets?.map((asset) => asset.toUpperCase()).join("/") ??
       "all assets",
     override.periods?.join("/") ?? "all periods",
+    override.marketRegimes?.join("/") ?? "all regimes",
   ].join(" ");
   const values = [
     override.minEngagements === undefined
