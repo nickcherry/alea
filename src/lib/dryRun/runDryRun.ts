@@ -27,6 +27,7 @@ import {
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
 import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDecision";
+import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
@@ -118,6 +119,7 @@ export async function runDryRun({
   for (const period of selectedPeriods) {
     statesByPeriod.set(period, []);
   }
+  const fetchCandles = createMarketEventPythCandleFetcher({ db });
   // Hydrate.
   for (const asset of assets) {
     for (const period of selectedPeriods) {
@@ -125,6 +127,7 @@ export async function runDryRun({
         asset,
         period,
         limit: TRADE_DECISION_HYDRATE_BARS,
+        fetchCandles,
       });
       states.set(dryRunStateKey({ asset, period }), state);
       statesByPeriod.get(period)?.push(state);
@@ -207,6 +210,7 @@ export async function runDryRun({
                   state,
                   nowMs: now,
                   limit: TRADE_DECISION_HYDRATE_BARS,
+                  fetchCandles,
                 });
               } catch (e) {
                 log({

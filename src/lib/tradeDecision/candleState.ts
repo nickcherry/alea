@@ -34,7 +34,7 @@ export type TradeDecisionCandleRefresh = {
   readonly barsForDecision: readonly FilterBar[] | null;
 };
 
-type FetchCandles = (params: {
+export type FetchCandles = (params: {
   readonly asset: Asset;
   readonly timeframe: TradeDecisionPeriod;
   readonly start: Date;

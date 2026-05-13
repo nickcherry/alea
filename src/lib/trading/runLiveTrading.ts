@@ -19,11 +19,13 @@ import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowS
 import { getPolymarketClobClient } from "@alea/lib/polymarket/getPolymarketClobClient";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import {
+  type FetchCandles,
   hydrateTradeDecisionCandleState,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
 import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDecision";
+import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
 import {
   createLiveOrderExecutor,
   type LiveTradingMarketLogEvent,
@@ -92,12 +94,14 @@ export async function runLiveTrading({
   for (const period of selectedPeriods) {
     statesByPeriod.set(period, []);
   }
+  const fetchCandles = createMarketEventPythCandleFetcher({ db });
   for (const asset of assets) {
     for (const period of selectedPeriods) {
       const state = await hydrateTradeDecisionCandleState({
         asset,
         period,
         limit: TRADE_DECISION_HYDRATE_BARS,
+        fetchCandles,
       });
       statesByPeriod.get(period)?.push(state);
       log({ kind: "hydrated", asset, period, barCount: state.bars.length });
@@ -157,6 +161,7 @@ export async function runLiveTrading({
             const refreshed = await refreshStateForDecision({
               state,
               now,
+              fetchCandles,
               log,
             });
             if (refreshed === null) {
@@ -196,10 +201,12 @@ export async function runLiveTrading({
 async function refreshStateForDecision({
   state,
   now,
+  fetchCandles,
   log,
 }: {
   readonly state: TradeDecisionCandleState;
   readonly now: number;
+  readonly fetchCandles: FetchCandles;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<{
   readonly barsForDecision: readonly FilterBar[];
@@ -210,6 +217,7 @@ async function refreshStateForDecision({
       state,
       nowMs: now,
       limit: TRADE_DECISION_HYDRATE_BARS,
+      fetchCandles,
     });
     if (refreshed.syntheticBar === null || refreshed.barsForDecision === null) {
       const reason =
