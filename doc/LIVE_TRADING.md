@@ -3,7 +3,7 @@
 `bun alea trading:run` is the real-money version of the committee
 runner. It uses the same source-aware candle refresh, regime
 classification, committee roster, one-vote-per-filter aggregation,
-and confidence gate as dry-run. The difference is execution:
+and order-placement policy as dry-run. The difference is execution:
 actionable decisions place real Polymarket orders.
 
 Run it:
@@ -104,16 +104,15 @@ Live trading only places predicted-side maker buys:
 - Notional: `STAKE_USD`.
 - Price band: `50c +/- LIVE_TRADING_ORDER_PRICE_WINDOW_CENTS`, today
   `+/- 3c`.
-- Confidence gate: average winning-voter selected win rate must be at
-  least the limit price.
+- Confidence: logged for analysis, not used as an order-placement gate.
 
 If placement is rejected or the book moves, the runner recomputes from
 the latest known book and retries up to
 `LIVE_TRADING_MAX_ORDER_ATTEMPTS = 800`, as long as the recomputed
-order remains inside the price band and passes the confidence gate. A
-post-only cross rejection ratchets the next attempt down by one tick
+order remains inside the price band. A post-only cross rejection
+ratchets the next attempt down by one tick
 even if no fresher WebSocket quote has arrived. There is no retry after
-price-band or confidence failure.
+price-band failure.
 
 Rate-limit and transient venue failures use adaptive retry sleeps
 instead of the normal 50ms placement retry delay. This avoids turning

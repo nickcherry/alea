@@ -36,7 +36,7 @@ function setQuote({
 }
 
 describe("resolveDryRunOrderPlacement", () => {
-  it("places a predicted-side buy one tick below the same-side best ask when confidence clears the limit", () => {
+  it("places a predicted-side buy one tick below the same-side best ask", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.495, ask: 0.505 });
 
@@ -97,7 +97,7 @@ describe("resolveDryRunOrderPlacement", () => {
     });
   });
 
-  it("skips when committee confidence does not clear the limit price", () => {
+  it("places even when committee confidence is below the limit price", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.515, ask: 0.525 });
 
@@ -109,9 +109,29 @@ describe("resolveDryRunOrderPlacement", () => {
         confidence: 0.512,
       }),
     ).toMatchObject({
-      status: "skipped_confidence",
+      status: "placed",
       observedPrice: 0.52,
       limitPrice: 0.524,
+      confidence: 0.512,
+    });
+  });
+
+  it("places even when committee confidence is missing", () => {
+    const state = emptyState();
+    setQuote({ state, side: "up", bid: 0.515, ask: 0.525 });
+
+    expect(
+      resolveDryRunOrderPlacement({
+        prediction: "u",
+        state,
+        nowMs: NOW_MS,
+        confidence: null,
+      }),
+    ).toMatchObject({
+      status: "placed",
+      observedPrice: 0.52,
+      limitPrice: 0.524,
+      confidence: null,
     });
   });
 

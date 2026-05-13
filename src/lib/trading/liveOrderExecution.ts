@@ -457,17 +457,6 @@ export function createLiveOrderExecutor({
           });
           return;
         }
-        if (cappedPlacement.status === "confidence") {
-          logOrder({
-            order,
-            status: "skipped_confidence",
-            attempt,
-            placement: cappedPlacement,
-            session,
-          });
-          return;
-        }
-
         const request = buildLiveMakerLimitBuyOrder({
           market: session.market,
           period: order.period,
@@ -797,14 +786,6 @@ function applyPostOnlyLimitCap({
   if (Math.abs(limitPrice - 0.5) > priceWindow) {
     return {
       status: "price_window",
-      observedPrice: placement.observedPrice,
-      limitPrice,
-      confidence: placement.confidence,
-    };
-  }
-  if (placement.confidence < limitPrice) {
-    return {
-      status: "confidence",
       observedPrice: placement.observedPrice,
       limitPrice,
       confidence: placement.confidence,

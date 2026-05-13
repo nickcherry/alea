@@ -36,16 +36,10 @@ export type MakerLimitBuyPlacement =
       readonly confidence: number | null;
     }
   | {
-      readonly status: "confidence";
-      readonly observedPrice: number;
-      readonly limitPrice: number;
-      readonly confidence: number | null;
-    }
-  | {
       readonly status: "placeable";
       readonly observedPrice: number;
       readonly limitPrice: number;
-      readonly confidence: number;
+      readonly confidence: number | null;
     };
 
 export type PredictedSideBookSnapshot = {
@@ -187,15 +181,6 @@ export function resolveMakerLimitBuyPlacement({
       confidence,
     };
   }
-  if (confidence === null || confidence < limitPrice) {
-    return {
-      status: "confidence",
-      observedPrice: observed,
-      limitPrice,
-      confidence,
-    };
-  }
-
   return {
     status: "placeable",
     observedPrice: observed,

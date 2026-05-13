@@ -58,10 +58,8 @@ For each configured period, defaulting to `5m,15m`, and each of the
    current and next markets before entry so the market subscription is
    already available when the simulated placement time arrives. If the
    observed predicted-side price is within the
-   configured 50c window, and the average
-   selected asset/regime win rate of the effective winning voters is at
-   least the simulated limit price, place a pretend limit buy by
-   bidding one tick below the predicted-side best ask, or one tick
+   configured 50c window, place a pretend limit buy by bidding one tick
+   below the predicted-side best ask, or one tick
    below 50c if no predicted-side ask has arrived yet. The runner then watches the
    latest known predicted-side ask until the target market closes.
    If the simulated limit never becomes executable, the row is marked
@@ -161,13 +159,10 @@ equal to the simulated limit price. Trade prints are
 intentionally not fill evidence, because seeing a trade does not prove
 our resting order would have been next in queue.
 
-The confidence gate uses the average selected asset/regime win rate across
-the effective winning voters after the same one-vote-per-filter
-collapse used by the committee decision. A simulated order is skipped
-when `avg_confidence < limit_price`; in a zero-fee binary market this
-is the direct expected-value check. This is direction-neutral because
-UP decisions compare against the UP token price and DOWN decisions
-compare against the DOWN token price.
+Dry-run still records the average selected asset/regime win rate across
+the effective winning voters after the same one-vote-per-filter collapse
+used by the committee decision. That value is logged as order confidence
+for analysis only; it no longer gates simulated order placement.
 
 Market discovery is centralized in
 [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts).
@@ -206,7 +201,7 @@ and the `market_regime` column added by
 | `order_placed_at_ms`    | Simulated order-placement wall-clock                                 |
 | `order_observed_price`  | Predicted-side token price read at simulated placement               |
 | `order_limit_price`     | Simulated limit-buy price                                            |
-| `order_confidence`      | Average effective winning-voter confidence used for the EV gate      |
+| `order_confidence`      | Average effective winning-voter confidence recorded for analysis     |
 | `order_filled_at_ms`    | When the simulated order first became fillable                       |
 | `order_fill_price`      | Simulated fill price                                                 |
 | `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence  |

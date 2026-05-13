@@ -46,7 +46,7 @@ export type DryRunOrderPlacementResolution =
       readonly status: "placed" | "filled";
       readonly observedPrice: number;
       readonly limitPrice: number;
-      readonly confidence: number;
+      readonly confidence: number | null;
       readonly fillPrice: number | null;
     };
 
@@ -131,15 +131,6 @@ export function resolveDryRunOrderPlacement({
       confidence: placement.confidence,
     };
   }
-  if (placement.status === "confidence") {
-    return {
-      status: "skipped_confidence",
-      observedPrice: placement.observedPrice,
-      limitPrice: placement.limitPrice,
-      confidence: placement.confidence,
-    };
-  }
-
   const fillPrice = resolveDryRunOrderFill({
     prediction,
     state,
@@ -182,14 +173,6 @@ function resolveNoQuotePlacement({
       nowMs,
       maxQuoteAgeMs: DRY_RUN_ORDER_MAX_QUOTE_AGE_MS,
     }) ?? DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE;
-  if (confidence === null || confidence < limitPrice) {
-    return {
-      status: "skipped_confidence",
-      observedPrice,
-      limitPrice,
-      confidence,
-    };
-  }
   return {
     status: "placed",
     observedPrice,

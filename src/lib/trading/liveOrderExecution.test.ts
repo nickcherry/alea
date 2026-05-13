@@ -135,6 +135,43 @@ describe("createLiveOrderExecutor", () => {
     expect(calls.map((call) => call.userOrder.price)).toEqual([0.5, 0.49]);
   });
 
+  it("posts even when committee confidence is below the limit price", async () => {
+    const calls: PostedOrder[] = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [{ success: true, orderID: "order-low-confidence" }],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.001, negRisk: false }),
+      }),
+      log: () => {},
+      now: () => 1_795_000,
+      sleep: async () => {},
+      streamMarketData: fakeStreamMarketData([
+        {
+          kind: "best-bid-ask",
+          vendorRef: "COND",
+          outcomeRef: "UP",
+          bestBid: 0.51,
+          bestAsk: 0.525,
+          atMs: 1_795_000,
+        },
+      ]),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: 0.51,
+    });
+
+    await waitFor(() => calls.length === 1);
+    expect(calls[0]?.userOrder.price).toBe(0.524);
+  });
+
   it("backs off rate-limit rejections before retrying", async () => {
     const calls: PostedOrder[] = [];
     const sleeps: number[] = [];
