@@ -12,6 +12,7 @@ type Config = z.infer<typeof configSchema>;
 export const parabolicSarFlipFollow: Filter<Config> = {
   id: "parabolic_sar_flip_follow",
   version: 1,
+  barSource: "pyth",
   family: "trend_flip_continuation",
   description:
     "Parabolic SAR flip follow. A latest-bar flip from SAR above price to below price predicts UP; the reverse flip predicts DOWN.",

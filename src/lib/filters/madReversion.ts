@@ -32,6 +32,7 @@ function median(sorted: readonly number[]): number {
 export const madReversion: Filter<Config> = {
   id: "mad_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Robust z-score reversion using median + median-absolute-deviation. Sibling of `zscore_reversion` but resistant to outlier bars that would inflate std-dev.",

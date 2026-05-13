@@ -14,6 +14,7 @@ import {
   loadCommitteeRoster,
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { getPolymarketClobClient } from "@alea/lib/polymarket/getPolymarketClobClient";
@@ -167,7 +168,7 @@ export async function runLiveTrading({
             await makeLiveDecision({
               state,
               targetTsMs: nextBoundary,
-              bars: refreshed.barsForDecision,
+              series: refreshed.seriesForDecision,
               synthBar: refreshed.syntheticBar,
               roster,
               candidatesByKey,
@@ -203,7 +204,7 @@ async function refreshStateForDecision({
   readonly now: number;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<{
-  readonly barsForDecision: readonly FilterBar[];
+  readonly seriesForDecision: AlignedBarSeries;
   readonly syntheticBar: FilterBar;
 } | null> {
   try {
@@ -212,7 +213,10 @@ async function refreshStateForDecision({
       nowMs: now,
       limit: TRADE_DECISION_HYDRATE_BARS,
     });
-    if (refreshed.syntheticBar === null || refreshed.barsForDecision === null) {
+    if (
+      refreshed.syntheticBar === null ||
+      refreshed.seriesForDecision === null
+    ) {
       const reason =
         refreshed.priceAgeMs === null
           ? "missing latest Pyth price"
@@ -224,7 +228,7 @@ async function refreshStateForDecision({
       return null;
     }
     return {
-      barsForDecision: refreshed.barsForDecision,
+      seriesForDecision: refreshed.seriesForDecision,
       syntheticBar: refreshed.syntheticBar,
     };
   } catch (e) {
@@ -239,7 +243,7 @@ async function refreshStateForDecision({
 async function makeLiveDecision({
   state,
   targetTsMs,
-  bars,
+  series,
   synthBar,
   roster,
   candidatesByKey,
@@ -248,7 +252,7 @@ async function makeLiveDecision({
 }: {
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
@@ -258,7 +262,7 @@ async function makeLiveDecision({
   const evaluated = evaluateTradeDecision({
     asset: state.asset,
     period: state.period,
-    bars,
+    series,
     roster,
     candidatesByKey,
   });

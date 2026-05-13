@@ -25,6 +25,7 @@ type Config = z.infer<typeof configSchema>;
 export const percentRankMeanRev: Filter<Config> = {
   id: "percent_rank_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Percentile-rank mean reversion. Computes where the latest close sits in the trailing N-bar close distribution and engages on extremes. Distribution-free, robust to outliers, distinct from range-based Stochastic.",

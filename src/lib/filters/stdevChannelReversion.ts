@@ -25,6 +25,7 @@ type Config = z.infer<typeof configSchema>;
 export const stdevChannelReversion: Filter<Config> = {
   id: "stdev_channel_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Linear-regression-channel reversion. Fits OLS to trailing closes, computes residual std-dev; engages when the latest close clears `multiplier`σ of residuals. Trend-aware analog of Bollinger.",

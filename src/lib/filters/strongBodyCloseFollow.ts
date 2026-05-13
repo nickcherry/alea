@@ -20,6 +20,7 @@ type Config = z.infer<typeof configSchema>;
 export const strongBodyCloseFollow: Filter<Config> = {
   id: "strong_body_close_follow",
   version: 1,
+  barSource: "pyth",
   family: "candle_momentum_continuation",
   description:
     "Follows decisive directional candles. A large body versus ATR, high body share, and close near the candle extreme predict same-direction continuation.",

@@ -19,6 +19,7 @@ type Config = z.infer<typeof configSchema>;
 export const alternationRangeFlip: Filter<Config> = {
   id: "alternation_range_flip",
   version: 1,
+  barSource: "pyth",
   family: "directional_sequence_pattern",
   description:
     "Alternating-body range pattern. When recent candle signs flip often enough, predict the opposite of the latest candle body.",

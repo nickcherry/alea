@@ -4,8 +4,13 @@ import {
   TRADE_DECISION_MAX_PRICE_AGE_MS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
+import { fetchCoinbaseCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbaseCandles";
 import { fetchPythCandles } from "@alea/lib/candles/sources/pyth/fetchPythCandles";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import {
+  alignBarSeries,
+  type AlignedBarSeries,
+} from "@alea/lib/filters/barSeries";
 import type { FilterBar } from "@alea/lib/filters/types";
 import {
   fetchLatestPythPrices,
@@ -19,7 +24,12 @@ export type TradeDecisionCandleState = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly periodMs: number;
+  /** Closed Pyth bars, ascending by openTimeMs. Canonical timeline. */
   bars: FilterBar[];
+  /** Closed Coinbase bars, ascending by openTimeMs. Aligned to Pyth
+   *  bars by openTimeMs at decision time. Missing bars (Coinbase
+   *  gap) mean volume filters abstain at those timestamps. */
+  coinbaseBars: FilterBar[];
   lastPredictedBoundary: number;
   lastRefreshedAtMs: number | null;
 };
@@ -31,7 +41,7 @@ export type TradeDecisionCandleRefresh = {
   readonly latestPrice: LatestPythPrice | null;
   readonly priceAgeMs: number | null;
   readonly syntheticBar: FilterBar | null;
-  readonly barsForDecision: readonly FilterBar[] | null;
+  readonly seriesForDecision: AlignedBarSeries | null;
 };
 
 type FetchCandles = (params: {
@@ -56,33 +66,45 @@ export async function hydrateTradeDecisionCandleState({
   readonly period: TradeDecisionPeriod;
   readonly limit?: number;
 }): Promise<TradeDecisionCandleState> {
-  const rows = await db
-    .selectFrom("candles")
-    .select(["timestamp", "open", "high", "low", "close", "volume"])
-    .where("source", "=", "pyth")
-    .where("product", "=", "spot")
-    .where("asset", "=", asset)
-    .where("timeframe", "=", period)
-    .orderBy("timestamp", "desc")
-    .limit(limit)
-    .execute();
+  const [pythRows, coinbaseRows] = await Promise.all([
+    db
+      .selectFrom("candles")
+      .select(["timestamp", "open", "high", "low", "close", "volume"])
+      .where("source", "=", "pyth")
+      .where("product", "=", "spot")
+      .where("asset", "=", asset)
+      .where("timeframe", "=", period)
+      .orderBy("timestamp", "desc")
+      .limit(limit)
+      .execute(),
+    db
+      .selectFrom("candles")
+      .select(["timestamp", "open", "high", "low", "close", "volume"])
+      .where("source", "=", "coinbase")
+      .where("product", "=", "spot")
+      .where("asset", "=", asset)
+      .where("timeframe", "=", period)
+      .orderBy("timestamp", "desc")
+      .limit(limit)
+      .execute(),
+  ]);
+  const toBar = (r: (typeof pythRows)[number]): FilterBar => ({
+    openTimeMs:
+      r.timestamp instanceof Date
+        ? r.timestamp.getTime()
+        : new Date(r.timestamp).getTime(),
+    open: r.open,
+    high: r.high,
+    low: r.low,
+    close: r.close,
+    volume: r.volume,
+  });
   return {
     asset,
     period,
     periodMs: resolutionTimeframeStepMs({ timeframe: period }),
-    bars: rows
-      .map((r) => ({
-        openTimeMs:
-          r.timestamp instanceof Date
-            ? r.timestamp.getTime()
-            : new Date(r.timestamp).getTime(),
-        open: r.open,
-        high: r.high,
-        low: r.low,
-        close: r.close,
-        volume: r.volume,
-      }))
-      .reverse(),
+    bars: pythRows.map(toBar).reverse(),
+    coinbaseBars: coinbaseRows.map(toBar).reverse(),
     lastPredictedBoundary: 0,
     lastRefreshedAtMs: null,
   };
@@ -94,6 +116,7 @@ export async function refreshTradeDecisionCandleState({
   limit = TRADE_DECISION_HYDRATE_BARS,
   maxPriceAgeMs = TRADE_DECISION_MAX_PRICE_AGE_MS,
   fetchCandles = fetchDecisionPythCandles,
+  fetchCoinbaseBarsForRefresh = fetchDecisionCoinbaseCandles,
   fetchLatestPrices = fetchLatestPythPrices,
 }: {
   readonly state: TradeDecisionCandleState;
@@ -101,6 +124,7 @@ export async function refreshTradeDecisionCandleState({
   readonly limit?: number;
   readonly maxPriceAgeMs?: number;
   readonly fetchCandles?: FetchCandles;
+  readonly fetchCoinbaseBarsForRefresh?: FetchCandles;
   readonly fetchLatestPrices?: FetchLatestPrices;
 }): Promise<TradeDecisionCandleRefresh> {
   const currentOpenTimeMs = Math.floor(nowMs / state.periodMs) * state.periodMs;
@@ -108,19 +132,40 @@ export async function refreshTradeDecisionCandleState({
     0,
     currentOpenTimeMs - state.periodMs * (limit + 2),
   );
-  const candles = await fetchCandles({
-    asset: state.asset,
-    timeframe: state.period,
-    start: new Date(fetchStartMs),
-    end: new Date(nowMs),
-  });
+  // Fetch Pyth (canonical timeline + active bar synthesis) and Coinbase
+  // (volume input for volume-source filters) concurrently. Treat a
+  // Coinbase fetch failure as soft — volume filters will simply abstain
+  // on this decision moment if the bundle can't be assembled.
+  const [candles, coinbaseCandles] = await Promise.all([
+    fetchCandles({
+      asset: state.asset,
+      timeframe: state.period,
+      start: new Date(fetchStartMs),
+      end: new Date(nowMs),
+    }),
+    fetchCoinbaseBarsForRefresh({
+      asset: state.asset,
+      timeframe: state.period,
+      start: new Date(fetchStartMs),
+      end: new Date(nowMs),
+    }).catch(() => [] as readonly Candle[]),
+  ]);
   const fetchedBars = candles.map(candleToFilterBar);
   const closedBars = fetchedBars.filter(
+    (bar) => bar.openTimeMs < currentOpenTimeMs,
+  );
+  const fetchedCoinbaseBars = coinbaseCandles.map(candleToFilterBar);
+  const closedCoinbaseBars = fetchedCoinbaseBars.filter(
     (bar) => bar.openTimeMs < currentOpenTimeMs,
   );
   state.bars = upsertFilterBars({
     existing: state.bars,
     incoming: closedBars,
+    limit,
+  });
+  state.coinbaseBars = upsertFilterBars({
+    existing: state.coinbaseBars,
+    incoming: closedCoinbaseBars,
     limit,
   });
   state.lastRefreshedAtMs = nowMs;
@@ -135,7 +180,7 @@ export async function refreshTradeDecisionCandleState({
       latestPrice,
       priceAgeMs: null,
       syntheticBar: null,
-      barsForDecision: null,
+      seriesForDecision: null,
     };
   }
 
@@ -148,7 +193,7 @@ export async function refreshTradeDecisionCandleState({
       latestPrice,
       priceAgeMs,
       syntheticBar: null,
-      barsForDecision: null,
+      seriesForDecision: null,
     };
   }
 
@@ -160,6 +205,34 @@ export async function refreshTradeDecisionCandleState({
     priorClose: state.bars.at(-1)?.close ?? null,
     price: latestPrice.price,
   });
+  if (syntheticBar === null) {
+    return {
+      currentOpenTimeMs,
+      fetchedBarCount: fetchedBars.length,
+      closedBarCount: closedBars.length,
+      latestPrice,
+      priceAgeMs,
+      syntheticBar: null,
+      seriesForDecision: null,
+    };
+  }
+  // Synthesize a Coinbase active bar from its partial bar in the same
+  // refresh window. Volume filters need a candle at `currentOpenTimeMs`
+  // — if Coinbase hasn't been published for the open period yet
+  // (unusual; the Advanced Trade API serves partial bars), the active
+  // slot is null and volume filters abstain for this boundary.
+  const coinbasePartial =
+    fetchedCoinbaseBars.find((bar) => bar.openTimeMs === currentOpenTimeMs) ??
+    null;
+  const pythSeries = [...state.bars, syntheticBar];
+  const coinbaseSeries = [
+    ...state.coinbaseBars,
+    ...(coinbasePartial === null ? [] : [coinbasePartial]),
+  ];
+  const seriesForDecision = alignBarSeries({
+    pyth: pythSeries,
+    coinbase: coinbaseSeries,
+  });
   return {
     currentOpenTimeMs,
     fetchedBarCount: fetchedBars.length,
@@ -167,8 +240,7 @@ export async function refreshTradeDecisionCandleState({
     latestPrice,
     priceAgeMs,
     syntheticBar,
-    barsForDecision:
-      syntheticBar === null ? null : [...state.bars, syntheticBar],
+    seriesForDecision,
   };
 }
 
@@ -212,6 +284,15 @@ async function fetchDecisionPythCandles(
     requestTimeoutMs: TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS,
     maxRateLimitRetries: 0,
   });
+}
+
+async function fetchDecisionCoinbaseCandles(params: {
+  readonly asset: Asset;
+  readonly timeframe: TradeDecisionPeriod;
+  readonly start: Date;
+  readonly end: Date;
+}): Promise<readonly Candle[]> {
+  return fetchCoinbaseCandles(params);
 }
 
 function synthesizeActiveBar({

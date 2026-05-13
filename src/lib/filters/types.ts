@@ -19,6 +19,26 @@ export type FilterBar = {
 };
 
 /**
+ * Where a filter's input bars come from. Required on every filter so
+ * the framework can route the right candle stream automatically.
+ *
+ *  - `"pyth"`: Pyth Network oracle median bars. OHLC matches the
+ *    Polymarket-aligned settlement proxy. `volume` on these bars is
+ *    always `0` (Pyth is an oracle median, not a venue tape) — so
+ *    filters that read `volume` must NOT declare `"pyth"`.
+ *  - `"coinbase"`: Coinbase spot OHLCV from the Advanced Trade API.
+ *    Carries real exchange volume. Use this for any filter that
+ *    reads `volume` (MFI, VWAP, OBV, relative-volume gates, etc.).
+ *
+ * The runtime always pre-loads BOTH streams, aligned by openTimeMs,
+ * and slices the right one per filter at call time. Outcome
+ * labeling for training continues to use Pyth bars regardless of the
+ * filter's input source — Pyth is the single source of truth for
+ * "what direction did the next bar close".
+ */
+export type BarSource = "pyth" | "coinbase";
+
+/**
  * What a filter returns for one decision moment.
  *
  * - `"up"` / `"down"`: the filter has engaged and predicts the next
@@ -94,10 +114,24 @@ export type FilterFamily =
   | "momentum_exhaustion"
   | "oscillator_reversal"
   | "volume_weighted_reversion"
+  | "volume_weighted_acceptance"
   | "volume_oscillator_reversion"
   | "volume_divergence"
+  | "volume_divergence_reversion"
   | "volume_exhaustion"
+  | "volume_momentum_continuation"
+  | "volume_absorption_reversion"
+  | "volume_absorption_failure"
+  | "volume_flow_continuation"
+  | "volume_acceleration_continuation"
+  | "volume_dormancy_expansion"
+  | "volume_profile_reversion"
+  | "volume_profile_air_pocket"
+  | "signed_flow_exhaustion"
+  | "signed_flow_divergence"
+  | "empirical_volume_sequence"
   | "participation_failure"
+  | "participation_continuation"
   | "body_momentum_reversion"
   | "body_location_oscillator"
   | "directional_sequence_reversion"
@@ -132,6 +166,14 @@ export type Filter<TConfig> = {
   readonly version: number;
   readonly description: string;
   readonly family: FilterFamily;
+  /**
+   * Which candle stream this filter's `predict` consumes. Required
+   * with no default: a filter that reads `volume` must declare
+   * `"coinbase"`, since Pyth bars always carry `volume: 0`. The
+   * pipeline routes per filter, so a committee can mix price-only
+   * and volume filters on the same decision moment.
+   */
+  readonly barSource: BarSource;
   readonly configSchema: z.ZodType<TConfig>;
   readonly requiredBars: (config: TConfig) => number;
   readonly predict: (

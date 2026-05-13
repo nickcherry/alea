@@ -39,6 +39,7 @@ type Config = z.infer<typeof configSchema>;
 export const rangeExpansionFade: Filter<Config> = {
   id: "range_expansion_fade",
   version: 1,
+  barSource: "pyth",
   family: "velocity_fade",
   description:
     "Fades bars whose high-low range is more than `multiplier ×` the average range of the prior `window` bars. Predicts opposite of the bar's color (green burst → DOWN, red burst → UP). Range-based companion to `atr_burst_fade`: that one keys off close-to-close move; this one keys off the bar's total span.",

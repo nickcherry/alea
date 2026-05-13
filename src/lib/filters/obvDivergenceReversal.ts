@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const obvDivergenceReversal: Filter<Config> = {
   id: "obv_divergence_reversal",
   version: 1,
+  barSource: "coinbase",
   family: "volume_divergence",
   description:
     "OBV/price divergence reversal. A price break to a new local high without OBV confirmation predicts DOWN; a new local low without OBV confirmation predicts UP.",

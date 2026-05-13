@@ -21,6 +21,7 @@ type Config = z.infer<typeof configSchema>;
 export const williamsRMeanRev: Filter<Config> = {
   id: "williams_r_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Williams %R mean reversion. Engages UP at oversold readings (≤ `oversold`, default -80), DOWN at overbought (≥ `overbought`, default -20). Inverted-Stochastic family.",

@@ -6,11 +6,8 @@ import {
   rosterBucketKey,
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { CommitteeCandidate } from "@alea/lib/committee/types";
-import type {
-  Candidate,
-  FilterBar,
-  FilterPrediction,
-} from "@alea/lib/filters/types";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
+import type { Candidate, FilterPrediction } from "@alea/lib/filters/types";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import type { Asset } from "@alea/types/assets";
@@ -28,17 +25,20 @@ export type EvaluatedTradeDecision = {
 export function evaluateTradeDecision({
   asset,
   period,
-  bars,
+  series,
   roster,
   candidatesByKey,
 }: {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
 }): EvaluatedTradeDecision {
-  const marketRegime = classifyMarketRegime({ bars });
+  // The market-regime classifier reads Pyth OHLC only — keep its
+  // input on the canonical Pyth timeline regardless of whether
+  // individual committee members use Coinbase data.
+  const marketRegime = classifyMarketRegime({ bars: series.pyth });
   const rosterCandidates: CommitteeCandidate[] = [];
   if (marketRegime !== null) {
     const bucket = roster.byBucket.get(
@@ -70,7 +70,7 @@ export function evaluateTradeDecision({
           decision: { prediction: null, up: 0, down: 0, abstain: 0 } as const,
           votes: [],
         }
-      : evaluateCommittee({ bars, candidates: rosterCandidates });
+      : evaluateCommittee({ series, candidates: rosterCandidates });
   const effectiveVotes = selectEffectiveCommitteeVotes({ votes });
   const orderConfidence = averageWinningVoteConfidence({
     prediction: decision.prediction,

@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const internalBarStrengthMeanrev: Filter<Config> = {
   id: "internal_bar_strength_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "candle_location_reversion",
   description:
     "Fades close-location extremes inside the bar range. Average Internal Bar Strength `(close - low) / (high - low)` over `ibsLength` bars at or below `lower` predicts UP; at or above `upper` predicts DOWN. Average range must clear `minRangeAtr * ATR` so tiny dojis don't trigger.",

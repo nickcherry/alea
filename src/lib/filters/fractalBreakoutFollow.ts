@@ -14,6 +14,7 @@ type Config = z.infer<typeof configSchema>;
 export const fractalBreakoutFollow: Filter<Config> = {
   id: "fractal_breakout_follow",
   version: 1,
+  barSource: "pyth",
   family: "swing_structure_continuation",
   description:
     "Follows breaks of confirmed swing pivots. A latest close above the most recent swing high predicts UP; a close below the most recent swing low predicts DOWN.",

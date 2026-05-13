@@ -14,6 +14,7 @@ type Config = z.infer<typeof configSchema>;
 export const adxDiTrendFollow: Filter<Config> = {
   id: "adx_di_trend_follow",
   version: 2,
+  barSource: "pyth",
   family: "trend_continuation",
   description:
     "Classic ADX/+DI/-DI trend follow. High ADX plus a sufficient +DI lead predicts UP; high ADX plus a sufficient -DI lead predicts DOWN.",

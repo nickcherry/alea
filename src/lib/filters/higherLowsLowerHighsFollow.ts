@@ -14,6 +14,7 @@ type Config = z.infer<typeof configSchema>;
 export const higherLowsLowerHighsFollow: Filter<Config> = {
   id: "higher_lows_lower_highs_follow",
   version: 1,
+  barSource: "pyth",
   family: "micro_structure_continuation",
   description:
     "Follows short micro-structure pressure. Consecutive higher lows predict UP; consecutive lower highs predict DOWN, optionally requiring the latest close to confirm.",

@@ -23,6 +23,7 @@ type Config = z.infer<typeof configSchema>;
 export const cmoMeanRev: Filter<Config> = {
   id: "cmo_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Chande Momentum Oscillator reversion. Faster-reacting cousin of RSI — uses raw gain/loss sums instead of Wilder-smoothed averages.",

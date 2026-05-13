@@ -18,6 +18,7 @@ import {
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
+import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { MarketRegime } from "@alea/lib/regime/types";
@@ -224,7 +225,7 @@ export async function runDryRun({
               });
               if (
                 refreshed.syntheticBar === null ||
-                refreshed.barsForDecision === null
+                refreshed.seriesForDecision === null
               ) {
                 const reason =
                   refreshed.priceAgeMs === null
@@ -241,7 +242,7 @@ export async function runDryRun({
                 db,
                 state,
                 targetTsMs: nextBoundary,
-                bars: refreshed.barsForDecision,
+                series: refreshed.seriesForDecision,
                 synthBar: refreshed.syntheticBar,
                 roster,
                 candidatesByKey,
@@ -274,7 +275,7 @@ async function makePrediction({
   db,
   state,
   targetTsMs,
-  bars,
+  series,
   synthBar,
   roster,
   candidatesByKey,
@@ -285,7 +286,7 @@ async function makePrediction({
   readonly db: DatabaseClient;
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
-  readonly bars: readonly FilterBar[];
+  readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
@@ -297,7 +298,7 @@ async function makePrediction({
   const evaluated = evaluateTradeDecision({
     asset: state.asset,
     period: state.period,
-    bars,
+    series,
     roster,
     candidatesByKey,
   });

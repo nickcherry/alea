@@ -27,6 +27,7 @@ type Config = z.infer<typeof configSchema>;
 export const tsiMeanRev: Filter<Config> = {
   id: "tsi_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Mean reversion on the True Strength Index — double-smoothed momentum oscillator. Smoother than RSI / CMO at the cost of more lag; engages on canonical ±25 extremes by default.",

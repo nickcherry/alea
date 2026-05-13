@@ -35,6 +35,7 @@ type Config = z.infer<typeof configSchema>;
 export const heikinAshiReversion: Filter<Config> = {
   id: "heikin_ashi_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Bollinger reversion on Heikin-Ashi candles. Identical decision tree to `bollinger_reversion` but the entire OHLC series is first transformed into HA candles, dampening single-bar noise. Head-to-head with the basic Bollinger reversion says whether smoothing the input is a net win.",

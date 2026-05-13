@@ -12,6 +12,7 @@ type Config = z.infer<typeof configSchema>;
 export const vwapZscoreReversion: Filter<Config> = {
   id: "vwap_zscore_reversion",
   version: 1,
+  barSource: "coinbase",
   family: "volume_weighted_reversion",
   description:
     "Mean reversion on close distance from rolling VWAP in volume-weighted standard deviations. High positive z predicts DOWN; high negative z predicts UP.",

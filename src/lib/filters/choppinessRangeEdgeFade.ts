@@ -18,6 +18,7 @@ type Config = z.infer<typeof configSchema>;
 export const choppinessRangeEdgeFade: Filter<Config> = {
   id: "choppiness_range_edge_fade",
   version: 1,
+  barSource: "pyth",
   family: "range_reversion",
   description:
     "Range-edge fade gated by Choppiness Index. In choppy conditions, closes near the recent high predict DOWN and closes near the recent low predict UP.",

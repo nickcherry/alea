@@ -35,6 +35,7 @@ type Config = z.infer<typeof configSchema>;
 export const bollingerRecovery: Filter<Config> = {
   id: "bollinger_recovery",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Engages after a confirmed Bollinger pierce + recovery: bar i-1 closes outside the band, bar i closes back inside, predict continued reversion at bar i+1. Lagged-confirmation sibling of `bollinger_reversion`; trades earlier-and-cheaper for later-and-cleaner.",

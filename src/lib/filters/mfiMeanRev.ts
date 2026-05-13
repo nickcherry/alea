@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const mfiMeanRev: Filter<Config> = {
   id: "mfi_meanrev",
   version: 1,
+  barSource: "coinbase",
   family: "volume_oscillator_reversion",
   description:
     "Money Flow Index mean reversion. Oversold MFI predicts UP; overbought MFI predicts DOWN, adding volume-weighted oscillator pressure to the registry.",

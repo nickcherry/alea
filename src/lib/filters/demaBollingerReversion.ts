@@ -23,6 +23,7 @@ type Config = z.infer<typeof configSchema>;
 export const demaBollingerReversion: Filter<Config> = {
   id: "dema_bollinger_reversion",
   version: 1,
+  barSource: "pyth",
   family: "band_reversion",
   description:
     "Bollinger reversion on a DEMA-smoothed close series. DEMA reduces lag vs. a single EMA; tests whether a less-laggy smoothed input helps the basic Bollinger reversion signal.",

@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const qstickBodyBiasFade: Filter<Config> = {
   id: "qstick_body_bias_fade",
   version: 1,
+  barSource: "pyth",
   family: "body_momentum_reversion",
   description:
     "Qstick body-bias fade. If the average recent candle body is strongly positive versus ATR, predict DOWN; strongly negative predicts UP.",

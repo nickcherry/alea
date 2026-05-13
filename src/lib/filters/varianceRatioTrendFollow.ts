@@ -13,6 +13,7 @@ type Config = z.infer<typeof configSchema>;
 export const varianceRatioTrendFollow: Filter<Config> = {
   id: "variance_ratio_trend_follow",
   version: 1,
+  barSource: "pyth",
   family: "persistence_continuation",
   description:
     "Follows statistically persistent return paths. A high variance ratio indicates trend persistence; direction comes from the net move over the same window.",

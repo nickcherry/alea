@@ -32,6 +32,7 @@ type Config = z.infer<typeof configSchema>;
 export const cciMeanRev: Filter<Config> = {
   id: "cci_meanrev",
   version: 1,
+  barSource: "pyth",
   family: "oscillator_reversion",
   description:
     "Mean reversion on the Commodity Channel Index. Engages UP when CCI ≤ `oversold`, DOWN when ≥ `overbought`. Third oscillator family in the registry — alongside RSI (gain/loss percentile) and Stochastic (recent-range percentile), CCI uses mean absolute deviation of the typical price. Side-by-side WR tells us whether the MAD-based normalization sees the same reversion signal as the other two.",

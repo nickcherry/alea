@@ -37,6 +37,7 @@ type Config = z.infer<typeof configSchema>;
 export const rsiVelocity: Filter<Config> = {
   id: "rsi_velocity",
   version: 1,
+  barSource: "pyth",
   family: "velocity_fade",
   description:
     "Engages on the RATE of change of RSI rather than its level. A drop ≥ `threshold` RSI points across `lookback` bars → UP; symmetric for DOWN. Alternative to `rsi_meanrev` that tests whether 'we got to an extreme fast' is a stronger signal than 'we are at an extreme'.",

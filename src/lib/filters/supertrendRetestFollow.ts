@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const supertrendRetestFollow: Filter<Config> = {
   id: "supertrend_retest_follow",
   version: 1,
+  barSource: "pyth",
   family: "trend_pullback_continuation",
   description:
     "Follows Supertrend pullback retests. Existing bullish/bearish trend must hold, price retests the Supertrend line, then closes back in trend direction.",

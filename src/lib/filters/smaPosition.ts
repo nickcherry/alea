@@ -22,6 +22,7 @@ import { computeSmaSeries } from "@alea/lib/indicators/sma";
 export const smaPosition: Filter<MovingAveragePositionConfig> = {
   id: "sma_position",
   version: 1,
+  barSource: "pyth",
   family: "ma_position",
   description:
     "Engages on the close's position relative to an N-bar SMA. `mode=trend` predicts UP when above and DOWN when below (the 'price tends to continue with the SMA bias' hypothesis); `mode=revert` predicts the inverse (mean-reversion to the SMA). `threshold` gates engagement so the filter only engages when the close is at least that fraction of the SMA away — useful for testing the 'reversion only happens at extremes' variant.",

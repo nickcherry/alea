@@ -16,6 +16,7 @@ type Config = z.infer<typeof configSchema>;
 export const squeezeBreakoutFollow: Filter<Config> = {
   id: "squeeze_breakout_follow",
   version: 1,
+  barSource: "pyth",
   family: "volatility_compression_continuation",
   description:
     "Follows Bollinger squeeze breakouts. The prior bandwidth must sit in a low percentile, then the latest real-body candle must close outside the corresponding band.",
