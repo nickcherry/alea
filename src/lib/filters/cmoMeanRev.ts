@@ -72,5 +72,9 @@ registerFilter({
     { period: 14, oversold: -70, overbought: 70 },
     { period: 14, oversold: -50, overbought: 50 },
     { period: 9, oversold: -50, overbought: 50 },
+    { period: 14, oversold: -80, overbought: 80 },
+    { period: 21, oversold: -60, overbought: 60 },
+    { period: 9, oversold: -40, overbought: 40 },
+    { period: 21, oversold: -80, overbought: 80 },
   ],
 });

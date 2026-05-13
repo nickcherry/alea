@@ -92,5 +92,9 @@ registerFilter({
     { period: 20, threshold: 0.005 },
     { period: 14, threshold: 0.003 },
     { period: 20, threshold: 0.003 },
+    { period: 20, threshold: 0.015 },
+    { period: 20, threshold: 0.02 },
+    { period: 30, threshold: 0.01 },
+    { period: 14, threshold: 0.015 },
   ],
 });

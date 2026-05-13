@@ -72,5 +72,9 @@ registerFilter({
     { smoothK: 3, lookback: 7, oversold: 10, overbought: 90 },
     { smoothK: 3, lookback: 14, oversold: 10, overbought: 90 },
     { smoothK: 3, lookback: 21, oversold: 10, overbought: 90 },
+    { smoothK: 1, lookback: 21, oversold: 10, overbought: 90 },
+    { smoothK: 1, lookback: 14, oversold: 5, overbought: 95 },
+    { smoothK: 1, lookback: 7, oversold: 5, overbought: 95 },
+    { smoothK: 2, lookback: 14, oversold: 10, overbought: 90 },
   ],
 });

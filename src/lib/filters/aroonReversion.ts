@@ -78,5 +78,9 @@ registerFilter({
     { period: 25, upTrigger: 100, downTrigger: 30 },
     { period: 14, upTrigger: 100, downTrigger: 0 },
     { period: 14, upTrigger: 100, downTrigger: 30 },
+    { period: 35, upTrigger: 100, downTrigger: 30 },
+    { period: 50, upTrigger: 100, downTrigger: 30 },
+    { period: 75, upTrigger: 100, downTrigger: 0 },
+    { period: 25, upTrigger: 100, downTrigger: 20 },
   ],
 });

@@ -94,6 +94,10 @@ registerFilter({
     { lookback: 50, atrLength: 14, minBreakAtr: 0.1, failureBars: 2 },
     { lookback: 14, atrLength: 7, minBreakAtr: 0.1, failureBars: 1 },
     { lookback: 30, atrLength: 14, minBreakAtr: 0.25, failureBars: 2 },
+    { lookback: 14, atrLength: 14, minBreakAtr: 0.15, failureBars: 1 },
+    { lookback: 30, atrLength: 14, minBreakAtr: 0.15, failureBars: 1 },
+    { lookback: 14, atrLength: 7, minBreakAtr: 0.2, failureBars: 1 },
+    { lookback: 30, atrLength: 14, minBreakAtr: 0.2, failureBars: 1 },
   ],
 });
 

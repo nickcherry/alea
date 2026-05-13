@@ -143,5 +143,33 @@ registerFilter({
       minBodyAtr: 1,
       minBodyFraction: 0.55,
     },
+    {
+      bodyLookback: 30,
+      bodyMultiplier: 5,
+      atrLength: 14,
+      minBodyAtr: 1.2,
+      minBodyFraction: 0.5,
+    },
+    {
+      bodyLookback: 30,
+      bodyMultiplier: 4,
+      atrLength: 20,
+      minBodyAtr: 1.2,
+      minBodyFraction: 0.6,
+    },
+    {
+      bodyLookback: 50,
+      bodyMultiplier: 4,
+      atrLength: 14,
+      minBodyAtr: 1.2,
+      minBodyFraction: 0.55,
+    },
+    {
+      bodyLookback: 20,
+      bodyMultiplier: 5,
+      atrLength: 20,
+      minBodyAtr: 1.5,
+      minBodyFraction: 0.7,
+    },
   ],
 });

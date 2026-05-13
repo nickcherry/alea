@@ -70,5 +70,9 @@ registerFilter({
     { lookback: 14, oversold: -85, overbought: -15 },
     { lookback: 14, oversold: -80, overbought: -20 },
     { lookback: 21, oversold: -80, overbought: -20 },
+    { lookback: 14, oversold: -95, overbought: -5 },
+    { lookback: 7, oversold: -90, overbought: -10 },
+    { lookback: 21, oversold: -95, overbought: -5 },
+    { lookback: 7, oversold: -95, overbought: -5 },
   ],
 });

@@ -125,5 +125,8 @@ registerFilter({
     { length: 50, bandZ: 2.0, minOutsideBars: 1, atrLength: 14, minDistanceAtr: 0.25 },
     { length: 14, bandZ: 2.0, minOutsideBars: 1, atrLength: 7, minDistanceAtr: 0.2 },
     { length: 50, bandZ: 2.5, minOutsideBars: 2, atrLength: 20, minDistanceAtr: 0.4 },
+    { length: 50, bandZ: 3.0, minOutsideBars: 2, atrLength: 20, minDistanceAtr: 0.5 },
+    { length: 50, bandZ: 2.5, minOutsideBars: 1, atrLength: 20, minDistanceAtr: 0.5 },
+    { length: 20, bandZ: 3.0, minOutsideBars: 1, atrLength: 14, minDistanceAtr: 0.4 },
   ],
 });

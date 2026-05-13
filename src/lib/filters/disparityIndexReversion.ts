@@ -59,5 +59,9 @@ registerFilter({
     { length: 14, threshold: 0.5 },
     { length: 20, threshold: 1 },
     { length: 20, threshold: 0.5 },
+    { length: 14, threshold: 1.5 },
+    { length: 10, threshold: 1 },
+    { length: 10, threshold: 1.5 },
+    { length: 14, threshold: 2 },
   ],
 });

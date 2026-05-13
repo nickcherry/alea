@@ -104,4 +104,8 @@ export const defaultMovingAveragePositionConfigs: ReadonlyArray<MovingAveragePos
     { length: 20, mode: "revert", threshold: 0.005 },
     { length: 20, mode: "revert", threshold: 0.01 },
     { length: 20, mode: "revert", threshold: 0.02 },
+    { length: 10, mode: "revert", threshold: 0.015 },
+    { length: 14, mode: "revert", threshold: 0.02 },
+    { length: 10, mode: "revert", threshold: 0.02 },
+    { length: 30, mode: "revert", threshold: 0.01 },
   ];

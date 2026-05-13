@@ -112,6 +112,9 @@ registerFilter({
       zThreshold: 2.25,
       turnBars: 1,
     },
+    { fast: 5, slow: 13, signal: 5, zLength: 50, zThreshold: 3, turnBars: 1 },
+    { fast: 3, slow: 10, signal: 3, zLength: 50, zThreshold: 2.5, turnBars: 1 },
+    { fast: 3, slow: 10, signal: 3, zLength: 50, zThreshold: 3, turnBars: 1 },
   ],
 });
 

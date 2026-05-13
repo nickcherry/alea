@@ -81,5 +81,9 @@ registerFilter({
     { window: 20, multiplier: 3 },
     { window: 50, multiplier: 2.5 },
     { window: 20, multiplier: 2.5 },
+    { window: 50, multiplier: 4 },
+    { window: 20, multiplier: 4.5 },
+    { window: 30, multiplier: 3.5 },
+    { window: 100, multiplier: 3 },
   ],
 });

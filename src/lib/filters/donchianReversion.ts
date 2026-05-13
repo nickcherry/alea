@@ -64,5 +64,9 @@ registerFilter({
     { period: 14 },
     { period: 50 },
     { period: 10 },
+    { period: 40 },
+    { period: 75 },
+    { period: 100 },
+    { period: 7 },
   ],
 });

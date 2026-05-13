@@ -52,5 +52,9 @@ registerFilter({
     { length: 21, oversold: 15, overbought: 85 },
     { length: 14, oversold: 20, overbought: 80 },
     { length: 14, oversold: 15, overbought: 85 },
+    { length: 7, oversold: 10, overbought: 90 },
+    { length: 5, oversold: 15, overbought: 85 },
+    { length: 5, oversold: 10, overbought: 90 },
+    { length: 7, oversold: 12, overbought: 88 },
   ],
 });

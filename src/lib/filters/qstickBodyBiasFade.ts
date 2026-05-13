@@ -60,6 +60,10 @@ registerFilter({
     { length: 14, atrLength: 14, thresholdAtr: 0.1 },
     { length: 5, atrLength: 7, thresholdAtr: 0.2 },
     { length: 20, atrLength: 14, thresholdAtr: 0.08 },
+    { length: 3, atrLength: 7, thresholdAtr: 0.25 },
+    { length: 5, atrLength: 7, thresholdAtr: 0.25 },
+    { length: 3, atrLength: 7, thresholdAtr: 0.3 },
+    { length: 5, atrLength: 7, thresholdAtr: 0.3 },
   ],
 });
 

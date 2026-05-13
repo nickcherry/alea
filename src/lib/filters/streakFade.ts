@@ -77,5 +77,9 @@ registerFilter({
     { minStreak: 6 },
     { minStreak: 9 },
     { minStreak: 5 },
+    { minStreak: 4 },
+    { minStreak: 8 },
+    { minStreak: 11 },
+    { minStreak: 12 },
   ],
 });

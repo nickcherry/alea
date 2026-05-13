@@ -92,5 +92,9 @@ registerFilter({
     { length: 14, multiplier: 2.5 },
     { length: 50, multiplier: 2.5 },
     { length: 50, multiplier: 3 },
+    { length: 20, multiplier: 3.5 },
+    { length: 14, multiplier: 3 },
+    { length: 14, multiplier: 3.5 },
+    { length: 30, multiplier: 3 },
   ],
 });

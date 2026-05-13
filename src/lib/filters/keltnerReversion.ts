@@ -92,5 +92,9 @@ registerFilter({
     { length: 20, useEma: true, multiplier: 2.5 },
     { length: 20, useEma: false, multiplier: 2.5 },
     { length: 20, useEma: false, multiplier: 2 },
+    { length: 14, useEma: false, multiplier: 3 },
+    { length: 30, useEma: false, multiplier: 3 },
+    { length: 50, useEma: false, multiplier: 3 },
+    { length: 20, useEma: false, multiplier: 3.5 },
   ],
 });

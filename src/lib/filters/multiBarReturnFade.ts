@@ -71,5 +71,9 @@ registerFilter({
     { lookback: 5, threshold: 0.02 },
     { lookback: 3, threshold: 0.01 },
     { lookback: 5, threshold: 0.01 },
+    { lookback: 5, threshold: 0.04 },
+    { lookback: 7, threshold: 0.03 },
+    { lookback: 10, threshold: 0.03 },
+    { lookback: 3, threshold: 0.03 },
   ],
 });

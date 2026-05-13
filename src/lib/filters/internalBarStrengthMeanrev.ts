@@ -73,5 +73,9 @@ registerFilter({
     { ibsLength: 2, lower: 0.15, upper: 0.85, atrLength: 14, minRangeAtr: 0.3 },
     { ibsLength: 3, lower: 0.2, upper: 0.8, atrLength: 14, minRangeAtr: 0.2 },
     { ibsLength: 1, lower: 0.02, upper: 0.98, atrLength: 7, minRangeAtr: 0.2 },
+    { ibsLength: 5, lower: 0.25, upper: 0.75, atrLength: 14, minRangeAtr: 0.2 },
+    { ibsLength: 5, lower: 0.3, upper: 0.7, atrLength: 14, minRangeAtr: 0.2 },
+    { ibsLength: 4, lower: 0.25, upper: 0.75, atrLength: 14, minRangeAtr: 0.3 },
+    { ibsLength: 5, lower: 0.2, upper: 0.8, atrLength: 14, minRangeAtr: 0.25 },
   ],
 });

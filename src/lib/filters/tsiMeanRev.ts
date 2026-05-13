@@ -95,5 +95,9 @@ registerFilter({
     { longLen: 25, oversold: -40, shortLen: 13, overbought: 40 },
     { longLen: 25, oversold: -25, shortLen: 13, overbought: 25 },
     { longLen: 40, oversold: -25, shortLen: 13, overbought: 25 },
+    { longLen: 13, oversold: -50, shortLen: 7, overbought: 50 },
+    { longLen: 9, oversold: -40, shortLen: 5, overbought: 40 },
+    { longLen: 13, oversold: -60, shortLen: 7, overbought: 60 },
+    { longLen: 9, oversold: -50, shortLen: 5, overbought: 50 },
   ],
 });
