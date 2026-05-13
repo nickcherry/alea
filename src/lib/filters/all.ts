@@ -22,7 +22,10 @@
  * reactivated selected OHLC-only continuation/failure/trend families
  * with revised configs. Later still, a third pass trimmed any filter
  * whose default configs produced no committee seat under the active
- * selection profile.
+ * selection profile. A subsequent broad config expansion plus a dud
+ * prune extended the per-filter grid, then a fourth trim again
+ * unregistered every filter that earned zero committee seats under
+ * the expanded grid.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -47,16 +50,13 @@ import "@alea/lib/filters/donchianReversion";
 import "@alea/lib/filters/effortVsResultFade";
 import "@alea/lib/filters/emaPosition";
 import "@alea/lib/filters/failedCloseBreakoutFade";
-import "@alea/lib/filters/freshVolumeImpulseFollow";
 import "@alea/lib/filters/heikinAshiReversion";
 import "@alea/lib/filters/highVolumeFailedBreakoutFade";
 import "@alea/lib/filters/hullMaPosition";
-import "@alea/lib/filters/insideBarFakeoutFade";
 import "@alea/lib/filters/internalBarStrengthMeanrev";
 import "@alea/lib/filters/keltnerReversion";
 import "@alea/lib/filters/lateVolumeClimaxFade";
 import "@alea/lib/filters/lowVolumeBreakoutFade";
-import "@alea/lib/filters/lowVolumeNodeTraverseFollow";
 import "@alea/lib/filters/macdHistogramTurnFade";
 import "@alea/lib/filters/madReversion";
 import "@alea/lib/filters/multiBarReturnFade";
@@ -64,9 +64,7 @@ import "@alea/lib/filters/percentRankMeanRev";
 import "@alea/lib/filters/priceVolumeDisagreementFade";
 import "@alea/lib/filters/qstickBodyBiasFade";
 import "@alea/lib/filters/rangeExpansionFade";
-import "@alea/lib/filters/relvolContextMarkovDirection";
 import "@alea/lib/filters/rollingVwapBandReclaim";
-import "@alea/lib/filters/rollingVwapCrossFollow";
 import "@alea/lib/filters/rsiMeanRev";
 import "@alea/lib/filters/rsiVelocity";
 import "@alea/lib/filters/signedVolumeImbalanceFade";
@@ -74,17 +72,9 @@ import "@alea/lib/filters/smaPosition";
 import "@alea/lib/filters/squeezeBreakoutFollow";
 import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochasticMeanRev";
-import "@alea/lib/filters/stoppingVolumeReversal";
 import "@alea/lib/filters/streakFade";
 import "@alea/lib/filters/supertrendRetestFollow";
 import "@alea/lib/filters/tsiMeanRev";
-import "@alea/lib/filters/volumeCompressionBreakoutFollow";
-import "@alea/lib/filters/volumeConfirmedBreakoutFollow";
-import "@alea/lib/filters/volumeDivergenceRetestFade";
 import "@alea/lib/filters/volumeDryupPullbackFollow";
-import "@alea/lib/filters/volumeGradientTrendFollow";
-import "@alea/lib/filters/volumeProfileValueAreaEdgeFade";
-import "@alea/lib/filters/volumeTaperExhaustionFade";
-import "@alea/lib/filters/volumeWeightedBodyPressureFollow";
 import "@alea/lib/filters/williamsRMeanRev";
 import "@alea/lib/filters/zscoreReversion";
