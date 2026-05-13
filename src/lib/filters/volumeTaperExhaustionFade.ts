@@ -111,5 +111,10 @@ registerFilter({
     { lookback: 20, volLength: 50, atrLength: 14, minPriceMoveAtr: 1.8, maxRelVolEnd: 0.75, maxVolSlope: -0.03 },
     { lookback: 6, volLength: 20, atrLength: 7, minPriceMoveAtr: 0.7, maxRelVolEnd: 0.85, maxVolSlope: -0.06 },
     { lookback: 15, volLength: 50, atrLength: 20, minPriceMoveAtr: 1.5, maxRelVolEnd: 0.8, maxVolSlope: -0.04 },
+    // Push longer lookbacks + tighter taper requirements (the long-lookback configs led WR).
+    { lookback: 25, volLength: 50, atrLength: 20, minPriceMoveAtr: 2.0, maxRelVolEnd: 0.7, maxVolSlope: -0.03 },
+    { lookback: 18, volLength: 50, atrLength: 14, minPriceMoveAtr: 1.6, maxRelVolEnd: 0.7, maxVolSlope: -0.04 },
+    { lookback: 30, volLength: 50, atrLength: 20, minPriceMoveAtr: 2.5, maxRelVolEnd: 0.65, maxVolSlope: -0.025 },
+    { lookback: 15, volLength: 20, atrLength: 14, minPriceMoveAtr: 1.4, maxRelVolEnd: 0.75, maxVolSlope: -0.05 },
   ],
 });

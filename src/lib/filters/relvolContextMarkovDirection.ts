@@ -219,5 +219,10 @@ registerFilter({
     { contextBars: 4, sampleLookback: 1200, minSamples: 20, minProb: 0.62, volLength: 50, volumeBuckets: 4, includeCloseLocation: false },
     { contextBars: 3, sampleLookback: 1500, minSamples: 40, minProb: 0.58, volLength: 50, volumeBuckets: 4, includeCloseLocation: true },
     { contextBars: 5, sampleLookback: 2000, minSamples: 15, minProb: 0.65, volLength: 50, volumeBuckets: 3, includeCloseLocation: false },
+    // Push the winning axis: deeper lookback + closeLoc + buckets:4.
+    { contextBars: 3, sampleLookback: 2500, minSamples: 50, minProb: 0.58, volLength: 50, volumeBuckets: 4, includeCloseLocation: true },
+    { contextBars: 4, sampleLookback: 2000, minSamples: 30, minProb: 0.6, volLength: 50, volumeBuckets: 4, includeCloseLocation: true },
+    { contextBars: 2, sampleLookback: 1500, minSamples: 50, minProb: 0.6, volLength: 50, volumeBuckets: 4, includeCloseLocation: true },
+    { contextBars: 4, sampleLookback: 3000, minSamples: 40, minProb: 0.6, volLength: 50, volumeBuckets: 5, includeCloseLocation: true },
   ],
 });

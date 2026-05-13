@@ -114,5 +114,10 @@ registerFilter({
     { lookback: 10, volLength: 50, atrLength: 14, imbalanceRatio: 0.7, minNetMoveAtr: 1.5, minAvgRelVol: 1.0 },
     { lookback: 4, volLength: 20, atrLength: 7, imbalanceRatio: 0.9, minNetMoveAtr: 0.6, minAvgRelVol: 1.5 },
     { lookback: 12, volLength: 50, atrLength: 20, imbalanceRatio: 0.72, minNetMoveAtr: 2.0, minAvgRelVol: 1.0 },
+    // Pushing the winning axis: short lookbacks + high imbalance + high relVol.
+    { lookback: 3, volLength: 20, atrLength: 7, imbalanceRatio: 0.95, minNetMoveAtr: 0.5, minAvgRelVol: 1.7 },
+    { lookback: 4, volLength: 20, atrLength: 14, imbalanceRatio: 0.85, minNetMoveAtr: 0.8, minAvgRelVol: 1.4 },
+    { lookback: 6, volLength: 20, atrLength: 14, imbalanceRatio: 0.85, minNetMoveAtr: 1.0, minAvgRelVol: 1.3 },
+    { lookback: 5, volLength: 50, atrLength: 14, imbalanceRatio: 0.82, minNetMoveAtr: 0.9, minAvgRelVol: 1.3 },
   ],
 });

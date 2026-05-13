@@ -118,5 +118,10 @@ registerFilter({
     { lookback: 10, volLength: 50, atrLength: 14, minNetMoveAtr: 1.0, minOppSignedVolRatio: 0.55, minAvgRelVol: 0.9 },
     { lookback: 4, volLength: 20, atrLength: 7, minNetMoveAtr: 0.3, minOppSignedVolRatio: 0.65, minAvgRelVol: 1.2 },
     { lookback: 12, volLength: 50, atrLength: 20, minNetMoveAtr: 1.2, minOppSignedVolRatio: 0.55, minAvgRelVol: 0.9 },
+    // Push longer lookbacks + larger net moves; oppRatio mid-range.
+    { lookback: 15, volLength: 50, atrLength: 14, minNetMoveAtr: 1.5, minOppSignedVolRatio: 0.55, minAvgRelVol: 0.9 },
+    { lookback: 10, volLength: 20, atrLength: 14, minNetMoveAtr: 1.0, minOppSignedVolRatio: 0.58, minAvgRelVol: 1.0 },
+    { lookback: 8, volLength: 50, atrLength: 14, minNetMoveAtr: 0.8, minOppSignedVolRatio: 0.6, minAvgRelVol: 1.0 },
+    { lookback: 20, volLength: 50, atrLength: 20, minNetMoveAtr: 1.8, minOppSignedVolRatio: 0.55, minAvgRelVol: 0.9 },
   ],
 });

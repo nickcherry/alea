@@ -185,5 +185,38 @@ registerFilter({
       minVolumeDropFrac: 0.5,
       minRejectionFrac: 0.45,
     },
+    // Stricter volume drop + rejection; mid-range lookback (winning axis on 5m).
+    {
+      lookback: 50,
+      minSeparation: 5,
+      atrLength: 14,
+      toleranceAtr: 0.2,
+      minVolumeDropFrac: 0.55,
+      minRejectionFrac: 0.4,
+    },
+    {
+      lookback: 60,
+      minSeparation: 6,
+      atrLength: 14,
+      toleranceAtr: 0.2,
+      minVolumeDropFrac: 0.45,
+      minRejectionFrac: 0.4,
+    },
+    {
+      lookback: 80,
+      minSeparation: 8,
+      atrLength: 14,
+      toleranceAtr: 0.25,
+      minVolumeDropFrac: 0.5,
+      minRejectionFrac: 0.35,
+    },
+    {
+      lookback: 40,
+      minSeparation: 4,
+      atrLength: 14,
+      toleranceAtr: 0.18,
+      minVolumeDropFrac: 0.6,
+      minRejectionFrac: 0.45,
+    },
   ],
 });
