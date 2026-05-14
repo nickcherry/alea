@@ -19,9 +19,9 @@ Selection is **manual** — operator runs it after a fresh
 
 **Evaluation** runs at each configured trade-decision boundary,
 inside the dry-run / live loop. Dry-run defaults to `5m,15m`, and
-the CLI can override that set. Classify the bar's regime → look up
-the roster for `(asset, regime, period)` → evaluate each candidate → apply
-the shared trade decision policy.
+the CLI can override that set. Classify the bar's regime → apply the
+shared allowed-regime gate → look up the roster for `(asset, regime,
+period)` → evaluate each candidate → apply the shared vote policy.
 
 ## Selection: eligibility + ranking
 
@@ -117,16 +117,18 @@ At each configured period boundary the loop:
    bar with Pyth's lead-time price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
-3. Looks up the roster bucket for `(asset, marketRegime, period)`.
+3. Checks `TRADE_DECISION_ALLOWED_MARKET_REGIMES`.
+   - Disallowed regime → abstain entirely.
+4. Looks up the roster bucket for `(asset, marketRegime, period)`.
    - Empty bucket → abstain entirely.
-4. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
+5. Calls `evaluateCommittee({ bars, candidates: rosterCandidates })`.
    Each selected candidate config's `predict` runs; votes are
    collected with the selection-time win rate.
-5. Collapse to at most one active vote per `filter_id`. If multiple
+6. Collapse to at most one active vote per `filter_id`. If multiple
    configs for the same filter engage, the engaged config with the
    highest selected asset/regime `win_rate` is the one that counts. Abstain
    configs do not block a lower-WR engaged config for the same filter.
-6. Apply the trade decision constants: minimum non-abstain votes,
+7. Apply the trade decision constants: minimum non-abstain votes,
    consensus fraction, and tie handling.
 
 [`aggregateCommittee`](../src/lib/committee/aggregate.ts) is the
@@ -143,6 +145,7 @@ Critical decision settings live in
 | --------------------------------------- | ------------------------: | ----------------------------------------------------------------------------------- |
 | `TRADE_DECISION_DEFAULT_PERIODS`        |                 `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
 | `TRADE_DECISION_SUPPORTED_PERIODS`      |                 `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
+| `TRADE_DECISION_ALLOWED_MARKET_REGIMES` | low-vol regimes only      | Regimes allowed to produce actionable backtest/dry-run/live trades                  |
 | `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` | `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`           |                     `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`        |                       `1` | One active vote per `filter_id`, even if multiple configs engage                    |
@@ -155,7 +158,13 @@ after filter-level vote collapse, with at least three engaged filters
 required. The wider selection caps intentionally pair with this higher
 vote gate so breadth only becomes an actionable trade when multiple
 independent filters agree. Changing `MIN_COMMITTEE_VOTES_TO_TRADE`
-changes that for both dry-run and live.
+changes that for both dry-run and live. Changing
+`TRADE_DECISION_ALLOWED_MARKET_REGIMES` changes which classified
+environments can produce trades for backtest, dry-run, and live.
+The high-vol regime names are intentionally left as commented entries
+beside the allow-list in `src/constants/tradeDecision.ts`; adding them
+back should be followed by `bun alea backtest:run` and a restart of
+any running dry-run/live process.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See

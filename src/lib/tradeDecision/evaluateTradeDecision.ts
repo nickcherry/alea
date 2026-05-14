@@ -1,4 +1,7 @@
-import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
+import {
+  isTradeDecisionMarketRegimeAllowed,
+  type TradeDecisionPeriod,
+} from "@alea/constants/tradeDecision";
 import { selectEffectiveCommitteeVotes } from "@alea/lib/committee/aggregate";
 import { evaluateCommittee } from "@alea/lib/committee/runCommittee";
 import {
@@ -39,28 +42,37 @@ export function evaluateTradeDecision({
   // input on the canonical Pyth timeline regardless of whether
   // individual committee members use Coinbase data.
   const marketRegime = classifyMarketRegime({ bars: series.pyth });
+  if (!isTradeDecisionMarketRegimeAllowed(marketRegime)) {
+    return {
+      prediction: null,
+      marketRegime,
+      rosterSize: 0,
+      up: 0,
+      down: 0,
+      abstain: 0,
+      orderConfidence: null,
+    };
+  }
   const rosterCandidates: CommitteeCandidate[] = [];
-  if (marketRegime !== null) {
-    const bucket = roster.byBucket.get(
-      rosterBucketKey({
-        asset,
-        marketRegime,
-        period,
-      }),
-    );
-    if (bucket !== undefined) {
-      for (const member of bucket) {
-        const cand = candidatesByKey.get(member.key);
-        if (cand !== undefined) {
-          rosterCandidates.push({
-            candidate: cand,
-            selection: {
-              winRate: member.winRate,
-              nEngagements: member.nEngagements,
-              rank: member.rank,
-            },
-          });
-        }
+  const bucket = roster.byBucket.get(
+    rosterBucketKey({
+      asset,
+      marketRegime,
+      period,
+    }),
+  );
+  if (bucket !== undefined) {
+    for (const member of bucket) {
+      const cand = candidatesByKey.get(member.key);
+      if (cand !== undefined) {
+        rosterCandidates.push({
+          candidate: cand,
+          selection: {
+            winRate: member.winRate,
+            nEngagements: member.nEngagements,
+            rank: member.rank,
+          },
+        });
       }
     }
   }

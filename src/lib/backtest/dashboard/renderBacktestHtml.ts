@@ -191,6 +191,7 @@ function renderConfig(run: CommitteeBacktestSummary): string {
       ${profileItem({ label: "Periods", value: run.periods.join(", ") })}
       ${profileItem({ label: "Assets", value: run.assets.map((asset) => asset.toUpperCase()).join(", ") })}
       ${profileItem({ label: "Decision lead", value: formatLeadTimes({ periods: run.periods, leadTimeByPeriodMs: run.tradeDecisionConfig.leadTimeByPeriodMs }) })}
+      ${profileItem({ label: "Allowed regimes", value: formatRegimes({ values: run.tradeDecisionConfig.allowedMarketRegimes }) })}
       ${profileItem({ label: "Min votes", value: run.tradeDecisionConfig.minVotesToTrade.toLocaleString() })}
       ${profileItem({ label: "Min consensus", value: formatPercent({ value: run.tradeDecisionConfig.minConsensusFraction }) })}
     </div>
@@ -214,6 +215,14 @@ function formatLeadTimes({
       return `${period}: ${minutes.toLocaleString()}m`;
     })
     .join(" / ");
+}
+
+function formatRegimes({
+  values,
+}: {
+  readonly values: readonly string[];
+}): string {
+  return values.map((value) => value.replaceAll("_", " ")).join(", ");
 }
 
 function renderBucketTable({

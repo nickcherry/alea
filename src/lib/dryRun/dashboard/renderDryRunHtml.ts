@@ -138,6 +138,13 @@ export function renderDryRunHtml({
                   tip: "Fraction of votes that must agree on a side. Ties still abstain.",
                 },
                 {
+                  label: "Allowed Regimes",
+                  value: formatRegimeList({
+                    values: payload.decisionConfig.allowedMarketRegimes,
+                  }),
+                  tip: "Classified regimes that may produce an actionable decision.",
+                },
+                {
                   label: "Filter Tie Break",
                   value: formatFilterTieBreak({
                     value: payload.decisionConfig.filterTieBreak,
@@ -586,4 +593,12 @@ function formatFilterTieBreak({ value }: { readonly value: string }): string {
     return "win rate > engagements > rank";
   }
   return value;
+}
+
+function formatRegimeList({
+  values,
+}: {
+  readonly values: readonly string[];
+}): string {
+  return values.map((value) => value.replaceAll("_", " ")).join(", ");
 }

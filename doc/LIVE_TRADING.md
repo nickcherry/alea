@@ -82,7 +82,9 @@ For each asset/period:
    synthesizes the active Pyth candle, aligns Coinbase bars to the
    Pyth timestamps, and asks the committee for a decision. Coinbase
    failures are soft; Pyth failures or stale latest Pyth prices skip
-   the decision.
+   the decision. The shared decision policy also skips any regime not
+   listed in `TRADE_DECISION_ALLOWED_MARKET_REGIMES`; the current
+   default is low-vol only.
 4. If the decision is actionable, live placement starts immediately.
    Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
    `15m` crypto up/down markets were already `active`, `accepting`,

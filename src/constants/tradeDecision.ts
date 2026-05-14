@@ -1,3 +1,5 @@
+import type { MarketRegime } from "@alea/lib/regime/types";
+
 /**
  * Source-of-truth knobs for turning committee votes into an
  * actionable trade decision. Dry-run and live trading must read
@@ -21,6 +23,36 @@ export type CommitteeDecisionRules = {
   readonly minVotesToTrade: number;
   readonly minConsensusFraction: number;
 };
+
+/**
+ * Market regimes allowed to produce an actionable trade. Backtest,
+ * dry-run, and live trading all consult this same allow-list after
+ * classifying the current bar window.
+ *
+ * Keep this list deliberately small. To re-enable high-vol trading,
+ * add one or both high-vol regimes below and rerun `backtest:run`
+ * before restarting dry-run/live processes.
+ */
+export const TRADE_DECISION_ALLOWED_MARKET_REGIMES = [
+  "low_vol_trending",
+  "low_vol_ranging",
+  // "high_vol_trending",
+  // "high_vol_ranging",
+] as const satisfies readonly MarketRegime[];
+
+export type TradeDecisionAllowedMarketRegime =
+  (typeof TRADE_DECISION_ALLOWED_MARKET_REGIMES)[number];
+
+export function isTradeDecisionMarketRegimeAllowed(
+  marketRegime: MarketRegime | null,
+): marketRegime is TradeDecisionAllowedMarketRegime {
+  return (
+    marketRegime !== null &&
+    TRADE_DECISION_ALLOWED_MARKET_REGIMES.includes(
+      marketRegime as TradeDecisionAllowedMarketRegime,
+    )
+  );
+}
 
 /**
  * Candle periods the dry-run trader predicts when the CLI does not

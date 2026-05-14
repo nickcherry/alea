@@ -43,10 +43,12 @@ At each historical decision moment, the runner:
    ending with a synthetic in-flight period bar from completed `1m` candles
    available at the configured decision lead.
 2. Classifies the current market regime.
-3. Loads the selected committee roster for `(asset, regime, period)`.
-4. Runs `evaluateCommittee`, including the shared one-vote-per-filter
+3. Applies `TRADE_DECISION_ALLOWED_MARKET_REGIMES`; high-vol regimes
+   currently abstain before any vote can become a trade.
+4. Loads the selected committee roster for `(asset, regime, period)`.
+5. Runs `evaluateCommittee`, including the shared one-vote-per-filter
    and consensus policy.
-5. Scores non-abstain decisions against the target candle's
+6. Scores non-abstain decisions against the target candle's
    open-to-close direction.
 
 Tiny Pyth open-to-close moves use the same ambiguous-outcome helper as

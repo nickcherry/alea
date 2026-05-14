@@ -34,6 +34,7 @@ export type DryRunDecisionConfig = {
    */
   readonly supportedPeriods: readonly string[];
   readonly leadTimeByPeriodMs: { readonly [period: string]: number };
+  readonly allowedMarketRegimes: readonly string[];
   readonly hydratedBars: number;
   readonly maxVotesPerFilter: number;
   readonly minVotesToTrade: number;

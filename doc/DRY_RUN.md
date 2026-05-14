@@ -48,9 +48,10 @@ For each configured period, defaulting to `5m,15m`, and each of the
    combine it with the active Pyth candle when available, and build a
    synthetic active candle for the about-to-finalize bar. Align the
    Coinbase buffer to the Pyth open-time timeline. Run the regime
-   classifier on Pyth bars. Look up the committee roster for that
-   period and regime. Apply the shared trade decision policy. If
-   non-abstain, persist the decision; otherwise skip.
+   classifier on Pyth bars. Apply the shared allowed-regime gate,
+   then look up the committee roster for that period and regime.
+   Apply the shared trade decision policy. If non-abstain, persist
+   the decision; otherwise skip.
 4. **Simulate order** — immediately after an actionable committee
    decision, read the live UP/DOWN book/BBO
    market data for the predicted side. The runner pre-discovers
@@ -111,20 +112,22 @@ for each asset:
    in-flight bar with Pyth's lead-time price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
-3. Look up the roster bucket for `(asset, regime, period)` in
+3. If the regime is not in `TRADE_DECISION_ALLOWED_MARKET_REGIMES`,
+   abstain entirely. Current defaults allow only low-vol regimes.
+4. Look up the roster bucket for `(asset, regime, period)` in
    `committee_selections`. Empty bucket → abstain.
-4. Evaluate each rostered candidate's `predict` on the trailing bar
+5. Evaluate each rostered candidate's `predict` on the trailing bar
    window from its declared source: Pyth for price filters, Coinbase
    spot for volume filters. Coinbase gaps become abstains for that
    candidate.
-5. Collapse votes to at most one active vote per `filter_id`. When
+6. Collapse votes to at most one active vote per `filter_id`. When
    multiple configs for a filter engage, the engaged config with the
    highest selected asset/regime `win_rate` counts.
-6. Require the shared minimum-vote and consensus settings from
+7. Require the shared minimum-vote and consensus settings from
    [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
    With today's defaults this is simple majority after filter collapse;
    ties and all-abstain still abstain.
-7. Persist if non-abstain.
+8. Persist if non-abstain.
 
 ## Order simulation
 

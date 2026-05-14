@@ -48,6 +48,7 @@ function payloadFixture(): BacktestDashboardPayload {
       tradeDecisionConfig: {
         hydrateBars: 150,
         leadTimeByPeriodMs: { "5m": 120_000, "15m": 180_000 },
+        allowedMarketRegimes: ["low_vol_trending", "low_vol_ranging"],
         maxVotesPerFilter: 1,
         minVotesToTrade: 1,
         minConsensusFraction: 0.5,

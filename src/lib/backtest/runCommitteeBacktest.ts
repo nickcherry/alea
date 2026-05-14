@@ -12,6 +12,8 @@ import {
 import {
   type CommitteeDecisionRules,
   DEFAULT_COMMITTEE_DECISION_RULES,
+  isTradeDecisionMarketRegimeAllowed,
+  TRADE_DECISION_ALLOWED_MARKET_REGIMES,
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
@@ -83,6 +85,7 @@ export type CommitteeBacktestSummary = {
   readonly tradeDecisionConfig: {
     readonly hydrateBars: number;
     readonly leadTimeByPeriodMs: Readonly<Record<TradeDecisionPeriod, number>>;
+    readonly allowedMarketRegimes: readonly MarketRegime[];
     readonly maxVotesPerFilter: number;
     readonly minVotesToTrade: number;
     readonly minConsensusFraction: number;
@@ -213,6 +216,7 @@ export async function runCommitteeBacktest({
     tradeDecisionConfig: {
       hydrateBars: TRADE_DECISION_HYDRATE_BARS,
       leadTimeByPeriodMs: TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
+      allowedMarketRegimes: TRADE_DECISION_ALLOWED_MARKET_REGIMES,
       maxVotesPerFilter: decisionRules.maxVotesPerFilter,
       minVotesToTrade: decisionRules.minVotesToTrade,
       minConsensusFraction: decisionRules.minConsensusFraction,
@@ -352,6 +356,10 @@ function replaySeries({
     const regimeBucket = getBucket(acc.byRegime, marketRegime, marketRegime);
     regimeBucket.decisionMoments += 1;
     const regimeBuckets = [...buckets, regimeBucket];
+    if (!isTradeDecisionMarketRegimeAllowed(marketRegime)) {
+      increment(regimeBuckets, "abstainMoments");
+      continue;
+    }
     const bucket = rosterBucketKey({
       asset: series.asset,
       marketRegime,
