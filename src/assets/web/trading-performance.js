@@ -3,7 +3,7 @@
  * Client-side logic for the Polymarket Trading Performance report.
  * Reads the trade payload from <script id="performance-payload">,
  * the chart tokens from <script id="performance-tokens">. Renders
- * the cumulative-PnL line chart with a hover tooltip.
+ * the cumulative-realized-PnL line chart with a hover tooltip.
  */
 (function () {
   const payloadEl = document.getElementById("performance-payload");
@@ -71,7 +71,7 @@
         series: [
           {},
           {
-            label: "Cumulative PnL",
+            label: "Cumulative Realized PnL",
             stroke: "#d7aa45",
             width: 3,
             value: (_self, raw) => raw == null ? "--" : formatUsd(raw),
@@ -100,8 +100,8 @@
           setCursor: [
             (self) => {
               const index = self.cursor.idx;
-              // Index 0 is the synthetic baseline (no trade); only
-              // hover-points 1..N correspond to real events.
+              // Index 0 is the synthetic baseline (no settled trade);
+              // only hover-points 1..N correspond to realized events.
               if (index == null || index < 1) {
                 tooltip.classList.remove("visible");
                 return;
@@ -117,8 +117,8 @@
               tooltip.innerHTML =
                 '<div class="alea-tooltip-head">' + head + '</div>' +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + ' · ' + point.title + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Market PnL</span><span class="value">' + formatUsd(point.marketPnlUsd) + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Total PnL</span><span class="value">' + formatUsd(point.cumulativePnlUsd) + '</span></div>';
+                '<div class="alea-tooltip-row"><span></span><span class="name">Market Realized</span><span class="value">' + formatUsd(point.marketPnlUsd) + '</span></div>' +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Total Realized</span><span class="value">' + formatUsd(point.cumulativePnlUsd) + '</span></div>';
               const rect = host.getBoundingClientRect();
               tooltip.style.left = Math.min(rect.width - 230, Math.max(8, self.cursor.left + 12)) + "px";
               tooltip.style.top = Math.max(8, self.cursor.top + 12) + "px";

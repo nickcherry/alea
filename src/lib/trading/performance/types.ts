@@ -12,6 +12,10 @@ export type TradingPerformanceSummary = {
   readonly losingMarketCount: number;
   readonly flatMarketCount: number;
   readonly lifetimePnlUsd: number;
+  /** Settled PnL only: closed/redeemable markets plus maker rebates. */
+  readonly realizedPnlUsd: number;
+  /** Mark-to-market PnL from currently open positions only. */
+  readonly openMtmPnlUsd: number;
   readonly totalInvestedUsd: number;
   readonly totalReturnedUsd: number;
   readonly currentValueUsd: number;
@@ -51,6 +55,11 @@ export type TradingPerformanceMarketRow = {
   readonly currentValueUsd: number;
   readonly currentSize: number;
   readonly currentPrice: number;
+  readonly boughtSize: number;
+  readonly avgEntryPrice: number | null;
+  /** Null for open positions because their PnL is still mark-to-market. */
+  readonly realizedPnlUsd: number | null;
+  /** Equity PnL: realized cashflows plus current mark for open positions. */
   readonly pnlUsd: number;
   readonly status: TradingPerformanceMarketStatus;
   readonly result: TradingPerformanceMarketResult;

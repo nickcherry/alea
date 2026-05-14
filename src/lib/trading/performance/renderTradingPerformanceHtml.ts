@@ -60,10 +60,16 @@ export function renderTradingPerformanceHtml({
     <main class="alea-main">
       <section class="alea-summary-grid cols-4">
         ${renderMetric({
-          label: "Lifetime PnL",
+          label: "Equity PnL",
           value: formatSignedUsd({ value: payload.summary.lifetimePnlUsd }),
           tone: toneForNumber({ value: payload.summary.lifetimePnlUsd }),
-          sub: `${payload.summary.marketCount.toLocaleString()} markets`,
+          sub: `${formatSignedUsd({ value: payload.summary.realizedPnlUsd })} realized`,
+        })}
+        ${renderMetric({
+          label: "Open MTM",
+          value: formatSignedUsd({ value: payload.summary.openMtmPnlUsd }),
+          tone: toneForNumber({ value: payload.summary.openMtmPnlUsd }),
+          sub: `${payload.summary.openPositionCount.toLocaleString()} open`,
         })}
         ${renderMetric({
           label: "Total Fees",
@@ -74,20 +80,15 @@ export function renderTradingPerformanceHtml({
         ${renderMetric({
           label: "Win / Loss",
           value: `${payload.summary.winningMarketCount.toLocaleString()} / ${payload.summary.losingMarketCount.toLocaleString()}`,
-          sub: `${payload.summary.openPositionCount.toLocaleString()} open · ${payload.summary.flatMarketCount.toLocaleString()} flat`,
-        })}
-        ${renderMetric({
-          label: "Open Positions",
-          value: payload.summary.openPositionCount.toLocaleString(),
           sub: `${payload.summary.redeemablePositionCount.toLocaleString()} redeemable`,
         })}
       </section>
 
       <section class="trading-section">
-        <div class="alea-section-rule"><h2>Cumulative PnL</h2></div>
+        <div class="alea-section-rule"><h2>Cumulative Realized PnL</h2></div>
         <div class="chart-frame">
           <div id="pnl-chart" class="chart-host"></div>
-          <div id="pnl-empty" class="chart-empty">No positions to chart yet.</div>
+          <div id="pnl-empty" class="chart-empty">No settled markets to chart yet.</div>
           <div id="pnl-tooltip" class="alea-tooltip"></div>
         </div>
       </section>
@@ -101,9 +102,12 @@ export function renderTradingPerformanceHtml({
                 <th>Symbol</th>
                 <th class="market-col">Market</th>
                 <th>Role</th>
-                <th>Fees</th>
+                <th>Entry</th>
                 <th>Invested</th>
-                <th>PnL</th>
+                <th>Returned</th>
+                <th>Current</th>
+                <th>Realized</th>
+                <th>MTM</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -160,10 +164,13 @@ function renderMarketRow(
         </div>
       </td>
       <td>${renderRolePill({ role: row.traderRole })}</td>
-      <td class="alea-mono">${formatUnsignedUsd({ value: row.feeUsd })}</td>
+      <td class="alea-mono">${formatPriceCents({ value: row.avgEntryPrice })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.investedUsd })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.returnedUsd })}</td>
+      <td class="alea-mono">${formatUnsignedUsd({ value: row.currentValueUsd })}</td>
+      <td class="alea-mono${toneClassForNullable({ value: row.realizedPnlUsd })}">${formatNullableSignedUsd({ value: row.realizedPnlUsd })}</td>
       <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
-      <td><span class="result-pill ${row.result}">${row.result}</span></td>
+      <td>${renderStatusPill({ row })}</td>
     </tr>
   `;
 }
@@ -196,6 +203,60 @@ function formatUnsignedUsd({ value }: { readonly value: number }): string {
   })}`;
 }
 
+function formatNullableSignedUsd({
+  value,
+}: {
+  readonly value: number | null;
+}): string {
+  if (value === null) {
+    return "—";
+  }
+  return formatSignedUsd({ value });
+}
+
+function formatPriceCents({
+  value,
+}: {
+  readonly value: number | null;
+}): string {
+  if (value === null || !Number.isFinite(value)) {
+    return "—";
+  }
+  return `${(value * 100).toLocaleString("en-US", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}c`;
+}
+
+function toneClassForNullable({
+  value,
+}: {
+  readonly value: number | null;
+}): string {
+  if (value === null) {
+    return "";
+  }
+  return value > 0
+    ? " alea-num-positive"
+    : value < 0
+      ? " alea-num-negative"
+      : "";
+}
+
+function renderStatusPill({
+  row,
+}: {
+  readonly row: TradingPerformancePayload["markets"][number];
+}): string {
+  if (row.status === "open") {
+    return '<span class="result-pill open">open</span>';
+  }
+  if (row.status === "redeemable") {
+    return `<span class="result-pill ${row.result}">redeemable ${row.result}</span>`;
+  }
+  return `<span class="result-pill ${row.result}">${row.result}</span>`;
+}
+
 function toneForNumber({
   value,
 }: {
@@ -216,5 +277,4 @@ function shortId({ value }: { readonly value: string }): string {
   }
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }
-
 

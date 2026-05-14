@@ -98,6 +98,7 @@ export function buildTradingPerformancePayload({
       invested: number;
       returned: number;
       feeUsd: number;
+      boughtSize: number;
       latestActivityMs: number;
     }
   >();
@@ -123,12 +124,16 @@ export function buildTradingPerformancePayload({
       invested: 0,
       returned: 0,
       feeUsd: 0,
+      boughtSize: 0,
       latestActivityMs: 0,
     };
     if (sign < 0) {
       existing.invested += event.usdcSize;
     } else {
       existing.returned += event.usdcSize;
+    }
+    if (event.kind === "TRADE" && event.side === "BUY") {
+      existing.boughtSize += event.size;
     }
     existing.feeUsd += deriveFeeUsd({ event });
     if (event.timestampMs > existing.latestActivityMs) {
@@ -159,6 +164,7 @@ export function buildTradingPerformancePayload({
         invested: 0,
         returned: 0,
         feeUsd: 0,
+        boughtSize: 0,
         latestActivityMs: 0,
       });
     }
@@ -170,11 +176,13 @@ export function buildTradingPerformancePayload({
     const currentValueUsd = position?.currentValueUsd ?? 0;
     const currentSize = position?.size ?? 0;
     const currentPrice = position?.currentPrice ?? 0;
-    const pnlUsd = m.returned + currentValueUsd - m.invested;
     const status = positionStatus({
       hasPosition: position !== null,
       redeemable: position?.redeemable ?? false,
     });
+    const equityPnlUsd = m.returned + currentValueUsd - m.invested;
+    const realizedPnlUsd = status === "open" ? null : m.returned - m.invested;
+    const avgEntryPrice = m.boughtSize > 0 ? m.invested / m.boughtSize : null;
     const role = tradeRolesByConditionId?.get(m.conditionId);
     rows.push({
       conditionId: m.conditionId,
@@ -189,9 +197,12 @@ export function buildTradingPerformancePayload({
       currentValueUsd,
       currentSize,
       currentPrice,
-      pnlUsd,
+      boughtSize: m.boughtSize,
+      avgEntryPrice,
+      realizedPnlUsd,
+      pnlUsd: equityPnlUsd,
       status,
-      result: resultFromRow({ pnlUsd, status }),
+      result: resultFromRow({ pnlUsd: equityPnlUsd, status }),
       traderRole: role?.role ?? null,
       feeUsd: m.feeUsd,
     });
@@ -208,6 +219,11 @@ export function buildTradingPerformancePayload({
   const totalReturnedUsd = sum(rows.map((r) => r.returnedUsd));
   const currentValueUsd = sum(rows.map((r) => r.currentValueUsd));
   const totalFeesUsd = sum(rows.map((r) => r.feeUsd));
+  const realizedPnlUsd =
+    sum(rows.map((r) => r.realizedPnlUsd ?? 0)) + makerRebateUsd;
+  const openMtmPnlUsd = sum(
+    rows.filter((r) => r.status === "open").map((r) => r.pnlUsd),
+  );
   const lifetimePnlUsd =
     totalReturnedUsd + currentValueUsd - totalInvestedUsd + makerRebateUsd;
 
@@ -230,6 +246,8 @@ export function buildTradingPerformancePayload({
       losingMarketCount: rows.filter((r) => r.result === "loss").length,
       flatMarketCount: rows.filter((r) => r.result === "flat").length,
       lifetimePnlUsd,
+      realizedPnlUsd,
+      openMtmPnlUsd,
       totalInvestedUsd,
       totalReturnedUsd,
       currentValueUsd,
@@ -346,11 +364,11 @@ function buildChart({
 }: {
   readonly rows: readonly TradingPerformanceMarketRow[];
 }): TradingPerformanceChartPoint[] {
-  // Order events by latest market activity so the cumulative line
-  // tracks the user's PnL through time. Open positions whose latest
-  // activity is recent show up at the right edge with their current
-  // mark-to-market.
-  const ordered = [...rows].sort(
+  // Order settled events by latest market activity so the cumulative
+  // line tracks realized PnL through time. Open positions stay out of
+  // this chart because their PnL is still mark-to-market and can move
+  // until resolution/redemption.
+  const ordered = rows.filter((r) => r.realizedPnlUsd !== null).sort(
     (a, b) =>
       a.lastActivityAtMs - b.lastActivityAtMs ||
       a.conditionId.localeCompare(b.conditionId),
@@ -358,13 +376,14 @@ function buildChart({
   let cumulative = 0;
   const points: TradingPerformanceChartPoint[] = [];
   for (const row of ordered) {
-    cumulative += row.pnlUsd;
+    const realizedPnlUsd = row.realizedPnlUsd ?? 0;
+    cumulative += realizedPnlUsd;
     points.push({
       conditionId: row.conditionId,
       symbol: row.symbol,
       title: row.title,
       orderedAtMs: row.lastActivityAtMs,
-      marketPnlUsd: row.pnlUsd,
+      marketPnlUsd: realizedPnlUsd,
       cumulativePnlUsd: cumulative,
     });
   }

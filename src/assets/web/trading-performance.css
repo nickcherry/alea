@@ -1,6 +1,6 @@
 /*
  * Page-specific layout for the Polymarket Trading Performance report:
- * the cumulative-PnL chart frame and the per-trade ledger pills.
+ * the cumulative-realized-PnL chart frame and the per-trade ledger pills.
  * Generic primitives (cards, tables, summary-grid, metric, mono,
  * num-positive/negative, nowrap) come from alea.css.
  */
@@ -49,28 +49,28 @@
    roughly twice that — keeps the eye on the question text without
    making any single narrow column visually dominant.
 
-   `min-width: 880px` is the readability floor: 6 narrow columns at
-   ~100px each + Market at ~280px. The wrapping `.alea-table-wrap`
+   `min-width: 1160px` is the readability floor for the accounting
+   columns. The wrapping `.alea-table-wrap`
    already has `overflow-x: auto`, so on viewports narrower than
-   880px the table doesn't crush — it scrolls horizontally. On
+   that the table doesn't crush — it scrolls horizontally. On
    wider viewports the table fills the card via the inherited
    `width: 100%` from .alea-table. */
 .trading-performance-table {
   font-size: 11.5px;
   table-layout: fixed;
-  min-width: 880px;
+  min-width: 1160px;
 }
 .trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
 .trading-performance-table tbody td { padding: 9px 11px; }
 .trading-performance-table th:not(.market-col),
 .trading-performance-table td:not(.market-col) {
-  width: 12.5%;
+  width: 9%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .trading-performance-table th.market-col,
-.trading-performance-table td.market-col { width: 25%; }
+.trading-performance-table td.market-col { width: 19%; }
 
 .trade-market {
   display: flex;

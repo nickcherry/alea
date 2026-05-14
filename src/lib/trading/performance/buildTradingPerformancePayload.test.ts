@@ -52,8 +52,11 @@ describe("buildTradingPerformancePayload", () => {
       positions: [],
     });
     expect(payload.summary.lifetimePnlUsd).toBeCloseTo(15, 9);
+    expect(payload.summary.realizedPnlUsd).toBeCloseTo(15, 9);
+    expect(payload.summary.openMtmPnlUsd).toBeCloseTo(0, 9);
     expect(payload.summary.totalInvestedUsd).toBeCloseTo(10, 9);
     expect(payload.summary.totalReturnedUsd).toBeCloseTo(25, 9);
+    expect(payload.markets[0]?.realizedPnlUsd).toBeCloseTo(15, 9);
     expect(payload.markets[0]?.result).toBe("win");
     expect(payload.markets[0]?.status).toBe("closed");
   });
@@ -102,8 +105,12 @@ describe("buildTradingPerformancePayload", () => {
       ],
     });
     expect(payload.summary.lifetimePnlUsd).toBeCloseTo(15, 9);
+    expect(payload.summary.realizedPnlUsd).toBeCloseTo(0, 9);
+    expect(payload.summary.openMtmPnlUsd).toBeCloseTo(15, 9);
     expect(payload.markets[0]?.status).toBe("open");
     expect(payload.markets[0]?.result).toBe("open");
+    expect(payload.markets[0]?.realizedPnlUsd).toBeNull();
+    expect(payload.chart).toHaveLength(0);
   });
 
   it("counts MAKER_REBATE income but does not attach it to any market", () => {
@@ -133,7 +140,7 @@ describe("buildTradingPerformancePayload", () => {
     expect(payload.markets).toHaveLength(1);
   });
 
-  it("orders the chart by latest market activity and produces cumulative PnL", () => {
+  it("orders the chart by latest settled activity and produces cumulative realized PnL", () => {
     const payload = buildTradingPerformancePayload({
       walletAddress: "0xfunder",
       generatedAtMs: 0,
@@ -146,5 +153,43 @@ describe("buildTradingPerformancePayload", () => {
       positions: [],
     });
     expect(payload.chart.map((p) => p.cumulativePnlUsd)).toEqual([15, 10]);
+  });
+
+  it("keeps positive open mark-to-market out of realized win counts and chart", () => {
+    const payload = buildTradingPerformancePayload({
+      walletAddress: "0xfunder",
+      generatedAtMs: 0,
+      activity: [
+        buy({
+          conditionId: "open",
+          usdcSize: 20,
+          size: 38.46,
+          price: 0.52,
+        }),
+      ],
+      positions: [
+        {
+          conditionId: "open",
+          title: "XRP Up",
+          slug: "xrp-updown-15m",
+          outcome: "Up",
+          size: 38.46,
+          currentPrice: 0.74,
+          currentValueUsd: 28.4604,
+          endDateMs: 1_777_900_000_000,
+          redeemable: false,
+        },
+      ],
+    });
+
+    expect(payload.summary.winningMarketCount).toBe(0);
+    expect(payload.summary.openPositionCount).toBe(1);
+    expect(payload.summary.lifetimePnlUsd).toBeCloseTo(8.4604, 9);
+    expect(payload.summary.realizedPnlUsd).toBeCloseTo(0, 9);
+    expect(payload.summary.openMtmPnlUsd).toBeCloseTo(8.4604, 9);
+    expect(payload.markets[0]?.avgEntryPrice).toBeCloseTo(20 / 38.46, 9);
+    expect(payload.markets[0]?.realizedPnlUsd).toBeNull();
+    expect(payload.markets[0]?.result).toBe("open");
+    expect(payload.chart).toHaveLength(0);
   });
 });

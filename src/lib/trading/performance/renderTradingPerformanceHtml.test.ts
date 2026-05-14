@@ -17,6 +17,9 @@ describe("renderTradingPerformanceHtml", () => {
     expect(html).toContain("-$25.00");
     expect(html).toContain("Polymarket data-api");
     expect(html).toContain("Total Fees");
+    expect(html).toContain("Cumulative Realized PnL");
+    expect(html).toContain("MTM");
+    expect(html).toContain("50.0c");
   });
 });
 
@@ -38,6 +41,8 @@ function payloadFixture(): TradingPerformancePayload {
       losingMarketCount: 1,
       flatMarketCount: 0,
       lifetimePnlUsd: -25,
+      realizedPnlUsd: -25,
+      openMtmPnlUsd: 0,
       totalInvestedUsd: 25,
       totalReturnedUsd: 0,
       currentValueUsd: 0,
@@ -68,6 +73,9 @@ function payloadFixture(): TradingPerformancePayload {
         currentValueUsd: 0,
         currentSize: 100,
         currentPrice: 0,
+        boughtSize: 50,
+        avgEntryPrice: 0.5,
+        realizedPnlUsd: -25,
         pnlUsd: -25,
         status: "redeemable",
         result: "loss",
