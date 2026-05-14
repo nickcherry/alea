@@ -1,12 +1,12 @@
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import {
-  type AlignedBarSeries,
-  selectFilterWindow,
-} from "@alea/lib/filters/barSeries";
 import { runHash } from "@alea/lib/filters/hash";
 import { getFilter } from "@alea/lib/filters/registry";
 import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import {
+  type HistoricalDecisionSeries,
+  selectHistoricalDecisionFilterWindow,
+} from "@alea/lib/tradeDecision/historicalDecisionSeries";
 import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
 import type { Asset } from "@alea/types/assets";
 import type { CandleTimeframe } from "@alea/types/candles";
@@ -57,24 +57,24 @@ export type RunBacktestResult = {
 const ENGAGEMENT_INSERT_CHUNK = 5000;
 
 /**
- * Walks a series of CLOSED bars and asks one candidate's filter to
- * predict at each bar boundary. At bar `i` (after it has closed),
- * the filter sees `bars[i - N + 1 .. i]` (length N = requiredBars)
- * and predicts the direction of `bars[i + 1]`'s open→close move.
+ * Walks a historical trade-decision series and asks one candidate's filter to
+ * predict at each live-equivalent decision moment. For target period bar `T`,
+ * the filter sees closed period bars plus the synthetic in-flight period bar
+ * built from 1m candles available at the configured decision lead.
  *
- * **No data leakage**: the prediction window is sliced *exclusive*
- * of `bars[i + 1]`, and the outcome (next bar's close vs open) is
- * only read AFTER the prediction is locked in. Filters never see
- * the bar they're voting on.
+ * **No data leakage**: the prediction window is sliced *exclusive* of the
+ * target bar, and the outcome (target close vs open) is only read AFTER the
+ * prediction is locked in. Filters never see the bar they're voting on or the
+ * full close of the active pre-target period bar.
  *
  * **Ambiguous outcomes**: Pyth is not the Polymarket settlement feed,
  * so target bars whose open-to-close move is inside the configured
  * training threshold are ignored. The prediction still happened, but
  * it does not contribute a win or loss to the training stats.
  *
- * The last bar in the series can't be a prediction subject (no
- * next bar to score against), so the loop stops at
- * `bars.length - 1`.
+ * The first bar in the series can't be a prediction subject because there is
+ * no prior period bar to synthesize from. Later target bars are scored against
+ * their own open-to-close move after the prediction is locked in.
  *
  * Caching: the row in `filter_runs` keyed by `runHash` is the
  * authoritative cache only when its stored range exactly matches the
@@ -93,15 +93,16 @@ export async function runBacktestForCandidate({
   readonly candidate: Candidate;
   readonly period: CandleTimeframe;
   readonly asset: Asset;
-  readonly series: AlignedBarSeries;
+  readonly series: HistoricalDecisionSeries;
 }): Promise<RunBacktestResult> {
-  if (series.pyth.length < 2) {
+  if (series.periodSeries.pyth.length < 2) {
     throw new Error(
-      `training pass needs at least 2 bars, got ${series.pyth.length} for ${candidate.filterId}/${period}/${asset}`,
+      `training pass needs at least 2 bars, got ${series.periodSeries.pyth.length} for ${candidate.filterId}/${period}/${asset}`,
     );
   }
-  const rangeFirstMs = series.pyth[0]!.openTimeMs;
-  const rangeLastMs = series.pyth[series.pyth.length - 1]!.openTimeMs;
+  const rangeFirstMs = series.periodSeries.pyth[0]!.openTimeMs;
+  const rangeLastMs =
+    series.periodSeries.pyth[series.periodSeries.pyth.length - 1]!.openTimeMs;
   const rh = runHash({
     candidateHash: candidate.candidateHash,
     period,
@@ -151,12 +152,11 @@ export async function runBacktestForCandidate({
   const requiredBars = entry.filter.requiredBars(candidate.config);
   const { stats, engagements } = walkSeries({
     series,
-    requiredBars,
-    selectWindow: (endInclusive) =>
-      selectFilterWindow({
+    selectWindow: (targetIndex) =>
+      selectHistoricalDecisionFilterWindow({
         series,
         filter: entry.filter,
-        endInclusive,
+        targetIndex,
         requiredBars,
       }),
     predict: (window) => entry.filter.predict(candidate.config, window),
@@ -274,15 +274,14 @@ export function isUsableTrainingCache({
 }
 
 /**
- * Pure walker. Iterates the canonical Pyth timeline from index
- * `requiredBars - 1` to `pyth.length - 2` (each step needs a "next
- * bar" to score against), asks `selectWindow` for the trailing
- * window in the filter's declared source, and runs `predict` on it.
+ * Pure walker. Iterates the canonical Pyth target timeline, asks
+ * `selectWindow` for the live-equivalent trailing window in the filter's
+ * declared source, and runs `predict` on it.
  *
  * If `selectWindow` returns `null` (e.g. a Coinbase gap for a volume
  * filter) the bar is skipped — same effect as the filter abstaining.
  *
- * Outcome labeling ALWAYS reads from `series.pyth[i + 1]`, regardless
+ * Outcome labeling ALWAYS reads from `series.periodSeries.pyth[targetIndex]`, regardless
  * of the filter's input source. Pyth is the Polymarket-aligned
  * outcome proxy; we judge every filter against the same outcome
  * series so price-only and volume filters are directly comparable.
@@ -292,13 +291,11 @@ export function isUsableTrainingCache({
  */
 function walkSeries({
   series,
-  requiredBars,
   selectWindow,
   predict,
 }: {
-  readonly series: AlignedBarSeries;
-  readonly requiredBars: number;
-  readonly selectWindow: (endInclusive: number) => readonly FilterBar[] | null;
+  readonly series: HistoricalDecisionSeries;
+  readonly selectWindow: (targetIndex: number) => readonly FilterBar[] | null;
   readonly predict: (window: readonly FilterBar[]) => "up" | "down" | null;
 }): {
   readonly stats: BacktestStats;
@@ -309,11 +306,9 @@ function walkSeries({
   let nEngagementsDown = 0;
   let nWinsDown = 0;
   const engagements: BacktestEngagement[] = [];
-  const pyth = series.pyth;
-  const start = Math.max(requiredBars - 1, 0);
-  const end = pyth.length - 2; // need bar[i+1] for outcome
-  for (let i = start; i <= end; i += 1) {
-    const window = selectWindow(i);
+  const pyth = series.periodSeries.pyth;
+  for (let targetIndex = 1; targetIndex < pyth.length; targetIndex += 1) {
+    const window = selectWindow(targetIndex);
     if (window === null) {
       continue;
     }
@@ -321,7 +316,7 @@ function walkSeries({
     if (pred === null) {
       continue;
     }
-    const next = pyth[i + 1]!;
+    const next = pyth[targetIndex]!;
     const actual = resolveTrainingOutcomeDirection({
       open: next.open,
       close: next.close,

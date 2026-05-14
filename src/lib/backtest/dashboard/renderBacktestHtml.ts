@@ -190,10 +190,30 @@ function renderConfig(run: CommitteeBacktestSummary): string {
       ${profileItem({ label: "Roster candidates", value: run.roster.candidateCount.toLocaleString() })}
       ${profileItem({ label: "Periods", value: run.periods.join(", ") })}
       ${profileItem({ label: "Assets", value: run.assets.map((asset) => asset.toUpperCase()).join(", ") })}
+      ${profileItem({ label: "Decision lead", value: formatLeadTimes({ periods: run.periods, leadTimeByPeriodMs: run.tradeDecisionConfig.leadTimeByPeriodMs }) })}
       ${profileItem({ label: "Min votes", value: run.tradeDecisionConfig.minVotesToTrade.toLocaleString() })}
       ${profileItem({ label: "Min consensus", value: formatPercent({ value: run.tradeDecisionConfig.minConsensusFraction }) })}
     </div>
   </details>`;
+}
+
+function formatLeadTimes({
+  periods,
+  leadTimeByPeriodMs,
+}: {
+  readonly periods: readonly string[];
+  readonly leadTimeByPeriodMs?: { readonly [period: string]: number };
+}): string {
+  return periods
+    .map((period) => {
+      const leadMs = leadTimeByPeriodMs?.[period];
+      if (leadMs === undefined) {
+        return `${period}: n/a`;
+      }
+      const minutes = leadMs / 60_000;
+      return `${period}: ${minutes.toLocaleString()}m`;
+    })
+    .join(" / ");
 }
 
 function renderBucketTable({

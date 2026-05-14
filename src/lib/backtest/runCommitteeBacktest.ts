@@ -14,11 +14,11 @@ import {
   DEFAULT_COMMITTEE_DECISION_RULES,
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
+  TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { STAKE_USD } from "@alea/constants/trading";
 import { TRAINING_PROFILE_ID } from "@alea/constants/training";
-import { loadAlignedBarSeries } from "@alea/lib/candles/loadAlignedBarSeries";
 import { evaluateCommittee } from "@alea/lib/committee/runCommittee";
 import {
   candidateRosterKey,
@@ -28,10 +28,14 @@ import {
 } from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { CommitteeCandidate } from "@alea/lib/committee/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import { allCandidates } from "@alea/lib/filters/registry";
 import { classifyMarketRegime } from "@alea/lib/regime/classify";
 import type { MarketRegime } from "@alea/lib/regime/types";
+import {
+  buildHistoricalDecisionMoment,
+  type HistoricalDecisionSeries,
+  loadHistoricalDecisionSeries,
+} from "@alea/lib/tradeDecision/historicalDecisionSeries";
 import { resolveTrainingOutcomeDirection } from "@alea/lib/training/resolveTrainingOutcomeDirection";
 import type { Asset } from "@alea/types/assets";
 
@@ -78,6 +82,7 @@ export type CommitteeBacktestSummary = {
   readonly assets: readonly Asset[];
   readonly tradeDecisionConfig: {
     readonly hydrateBars: number;
+    readonly leadTimeByPeriodMs: Readonly<Record<TradeDecisionPeriod, number>>;
     readonly maxVotesPerFilter: number;
     readonly minVotesToTrade: number;
     readonly minConsensusFraction: number;
@@ -121,7 +126,7 @@ type MutableEquityPoint = {
 type LoadedBars = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
-  readonly series: AlignedBarSeries;
+  readonly series: HistoricalDecisionSeries;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -207,6 +212,7 @@ export async function runCommitteeBacktest({
     assets: assetValues,
     tradeDecisionConfig: {
       hydrateBars: TRADE_DECISION_HYDRATE_BARS,
+      leadTimeByPeriodMs: TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
       maxVotesPerFilter: decisionRules.maxVotesPerFilter,
       minVotesToTrade: decisionRules.minVotesToTrade,
       minConsensusFraction: decisionRules.minConsensusFraction,
@@ -243,10 +249,10 @@ async function loadBacktestBars({
   for (const period of TRADE_DECISION_DEFAULT_PERIODS) {
     const warmupMs = TRADE_DECISION_HYDRATE_BARS * periodMs[period];
     for (const asset of assetValues) {
-      const series = await loadAlignedBarSeries({
+      const series = await loadHistoricalDecisionSeries({
         db,
         asset,
-        timeframe: period,
+        period,
         windowStartMs: BACKTEST_WINDOW_START_MS - warmupMs,
         windowEndExclusiveMs,
       });
@@ -309,15 +315,22 @@ function replaySeries({
   readonly acc: ReturnType<typeof createAccumulator>;
   readonly decisionRules: CommitteeDecisionRules;
 }): void {
-  const pyth = series.series.pyth;
-  const coinbase = series.series.coinbase;
-  for (let i = 0; i < pyth.length - 1; i += 1) {
-    const target = pyth[i + 1]!;
+  const pyth = series.series.periodSeries.pyth;
+  for (let targetIndex = 1; targetIndex < pyth.length; targetIndex += 1) {
+    const target = pyth[targetIndex]!;
     if (target.openTimeMs < BACKTEST_WINDOW_START_MS) {
       continue;
     }
     if (target.openTimeMs >= windowEndExclusiveMs) {
       break;
+    }
+
+    const decisionMoment = buildHistoricalDecisionMoment({
+      series: series.series,
+      targetIndex,
+    });
+    if (decisionMoment === null) {
+      continue;
     }
 
     const buckets = bucketsForDecision({
@@ -328,14 +341,9 @@ function replaySeries({
     });
     increment(buckets, "decisionMoments");
 
-    const startIdx = Math.max(0, i - TRADE_DECISION_HYDRATE_BARS + 1);
-    const pythWindow = pyth.slice(startIdx, i + 1);
-    const coinbaseWindow = coinbase.slice(startIdx, i + 1);
-    const trailingSeries = {
-      pyth: pythWindow,
-      coinbase: coinbaseWindow,
-    };
-    const marketRegime = classifyMarketRegime({ bars: pythWindow });
+    const marketRegime = classifyMarketRegime({
+      bars: decisionMoment.series.pyth,
+    });
     if (marketRegime === null) {
       increment(buckets, "noRegimeMoments");
       continue;
@@ -356,7 +364,7 @@ function replaySeries({
     }
 
     const { decision } = evaluateCommittee({
-      series: trailingSeries,
+      series: decisionMoment.series,
       candidates,
       decisionRules,
     });

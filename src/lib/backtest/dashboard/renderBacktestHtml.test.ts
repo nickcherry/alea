@@ -47,6 +47,7 @@ function payloadFixture(): BacktestDashboardPayload {
       assets: ["btc", "eth"],
       tradeDecisionConfig: {
         hydrateBars: 150,
+        leadTimeByPeriodMs: { "5m": 120_000, "15m": 180_000 },
         maxVotesPerFilter: 1,
         minVotesToTrade: 1,
         minConsensusFraction: 0.5,

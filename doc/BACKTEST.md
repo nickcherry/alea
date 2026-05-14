@@ -3,9 +3,10 @@
 The backtest is the fast holdout replay of the selected trade
 committee. It simulates the same committee voting policy used by
 dry-run/live trading over the post-training window, using historical
-Pyth spot candles as the canonical timeline/outcome source and
-Coinbase spot candles for volume-source filters. It does **not**
-connect to Polymarket, inspect the order book, or model maker fills.
+Pyth spot candles as the canonical timeline/outcome source, Coinbase spot
+candles for volume-source filters, and `1m` candles to synthesize the
+pre-open in-flight period bar visible at decision time. It does **not** connect
+to Polymarket, inspect the order book, or model maker fills.
 
 Run it:
 
@@ -38,8 +39,9 @@ is inside the backtest window.
 
 At each historical decision moment, the runner:
 
-1. Builds aligned Pyth/Coinbase trailing candle windows for the
-   asset/period.
+1. Builds aligned Pyth/Coinbase trailing candle windows for the asset/period,
+   ending with a synthetic in-flight period bar from completed `1m` candles
+   available at the configured decision lead.
 2. Classifies the current market regime.
 3. Loads the selected committee roster for `(asset, regime, period)`.
 4. Runs `evaluateCommittee`, including the shared one-vote-per-filter

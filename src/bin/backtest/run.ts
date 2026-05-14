@@ -7,13 +7,15 @@ import {
   TRAINING_WINDOW_START_POLICY,
 } from "@alea/constants/researchWindows";
 import { runBacktestForCandidate } from "@alea/lib/backtest/runBacktest";
-import { loadAlignedBarSeries } from "@alea/lib/candles/loadAlignedBarSeries";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
-import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
 import { allCandidates } from "@alea/lib/filters/registry";
+import {
+  type HistoricalDecisionSeries,
+  loadHistoricalDecisionSeries,
+} from "@alea/lib/tradeDecision/historicalDecisionSeries";
 import type { Asset } from "@alea/types/assets";
 import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
@@ -31,14 +33,15 @@ type SupportedPeriod = (typeof SUPPORTED_PERIODS)[number];
  * row for that window.
  *
  * Side effects: reads `candles` (Pyth spot for the canonical
- * timeline/outcomes, Coinbase spot for volume-source filters),
- * upserts into `filter_runs`. No network.
+ * timeline/outcomes, Coinbase spot for volume-source filters, plus 1m bars for
+ * live-equivalent synthetic decision bars), upserts into `filter_runs`. No
+ * network.
  */
 export const trainingRunCommand = defineCommand({
   name: "training:run",
   summary: "Refresh filter training artifacts for every active candidate",
   description:
-    "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all` and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
+    "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all`, using 1m candles to synthesize the same pre-open decision bars live trading sees, and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
   options: [
     defineValueOption({
       key: "periods",
@@ -118,17 +121,17 @@ export const trainingRunCommand = defineCommand({
       for (const period of options.periods) {
         for (const asset of options.assets) {
           const series = await loadTrainingSeries({ db, asset, period });
-          if (series.pyth.length < 2) {
+          if (series.periodSeries.pyth.length < 2) {
             io.writeStdout(
-              `  ${pc.yellow(`skip ${period}/${asset}: only ${series.pyth.length} pyth bars`)}\n`,
+              `  ${pc.yellow(`skip ${period}/${asset}: only ${series.periodSeries.pyth.length} pyth bars`)}\n`,
             );
             continue;
           }
           const coinbaseCovered = countNonNull({
-            arr: series.coinbase,
+            arr: series.periodSeries.coinbase,
           });
           io.writeStdout(
-            `${pc.bold(`${period}/${asset}`)} ${pc.dim(`bars=${series.pyth.length}  coinbase=${coinbaseCovered}`)}\n`,
+            `${pc.bold(`${period}/${asset}`)} ${pc.dim(`bars=${series.periodSeries.pyth.length}  coinbase=${coinbaseCovered}  decisionLead=${(series.decisionLeadMs / 60_000).toLocaleString()}m`)}\n`,
           );
           for (const cand of selected) {
             const result = await runBacktestForCandidate({
@@ -177,11 +180,11 @@ async function loadTrainingSeries({
   readonly db: ReturnType<typeof createDatabase>;
   readonly asset: Asset;
   readonly period: SupportedPeriod;
-}): Promise<AlignedBarSeries> {
-  return loadAlignedBarSeries({
+}): Promise<HistoricalDecisionSeries> {
+  return loadHistoricalDecisionSeries({
     db,
     asset,
-    timeframe: period,
+    period,
     windowEndExclusiveMs: TRAINING_WINDOW_END_EXCLUSIVE_MS,
   });
 }
