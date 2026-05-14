@@ -36,6 +36,26 @@
   var crossingsTableHost = document.getElementById(
     "price-path-crossings-table-host",
   );
+  var driftPercentilesHost = document.getElementById(
+    "price-path-drift-percentiles-chart",
+  );
+  var driftPercentilesTooltip = document.getElementById(
+    "price-path-drift-percentiles-tooltip",
+  );
+  var driftSharesHost = document.getElementById(
+    "price-path-drift-shares-chart",
+  );
+  var driftSharesTooltip = document.getElementById(
+    "price-path-drift-shares-tooltip",
+  );
+  var driftEmpty = document.getElementById("price-path-drift-empty");
+
+  var DRIFT_PERCENTILE_LINES = [
+    { key: "absMedianBps", label: "p50", cls: "drift-p50" },
+    { key: "absP75Bps", label: "p75", cls: "drift-p75" },
+    { key: "absP90Bps", label: "p90", cls: "drift-p90" },
+    { key: "absP99Bps", label: "p99", cls: "drift-p99" },
+  ];
 
   var state = {
     timeframe: initialTimeframe(),
@@ -44,6 +64,8 @@
     heatmapLayout: null,
     bandLayout: null,
     crossingsLayout: null,
+    driftPercentilesLayout: null,
+    driftSharesLayout: null,
   };
 
   Array.prototype.forEach.call(tabs, function (tab) {
@@ -79,12 +101,29 @@
     crossingsChartHost.addEventListener("mouseleave", hideCrossingsHover);
   }
 
+  if (driftPercentilesHost) {
+    driftPercentilesHost.addEventListener(
+      "mousemove",
+      handleDriftPercentilesMove,
+    );
+    driftPercentilesHost.addEventListener(
+      "mouseleave",
+      hideDriftPercentilesHover,
+    );
+  }
+  if (driftSharesHost) {
+    driftSharesHost.addEventListener("mousemove", handleDriftSharesMove);
+    driftSharesHost.addEventListener("mouseleave", hideDriftSharesHover);
+  }
+
   window.addEventListener("resize", function () {
     window.clearTimeout(window.__aleaPricePathsResize);
     window.__aleaPricePathsResize = window.setTimeout(function () {
       renderHeatmap();
       renderBandChart();
       renderCrossingsChart();
+      renderDriftPercentilesChart();
+      renderDriftSharesChart();
     }, 120);
   });
 
@@ -108,6 +147,8 @@
     renderBandChart();
     renderCrossingsChart();
     renderCrossingsTable();
+    renderDriftPercentilesChart();
+    renderDriftSharesChart();
   }
 
   function activeBreakdown() {
@@ -919,5 +960,505 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function driftSliceForState() {
+    var drift = payload && payload.leadTimeDrift;
+    if (!drift || !drift.breakdowns) return null;
+    var breakdown = drift.breakdowns.filter(function (b) {
+      return b.timeframe === state.timeframe;
+    })[0];
+    if (!breakdown) return null;
+    var asset = state.asset || "all";
+    var slice = breakdown.slices.filter(function (s) {
+      return (s.asset || "all") === asset;
+    })[0];
+    if (!slice) {
+      slice = breakdown.slices[0] || null;
+    }
+    return { breakdown: breakdown, slice: slice, drift: drift };
+  }
+
+  function renderDriftPercentilesChart() {
+    if (!driftPercentilesHost) return;
+    state.driftPercentilesLayout = null;
+    var ctx = driftSliceForState();
+    var drift = payload && payload.leadTimeDrift;
+    var hasOneMin = Boolean(drift && drift.hasOneMinuteCandles);
+    if (driftEmpty) {
+      if (hasOneMin) {
+        driftEmpty.setAttribute("hidden", "hidden");
+      } else {
+        driftEmpty.removeAttribute("hidden");
+      }
+    }
+    if (!ctx || !ctx.slice || !ctx.slice.leads || !ctx.slice.leads.length) {
+      driftPercentilesHost.innerHTML =
+        '<p class="price-path-empty">No drift data for this slice yet.</p>';
+      return;
+    }
+    var leads = ctx.slice.leads;
+    var maxValue = 0;
+    leads.forEach(function (lead) {
+      DRIFT_PERCENTILE_LINES.forEach(function (line) {
+        var v = Number(lead[line.key]);
+        if (Number.isFinite(v) && v > maxValue) maxValue = v;
+      });
+    });
+    if (maxValue <= 0) {
+      driftPercentilesHost.innerHTML =
+        '<p class="price-path-empty">No drift samples landed in any band yet.</p>';
+      return;
+    }
+    var yMax = niceCeil(maxValue);
+    var width = 900;
+    var height = 320;
+    var pad = { left: 56, right: 22, top: 24, bottom: 44 };
+    var plotW = width - pad.left - pad.right;
+    var plotH = height - pad.top - pad.bottom;
+
+    var svg =
+      '<div class="price-path-band-legend">' +
+      DRIFT_PERCENTILE_LINES.map(function (line) {
+        return key(line.cls, line.label);
+      }).join("") +
+      "</div>" +
+      '<svg class="price-path-band-svg" viewBox="0 0 ' +
+      width +
+      " " +
+      height +
+      '" role="img" aria-label="Pre-close Pyth drift percentiles">';
+
+    // Y grid + bps labels.
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var y = pad.top + (1 - v) * plotH;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        pad.left +
+        '" x2="' +
+        (pad.left + plotW) +
+        '" y1="' +
+        y +
+        '" y2="' +
+        y +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        (pad.left - 8) +
+        '" y="' +
+        (y + 4) +
+        '" text-anchor="end">' +
+        formatBps(v * yMax) +
+        "</text>";
+    });
+
+    // X labels — one per lead minute. Largest L on the left.
+    leads.forEach(function (lead, i) {
+      var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        x +
+        '" x2="' +
+        x +
+        '" y1="' +
+        pad.top +
+        '" y2="' +
+        (pad.top + plotH) +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        x +
+        '" y="' +
+        (pad.top + plotH + 22) +
+        '" text-anchor="middle">' +
+        escapeHtml(formatLeadMinutes(lead.leadMinutes)) +
+        "</text>";
+    });
+
+    DRIFT_PERCENTILE_LINES.forEach(function (line) {
+      var d = "";
+      leads.forEach(function (lead, i) {
+        var v = Number(lead[line.key]);
+        if (!Number.isFinite(v) || !lead.sampleCount) return;
+        var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+        var y = pad.top + (1 - v / yMax) * plotH;
+        d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+      });
+      if (d) {
+        svg +=
+          '<path class="price-path-band-line ' +
+          line.cls +
+          '" d="' +
+          d +
+          '"></path>';
+      }
+    });
+
+    svg +=
+      '<line class="price-path-hover-line" data-hover="drift-percentiles-line" x1="0" x2="0" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '" style="display:none"></line>';
+    DRIFT_PERCENTILE_LINES.forEach(function (line) {
+      svg +=
+        '<circle class="price-path-hover-dot ' +
+        line.cls +
+        '" data-hover="' +
+        line.cls +
+        '-dot" r="3.5" cx="0" cy="0" style="display:none"></circle>';
+    });
+    svg += "</svg>";
+
+    driftPercentilesHost.innerHTML = svg;
+    state.driftPercentilesLayout = {
+      svgWidth: width,
+      svgHeight: height,
+      pad: pad,
+      plotW: plotW,
+      plotH: plotH,
+      yMax: yMax,
+      leads: leads,
+    };
+  }
+
+  function renderDriftSharesChart() {
+    if (!driftSharesHost) return;
+    state.driftSharesLayout = null;
+    var ctx = driftSliceForState();
+    if (!ctx || !ctx.slice || !ctx.slice.leads || !ctx.slice.leads.length) {
+      driftSharesHost.innerHTML =
+        '<p class="price-path-empty">No drift data for this slice yet.</p>';
+      return;
+    }
+    var thresholds = (ctx.drift && ctx.drift.thresholdsBps) || [];
+    var leads = ctx.slice.leads;
+    var hasAnyShare = leads.some(function (lead) {
+      return (lead.thresholdShares || []).some(function (s) {
+        return s !== null && s !== undefined;
+      });
+    });
+    if (!hasAnyShare) {
+      driftSharesHost.innerHTML =
+        '<p class="price-path-empty">No drift shares for this slice yet.</p>';
+      return;
+    }
+    var lineDefs = thresholds.map(function (threshold, idx) {
+      return {
+        idx: idx,
+        threshold: threshold,
+        label: "≤ " + threshold + " bps",
+        cls: "drift-share-" + threshold,
+      };
+    });
+
+    var width = 900;
+    var height = 280;
+    var pad = { left: 56, right: 22, top: 24, bottom: 44 };
+    var plotW = width - pad.left - pad.right;
+    var plotH = height - pad.top - pad.bottom;
+
+    var svg =
+      '<div class="price-path-band-legend">' +
+      lineDefs
+        .map(function (line) {
+          return key(line.cls, line.label);
+        })
+        .join("") +
+      "</div>" +
+      '<svg class="price-path-band-svg" viewBox="0 0 ' +
+      width +
+      " " +
+      height +
+      '" role="img" aria-label="Share of candles within drift band by lead minutes">';
+
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var y = pad.top + (1 - v) * plotH;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        pad.left +
+        '" x2="' +
+        (pad.left + plotW) +
+        '" y1="' +
+        y +
+        '" y2="' +
+        y +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        (pad.left - 8) +
+        '" y="' +
+        (y + 4) +
+        '" text-anchor="end">' +
+        Math.round(v * 100) +
+        "%</text>";
+    });
+
+    leads.forEach(function (lead, i) {
+      var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        x +
+        '" x2="' +
+        x +
+        '" y1="' +
+        pad.top +
+        '" y2="' +
+        (pad.top + plotH) +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        x +
+        '" y="' +
+        (pad.top + plotH + 22) +
+        '" text-anchor="middle">' +
+        escapeHtml(formatLeadMinutes(lead.leadMinutes)) +
+        "</text>";
+    });
+
+    lineDefs.forEach(function (line) {
+      var d = "";
+      leads.forEach(function (lead, i) {
+        var s = (lead.thresholdShares || [])[line.idx];
+        if (s === null || s === undefined) return;
+        var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+        var y = pad.top + (1 - s) * plotH;
+        d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+      });
+      if (d) {
+        svg +=
+          '<path class="price-path-band-line ' +
+          line.cls +
+          '" d="' +
+          d +
+          '"></path>';
+      }
+    });
+
+    svg +=
+      '<line class="price-path-hover-line" data-hover="drift-shares-line" x1="0" x2="0" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '" style="display:none"></line>';
+    lineDefs.forEach(function (line) {
+      svg +=
+        '<circle class="price-path-hover-dot ' +
+        line.cls +
+        '" data-hover="' +
+        line.cls +
+        '-dot" r="3.5" cx="0" cy="0" style="display:none"></circle>';
+    });
+    svg += "</svg>";
+
+    driftSharesHost.innerHTML = svg;
+    state.driftSharesLayout = {
+      svgWidth: width,
+      svgHeight: height,
+      pad: pad,
+      plotW: plotW,
+      plotH: plotH,
+      leads: leads,
+      thresholds: thresholds,
+      lineDefs: lineDefs,
+    };
+  }
+
+  function xFractionForIndex(i, n) {
+    if (n <= 1) return 0;
+    return i / (n - 1);
+  }
+
+  function handleDriftPercentilesMove(event) {
+    var layout = state.driftPercentilesLayout;
+    if (!driftPercentilesHost || !driftPercentilesTooltip || !layout) return;
+    var leads = layout.leads || [];
+    var idx = bucketIndexFor(
+      driftPercentilesHost,
+      event.clientX,
+      layout,
+      leads.length,
+    );
+    if (idx < 0) {
+      hideDriftPercentilesHover();
+      return;
+    }
+    var lead = leads[idx];
+    if (!lead) {
+      hideDriftPercentilesHover();
+      return;
+    }
+    var svg = driftPercentilesHost.querySelector("svg");
+    if (!svg) return;
+    var rect = driftPercentilesHost.getBoundingClientRect();
+    var x =
+      layout.pad.left + xFractionForIndex(idx, leads.length) * layout.plotW;
+    var hoverLine = svg.querySelector(
+      '[data-hover="drift-percentiles-line"]',
+    );
+    if (hoverLine) {
+      hoverLine.setAttribute("x1", x.toFixed(1));
+      hoverLine.setAttribute("x2", x.toFixed(1));
+      hoverLine.style.display = "";
+    }
+    DRIFT_PERCENTILE_LINES.forEach(function (line) {
+      var dot = svg.querySelector('[data-hover="' + line.cls + '-dot"]');
+      if (!dot) return;
+      var v = Number(lead[line.key]);
+      if (!Number.isFinite(v) || !lead.sampleCount) {
+        dot.style.display = "none";
+        return;
+      }
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute(
+        "cy",
+        (layout.pad.top + (1 - v / layout.yMax) * layout.plotH).toFixed(1),
+      );
+      dot.style.display = "";
+    });
+
+    driftPercentilesTooltip.innerHTML =
+      '<div class="alea-tooltip-head">' +
+      escapeHtml(formatLeadMinutes(lead.leadMinutes) + " from close") +
+      "</div>" +
+      DRIFT_PERCENTILE_LINES.map(function (line) {
+        var v = lead[line.key];
+        return bandTooltipRowLabeled(
+          line.cls,
+          line.label,
+          v === null || v === undefined ? "--" : formatBps(v),
+        );
+      }).join("") +
+      tooltipRow(
+        "Samples",
+        Number(lead.sampleCount || 0).toLocaleString(),
+      );
+    positionTooltip(driftPercentilesTooltip, driftPercentilesHost, event);
+    driftPercentilesTooltip.classList.add("visible");
+    // suppress unused rect var (was for symmetry with other handlers)
+    if (rect && rect.width < 0) return;
+  }
+
+  function hideDriftPercentilesHover() {
+    if (!driftPercentilesHost) return;
+    if (driftPercentilesTooltip) {
+      driftPercentilesTooltip.classList.remove("visible");
+    }
+    var svg = driftPercentilesHost.querySelector("svg");
+    if (!svg) return;
+    svg.querySelectorAll("[data-hover]").forEach(function (el) {
+      el.style.display = "none";
+    });
+  }
+
+  function handleDriftSharesMove(event) {
+    var layout = state.driftSharesLayout;
+    if (!driftSharesHost || !driftSharesTooltip || !layout) return;
+    var leads = layout.leads || [];
+    var idx = bucketIndexFor(
+      driftSharesHost,
+      event.clientX,
+      layout,
+      leads.length,
+    );
+    if (idx < 0) {
+      hideDriftSharesHover();
+      return;
+    }
+    var lead = leads[idx];
+    if (!lead) {
+      hideDriftSharesHover();
+      return;
+    }
+    var svg = driftSharesHost.querySelector("svg");
+    if (!svg) return;
+    var x =
+      layout.pad.left + xFractionForIndex(idx, leads.length) * layout.plotW;
+    var hoverLine = svg.querySelector('[data-hover="drift-shares-line"]');
+    if (hoverLine) {
+      hoverLine.setAttribute("x1", x.toFixed(1));
+      hoverLine.setAttribute("x2", x.toFixed(1));
+      hoverLine.style.display = "";
+    }
+    (layout.lineDefs || []).forEach(function (line) {
+      var dot = svg.querySelector('[data-hover="' + line.cls + '-dot"]');
+      if (!dot) return;
+      var share = (lead.thresholdShares || [])[line.idx];
+      if (share === null || share === undefined) {
+        dot.style.display = "none";
+        return;
+      }
+      dot.setAttribute("cx", x.toFixed(1));
+      dot.setAttribute(
+        "cy",
+        (layout.pad.top + (1 - share) * layout.plotH).toFixed(1),
+      );
+      dot.style.display = "";
+    });
+
+    driftSharesTooltip.innerHTML =
+      '<div class="alea-tooltip-head">' +
+      escapeHtml(formatLeadMinutes(lead.leadMinutes) + " from close") +
+      "</div>" +
+      (layout.lineDefs || [])
+        .map(function (line) {
+          var share = (lead.thresholdShares || [])[line.idx];
+          return bandTooltipRowLabeled(
+            line.cls,
+            line.label,
+            formatShare(share),
+          );
+        })
+        .join("") +
+      tooltipRow(
+        "Samples",
+        Number(lead.sampleCount || 0).toLocaleString(),
+      );
+    positionTooltip(driftSharesTooltip, driftSharesHost, event);
+    driftSharesTooltip.classList.add("visible");
+  }
+
+  function hideDriftSharesHover() {
+    if (!driftSharesHost) return;
+    if (driftSharesTooltip) {
+      driftSharesTooltip.classList.remove("visible");
+    }
+    var svg = driftSharesHost.querySelector("svg");
+    if (!svg) return;
+    svg.querySelectorAll("[data-hover]").forEach(function (el) {
+      el.style.display = "none";
+    });
+  }
+
+  function bandTooltipRowLabeled(swatchCls, label, value) {
+    return (
+      '<div class="alea-tooltip-row"><span class="price-path-band-swatch ' +
+      swatchCls +
+      '"></span><span class="name">' +
+      escapeHtml(label) +
+      '</span><span class="value">' +
+      escapeHtml(value) +
+      "</span></div>"
+    );
+  }
+
+  function formatLeadMinutes(leadMinutes) {
+    return "T-" + leadMinutes + "m";
+  }
+
+  function formatBps(value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+      return "--";
+    }
+    var v = Number(value);
+    return (v < 10 ? v.toFixed(2) : v.toFixed(1)) + " bps";
+  }
+
+  function niceCeil(value) {
+    if (!Number.isFinite(value) || value <= 0) return 1;
+    var exponent = Math.pow(10, Math.floor(Math.log10(value)));
+    var normalized = value / exponent;
+    var rounded;
+    if (normalized <= 1) rounded = 1;
+    else if (normalized <= 2) rounded = 2;
+    else if (normalized <= 5) rounded = 5;
+    else rounded = 10;
+    return rounded * exponent;
   }
 })();

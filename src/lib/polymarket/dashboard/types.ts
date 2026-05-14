@@ -1,3 +1,4 @@
+import type { LeadTimeDriftPayload } from "@alea/lib/polymarket/dashboard/loadLeadTimeDriftPayload";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 
 /**
@@ -226,4 +227,5 @@ export type PricePathsPayload = {
   readonly firstWindowMs: number | null;
   readonly lastWindowMs: number | null;
   readonly breakdowns: readonly PricePathTimeframeBreakdown[];
+  readonly leadTimeDrift: LeadTimeDriftPayload;
 };

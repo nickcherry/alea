@@ -85,6 +85,21 @@ export function renderPricePathsHtml({
         </div>
         <div id="price-path-crossings-table-host"></div>
       </section>
+
+      <section class="price-path-section">
+        <div class="alea-section-rule"><h2>Pre-close Pyth Drift</h2></div>
+        <div class="price-path-drift-chart-wrap">
+          <div id="price-path-drift-percentiles-chart" class="price-path-drift-chart"></div>
+          <div id="price-path-drift-percentiles-tooltip" class="alea-tooltip"></div>
+        </div>
+        <div class="price-path-drift-chart-wrap">
+          <div id="price-path-drift-shares-chart" class="price-path-drift-chart"></div>
+          <div id="price-path-drift-shares-tooltip" class="alea-tooltip"></div>
+        </div>
+        <p id="price-path-drift-empty" class="price-path-empty" hidden="hidden">
+          No 1m Pyth candles found for the training window. Run <span class="alea-mono">bun alea candles:sync --timeframe 1m --sources pyth --products spot</span> to populate this section.
+        </p>
+      </section>
     </main>
   </div>
   <script id="price-paths-payload" type="application/json">${payloadJson}</script>

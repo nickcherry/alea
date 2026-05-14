@@ -20,14 +20,24 @@ const defaultSampleIntervalsMs = {
   "15m": 1_000,
 } as const satisfies Record<ResolutionTimeframe, number>;
 
+/**
+ * Pre-market window: how far before `window_start_ts_ms` the sampler
+ * begins persisting ticks. Captured samples carry a negative `offsetMs`
+ * (handled by codec v2). Drives the discovery lead so the WS is up
+ * before sampling begins.
+ */
+export const PRE_MARKET_SAMPLE_LEAD_MS = 5 * 60_000;
+
 const tickIntervalMs = 250;
-const defaultDiscoveryLeadMs = 30_000;
+const discoverySafetyLeadMs = 30_000;
+const defaultDiscoveryLeadMs =
+  PRE_MARKET_SAMPLE_LEAD_MS + discoverySafetyLeadMs;
 const discoveryRequestIntervalMs = 750;
 const missingMarketRetryMs = 15_000;
 const discoveryFailureRetryMs = 10_000;
 const rateLimitedDiscoveryRetryMs = 60_000;
 const subscriptionTailMs = 10_000;
-const sampleSchemaVersion = 2;
+const sampleSchemaVersion = 3;
 
 export type PriceSamplerLogEvent = {
   readonly kind: "info" | "warn" | "error";
@@ -247,7 +257,10 @@ export async function runPolymarketPriceSampler({
           sampleIntervalMs: intervalMs,
           state: emptyMarketPriceState(),
           samples: [],
-          nextSampleAtMs: Math.max(Date.now(), request.windowStartTsMs),
+          nextSampleAtMs: Math.max(
+            Date.now(),
+            request.windowStartTsMs - PRE_MARKET_SAMPLE_LEAD_MS,
+          ),
           firstSampleTsMs: null,
           lastSampleTsMs: null,
           missingSampleCount: 0,
@@ -424,16 +437,30 @@ function bpsFromMid(state: TokenPriceState): number | null {
   return Math.max(0, Math.min(10_000, Math.round(mid * 10_000)));
 }
 
-function sampleActiveSessions({
+export type SampleableSession = Pick<
+  SamplerMarketSession,
+  | "windowStartTsMs"
+  | "windowEndTsMs"
+  | "sampleIntervalMs"
+  | "state"
+  | "samples"
+  | "nextSampleAtMs"
+  | "firstSampleTsMs"
+  | "lastSampleTsMs"
+  | "missingSampleCount"
+>;
+
+export function sampleActiveSessions({
   sessions,
   nowMs,
 }: {
-  readonly sessions: ReadonlyMap<string, SamplerMarketSession>;
+  readonly sessions: ReadonlyMap<string, SampleableSession>;
   readonly nowMs: number;
 }): void {
   for (const session of sessions.values()) {
+    const sampleFromMs = session.windowStartTsMs - PRE_MARKET_SAMPLE_LEAD_MS;
     if (
-      nowMs < session.windowStartTsMs ||
+      nowMs < sampleFromMs ||
       nowMs >= session.windowEndTsMs ||
       nowMs < session.nextSampleAtMs
     ) {
@@ -446,7 +473,7 @@ function sampleActiveSessions({
       continue;
     }
     const sampleTsMs = nowMs;
-    const offsetMs = Math.max(0, sampleTsMs - session.windowStartTsMs);
+    const offsetMs = sampleTsMs - session.windowStartTsMs;
     session.samples.push({ offsetMs, upBps, downBps });
     session.firstSampleTsMs ??= sampleTsMs;
     session.lastSampleTsMs = sampleTsMs;

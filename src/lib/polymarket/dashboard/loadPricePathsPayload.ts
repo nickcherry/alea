@@ -1,5 +1,10 @@
 import { assetValues } from "@alea/constants/assets";
+import { LEAD_TIME_DRIFT_THRESHOLD_BPS } from "@alea/constants/leadTimeDrift";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import {
+  type LeadTimeDriftPayload,
+  loadLeadTimeDriftPayload,
+} from "@alea/lib/polymarket/dashboard/loadLeadTimeDriftPayload";
 import type {
   PricePathAggregateSlice,
   PricePathBandPoint,
@@ -12,6 +17,7 @@ import type {
 } from "@alea/lib/polymarket/dashboard/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { decodePriceSamples } from "@alea/lib/polymarket/priceSampleCodec";
+import { PRE_MARKET_SAMPLE_LEAD_MS } from "@alea/lib/polymarket/priceSampler";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 import { resolutionTimeframeValues } from "@alea/types/resolutions";
 
@@ -85,11 +91,17 @@ export async function loadPricePathsPayload({
     .orderBy("window_start_ts_ms", "asc")
     .execute()) as readonly PricePathSampleRow[];
 
+  const leadTimeDrift = await loadLeadTimeDriftPayload({
+    db,
+    now: () => generatedAtMs,
+  });
+
   return buildPricePathsPayloadFromRows({
     rows,
     generatedAtMs,
     lookbackDays,
     cutoffMs,
+    leadTimeDrift,
   });
 }
 
@@ -98,11 +110,13 @@ export function buildPricePathsPayloadFromRows({
   generatedAtMs,
   lookbackDays,
   cutoffMs,
+  leadTimeDrift,
 }: {
   readonly rows: readonly PricePathSampleRow[];
   readonly generatedAtMs: number;
   readonly lookbackDays: number;
   readonly cutoffMs: number;
+  readonly leadTimeDrift?: LeadTimeDriftPayload;
 }): PricePathsPayload {
   const windows = rows
     .map(normalizeWindow)
@@ -166,6 +180,17 @@ export function buildPricePathsPayloadFromRows({
     firstWindowMs,
     lastWindowMs,
     breakdowns,
+    leadTimeDrift:
+      leadTimeDrift ??
+      ({
+        generatedAtMs,
+        trainingWindowEndExclusiveMs: 0,
+        thresholdsBps: LEAD_TIME_DRIFT_THRESHOLD_BPS,
+        hasOneMinuteCandles: false,
+        firstCandleMs: null,
+        lastCandleMs: null,
+        breakdowns: [],
+      } satisfies LeadTimeDriftPayload),
   };
 }
 
@@ -201,7 +226,10 @@ function parseSamples(raw: unknown): readonly CompactPriceSample[] {
   const ticks = decodePriceSamples(buffer);
   const samples: CompactPriceSample[] = [];
   for (const tick of ticks) {
-    if (!Number.isFinite(tick.offsetMs) || tick.offsetMs < 0) {
+    if (!Number.isFinite(tick.offsetMs)) {
+      continue;
+    }
+    if (tick.offsetMs < -PRE_MARKET_SAMPLE_LEAD_MS) {
       continue;
     }
     const priceBps =
@@ -247,7 +275,9 @@ function buildAggregateSlice({
   readonly durationMs: number;
   readonly timeBucketMs: number;
 }): PricePathAggregateSlice {
-  const columnCount = Math.ceil(durationMs / timeBucketMs);
+  const columnCount = Math.ceil(
+    (durationMs + PRE_MARKET_SAMPLE_LEAD_MS) / timeBucketMs,
+  );
   const columns = Array.from({ length: columnCount }, () =>
     createColumnAccumulator(),
   );
@@ -518,7 +548,7 @@ function tableMarkersMsFor({
   readonly durationMs: number;
   readonly timeBucketMs: number;
 }): readonly number[] {
-  const markers =
+  const inMarket =
     durationMs <= 5 * 60 * millisecondsPerSecond
       ? [
           4 * 60 * millisecondsPerSecond,
@@ -535,7 +565,18 @@ function tableMarkersMsFor({
           60 * millisecondsPerSecond,
           30 * millisecondsPerSecond,
         ];
-  return markers.filter((ms) => ms <= durationMs && ms >= timeBucketMs);
+  // Pre-market markers (timeRemainingMs > durationMs). Each entry is
+  // expressed as `durationMs + msBeforeOpen`, so the table reads as a
+  // chronological progression: pre-open → open → close.
+  const preMarket = [
+    durationMs + 5 * 60 * millisecondsPerSecond,
+    durationMs + 3 * 60 * millisecondsPerSecond,
+    durationMs + 60 * millisecondsPerSecond,
+  ];
+  const maxRemaining = durationMs + PRE_MARKET_SAMPLE_LEAD_MS;
+  return [...preMarket, ...inMarket].filter(
+    (ms) => ms <= maxRemaining && ms >= timeBucketMs,
+  );
 }
 
 function columnIndexForOffset({
@@ -549,9 +590,14 @@ function columnIndexForOffset({
   readonly timeBucketMs: number;
   readonly columnCount: number;
 }): number {
-  const boundedOffset = clamp({ value: offsetMs, min: 0, max: durationMs - 1 });
+  const minOffsetMs = -PRE_MARKET_SAMPLE_LEAD_MS;
+  const boundedOffset = clamp({
+    value: offsetMs,
+    min: minOffsetMs,
+    max: durationMs - 1,
+  });
   return clamp({
-    value: Math.floor(boundedOffset / timeBucketMs),
+    value: Math.floor((boundedOffset - minOffsetMs) / timeBucketMs),
     min: 0,
     max: columnCount - 1,
   });
@@ -586,7 +632,9 @@ function columnTimeRemainingMs({
   readonly durationMs: number;
   readonly timeBucketMs: number;
 }): number {
-  return Math.max(0, Math.round(durationMs - (index + 0.5) * timeBucketMs));
+  const offsetMs =
+    -PRE_MARKET_SAMPLE_LEAD_MS + (index + 0.5) * timeBucketMs;
+  return Math.round(durationMs - offsetMs);
 }
 
 function formatTimeRemaining({ ms }: { readonly ms: number }): string {

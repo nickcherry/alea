@@ -224,6 +224,109 @@
   margin-top: 14px;
 }
 
+/* Pre-close Pyth drift charts share chrome with the band-decay panel.
+   Two charts: absolute-bps percentiles (top), within-band shares
+   (bottom). Color palette extends the same gold/blue/green family with
+   a deeper crimson so a 4-line chart still reads at a glance. */
+.price-path-drift-chart-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.price-path-drift-chart {
+  min-height: 280px;
+  border: 1px solid var(--alea-border-muted);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(15, 27, 18, 0.58), rgba(7, 9, 10, 0.34)),
+    var(--alea-bg-soft);
+  overflow: hidden;
+}
+
+.price-path-band-line.drift-p50 {
+  stroke: var(--alea-gold);
+}
+
+.price-path-band-line.drift-p75 {
+  stroke: var(--alea-blue);
+}
+
+.price-path-band-line.drift-p90 {
+  stroke: var(--alea-green);
+}
+
+.price-path-band-line.drift-p99 {
+  stroke: #d05a4a;
+}
+
+.price-path-band-line.drift-share-2 {
+  stroke: var(--alea-gold);
+}
+
+.price-path-band-line.drift-share-5 {
+  stroke: var(--alea-blue);
+}
+
+.price-path-band-line.drift-share-10 {
+  stroke: var(--alea-green);
+}
+
+.price-path-band-swatch.drift-p50 {
+  background: var(--alea-gold);
+}
+
+.price-path-band-swatch.drift-p75 {
+  background: var(--alea-blue);
+}
+
+.price-path-band-swatch.drift-p90 {
+  background: var(--alea-green);
+}
+
+.price-path-band-swatch.drift-p99 {
+  background: #d05a4a;
+}
+
+.price-path-band-swatch.drift-share-2 {
+  background: var(--alea-gold);
+}
+
+.price-path-band-swatch.drift-share-5 {
+  background: var(--alea-blue);
+}
+
+.price-path-band-swatch.drift-share-10 {
+  background: var(--alea-green);
+}
+
+.price-path-hover-dot.drift-p50 {
+  fill: var(--alea-gold);
+}
+
+.price-path-hover-dot.drift-p75 {
+  fill: var(--alea-blue);
+}
+
+.price-path-hover-dot.drift-p90 {
+  fill: var(--alea-green);
+}
+
+.price-path-hover-dot.drift-p99 {
+  fill: #d05a4a;
+}
+
+.price-path-hover-dot.drift-share-2 {
+  fill: var(--alea-gold);
+}
+
+.price-path-hover-dot.drift-share-5 {
+  fill: var(--alea-blue);
+}
+
+.price-path-hover-dot.drift-share-10 {
+  fill: var(--alea-green);
+}
+
 .price-path-crossings-table {
   width: 100%;
   min-width: 460px;

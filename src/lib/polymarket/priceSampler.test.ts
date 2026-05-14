@@ -6,6 +6,9 @@ import {
 import {
   applyMarketDataEventToSamplerState,
   type MarketPriceState,
+  PRE_MARKET_SAMPLE_LEAD_MS,
+  type SampleableSession,
+  sampleActiveSessions,
   samplePriceMids,
 } from "@alea/lib/polymarket/priceSampler";
 import { describe, expect, it } from "bun:test";
@@ -71,6 +74,96 @@ describe("packed-tick codec", () => {
       { offsetMs: 2_000, upBps: null, downBps: null },
     ];
     expect(decodePriceSamples(encodePriceSamples(ticks))).toEqual(ticks);
+  });
+
+  it("round-trips negative pre-market offsets", () => {
+    const ticks: readonly PriceSampleTick[] = [
+      { offsetMs: -300_000, upBps: 5_000, downBps: 5_000 },
+      { offsetMs: -1_000, upBps: 5_100, downBps: 4_900 },
+      { offsetMs: 0, upBps: 5_050, downBps: 4_950 },
+      { offsetMs: 299_000, upBps: 6_000, downBps: 4_000 },
+    ];
+    expect(decodePriceSamples(encodePriceSamples(ticks))).toEqual(ticks);
+  });
+
+  it("decodes legacy v1 (u32 offsets) buffers", () => {
+    const tickCount = 2;
+    const buffer = Buffer.alloc(8 + tickCount * 8);
+    buffer.writeUInt16LE(1, 0);
+    buffer.writeUInt16LE(0, 2);
+    buffer.writeUInt32LE(tickCount, 4);
+    buffer.writeUInt32LE(0, 8);
+    buffer.writeUInt16LE(5_000, 12);
+    buffer.writeUInt16LE(5_000, 14);
+    buffer.writeUInt32LE(60_000, 16);
+    buffer.writeUInt16LE(5_200, 20);
+    buffer.writeUInt16LE(4_800, 22);
+    expect(decodePriceSamples(buffer)).toEqual([
+      { offsetMs: 0, upBps: 5_000, downBps: 5_000 },
+      { offsetMs: 60_000, upBps: 5_200, downBps: 4_800 },
+    ]);
+  });
+});
+
+describe("sampleActiveSessions", () => {
+  const windowStartTsMs = 1_778_517_600_000;
+  const windowEndTsMs = windowStartTsMs + 300_000;
+
+  function freshSession(): SampleableSession {
+    return {
+      windowStartTsMs,
+      windowEndTsMs,
+      sampleIntervalMs: 1_000,
+      state: {
+        up: { bid: 0.49, ask: 0.51, last: null },
+        down: { bid: 0.47, ask: 0.49, last: null },
+      },
+      samples: [],
+      nextSampleAtMs: windowStartTsMs - PRE_MARKET_SAMPLE_LEAD_MS,
+      firstSampleTsMs: null,
+      lastSampleTsMs: null,
+      missingSampleCount: 0,
+    };
+  }
+
+  it("skips sampling before the pre-market lead window", () => {
+    const session = freshSession();
+    sampleActiveSessions({
+      sessions: new Map([["k", session]]),
+      nowMs: windowStartTsMs - PRE_MARKET_SAMPLE_LEAD_MS - 1,
+    });
+    expect(session.samples).toEqual([]);
+  });
+
+  it("captures pre-market ticks with negative offsetMs", () => {
+    const session = freshSession();
+    const nowMs = windowStartTsMs - PRE_MARKET_SAMPLE_LEAD_MS;
+    sampleActiveSessions({ sessions: new Map([["k", session]]), nowMs });
+    expect(session.samples).toEqual([
+      { offsetMs: -PRE_MARKET_SAMPLE_LEAD_MS, upBps: 5_000, downBps: 4_800 },
+    ]);
+  });
+
+  it("captures intra-market ticks with non-negative offsetMs", () => {
+    const session = freshSession();
+    session.nextSampleAtMs = windowStartTsMs + 30_000;
+    sampleActiveSessions({
+      sessions: new Map([["k", session]]),
+      nowMs: windowStartTsMs + 30_000,
+    });
+    expect(session.samples).toEqual([
+      { offsetMs: 30_000, upBps: 5_000, downBps: 4_800 },
+    ]);
+  });
+
+  it("stops sampling once window has ended", () => {
+    const session = freshSession();
+    session.nextSampleAtMs = windowEndTsMs;
+    sampleActiveSessions({
+      sessions: new Map([["k", session]]),
+      nowMs: windowEndTsMs,
+    });
+    expect(session.samples).toEqual([]);
   });
 });
 

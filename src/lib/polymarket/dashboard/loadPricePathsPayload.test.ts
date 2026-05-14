@@ -34,8 +34,9 @@ describe("price paths dashboard payload", () => {
     expect(all?.overallWithinOneCentShare).toBe(0.5);
     expect(all?.overallWithinTwoCentShare).toBe(0.75);
     expect(all?.overallWithinFiveCentShare).toBe(0.75);
-    expect(all?.heatmap.columns[0]?.counts[50]).toBe(1);
-    expect(all?.heatmap.columns[6]?.counts[52]).toBe(1);
+    // 30 leftmost columns are pre-market (5m × 10s bucket).
+    expect(all?.heatmap.columns[30]?.counts[50]).toBe(1);
+    expect(all?.heatmap.columns[36]?.counts[52]).toBe(1);
 
     const oneMinuteMarker = all?.markerShares.find((m) => m.label === "T-1:00");
     expect(oneMinuteMarker?.withinOneCentShare).toBe(1);
@@ -80,8 +81,8 @@ describe("price paths dashboard payload", () => {
     expect(all?.crossings.windowsWithAnyCrossing).toBe(1);
     expect(all?.crossings.totalWindows).toBe(2);
     expect(all?.crossings.meanCrossingsPerWindow).toBe(1);
-    // 5m / 10s buckets = 30 buckets.
-    expect(all?.crossings.buckets.length).toBe(30);
+    // 5m candle + 5m pre-market lead = 600s, at 10s buckets = 60 buckets.
+    expect(all?.crossings.buckets.length).toBe(60);
     const earlyCrossings = (all?.crossings.buckets ?? [])
       .filter((b) => b.timeRemainingMs > 150_000)
       .reduce((sum, b) => sum + b.crossingCount, 0);
@@ -122,8 +123,47 @@ describe("price paths dashboard payload", () => {
     const all = fiveMinute?.slices[0];
     expect(all?.sampleCount).toBe(2);
     // First tick is reconstructed as 10000 - 4800 = 5200 → bucket 52.
-    expect(all?.heatmap.columns[0]?.counts[52]).toBe(1);
-    expect(all?.heatmap.columns[6]?.counts[53]).toBe(1);
+    // 30 pre-market columns sit to the left, so intra-market column 0 → 30.
+    expect(all?.heatmap.columns[30]?.counts[52]).toBe(1);
+    expect(all?.heatmap.columns[36]?.counts[53]).toBe(1);
+  });
+
+  it("places pre-market negative-offset ticks in left-side columns", () => {
+    const payload = buildPricePathsPayloadFromRows({
+      rows: [
+        {
+          asset: "btc",
+          timeframe: "5m",
+          window_start_ts_ms: 1_778_517_600_000,
+          window_end_ts_ms: 1_778_517_900_000,
+          samples: encodePriceSamples([
+            { offsetMs: -300_000, upBps: 5_000, downBps: 5_000 },
+            { offsetMs: -1_000, upBps: 5_100, downBps: 4_900 },
+            { offsetMs: 0, upBps: 5_050, downBps: 4_950 },
+            { offsetMs: 240_000, upBps: 5_300, downBps: 4_700 },
+          ]),
+        },
+      ],
+      generatedAtMs: 1_778_517_600_000,
+      lookbackDays: 30,
+      cutoffMs: 1_775_925_600_000,
+    });
+
+    const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
+    const all = fiveMinute?.slices[0];
+    expect(all?.sampleCount).toBe(4);
+    // Leftmost column (T-9:55) holds the −300_000 ms pre-market tick.
+    expect(all?.heatmap.columns[0]?.counts[50]).toBe(1);
+    // Column 29 sits just before the open boundary; the −1000 ms tick
+    // lands there at 51c.
+    expect(all?.heatmap.columns[29]?.counts[51]).toBe(1);
+    // Column 30 is the first intra-market column; offsetMs=0 tick at 51c.
+    expect(all?.heatmap.columns[30]?.counts[51]).toBe(1);
+
+    const labels = (all?.markerShares ?? []).map((m) => m.label);
+    expect(labels).toContain("T-10:00");
+    expect(labels).toContain("T-8:00");
+    expect(labels).toContain("T-6:00");
   });
 
   it("renders the price-path route and empty state", () => {

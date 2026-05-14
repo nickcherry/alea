@@ -9,19 +9,27 @@
  *     u32 tickCount
  *
  *   per-tick (8 bytes × tickCount)
- *     u32 offsetMs          ms since window_start_ts_ms
+ *     i32 offsetMs          ms since window_start_ts_ms (v2; v1 stored u32)
  *     u16 upBps             0..10000, or MISSING (0xFFFF)
  *     u16 downBps           0..10000, or MISSING (0xFFFF)
  *
+ * Versions:
+ *   v1 — offsetMs is unsigned (≥ 0). No pre-market samples possible.
+ *   v2 — offsetMs is signed (i32). Negative offsets are pre-market ticks
+ *        captured before `window_start_ts_ms`.
+ *
  * Buffer is host byte order (LE on x86/arm64). A 15m × 1s capture is
- * 8 + 900 × 8 = 7208 bytes.
+ * 8 + 900 × 8 = 7208 bytes; adding 5m of pre-market at 1Hz brings a
+ * 15m capture to 8 + 1200 × 8 = 9608 bytes.
  */
 
-export const PRICE_SAMPLE_CODEC_VERSION = 1;
+export const PRICE_SAMPLE_CODEC_VERSION = 2;
 export const PRICE_SAMPLE_TICK_BYTES = 8;
 export const PRICE_SAMPLE_HEADER_BYTES = 8;
 const MISSING_BPS = 0xffff;
 const MAX_BPS = 10_000;
+const I32_MIN = -0x80000000;
+const I32_MAX = 0x7fffffff;
 
 export type PriceSampleTick = {
   readonly offsetMs: number;
@@ -41,7 +49,7 @@ export function encodePriceSamples(
 
   let offset = PRICE_SAMPLE_HEADER_BYTES;
   for (const tick of ticks) {
-    buffer.writeUInt32LE(clampOffsetMs(tick.offsetMs), offset);
+    buffer.writeInt32LE(clampOffsetMs(tick.offsetMs), offset);
     buffer.writeUInt16LE(encodeBps(tick.upBps), offset + 4);
     buffer.writeUInt16LE(encodeBps(tick.downBps), offset + 6);
     offset += PRICE_SAMPLE_TICK_BYTES;
@@ -59,7 +67,7 @@ export function decodePriceSamples(
     return [];
   }
   const version = buffer.readUInt16LE(0);
-  if (version !== PRICE_SAMPLE_CODEC_VERSION) {
+  if (version !== 1 && version !== 2) {
     return [];
   }
   const tickCount = buffer.readUInt32LE(4);
@@ -71,8 +79,12 @@ export function decodePriceSamples(
   const ticks: PriceSampleTick[] = [];
   for (let i = 0; i < tickCount; i += 1) {
     const cursor = PRICE_SAMPLE_HEADER_BYTES + i * PRICE_SAMPLE_TICK_BYTES;
+    const offsetMs =
+      version === 2
+        ? buffer.readInt32LE(cursor)
+        : buffer.readUInt32LE(cursor);
     ticks.push({
-      offsetMs: buffer.readUInt32LE(cursor),
+      offsetMs,
       upBps: decodeBps(buffer.readUInt16LE(cursor + 4)),
       downBps: decodeBps(buffer.readUInt16LE(cursor + 6)),
     });
@@ -108,11 +120,14 @@ function decodeBps(raw: number): number | null {
 }
 
 function clampOffsetMs(offsetMs: number): number {
-  if (!Number.isFinite(offsetMs) || offsetMs < 0) {
+  if (!Number.isFinite(offsetMs)) {
     return 0;
   }
-  if (offsetMs > 0xffffffff) {
-    return 0xffffffff;
+  if (offsetMs < I32_MIN) {
+    return I32_MIN;
+  }
+  if (offsetMs > I32_MAX) {
+    return I32_MAX;
   }
   return Math.floor(offsetMs);
 }
