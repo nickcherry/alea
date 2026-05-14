@@ -292,6 +292,32 @@
   stroke: #d05a4a;
 }
 
+/* Discrete data-point markers on the flip-share and drift-share line
+   charts. Same fill as the parent line + a thin panel-colored stroke
+   so the dots read at every (T-Nm) lead instead of the line looking
+   like an unbroken trend. */
+.price-path-data-dot {
+  stroke: #08100c;
+  stroke-width: 1.25;
+  pointer-events: none;
+}
+
+.price-path-data-dot.flip-share {
+  fill: #d05a4a;
+}
+
+.price-path-data-dot.drift-share-2 {
+  fill: var(--alea-gold);
+}
+
+.price-path-data-dot.drift-share-5 {
+  fill: var(--alea-blue);
+}
+
+.price-path-data-dot.drift-share-10 {
+  fill: var(--alea-green);
+}
+
 .price-path-band-swatch.flip-share {
   background: #d05a4a;
 }

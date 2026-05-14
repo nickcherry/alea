@@ -1090,12 +1090,21 @@
 
     lineDefs.forEach(function (line) {
       var d = "";
+      var pointsSvg = "";
       leads.forEach(function (lead, i) {
         var s = (lead.thresholdShares || [])[line.idx];
         if (s === null || s === undefined) return;
         var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
         var y = pad.top + (1 - s) * plotH;
         d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+        pointsSvg +=
+          '<circle class="price-path-data-dot ' +
+          line.cls +
+          '" cx="' +
+          x.toFixed(1) +
+          '" cy="' +
+          y.toFixed(1) +
+          '" r="4.5"></circle>';
       });
       if (d) {
         svg +=
@@ -1103,7 +1112,8 @@
           line.cls +
           '" d="' +
           d +
-          '"></path>';
+          '"></path>' +
+          pointsSvg;
       }
     });
 
@@ -1304,16 +1314,24 @@
     });
 
     var d = "";
+    var pointsSvg = "";
     leads.forEach(function (lead, i) {
       var s = Number(lead.flippedShare);
       if (!Number.isFinite(s)) return;
       var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
       var y = pad.top + (1 - s / yMax) * plotH;
       d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+      pointsSvg +=
+        '<circle class="price-path-data-dot flip-share" cx="' +
+        x.toFixed(1) +
+        '" cy="' +
+        y.toFixed(1) +
+        '" r="4.5"></circle>';
     });
     if (d) {
       svg +=
-        '<path class="price-path-band-line flip-share" d="' + d + '"></path>';
+        '<path class="price-path-band-line flip-share" d="' + d + '"></path>' +
+        pointsSvg;
     }
 
     svg +=
