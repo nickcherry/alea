@@ -11,11 +11,12 @@ function aggregateRow(
   overrides: Partial<LeadTimeDriftAggregateRow> &
     Pick<LeadTimeDriftAggregateRow, "asset" | "timeframe" | "leadMinutes">,
 ): LeadTimeDriftAggregateRow {
+  const sampleCount = overrides.sampleCount ?? 100;
   return {
     asset: overrides.asset,
     timeframe: overrides.timeframe,
     leadMinutes: overrides.leadMinutes,
-    sampleCount: overrides.sampleCount ?? 100,
+    sampleCount,
     missingCount: overrides.missingCount ?? 5,
     signedMeanBps: overrides.signedMeanBps ?? 0.4,
     absP50Bps: overrides.absP50Bps ?? 1.5,
@@ -23,6 +24,8 @@ function aggregateRow(
     absP90Bps: overrides.absP90Bps ?? 4.6,
     absP99Bps: overrides.absP99Bps ?? 9.1,
     withinBpsCounts: overrides.withinBpsCounts ?? [40, 60, 90],
+    directionalCount: overrides.directionalCount ?? sampleCount,
+    flippedCount: overrides.flippedCount ?? 0,
     firstCandleMs: overrides.firstCandleMs ?? 1_700_000_000_000,
     lastCandleMs: overrides.lastCandleMs ?? 1_770_000_000_000,
   };
@@ -156,6 +159,40 @@ describe("lead-time drift payload", () => {
     expect(lead1?.absP99Bps).toBeCloseTo(15.75, 5);
     // Within-bps counts summed: [110, 225, 360]; shares: /400.
     expect(lead1?.thresholdShares).toEqual([110 / 400, 225 / 400, 360 / 400]);
+  });
+
+  it("computes flippedShare per lead and across the all-assets rollup", () => {
+    const payload = buildLeadTimeDriftPayloadFromAggregateRows({
+      rows: [
+        aggregateRow({
+          asset: "btc",
+          timeframe: "5m",
+          leadMinutes: 1,
+          sampleCount: 100,
+          directionalCount: 100,
+          flippedCount: 5,
+        }),
+        aggregateRow({
+          asset: "eth",
+          timeframe: "5m",
+          leadMinutes: 1,
+          sampleCount: 300,
+          directionalCount: 300,
+          flippedCount: 45,
+        }),
+      ],
+      generatedAtMs,
+      trainingWindowEndExclusiveMs,
+      hasOneMinuteCandles: true,
+    });
+    const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
+    const btcSlice = fiveMinute?.slices.find((s) => s.asset === "btc");
+    const ethSlice = fiveMinute?.slices.find((s) => s.asset === "eth");
+    const all = fiveMinute?.slices.find((s) => s.asset === null);
+    expect(btcSlice?.leads[0]?.flippedShare).toBeCloseTo(0.05, 5);
+    expect(ethSlice?.leads[0]?.flippedShare).toBeCloseTo(0.15, 5);
+    expect(all?.leads[0]?.directionalCount).toBe(400);
+    expect(all?.leads[0]?.flippedShare).toBeCloseTo(50 / 400, 5);
   });
 
   it("tracks first/last candle ms across all rows", () => {

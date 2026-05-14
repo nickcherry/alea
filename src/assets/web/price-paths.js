@@ -39,6 +39,10 @@
   var driftSharesTooltip = document.getElementById(
     "price-path-drift-shares-tooltip",
   );
+  var flipShareHost = document.getElementById("price-path-flip-share-chart");
+  var flipShareTooltip = document.getElementById(
+    "price-path-flip-share-tooltip",
+  );
   var driftEmpty = document.getElementById("price-path-drift-empty");
 
   var state = {
@@ -49,6 +53,7 @@
     bandLayout: null,
     crossingsLayout: null,
     driftSharesLayout: null,
+    flipShareLayout: null,
   };
 
   Array.prototype.forEach.call(tabs, function (tab) {
@@ -88,6 +93,10 @@
     driftSharesHost.addEventListener("mousemove", handleDriftSharesMove);
     driftSharesHost.addEventListener("mouseleave", hideDriftSharesHover);
   }
+  if (flipShareHost) {
+    flipShareHost.addEventListener("mousemove", handleFlipShareMove);
+    flipShareHost.addEventListener("mouseleave", hideFlipShareHover);
+  }
 
   window.addEventListener("resize", function () {
     window.clearTimeout(window.__aleaPricePathsResize);
@@ -96,6 +105,7 @@
       renderBandChart();
       renderCrossingsChart();
       renderDriftSharesChart();
+      renderFlipShareChart();
     }, 120);
   });
 
@@ -119,6 +129,7 @@
     renderBandChart();
     renderCrossingsChart();
     renderDriftSharesChart();
+    renderFlipShareChart();
   }
 
   function activeBreakdown() {
@@ -1203,6 +1214,188 @@
       driftSharesTooltip.classList.remove("visible");
     }
     var svg = driftSharesHost.querySelector("svg");
+    if (!svg) return;
+    svg.querySelectorAll("[data-hover]").forEach(function (el) {
+      el.style.display = "none";
+    });
+  }
+
+  function renderFlipShareChart() {
+    if (!flipShareHost) return;
+    state.flipShareLayout = null;
+    var ctx = driftSliceForState();
+    if (!ctx || !ctx.slice || !ctx.slice.leads || !ctx.slice.leads.length) {
+      flipShareHost.innerHTML =
+        '<p class="price-path-empty">No flip data for this slice yet.</p>';
+      return;
+    }
+    var leads = ctx.slice.leads;
+    var hasAnyShare = leads.some(function (lead) {
+      return lead.flippedShare !== null && lead.flippedShare !== undefined;
+    });
+    if (!hasAnyShare) {
+      flipShareHost.innerHTML =
+        '<p class="price-path-empty">No flip data for this slice yet.</p>';
+      return;
+    }
+    var maxShare = 0;
+    leads.forEach(function (lead) {
+      var s = Number(lead.flippedShare);
+      if (Number.isFinite(s) && s > maxShare) maxShare = s;
+    });
+    var yMax = Math.max(0.05, Math.ceil(maxShare * 20) / 20);
+
+    var width = 900;
+    var height = 280;
+    var pad = { left: 56, right: 22, top: 24, bottom: 44 };
+    var plotW = width - pad.left - pad.right;
+    var plotH = height - pad.top - pad.bottom;
+
+    var svg =
+      '<div class="price-path-band-legend">' +
+      key("flip-share", "Direction flipped vs close") +
+      "</div>" +
+      '<svg class="price-path-band-svg" viewBox="0 0 ' +
+      width +
+      " " +
+      height +
+      '" role="img" aria-label="Share of candles whose direction flipped between lead and close">';
+
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var y = pad.top + (1 - v) * plotH;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        pad.left +
+        '" x2="' +
+        (pad.left + plotW) +
+        '" y1="' +
+        y +
+        '" y2="' +
+        y +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        (pad.left - 8) +
+        '" y="' +
+        (y + 4) +
+        '" text-anchor="end">' +
+        Math.round(v * yMax * 100) +
+        "%</text>";
+    });
+
+    leads.forEach(function (lead, i) {
+      var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+      svg +=
+        '<line class="price-path-band-grid" x1="' +
+        x +
+        '" x2="' +
+        x +
+        '" y1="' +
+        pad.top +
+        '" y2="' +
+        (pad.top + plotH) +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        x +
+        '" y="' +
+        (pad.top + plotH + 22) +
+        '" text-anchor="middle">' +
+        escapeHtml(formatLeadMinutes(lead.leadMinutes)) +
+        "</text>";
+    });
+
+    var d = "";
+    leads.forEach(function (lead, i) {
+      var s = Number(lead.flippedShare);
+      if (!Number.isFinite(s)) return;
+      var x = pad.left + xFractionForIndex(i, leads.length) * plotW;
+      var y = pad.top + (1 - s / yMax) * plotH;
+      d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+    });
+    if (d) {
+      svg +=
+        '<path class="price-path-band-line flip-share" d="' + d + '"></path>';
+    }
+
+    svg +=
+      '<line class="price-path-hover-line" data-hover="flip-share-line" x1="0" x2="0" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '" style="display:none"></line>' +
+      '<circle class="price-path-hover-dot flip-share" data-hover="flip-share-dot" r="3.5" cx="0" cy="0" style="display:none"></circle>';
+    svg += "</svg>";
+
+    flipShareHost.innerHTML = svg;
+    state.flipShareLayout = {
+      svgWidth: width,
+      svgHeight: height,
+      pad: pad,
+      plotW: plotW,
+      plotH: plotH,
+      yMax: yMax,
+      leads: leads,
+    };
+  }
+
+  function handleFlipShareMove(event) {
+    var layout = state.flipShareLayout;
+    if (!flipShareHost || !flipShareTooltip || !layout) return;
+    var leads = layout.leads || [];
+    var idx = bucketIndexFor(flipShareHost, event.clientX, layout, leads.length);
+    if (idx < 0) {
+      hideFlipShareHover();
+      return;
+    }
+    var lead = leads[idx];
+    if (!lead) {
+      hideFlipShareHover();
+      return;
+    }
+    var svg = flipShareHost.querySelector("svg");
+    if (!svg) return;
+    var x =
+      layout.pad.left + xFractionForIndex(idx, leads.length) * layout.plotW;
+    var hoverLine = svg.querySelector('[data-hover="flip-share-line"]');
+    if (hoverLine) {
+      hoverLine.setAttribute("x1", x.toFixed(1));
+      hoverLine.setAttribute("x2", x.toFixed(1));
+      hoverLine.style.display = "";
+    }
+    var dot = svg.querySelector('[data-hover="flip-share-dot"]');
+    var share = Number(lead.flippedShare);
+    if (dot) {
+      if (!Number.isFinite(share)) {
+        dot.style.display = "none";
+      } else {
+        dot.setAttribute("cx", x.toFixed(1));
+        dot.setAttribute(
+          "cy",
+          (layout.pad.top + (1 - share / layout.yMax) * layout.plotH).toFixed(1),
+        );
+        dot.style.display = "";
+      }
+    }
+    flipShareTooltip.innerHTML =
+      '<div class="alea-tooltip-head">' +
+      escapeHtml(formatLeadMinutes(lead.leadMinutes) + " from close") +
+      "</div>" +
+      bandTooltipRowLabeled(
+        "flip-share",
+        "Flipped",
+        formatShare(Number.isFinite(share) ? share : null),
+      ) +
+      tooltipRow(
+        "Directional candles",
+        Number(lead.directionalCount || 0).toLocaleString(),
+      );
+    positionTooltip(flipShareTooltip, flipShareHost, event);
+    flipShareTooltip.classList.add("visible");
+  }
+
+  function hideFlipShareHover() {
+    if (!flipShareHost) return;
+    if (flipShareTooltip) flipShareTooltip.classList.remove("visible");
+    var svg = flipShareHost.querySelector("svg");
     if (!svg) return;
     svg.querySelectorAll("[data-hover]").forEach(function (el) {
       el.style.display = "none";

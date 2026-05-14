@@ -101,6 +101,21 @@ export function renderPricePathsHtml({
           No 1m Pyth candles found for the training window. Run <span class="alea-mono">bun alea candles:sync --timeframe 1m --sources pyth --products spot</span> to populate this section.
         </p>
       </section>
+
+      <section class="price-path-section">
+        <div class="alea-section-rule"><h2>Pre-close Direction Flip</h2></div>
+        <p class="price-path-section-note">
+          Share of historic Pyth candles whose price <span class="alea-mono">N</span> minutes
+          before close was on the <em>opposite</em> side of the candle's open
+          from where it eventually closed — i.e., the candle went on to flip
+          up/down direction in those final minutes. Lower = the candle's
+          direction is already locked by that point.
+        </p>
+        <div class="price-path-drift-chart-wrap">
+          <div id="price-path-flip-share-chart" class="price-path-drift-chart"></div>
+          <div id="price-path-flip-share-tooltip" class="alea-tooltip"></div>
+        </div>
+      </section>
     </main>
   </div>
   <script id="price-paths-payload" type="application/json">${payloadJson}</script>

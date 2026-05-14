@@ -288,6 +288,18 @@
   fill: var(--alea-gold);
 }
 
+.price-path-band-line.flip-share {
+  stroke: #d05a4a;
+}
+
+.price-path-band-swatch.flip-share {
+  background: #d05a4a;
+}
+
+.price-path-hover-dot.flip-share {
+  fill: #d05a4a;
+}
+
 .price-path-hover-dot.drift-share-5 {
   fill: var(--alea-blue);
 }

@@ -27,6 +27,19 @@ export type LeadTimeDriftLeadPoint = {
    * threshold value. Order matches `LEAD_TIME_DRIFT_THRESHOLD_BPS`.
    */
   readonly thresholdShares: readonly (number | null)[];
+  /**
+   * Count of candles where neither the price-at-lead nor the eventual
+   * close equals the candle's open (i.e., both have a defined sign
+   * relative to open). Denominator for `flippedShare`.
+   */
+  readonly directionalCount: number;
+  /**
+   * Share of those candles where the sign of `price_at_lead − open`
+   * differs from the sign of `close − open` — i.e., the candle went
+   * on to flip up/down direction between the lead and the close.
+   * `null` when no candles had a definable direction at this lead.
+   */
+  readonly flippedShare: number | null;
 };
 
 export type LeadTimeDriftSlice = {
@@ -70,6 +83,17 @@ export type LeadTimeDriftAggregateRow = {
   readonly absP90Bps: number | null;
   readonly absP99Bps: number | null;
   readonly withinBpsCounts: readonly number[];
+  /**
+   * Number of candles (within `sampleCount`) where both the
+   * price-at-lead and the close have a defined sign relative to open.
+   */
+  readonly directionalCount: number;
+  /**
+   * Number of `directionalCount` candles whose price-at-lead landed
+   * on the opposite side of open from where the candle ultimately
+   * closed (i.e., direction flipped between lead and close).
+   */
+  readonly flippedCount: number;
   readonly firstCandleMs: number | null;
   readonly lastCandleMs: number | null;
 };
@@ -235,6 +259,8 @@ function materializeSlice({
         absP90Bps: null,
         absP99Bps: null,
         thresholdShares: LEAD_TIME_DRIFT_THRESHOLD_BPS.map(() => null),
+        directionalCount: 0,
+        flippedShare: null,
       });
       continue;
     }
@@ -250,6 +276,11 @@ function materializeSlice({
       thresholdShares: row.withinBpsCounts.map((withinCount) =>
         row.sampleCount === 0 ? null : withinCount / row.sampleCount,
       ),
+      directionalCount: row.directionalCount,
+      flippedShare:
+        row.directionalCount === 0
+          ? null
+          : row.flippedCount / row.directionalCount,
     });
   }
   return { asset, label, candleCount, leads };
@@ -276,6 +307,8 @@ function aggregateAcrossAssets({
       p90Weighted: number;
       p99Weighted: number;
       withinCounts: number[];
+      directional: number;
+      flipped: number;
       firstCandleMs: number | null;
       lastCandleMs: number | null;
     }
@@ -293,6 +326,8 @@ function aggregateAcrossAssets({
           p75Weighted: (row.absP75Bps ?? 0) * row.sampleCount,
           p90Weighted: (row.absP90Bps ?? 0) * row.sampleCount,
           p99Weighted: (row.absP99Bps ?? 0) * row.sampleCount,
+          directional: row.directionalCount,
+          flipped: row.flippedCount,
           withinCounts: [...row.withinBpsCounts],
           firstCandleMs: row.firstCandleMs,
           lastCandleMs: row.lastCandleMs,
@@ -306,6 +341,8 @@ function aggregateAcrossAssets({
       existing.p75Weighted += (row.absP75Bps ?? 0) * row.sampleCount;
       existing.p90Weighted += (row.absP90Bps ?? 0) * row.sampleCount;
       existing.p99Weighted += (row.absP99Bps ?? 0) * row.sampleCount;
+      existing.directional += row.directionalCount;
+      existing.flipped += row.flippedCount;
       for (let i = 0; i < existing.withinCounts.length; i += 1) {
         existing.withinCounts[i]! += row.withinBpsCounts[i] ?? 0;
       }
@@ -339,6 +376,8 @@ function aggregateAcrossAssets({
       absP90Bps: acc.sample === 0 ? null : acc.p90Weighted / acc.sample,
       absP99Bps: acc.sample === 0 ? null : acc.p99Weighted / acc.sample,
       withinBpsCounts: acc.withinCounts,
+      directionalCount: acc.directional,
+      flippedCount: acc.flipped,
       firstCandleMs: acc.firstCandleMs,
       lastCandleMs: acc.lastCandleMs,
     });
@@ -435,6 +474,8 @@ async function fetchAggregateRows({
     readonly within_bps_2: number | string;
     readonly within_bps_5: number | string;
     readonly within_bps_10: number | string;
+    readonly directional_count: number | string;
+    readonly flipped_count: number | string;
     readonly first_candle_ts: Date | string | null;
     readonly last_candle_ts: Date | string | null;
   }>`
@@ -444,7 +485,7 @@ async function fetchAggregateRows({
       select '15m'::text as timeframe, unnest(${fifteenMinuteLeads}) as lead_minutes
     ),
     targets as (
-      select asset, timeframe, timestamp, close
+      select asset, timeframe, timestamp, open, close
       from candles
       where source = 'pyth'
         and product = 'spot'
@@ -457,6 +498,7 @@ async function fetchAggregateRows({
         t.timeframe,
         l.lead_minutes,
         t.timestamp,
+        t.open as candle_open,
         t.close as candle_close,
         one_min.close as prev_close
       from targets t
@@ -477,13 +519,32 @@ async function fetchAggregateRows({
         timeframe,
         lead_minutes,
         timestamp,
+        candle_open,
         candle_close,
         prev_close,
         case
           when prev_close is null or candle_close is null or candle_close = 0
             then null
           else ((prev_close - candle_close) / candle_close) * 10000
-        end as drift_bps
+        end as drift_bps,
+        case
+          when prev_close is null or candle_open is null
+            then 0
+          when sign(prev_close - candle_open) = 0
+            or sign(candle_close - candle_open) = 0
+            then 0
+          else 1
+        end as directional,
+        case
+          when prev_close is null or candle_open is null
+            then 0
+          when sign(prev_close - candle_open) = 0
+            or sign(candle_close - candle_open) = 0
+            then 0
+          when sign(prev_close - candle_open) <> sign(candle_close - candle_open)
+            then 1
+          else 0
+        end as flipped
       from joined
     )
     select
@@ -500,6 +561,8 @@ async function fetchAggregateRows({
       count(*) filter (where drift_bps is not null and abs(drift_bps) <= ${bps2}) as within_bps_2,
       count(*) filter (where drift_bps is not null and abs(drift_bps) <= ${bps5}) as within_bps_5,
       count(*) filter (where drift_bps is not null and abs(drift_bps) <= ${bps10}) as within_bps_10,
+      sum(directional) as directional_count,
+      sum(flipped) as flipped_count,
       min(timestamp) as first_candle_ts,
       max(timestamp) as last_candle_ts
     from valued
@@ -520,6 +583,8 @@ async function fetchAggregateRows({
       readonly within_bps_2: number | string;
       readonly within_bps_5: number | string;
       readonly within_bps_10: number | string;
+      readonly directional_count: number | string;
+      readonly flipped_count: number | string;
       readonly first_candle_ts: Date | string | null;
       readonly last_candle_ts: Date | string | null;
     }[];
@@ -541,6 +606,8 @@ async function fetchAggregateRows({
       Number(row.within_bps_5),
       Number(row.within_bps_10),
     ],
+    directionalCount: Number(row.directional_count),
+    flippedCount: Number(row.flipped_count),
     firstCandleMs:
       row.first_candle_ts === null
         ? null
