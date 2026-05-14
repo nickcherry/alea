@@ -70,11 +70,12 @@ For each asset/period:
    parallel in-memory buffers. Pyth is the canonical timeline;
    Coinbase supplies volume for filters that declare
    `barSource: "coinbase"`.
-2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 5m` before the
+2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 15m` before the
    next market opens, it resolves the next Polymarket slug and
    subscribes to both UP and DOWN token books. Polymarket currently
-   exposes these books much earlier, but 5 minutes keeps the hot path
-   settled without carrying a day of subscriptions.
+   exposes these books much earlier, but 15 minutes keeps the hot path
+   settled and leaves room to move decision timing earlier without a
+   market-discovery race.
 3. At the configured period lead (`5m` at T-2m, `15m` at T-3m), it
    refreshes recent Pyth and Coinbase spot candles for every due asset/period
    concurrently, fetches the latest Pyth price,

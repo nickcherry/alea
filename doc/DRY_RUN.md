@@ -138,7 +138,7 @@ Dry-run order configuration lives in
 | `DRY_RUN_ORDER_DEFAULT_TICK_SIZE`        |        1c | Fallback tick when market metadata has not supplied one yet                   |
 | `DRY_RUN_ORDER_NO_QUOTE_REFERENCE_PRICE` |   50c ref | Reference price used to bid one tick lower when no ask has arrived            |
 | `DRY_RUN_ORDER_MAX_QUOTE_AGE_MS`         | unbounded | Use latest known quote; missing placement quotes fall back one tick below 50c |
-| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`       |  300000ms | How early to pre-discover current and next Polymarket markets                 |
+| `DRY_RUN_MARKET_DISCOVERY_LEAD_MS`       |  900000ms | How early to pre-discover current and next Polymarket markets                 |
 
 The order price uses the predicted outcome token: UP decisions look
 at the UP token, DOWN decisions look at the DOWN token. For a DOWN

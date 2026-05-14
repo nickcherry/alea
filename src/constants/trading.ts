@@ -18,7 +18,7 @@ export const MAKER_FEE_RATE = 0;
 export const STAKE_USD = 20;
 
 /** How early live trading starts resolving and subscribing next markets. */
-export const LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 5 * 60 * 1000;
+export const LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 15 * 60 * 1000;
 
 /** Maximum allowed distance from 50c for a live maker order. */
 export const LIVE_TRADING_ORDER_PRICE_WINDOW_CENTS = 3;
