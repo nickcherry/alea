@@ -8,11 +8,14 @@ import { type Kysely, sql } from "kysely";
  * downstream behaviour and would bloat the table.
  *
  * - `ts_ms`: open time of the candle the committee predicts.
- * - `decided_at_ms`: when the decision was made before `ts_ms`.
+ * - `decided_at_ms`: when the decision was made (slightly before
+ *   `ts_ms` — the runner snapshots Pyth's price ~5 s before the
+ *   5-minute boundary and treats that as the prior candle's close
+ *   to drive the prediction).
  * - `prediction`: 'u' or 'd' — never null, abstains aren't written.
- * - `synth_open`: legacy decision reference price. Older rows used it
- *   as an approximate target open; newer rows store the latest closed
- *   Pyth price visible at decision time.
+ * - `synth_open`: the price used as the synthetic prior-bar close
+ *   (and the assumed open of the target bar). Stored so the
+ *   dashboard can show "we predicted UP from $63,841.20".
  * - `regime_votes`: jsonb dump of the filter-collapsed committee
  *   tally for audit.
  * - `actual_close`: filled in later (`null` until the target bar

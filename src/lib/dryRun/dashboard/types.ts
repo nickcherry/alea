@@ -34,7 +34,6 @@ export type DryRunDecisionConfig = {
    */
   readonly supportedPeriods: readonly string[];
   readonly leadTimeMs: number;
-  readonly targetLeadBars: number;
   readonly hydratedBars: number;
   readonly maxVotesPerFilter: number;
   readonly minVotesToTrade: number;
@@ -67,7 +66,6 @@ export type DryRunDashboardRecentRow = {
   readonly period: string;
   readonly prediction: "u" | "d";
   readonly synthOpen: number;
-  readonly actualOpen: number | null;
   readonly actualClose: number | null;
   readonly won: number | null;
   readonly marketRegime: string | null;

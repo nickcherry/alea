@@ -90,8 +90,8 @@ export function renderDryRunHtml({
               items: [
                 {
                   label: "Decision Lead",
-                  value: `${payload.decisionConfig.targetLeadBars.toLocaleString()} candle`,
-                  tip: "Whole candle periods before target open. 5m decisions lead by 5m; 15m decisions lead by 15m.",
+                  value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
+                  tip: "How long before the target candle's open the committee runs.",
                 },
                 {
                   label: "Hydrated Bars",
@@ -225,7 +225,7 @@ export function renderDryRunHtml({
                 <th>Asset</th>
                 <th>Prediction</th>
                 <th>Market Regime</th>
-                <th class="num-col">Open / Ref</th>
+                <th class="num-col">Synth Open</th>
                 <th class="num-col">Actual Close</th>
                 <th class="num-col">Move</th>
                 <th>Order</th>
@@ -330,7 +330,6 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
     row.actualClose === null
       ? '<span class="alea-muted">pending</span>'
       : row.actualClose.toFixed(2);
-  const displayedOpen = row.actualOpen ?? row.synthOpen;
   let outcome: string;
   if (row.won === null) {
     outcome = '<span class="alea-muted">—</span>';
@@ -344,7 +343,7 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       ? '<span class="alea-muted">—</span>'
       : `<span class="asset-pill">${escapeHtml({ value: formatMarketRegime(row.marketRegime) })}</span>`;
   const moveCell = renderMoveCell({
-    actualOpen: row.actualOpen ?? row.synthOpen,
+    synthOpen: row.synthOpen,
     actualClose: row.actualClose,
   });
   return `
@@ -353,7 +352,7 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       <td><span class="asset-pill">${escapeHtml({ value: row.asset })}</span></td>
       <td>${tag}</td>
       <td>${regimeCell}</td>
-      <td class="num-col alea-mono">${displayedOpen.toFixed(2)}</td>
+      <td class="num-col alea-mono">${row.synthOpen.toFixed(2)}</td>
       <td class="num-col alea-mono">${close}</td>
       <td class="num-col">${moveCell}</td>
       <td>${renderOrderCell(row)}</td>
@@ -493,16 +492,16 @@ function formatQuoteAgeLimit({ value }: { readonly value: number }): string {
  * down. `—` while the bar is still pending.
  */
 function renderMoveCell({
-  actualOpen,
+  synthOpen,
   actualClose,
 }: {
-  readonly actualOpen: number;
+  readonly synthOpen: number;
   readonly actualClose: number | null;
 }): string {
-  if (actualClose === null || actualOpen === 0) {
+  if (actualClose === null || synthOpen === 0) {
     return '<span class="alea-muted">—</span>';
   }
-  const pct = ((actualClose - actualOpen) / actualOpen) * 100;
+  const pct = ((actualClose - synthOpen) / synthOpen) * 100;
   const sign = pct > 0 ? "+" : pct < 0 ? "" : "";
   const cls =
     pct > 0

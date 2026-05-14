@@ -15,9 +15,9 @@ const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
 
 /**
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
- * the `candles` table, refreshes recent Pyth candles one full candle
- * before each target boundary, and runs the committee on closed bars.
- * Decisions land in
+ * the `candles` table, refreshes recent Pyth candles before each
+ * configured period boundary, synthesizes the active candle from the
+ * latest Pyth price, and runs the committee. Decisions land in
  * `dry_run_decisions`; the configured pre-open Polymarket order is
  * simulated; outcomes are scored once the target bar finalizes.
  *
@@ -28,7 +28,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run the committee in dry-run mode against live Pyth prices",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles one full candle before each target boundary, and runs the committee on closed bars to predict the target bar's direction. Predictions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles at T-90s of each configured boundary, synthesizes the active candle from the latest Pyth price, and runs the committee to predict the next bar's direction. Predictions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",
@@ -55,7 +55,7 @@ export const dryRunCommand = defineCommand({
   output:
     "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",
   sideEffects:
-    "Fetches recent Pyth/Coinbase candles and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
+    "Fetches Pyth candles/latest prices and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
   async run({ io, options }) {
     io.writeStdout(
       `${pc.bold("dry:run")} ${pc.dim(`periods=${options.periods.join(",")} assets=${assetValues.join(",")}`)}\n\n`,
@@ -117,7 +117,7 @@ export const dryRunCommand = defineCommand({
                     : pc.red("DOWN  ");
               const regime = event.marketRegime ?? "—";
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} ref=${event.referenceClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain)}\n`,
               );
               break;
             }

@@ -1,4 +1,8 @@
-import { highestHigh, lowestLow, meanVolume } from "@alea/lib/filters/_barMath";
+import {
+  highestHigh,
+  lowestLow,
+  meanVolume,
+} from "@alea/lib/filters/_barMath";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
 import { computeAtrSeries } from "@alea/lib/indicators/atr";
@@ -165,22 +169,6 @@ registerFilter({
       atrLength: 14,
       minBreakAtr: 0.1,
       minCloseBeyondAtr: 0.05,
-    },
-    {
-      lookback: 14,
-      volLength: 20,
-      maxRelVol: 0.7,
-      atrLength: 14,
-      minBreakAtr: 0,
-      minCloseBeyondAtr: 0,
-    },
-    {
-      lookback: 30,
-      volLength: 50,
-      maxRelVol: 0.65,
-      atrLength: 14,
-      minBreakAtr: 0.05,
-      minCloseBeyondAtr: 0.02,
     },
   ],
 });

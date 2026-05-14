@@ -2,10 +2,10 @@
 
 The dry-run loop is the bridge between offline committee backtests
 and real trading: a long-running process that keeps recent Pyth and
-Coinbase spot candles in memory, refreshes them one full candle before
-the target boundary, asks the committee to predict the target bar from
-closed candles only, and persists every decision to `dry_run_decisions`.
-No real orders are placed. The
+Coinbase spot candles in memory, refreshes them just before each
+market boundary, synthesizes the active Pyth candle from the latest
+Pyth price, asks the committee to predict the next bar, and persists
+every decision to `dry_run_decisions`. No real orders are placed. The
 loop also simulates whether a configured pre-open Polymarket order
 would have been eligible, placed, filled, or left unfilled.
 
@@ -39,15 +39,17 @@ For each configured period, defaulting to `5m,15m`, and each of the
    classifier's 100-bar window and the deepest filter's
    `requiredBars`, so the first decision always has enough history
    when the source has coverage.
-2. **Refresh** — one whole candle before each target boundary, fetch
-   recent Pyth and Coinbase spot
+2. **Refresh** — `TRADE_DECISION_LEAD_TIME_MS = 90s` before each
+   configured period boundary, fetch recent Pyth and Coinbase spot
    candles for that asset/period and upsert them into separate
    in-memory buffers by candle open time. Pyth refresh failures skip
    the decision; Coinbase refresh failures are soft, so volume-source
    filters abstain while Pyth-source filters can still vote.
-3. **Predict** — align the closed Coinbase buffer to the closed Pyth
-   open-time timeline. Run the regime classifier on the closed Pyth
-   bars visible at decision time. Look up the committee roster for that
+3. **Synthesize + predict** — fetch the latest one-shot Pyth price,
+   combine it with the active Pyth candle when available, and build a
+   synthetic active candle for the about-to-finalize bar. Align the
+   Coinbase buffer to the Pyth open-time timeline. Run the regime
+   classifier on Pyth bars. Look up the committee roster for that
    period and regime. Apply the shared trade decision policy. If
    non-abstain, persist the decision; otherwise skip.
 4. **Simulate order** — `DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0s`
@@ -87,10 +89,15 @@ runtime uses direct fetch/reconcile instead:
    buffer. Coinbase is optional at decision time: if it errors,
    times out, or has an open-time gap inside a filter window, only
    the Coinbase-source filters abstain.
-4. The decision bundle intentionally omits the in-flight candle. For a
-   `5m` target from `2:20-2:25`, the order is placed around `2:15` and
-   the committee only sees bars closed by `2:15`; it does not see the
-   `2:15-2:20` candle.
+4. It then fetches a one-shot latest Pyth price via
+   [`fetchLatestPythPrices`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts).
+   If that price is older than
+   `TRADE_DECISION_MAX_PRICE_AGE_MS`, the decision is skipped instead
+   of trading stale state.
+5. If Pyth has already returned the active partial candle, its
+   open/high/low are used and the latest price becomes the synthetic
+   close. If not, the prior closed candle's close is used as the
+   fallback open and the latest price defines the active bar's close.
 
 The remaining websocket in dry-run is the Polymarket market-data
 stream used by order simulation. That stream is about fillability and
@@ -98,10 +105,10 @@ book state, not committee candle construction.
 
 ## Committee evaluation
 
-At one full candle before the target boundary, for each asset:
+At T-90s of each boundary, for each asset:
 
-1. Classify the regime from the closed-bar window visible at decision
-   time.
+1. Classify the regime from the bar window (real history + the
+   in-flight bar with Pyth's t-90s price as the synthetic close).
 2. If the classifier returns `null`, abstain entirely. The 150-bar
    hydration makes this an edge case in practice.
 3. Look up the roster bucket for `(asset, regime, period)` in
@@ -177,32 +184,32 @@ Append-only. One row per non-abstain decision. Schema:
 and the `market_regime` column added by
 [`202605120200_dry_run_market_regime`](../src/lib/db/migrations/202605120200_dry_run_market_regime.ts).
 
-| Column                  | Meaning                                                                  |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `id`                    | bigserial PK                                                             |
-| `ts_ms`                 | Open-time of the target bar (the bar being predicted)                    |
-| `decided_at_ms`         | Wall-clock when the prediction was made                                  |
-| `asset`, `period`       | Self-explanatory                                                         |
-| `prediction`            | `'u'` or `'d'`                                                           |
-| `synth_open`            | Legacy name; latest closed Pyth reference price visible at decision time |
-| `actual_open`           | Filled in with the target candle's real open when the row is scored      |
-| `regime_votes`          | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse     |
-| `actual_close`          | Filled in once the target bar settles                                    |
-| `won`                   | 0/1, null until scored                                                   |
-| `market_regime`         | Classifier's read at decision time                                       |
-| `decision_duration_ms`  | Committee/regime decision compute time before persistence                |
-| `order_status`          | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason       |
-| `order_placed_at_ms`    | Simulated order-placement wall-clock                                     |
-| `order_observed_price`  | Predicted-side token price read at simulated placement                   |
-| `order_limit_price`     | Simulated limit-buy price                                                |
-| `order_confidence`      | Average effective winning-voter confidence recorded for analysis         |
-| `order_filled_at_ms`    | When the simulated order first became fillable                           |
-| `order_fill_price`      | Simulated fill price                                                     |
-| `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence      |
-| `order_expires_at_ms`   | Target market close; placed orders still unfilled here expire            |
-| `order_market_ref`      | Polymarket condition id for the target window used by order simulation   |
-| `order_up_token_ref`    | Polymarket UP token id for that target window                            |
-| `order_down_token_ref`  | Polymarket DOWN token id for that target window                          |
+| Column                  | Meaning                                                              |
+| ----------------------- | -------------------------------------------------------------------- |
+| `id`                    | bigserial PK                                                         |
+| `ts_ms`                 | Open-time of the target bar (the bar being predicted)                |
+| `decided_at_ms`         | Wall-clock when the prediction was made                              |
+| `asset`, `period`       | Self-explanatory                                                     |
+| `prediction`            | `'u'` or `'d'`                                                       |
+| `synth_open`            | Pyth price snapshotted at T-90s — used as the bar's synthetic open   |
+| `actual_open`           | Nullable audit column retained for legacy dry-run rows               |
+| `regime_votes`          | JSON `{up, down, abstain}` totals after one-vote-per-filter collapse |
+| `actual_close`          | Filled in once the target bar settles                                |
+| `won`                   | 0/1, null until scored                                               |
+| `market_regime`         | Classifier's read at decision time                                   |
+| `decision_duration_ms`  | Committee/regime decision compute time before persistence            |
+| `order_status`          | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason   |
+| `order_placed_at_ms`    | Simulated order-placement wall-clock                                 |
+| `order_observed_price`  | Predicted-side token price read at simulated placement               |
+| `order_limit_price`     | Simulated limit-buy price                                            |
+| `order_confidence`      | Average effective winning-voter confidence recorded for analysis     |
+| `order_filled_at_ms`    | When the simulated order first became fillable                       |
+| `order_fill_price`      | Simulated fill price                                                 |
+| `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence  |
+| `order_expires_at_ms`   | Target market close; placed orders still unfilled here expire        |
+| `order_market_ref`      | Polymarket condition id for the target window used by order simulation |
+| `order_up_token_ref`    | Polymarket UP token id for that target window                        |
+| `order_down_token_ref`  | Polymarket DOWN token id for that target window                      |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when
@@ -224,8 +231,8 @@ The CLI streams one line per event:
 ...
 13:21:05 loaded committee roster: 8 buckets, 592 candidates (selected_at=2026-05-13 15:35)
 13:21:05 ready
-13:20:00 UP     5m/eth   target=13:25 ref=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
-13:15:00 abstain 15m/btc   target=13:30 ref=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10
+13:24:55 UP     5m/eth   target=13:25 synth=2335.23 regime=low_vol_ranging roster=10 u=7 d=0 a=3
+13:24:55 abstain 15m/btc   target=13:30 synth=80876.38 regime=low_vol_trending roster=10 u=0 d=0 a=10
 ...
 13:25:01 WIN  5m/eth   bar=13:20 pred=u open=2329.42 close=2330.27
 ```
@@ -267,12 +274,14 @@ loader + renderer.
 - [`src/lib/dryRun/runDryRun.ts`](../src/lib/dryRun/runDryRun.ts) —
   the main loop.
 - [`src/lib/tradeDecision/candleState.ts`](../src/lib/tradeDecision/candleState.ts) —
-  shared hydrate/refresh candle state for dry-run and live trade
-  decisions.
+  shared hydrate/refresh/synthesize candle state for dry-run and live
+  trade decisions.
 - [`src/lib/dryRun/orderSimulation.ts`](../src/lib/dryRun/orderSimulation.ts) —
   pre-open dry-run order placement + fill simulation.
 - [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts) —
   shared current/next-window market discovery cache.
+- [`src/lib/livePrices/pyth/fetchLatestPythPrices.ts`](../src/lib/livePrices/pyth/fetchLatestPythPrices.ts) —
+  one-shot Hermes latest-price fetcher.
 - [`src/lib/dryRun/dashboard/`](../src/lib/dryRun/dashboard/) —
   payload loader + HTML renderer.
 - [`src/bin/dry/run.ts`](../src/bin/dry/run.ts) — the CLI.

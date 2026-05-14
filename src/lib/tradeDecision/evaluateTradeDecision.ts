@@ -65,20 +65,12 @@ export function evaluateTradeDecision({
     }
   }
   const { decision, votes } =
-    marketRegime === null || rosterCandidates.length === 0
+    rosterCandidates.length === 0
       ? {
           decision: { prediction: null, up: 0, down: 0, abstain: 0 } as const,
           votes: [],
         }
-      : evaluateCommittee({
-          decisionContext: {
-            asset,
-            marketRegime,
-            period,
-          },
-          series,
-          candidates: rosterCandidates,
-        });
+      : evaluateCommittee({ series, candidates: rosterCandidates });
   const effectiveVotes = selectEffectiveCommitteeVotes({ votes });
   const orderConfidence = averageWinningVoteConfidence({
     prediction: decision.prediction,

@@ -29,15 +29,15 @@ For a `(filter, config)` candidate to qualify for asset A and regime R's
 committee, **within that asset/regime bucket** it must clear the base
 rules, then any matching scoped override:
 
-| Rule                             | Default   | Why                                             |
-| -------------------------------- | --------- | ----------------------------------------------- |
-| Min engagements in asset/regime  | `≥ 40`    | Below this the WR is too noisy to act on        |
-| Aggregate WR in asset/regime     | `≥ 52.5%` | Proves a base-rate edge over coin-flip          |
-| Worst-quarter WR in asset/regime | `≥ 52%`   | Rejects "one good year, several bad" candidates |
+| Rule                             | Default | Why                                             |
+| -------------------------------- | ------- | ----------------------------------------------- |
+| Min engagements in asset/regime  | `≥ 80`  | Below this the WR is too noisy to act on        |
+| Aggregate WR in asset/regime     | `≥ 56%` | Proves a base-rate edge over coin-flip          |
+| Worst-quarter WR in asset/regime | `≥ 52%` | Rejects "one good year, several bad" candidates |
 
 The worst-quarter check only applies to quarters with at least 40
-engagements inside this asset/regime bucket. Candidates with no quarter that
-large skip the check (sparse + high-WR is admissible).
+engagements inside this asset/regime bucket. Candidates with no quarter that meaningful
+skip the check (sparse + high-WR is admissible).
 
 Defaults live in
 [`DEFAULT_COMMITTEE_SELECTION_PROFILE`](../src/lib/committee/selection/types.ts).
@@ -48,9 +48,10 @@ between trials.
 
 Scoped overrides:
 
-| Scope              | Override | Why                                             |
-| ------------------ | -------- | ----------------------------------------------- |
-| `high_vol_ranging` | Top `0`  | Avoids the holdout regime bucket that lost edge |
+| Scope                   | Override                       | Why                                                      |
+| ----------------------- | ------------------------------ | -------------------------------------------------------- |
+| BTC/ETH, both periods   | Aggregate WR `≥ 55%`, top `20` | Adds volume where holdout performance has been strongest |
+| SOL/XRP/DOGE, `5m` only | Aggregate WR `≥ 58%`, top `12` | Tightens the noisiest weak-asset/timeframe slice         |
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -65,8 +66,8 @@ highest-ranked config, then take the bucket's configured top-N distinct
 filters.
 
 Final selection: top-N distinct filters per `(asset, market_regime, period)`.
-With the current base cap and high-vol-ranging abstain, the table can hold
-up to 360 rows.
+With the current base cap and overrides, the table usually holds about
+590 rows.
 
 ```sh
 bun alea committee:select
@@ -110,9 +111,10 @@ The dry-run loop loads the table once at startup into an in-memory
 roster (`(asset, regime, period) → selected candidate keys + stats`). See
 [`loadCommitteeRoster`](../src/lib/committee/selection/loadCommitteeRoster.ts).
 
-At each one-candle-early decision moment the loop:
+At each configured period boundary the loop:
 
-1. Builds the closed-bar window visible at decision time.
+1. Builds the synthetic bar window (real history + the in-flight
+   bar with Pyth's t-90s price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
 3. Looks up the roster bucket for `(asset, marketRegime, period)`.
@@ -141,18 +143,19 @@ Critical decision settings live in
 | ---------------------------------- | ---------: | ----------------------------------------------------------------------------------- |
 | `TRADE_DECISION_DEFAULT_PERIODS`   |  `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
 | `TRADE_DECISION_SUPPORTED_PERIODS` |  `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
-| `TRADE_DECISION_TARGET_LEAD_BARS`  |        `1` | Whole candles before target open when the committee runs                            |
-| `TRADE_DECISION_LEAD_TIME_MS`      |   `300000` | Primary `5m` display lead; scheduling derives period-specific lead from lead bars   |
+| `TRADE_DECISION_LEAD_TIME_MS`      |    `90000` | Snapshot/live decision lead before target candle open                               |
 | `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
 | `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `2` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `3` | Minimum non-abstain votes after filter collapse                                     |
 | `MIN_COMMITTEE_CONSENSUS_FRACTION` |      `0.5` | Winning side must hold at least this share; ties still abstain                      |
 | `TRADE_DECISION_FILTER_TIE_BREAK`  | highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
-With the current constants, the final decision is simple majority after
-filter-level vote collapse, with at least two engaged filters required.
-Changing `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both dry-run and
-live.
+With the current constants, the final decision is simple majority
+after filter-level vote collapse, with at least three engaged filters
+required. The wider selection caps intentionally pair with this higher
+vote gate so breadth only becomes an actionable trade when multiple
+independent filters agree. Changing `MIN_COMMITTEE_VOTES_TO_TRADE`
+changes that for both dry-run and live.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See

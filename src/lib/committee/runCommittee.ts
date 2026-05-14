@@ -1,7 +1,6 @@
 import "@alea/lib/filters/all";
 
 import {
-  type CommitteeDecisionContext,
   type CommitteeDecisionRules,
   DEFAULT_COMMITTEE_DECISION_RULES,
 } from "@alea/constants/tradeDecision";
@@ -39,12 +38,10 @@ export function listCommitteeCandidates(): readonly Candidate[] {
  * window, are treated as abstain.
  */
 export function evaluateCommittee({
-  decisionContext,
   series,
   candidates,
   decisionRules = DEFAULT_COMMITTEE_DECISION_RULES,
 }: {
-  readonly decisionContext?: CommitteeDecisionContext;
   readonly series: AlignedBarSeries;
   readonly candidates: readonly (Candidate | CommitteeCandidate)[];
   readonly decisionRules?: CommitteeDecisionRules;
@@ -72,11 +69,7 @@ export function evaluateCommittee({
     }
     votes.push({ candidate: cand, prediction, selection: voter.selection });
   }
-  const decision = aggregateCommittee({
-    context: decisionContext,
-    votes,
-    rules: decisionRules,
-  });
+  const decision = aggregateCommittee({ votes, rules: decisionRules });
   return { decision, votes };
 }
 

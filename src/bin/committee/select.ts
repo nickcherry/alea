@@ -54,7 +54,6 @@ export const committeeSelectCommand = defineCommand({
         `${pc.dim("override:")} ${override.label} ` +
           `${formatScope({ values: override.assets, fallback: "all assets" })} ` +
           `${formatScope({ values: override.periods, fallback: "all periods" })} ` +
-          `${formatScope({ values: override.marketRegimes, fallback: "all regimes" })} ` +
           formatOverrideValues({ override }) +
           "\n",
       );

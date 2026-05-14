@@ -38,7 +38,7 @@ export const trainingRunCommand = defineCommand({
   name: "training:run",
   summary: "Refresh filter training artifacts for every active candidate",
   description:
-    "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all` and accumulates one-candle-lead prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
+    "Walks pyth/spot candles inside the configured training window for each (filter, config, period, asset) combination produced by `filters/all` and accumulates next-bar prediction stats into the `filter_runs` table. Cached: rows whose stored window exactly matches the configured training window and active training profile are skipped.",
   options: [
     defineValueOption({
       key: "periods",

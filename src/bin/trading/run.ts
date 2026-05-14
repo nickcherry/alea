@@ -25,7 +25,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live committee trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, makes committee decisions one full candle before target open, and starts real post-only maker GTD order placement immediately after each actionable pre-open decision. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, makes committee decisions at T-90s, and starts real post-only maker GTD order placement immediately after each actionable pre-open decision. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
   options: [
     defineValueOption({
       key: "periods",
@@ -141,8 +141,12 @@ export const tradingRunCommand = defineCommand({
                 event.confidence === null
                   ? "-"
                   : `${(event.confidence * 100).toFixed(1)}c`;
+              const priceAge =
+                event.priceAgeMs === null
+                  ? ""
+                  : ` priceAge=${event.priceAgeMs}ms`;
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} ref=${event.referenceClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain + " conf=" + confidence)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain + " conf=" + confidence + priceAge)}\n`,
               );
               break;
             }

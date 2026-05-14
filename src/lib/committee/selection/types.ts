@@ -26,7 +26,6 @@ export type CommitteeSelectionRuleOverride = {
   readonly label: string;
   readonly assets?: readonly string[];
   readonly periods?: readonly string[];
-  readonly marketRegimes?: readonly string[];
   readonly minEngagements?: number;
   readonly minAggregateWinRate?: number;
   readonly minWorstQuarterWinRate?: number;
@@ -39,20 +38,28 @@ export type CommitteeSelectionProfile = {
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
-  minEngagements: 40,
-  minAggregateWinRate: 0.525,
+  minEngagements: 80,
+  minAggregateWinRate: 0.56,
   minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 40,
-  topN: 14,
+  topN: 16,
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {
   baseRules: DEFAULT_COMMITTEE_SELECTION_RULES,
   ruleOverrides: [
     {
-      label: "High-vol ranging abstain",
-      marketRegimes: ["high_vol_ranging"],
-      topN: 0,
+      label: "BTC/ETH volume lift",
+      assets: ["btc", "eth"],
+      minAggregateWinRate: 0.55,
+      topN: 20,
+    },
+    {
+      label: "Weak-asset 5m quality gate",
+      assets: ["sol", "xrp", "doge"],
+      periods: ["5m"],
+      minAggregateWinRate: 0.58,
+      topN: 12,
     },
   ],
 };

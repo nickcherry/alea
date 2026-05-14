@@ -118,8 +118,8 @@ export interface FilterEngagementTable {
  * vote tally stored in `regime_votes` is after the shared
  * one-vote-per-filter policy. See
  * migration `202605120100_create_dry_run_decisions.ts` for the
- * column-by-column rationale. `actual_open` / `actual_close` / `won`
- * start null and get filled in once the target bar settles.
+ * column-by-column rationale. `actual_close` / `won` start null
+ * and get filled in once the target bar settles.
  */
 export interface DryRunDecisionTable {
   readonly id: Generated<string>;

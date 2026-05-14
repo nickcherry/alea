@@ -224,11 +224,7 @@
         : '<span class="asset-pill">' +
           escapeHtml(formatMarketRegime(row.marketRegime)) +
           "</span>";
-    var displayedOpen =
-      row.actualOpen === null || row.actualOpen === undefined
-        ? row.synthOpen
-        : row.actualOpen;
-    var moveCell = renderMoveCell(displayedOpen, row.actualClose);
+    var moveCell = renderMoveCell(row.synthOpen, row.actualClose);
     return (
       "<tr>" +
       '<td class="alea-mono">' +
@@ -244,7 +240,7 @@
       regimeCell +
       "</td>" +
       '<td class="num-col alea-mono">' +
-      Number(displayedOpen).toFixed(2) +
+      Number(row.synthOpen).toFixed(2) +
       "</td>" +
       '<td class="num-col alea-mono">' +
       close +
@@ -313,11 +309,11 @@
     return (Number(value) * 100).toFixed(1) + "c";
   }
 
-  function renderMoveCell(actualOpen, actualClose) {
-    if (actualClose === null || actualClose === undefined || !actualOpen) {
+  function renderMoveCell(synthOpen, actualClose) {
+    if (actualClose === null || actualClose === undefined || !synthOpen) {
       return '<span class="alea-muted">—</span>';
     }
-    var pct = ((actualClose - actualOpen) / actualOpen) * 100;
+    var pct = ((actualClose - synthOpen) / synthOpen) * 100;
     var sign = pct > 0 ? "+" : pct < 0 ? "" : "";
     var cls =
       pct > 0

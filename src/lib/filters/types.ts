@@ -6,7 +6,7 @@ import type { z } from "zod";
  * A single closed bar passed to filter `predict`. We don't pass the
  * full `Candle` shape (which carries source/product/asset metadata
  * the filter doesn't need) so this stays purely about the OHLCV
- * vector. Filters NEVER see the target bar's open or close — only
+ * vector. Filters NEVER see the next bar's open or close — only
  * fully-closed bars before the prediction moment.
  */
 export type FilterBar = {
@@ -33,15 +33,15 @@ export type FilterBar = {
  * The runtime always pre-loads BOTH streams, aligned by openTimeMs,
  * and slices the right one per filter at call time. Outcome
  * labeling for training continues to use Pyth bars regardless of the
- * filter's input source — Pyth is the single source of truth for the
- * target candle's direction.
+ * filter's input source — Pyth is the single source of truth for
+ * "what direction did the next bar close".
  */
 export type BarSource = "pyth" | "coinbase";
 
 /**
  * What a filter returns for one decision moment.
  *
- * - `"up"` / `"down"`: the filter has engaged and predicts the target
+ * - `"up"` / `"down"`: the filter has engaged and predicts the next
  *   bar will close above / below its open.
  * - `null`: abstain. The filter has no opinion at this moment. Not
  *   the same as "predicts no change" — it means the filter's

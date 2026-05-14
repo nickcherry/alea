@@ -3,7 +3,7 @@ import "@alea/lib/filters/all";
 import {
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
-  tradeDecisionLeadTimeMs,
+  TRADE_DECISION_LEAD_TIME_MS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
@@ -66,7 +66,8 @@ export type LiveTradingLogEvent =
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d" | null;
-      readonly referenceClose: number;
+      readonly synthClose: number;
+      readonly priceAgeMs: number | null;
       readonly marketRegime: MarketRegime | null;
       readonly rosterSize: number;
       readonly up: number;
@@ -144,17 +145,14 @@ export async function runLiveTrading({
           assets,
           timeframes: selectedPeriods,
           nowMs: now,
-          discoveryLeadMs: Math.max(
-            LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
-            maxTradeDecisionLeadTimeMs({ periods: selectedPeriods }),
-          ),
+          discoveryLeadMs: LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
         });
         let nextFireTime = now + 1000;
         const dueDecisions: Promise<void>[] = [];
         for (const period of selectedPeriods) {
           const periodMs = resolutionTimeframeStepMs({ timeframe: period });
-          const nextBoundary = Math.floor(now / periodMs) * periodMs + periodMs;
-          const fireTime = nextBoundary - tradeDecisionLeadTimeMs({ period });
+          const nextBoundary = Math.ceil(now / periodMs) * periodMs;
+          const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
           nextFireTime = Math.min(nextFireTime, fireTime);
           if (now < fireTime) {
             continue;
@@ -229,7 +227,8 @@ async function processDueLiveDecision({
       state,
       targetTsMs,
       series: refreshed.seriesForDecision,
-      referenceBar: refreshed.referenceBar,
+      synthBar: refreshed.syntheticBar,
+      priceAgeMs: refreshed.priceAgeMs,
       roster,
       candidatesByKey,
       orderExecutor,
@@ -255,7 +254,8 @@ async function refreshStateForDecision({
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<{
   readonly seriesForDecision: AlignedBarSeries;
-  readonly referenceBar: FilterBar | null;
+  readonly syntheticBar: FilterBar;
+  readonly priceAgeMs: number | null;
 } | null> {
   try {
     const refreshed = await refreshTradeDecisionCandleState({
@@ -264,16 +264,24 @@ async function refreshStateForDecision({
       limit: TRADE_DECISION_HYDRATE_BARS,
       fetchCandles,
     });
-    if (refreshed.seriesForDecision === null) {
+    if (
+      refreshed.syntheticBar === null ||
+      refreshed.seriesForDecision === null
+    ) {
+      const reason =
+        refreshed.priceAgeMs === null
+          ? "missing latest Pyth price"
+          : `latest Pyth price stale (${refreshed.priceAgeMs}ms old)`;
       log({
         kind: "error",
-        message: `skip decision ${state.period}/${state.asset}: missing closed Pyth bars`,
+        message: `skip decision ${state.period}/${state.asset}: ${reason}`,
       });
       return null;
     }
     return {
       seriesForDecision: refreshed.seriesForDecision,
-      referenceBar: refreshed.referenceBar,
+      syntheticBar: refreshed.syntheticBar,
+      priceAgeMs: refreshed.priceAgeMs,
     };
   } catch (e) {
     log({
@@ -288,7 +296,8 @@ async function makeLiveDecision({
   state,
   targetTsMs,
   series,
-  referenceBar,
+  synthBar,
+  priceAgeMs,
   roster,
   candidatesByKey,
   orderExecutor,
@@ -297,7 +306,8 @@ async function makeLiveDecision({
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
   readonly series: AlignedBarSeries;
-  readonly referenceBar: FilterBar | null;
+  readonly synthBar: FilterBar;
+  readonly priceAgeMs: number | null;
   readonly roster: CommitteeRoster;
   readonly candidatesByKey: ReadonlyMap<string, Candidate>;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
@@ -311,14 +321,14 @@ async function makeLiveDecision({
     candidatesByKey,
   });
   state.lastPredictedBoundary = targetTsMs;
-  const referenceClose = referenceBar?.close ?? series.pyth.at(-1)?.close ?? 0;
   log({
     kind: "decision",
     asset: state.asset,
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
-    referenceClose,
+    synthClose: synthBar.close,
+    priceAgeMs,
     marketRegime: evaluated.marketRegime,
     rosterSize: evaluated.rosterSize,
     up: evaluated.up,
@@ -336,17 +346,6 @@ async function makeLiveDecision({
     targetTsMs,
     confidence: evaluated.orderConfidence,
   });
-}
-
-function maxTradeDecisionLeadTimeMs({
-  periods,
-}: {
-  readonly periods: readonly TradeDecisionPeriod[];
-}): number {
-  return periods.reduce(
-    (max, period) => Math.max(max, tradeDecisionLeadTimeMs({ period })),
-    0,
-  );
 }
 
 function logRoster({

@@ -36,7 +36,7 @@ framework guarantees:
 1. `predict` is called with `bars` of length exactly
    `requiredBars(config)`, ordered ascending by `openTimeMs`. The
    most recent **closed** bar is `bars[bars.length - 1]`. The
-   prediction subject is **not** in the array — see
+   prediction subject (the next bar) is **not** in the array — see
    "No-leak invariant" in [TRAINING.md](./TRAINING.md).
 2. `configSchema.parse(config)` is the only way the framework hands
    the filter a config. Defaults declared in the schema apply.

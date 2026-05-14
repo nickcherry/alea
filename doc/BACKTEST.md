@@ -39,7 +39,7 @@ is inside the backtest window.
 At each historical decision moment, the runner:
 
 1. Builds aligned Pyth/Coinbase trailing candle windows for the
-   asset/period, ending one whole candle before the target.
+   asset/period.
 2. Classifies the current market regime.
 3. Loads the selected committee roster for `(asset, regime, period)`.
 4. Runs `evaluateCommittee`, including the shared one-vote-per-filter

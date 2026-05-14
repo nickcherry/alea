@@ -179,7 +179,7 @@ describe("selectCommitteeCandidates", () => {
     expect(result.map((r) => r.rank)).toEqual([1, 1]);
   });
 
-  it("applies scoped selection overrides by asset, period, and regime", () => {
+  it("applies scoped selection overrides by asset and period", () => {
     const result = selectCommitteeCandidates({
       stats: [
         stats({
@@ -214,15 +214,6 @@ describe("selectCommitteeCandidates", () => {
           winRate: 0.56,
           wilsonLow: 0.56,
         }),
-        stats({
-          asset: "btc",
-          period: "5m",
-          marketRegime: "high_vol_ranging",
-          filterId: "high_vol_blocked",
-          nEngagements: 100,
-          winRate: 0.7,
-          wilsonLow: 0.7,
-        }),
       ],
       rules: RULES,
       profile: {
@@ -239,11 +230,6 @@ describe("selectCommitteeCandidates", () => {
             assets: ["sol"],
             periods: ["5m"],
             minAggregateWinRate: 0.58,
-          },
-          {
-            label: "disable high-vol ranging",
-            marketRegimes: ["high_vol_ranging"],
-            topN: 0,
           },
         ],
       },

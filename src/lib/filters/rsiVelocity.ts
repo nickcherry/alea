@@ -82,9 +82,5 @@ registerFilter({
     { lookback: 3, rsiLength: 7, threshold: 25 },
     { lookback: 3, rsiLength: 21, threshold: 25 },
     { lookback: 4, rsiLength: 14, threshold: 25 },
-    { lookback: 2, rsiLength: 14, threshold: 30 },
-    { lookback: 2, rsiLength: 7, threshold: 25 },
-    { lookback: 2, rsiLength: 21, threshold: 25 },
-    { lookback: 4, rsiLength: 14, threshold: 30 },
   ],
 });

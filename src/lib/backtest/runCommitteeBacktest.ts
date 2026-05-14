@@ -14,9 +14,6 @@ import {
   DEFAULT_COMMITTEE_DECISION_RULES,
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
-  TRADE_DECISION_PERIOD_MS,
-  TRADE_DECISION_TARGET_LEAD_BARS,
-  TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { STAKE_USD } from "@alea/constants/trading";
@@ -81,11 +78,9 @@ export type CommitteeBacktestSummary = {
   readonly assets: readonly Asset[];
   readonly tradeDecisionConfig: {
     readonly hydrateBars: number;
-    readonly targetLeadBars: number;
     readonly maxVotesPerFilter: number;
     readonly minVotesToTrade: number;
     readonly minConsensusFraction: number;
-    readonly policyId: string | null;
   };
   readonly roster: {
     readonly selectedAtMs: number | null;
@@ -130,6 +125,11 @@ type LoadedBars = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const periodMs: Record<TradeDecisionPeriod, number> = {
+  "5m": 5 * 60 * 1000,
+  "15m": 15 * 60 * 1000,
+};
 
 export async function runAndPersistCommitteeBacktest({
   db,
@@ -207,11 +207,9 @@ export async function runCommitteeBacktest({
     assets: assetValues,
     tradeDecisionConfig: {
       hydrateBars: TRADE_DECISION_HYDRATE_BARS,
-      targetLeadBars: TRADE_DECISION_TARGET_LEAD_BARS,
       maxVotesPerFilter: decisionRules.maxVotesPerFilter,
       minVotesToTrade: decisionRules.minVotesToTrade,
       minConsensusFraction: decisionRules.minConsensusFraction,
-      policyId: decisionRules.policyId ?? null,
     },
     roster: {
       selectedAtMs: activeRoster.selectedAtMs,
@@ -243,11 +241,7 @@ async function loadBacktestBars({
 }): Promise<readonly LoadedBars[]> {
   const loaded: LoadedBars[] = [];
   for (const period of TRADE_DECISION_DEFAULT_PERIODS) {
-    const warmupMs =
-      (TRADE_DECISION_HYDRATE_BARS +
-        TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS -
-        1) *
-      TRADE_DECISION_PERIOD_MS[period];
+    const warmupMs = TRADE_DECISION_HYDRATE_BARS * periodMs[period];
     for (const asset of assetValues) {
       const series = await loadAlignedBarSeries({
         db,
@@ -317,12 +311,8 @@ function replaySeries({
 }): void {
   const pyth = series.series.pyth;
   const coinbase = series.series.coinbase;
-  for (
-    let i = 0;
-    i <= pyth.length - 1 - TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS;
-    i += 1
-  ) {
-    const target = pyth[i + TRADE_DECISION_TRAINING_TARGET_OFFSET_BARS]!;
+  for (let i = 0; i < pyth.length - 1; i += 1) {
+    const target = pyth[i + 1]!;
     if (target.openTimeMs < BACKTEST_WINDOW_START_MS) {
       continue;
     }
@@ -366,11 +356,6 @@ function replaySeries({
     }
 
     const { decision } = evaluateCommittee({
-      decisionContext: {
-        asset: series.asset,
-        marketRegime,
-        period: series.period,
-      },
       series: trailingSeries,
       candidates,
       decisionRules,

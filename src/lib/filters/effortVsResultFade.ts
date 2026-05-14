@@ -1,4 +1,8 @@
-import { bodyFraction, bodySize, meanVolume } from "@alea/lib/filters/_barMath";
+import {
+  bodyFraction,
+  bodySize,
+  meanVolume,
+} from "@alea/lib/filters/_barMath";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
 import { computeAtrSeries } from "@alea/lib/indicators/atr";

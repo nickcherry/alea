@@ -69,9 +69,9 @@ market_regime  text | null  one of 4 tags, or null at series start
 Schema:
 [`202605120300_bar_regimes`](../src/lib/db/migrations/202605120300_bar_regimes.ts).
 The exploration dashboard's per-regime aggregator joins
-`filter_engagements` against this table by shifting each engagement's
-target timestamp back to the last candle visible at decision time. The
-committee selection command does the same.
+`filter_engagements` against this table on
+`(asset, period, ts_ms)` to bucket engagements. The committee selection
+command does the same.
 
 Backfilling is a one-shot CLI:
 
