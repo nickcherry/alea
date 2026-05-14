@@ -294,7 +294,7 @@ export interface PolymarketPriceSampleTable {
   >;
   readonly sample_count: number;
   readonly missing_sample_count: number;
-  readonly samples: unknown;
+  readonly samples: Buffer;
 }
 
 export interface CommitteeSelectionTable {

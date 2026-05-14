@@ -1,5 +1,9 @@
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
+import {
+  encodePriceSamples,
+  type PriceSampleTick,
+} from "@alea/lib/polymarket/priceSampleCodec";
 import { discoverPolymarketMarket } from "@alea/lib/trading/vendor/polymarket/discoverMarket";
 import { streamPolymarketMarketData } from "@alea/lib/trading/vendor/polymarket/streamMarketData";
 import type {
@@ -13,7 +17,7 @@ import type { ResolutionTimeframe } from "@alea/types/resolutions";
 
 const defaultSampleIntervalsMs = {
   "5m": 1_000,
-  "15m": 3_000,
+  "15m": 1_000,
 } as const satisfies Record<ResolutionTimeframe, number>;
 
 const tickIntervalMs = 250;
@@ -23,15 +27,7 @@ const missingMarketRetryMs = 15_000;
 const discoveryFailureRetryMs = 10_000;
 const rateLimitedDiscoveryRetryMs = 60_000;
 const subscriptionTailMs = 10_000;
-const sampleSchemaVersion = 1;
-
-export type PriceSampleQuality = 0 | 1 | 2 | 3;
-
-export type CompactPriceSample = readonly [
-  offsetMs: number,
-  upPriceBps: number,
-  quality: PriceSampleQuality,
-];
+const sampleSchemaVersion = 2;
 
 export type PriceSamplerLogEvent = {
   readonly kind: "info" | "warn" | "error";
@@ -76,7 +72,7 @@ type SamplerMarketSession = {
   readonly market: TradableMarket;
   readonly sampleIntervalMs: number;
   readonly state: MarketPriceState;
-  readonly samples: CompactPriceSample[];
+  readonly samples: PriceSampleTick[];
   nextSampleAtMs: number;
   firstSampleTsMs: number | null;
   lastSampleTsMs: number | null;
@@ -404,26 +400,28 @@ export function applyMarketDataEventToSamplerState({
   }
 }
 
-export function sampleNormalizedUpPrice({
+/**
+ * Independent BBO mids per side. Returns null for a side whose
+ * book lacks a tight bid/ask pair — analysis can reconstruct the
+ * complementary side from the other when needed.
+ */
+export function samplePriceMids({
   state,
 }: {
   readonly state: MarketPriceState;
-}): { readonly price: number; readonly quality: PriceSampleQuality } | null {
-  const upMid = midPrice(state.up);
-  if (upMid !== null) {
-    return { price: upMid, quality: 0 };
+}): { readonly upBps: number | null; readonly downBps: number | null } {
+  return {
+    upBps: bpsFromMid(state.up),
+    downBps: bpsFromMid(state.down),
+  };
+}
+
+function bpsFromMid(state: TokenPriceState): number | null {
+  const mid = midPrice(state);
+  if (mid === null) {
+    return null;
   }
-  const downMid = midPrice(state.down);
-  if (downMid !== null) {
-    return { price: 1 - downMid, quality: 1 };
-  }
-  if (state.up.last !== null) {
-    return { price: state.up.last, quality: 2 };
-  }
-  if (state.down.last !== null) {
-    return { price: 1 - state.down.last, quality: 3 };
-  }
-  return null;
+  return Math.max(0, Math.min(10_000, Math.round(mid * 10_000)));
 }
 
 function sampleActiveSessions({
@@ -442,14 +440,14 @@ function sampleActiveSessions({
       continue;
     }
     session.nextSampleAtMs = nowMs + session.sampleIntervalMs;
-    const sample = sampleNormalizedUpPrice({ state: session.state });
-    if (sample === null) {
+    const { upBps, downBps } = samplePriceMids({ state: session.state });
+    if (upBps === null && downBps === null) {
       session.missingSampleCount += 1;
-      return;
+      continue;
     }
     const sampleTsMs = nowMs;
     const offsetMs = Math.max(0, sampleTsMs - session.windowStartTsMs);
-    session.samples.push([offsetMs, priceToBps(sample.price), sample.quality]);
+    session.samples.push({ offsetMs, upBps, downBps });
     session.firstSampleTsMs ??= sampleTsMs;
     session.lastSampleTsMs = sampleTsMs;
   }
@@ -526,7 +524,7 @@ async function persistSession({
     finalized_at_ms: finalizedAtMs,
     sample_count: session.samples.length,
     missing_sample_count: session.missingSampleCount,
-    samples: JSON.stringify(session.samples) as unknown,
+    samples: encodePriceSamples(session.samples),
   };
   await db
     .insertInto("polymarket_price_samples")
@@ -606,10 +604,6 @@ function normalizePrice(value: number | null): number | null {
     return null;
   }
   return value;
-}
-
-function priceToBps(price: number): number {
-  return Math.max(0, Math.min(10_000, Math.round(price * 10_000)));
 }
 
 function sanitizeErrorMessage(error: unknown): string {

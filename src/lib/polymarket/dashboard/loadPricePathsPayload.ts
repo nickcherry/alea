@@ -11,6 +11,7 @@ import type {
   PricePathTimeframeBreakdown,
 } from "@alea/lib/polymarket/dashboard/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
+import { decodePriceSamples } from "@alea/lib/polymarket/priceSampleCodec";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 import { resolutionTimeframeValues } from "@alea/types/resolutions";
 
@@ -186,39 +187,51 @@ function normalizeWindow(row: PricePathSampleRow): PricePathWindow | null {
   };
 }
 
+/**
+ * Convert a packed-bytea blob into the dashboard's compact-sample
+ * shape. Path analysis is symmetric around 50c, so it collapses to the
+ * UP-side mid; when only the DOWN side has a quote we mirror it as
+ * `10000 - downBps` to preserve coverage at the boundary.
+ */
 function parseSamples(raw: unknown): readonly CompactPriceSample[] {
-  const value = typeof raw === "string" ? safeJsonParse(raw) : raw;
-  if (!Array.isArray(value)) {
+  const buffer = coerceBuffer(raw);
+  if (buffer === null) {
     return [];
   }
+  const ticks = decodePriceSamples(buffer);
   const samples: CompactPriceSample[] = [];
-  for (const item of value) {
-    if (!Array.isArray(item) || item.length < 2) {
+  for (const tick of ticks) {
+    if (!Number.isFinite(tick.offsetMs) || tick.offsetMs < 0) {
       continue;
     }
-    const offsetMs = Number(item[0]);
-    const priceBps = Number(item[1]);
-    if (
-      !Number.isFinite(offsetMs) ||
-      !Number.isFinite(priceBps) ||
-      offsetMs < 0
-    ) {
+    const priceBps =
+      tick.upBps !== null
+        ? tick.upBps
+        : tick.downBps !== null
+          ? 10_000 - tick.downBps
+          : null;
+    if (priceBps === null) {
       continue;
     }
     samples.push({
-      offsetMs,
-      priceBps: clamp({ value: Math.round(priceBps), min: 0, max: 10_000 }),
+      offsetMs: tick.offsetMs,
+      priceBps: clamp({ value: priceBps, min: 0, max: 10_000 }),
     });
   }
   return samples;
 }
 
-function safeJsonParse(raw: string): unknown {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
+function coerceBuffer(raw: unknown): Buffer | null {
+  if (Buffer.isBuffer(raw)) {
+    return raw;
   }
+  if (raw instanceof Uint8Array) {
+    return Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
+  }
+  if (typeof raw === "string" && raw.startsWith("\\x")) {
+    return Buffer.from(raw.slice(2), "hex");
+  }
+  return null;
 }
 
 function buildAggregateSlice({

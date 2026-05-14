@@ -3,6 +3,7 @@ import {
   type PricePathSampleRow,
 } from "@alea/lib/polymarket/dashboard/loadPricePathsPayload";
 import { renderPricePathsHtml } from "@alea/lib/polymarket/dashboard/renderPricePathsHtml";
+import { encodePriceSamples } from "@alea/lib/polymarket/priceSampleCodec";
 import { describe, expect, it } from "bun:test";
 
 describe("price paths dashboard payload", () => {
@@ -13,10 +14,10 @@ describe("price paths dashboard payload", () => {
           asset: "btc",
           timeframe: "5m",
           samples: [
-            [0, 5_000, 0],
-            [60_000, 5_200, 0],
-            [240_000, 4_900, 0],
-            [295_000, 6_000, 0],
+            [0, 5_000],
+            [60_000, 5_200],
+            [240_000, 4_900],
+            [295_000, 6_000],
           ],
         }),
       ],
@@ -50,10 +51,10 @@ describe("price paths dashboard payload", () => {
           asset: "btc",
           timeframe: "5m",
           samples: [
-            [0, 5_200, 0],
-            [60_000, 5_100, 0],
-            [240_000, 4_900, 0],
-            [295_000, 6_000, 0],
+            [0, 5_200],
+            [60_000, 5_100],
+            [240_000, 4_900],
+            [295_000, 6_000],
           ],
         }),
         // Window 2: stays above the whole time, zero crossings.
@@ -61,10 +62,10 @@ describe("price paths dashboard payload", () => {
           asset: "eth",
           timeframe: "5m",
           samples: [
-            [0, 5_500, 0],
-            [60_000, 5_400, 0],
-            [240_000, 5_300, 0],
-            [295_000, 5_200, 0],
+            [0, 5_500],
+            [60_000, 5_400],
+            [240_000, 5_300],
+            [295_000, 5_200],
           ],
         }),
       ],
@@ -81,9 +82,6 @@ describe("price paths dashboard payload", () => {
     expect(all?.crossings.meanCrossingsPerWindow).toBe(1);
     // 5m / 10s buckets = 30 buckets.
     expect(all?.crossings.buckets.length).toBe(30);
-    // Both crossings landed in the late half of the window (offset
-    // 240s and 295s). The early buckets (first half) must be empty;
-    // the late half must absorb both events.
     const earlyCrossings = (all?.crossings.buckets ?? [])
       .filter((b) => b.timeRemainingMs > 150_000)
       .reduce((sum, b) => sum + b.crossingCount, 0);
@@ -99,6 +97,33 @@ describe("price paths dashboard payload", () => {
     const eth = fiveMinute?.slices.find((s) => s.asset === "eth");
     expect(eth?.crossings.totalCrossings).toBe(0);
     expect(eth?.crossings.windowsWithAnyCrossing).toBe(0);
+  });
+
+  it("falls back to DOWN-side mid when UP is missing", () => {
+    const payload = buildPricePathsPayloadFromRows({
+      rows: [
+        {
+          asset: "btc",
+          timeframe: "5m",
+          window_start_ts_ms: 1_778_517_600_000,
+          window_end_ts_ms: 1_778_517_900_000,
+          samples: encodePriceSamples([
+            { offsetMs: 0, upBps: null, downBps: 4_800 },
+            { offsetMs: 60_000, upBps: 5_300, downBps: 4_700 },
+          ]),
+        },
+      ],
+      generatedAtMs: 1_778_517_600_000,
+      lookbackDays: 30,
+      cutoffMs: 1_775_925_600_000,
+    });
+
+    const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
+    const all = fiveMinute?.slices[0];
+    expect(all?.sampleCount).toBe(2);
+    // First tick is reconstructed as 10000 - 4800 = 5200 → bucket 52.
+    expect(all?.heatmap.columns[0]?.counts[52]).toBe(1);
+    expect(all?.heatmap.columns[6]?.counts[53]).toBe(1);
   });
 
   it("renders the price-path route and empty state", () => {
@@ -128,13 +153,19 @@ function row({
 }: {
   readonly asset: string;
   readonly timeframe: "5m" | "15m";
-  readonly samples: readonly (readonly [number, number, number])[];
+  readonly samples: readonly (readonly [number, number])[];
 }): PricePathSampleRow {
   return {
     asset,
     timeframe,
     window_start_ts_ms: 1_778_517_600_000,
     window_end_ts_ms: 1_778_517_900_000,
-    samples,
+    samples: encodePriceSamples(
+      samples.map(([offsetMs, upBps]) => ({
+        offsetMs,
+        upBps,
+        downBps: 10_000 - upBps,
+      })),
+    ),
   };
 }
