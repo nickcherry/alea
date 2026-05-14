@@ -200,6 +200,9 @@ and the `market_regime` column added by
 | `order_fill_price`      | Simulated fill price                                                     |
 | `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence      |
 | `order_expires_at_ms`   | Target market close; placed orders still unfilled here expire            |
+| `order_market_ref`      | Polymarket condition id for the target window used by order simulation   |
+| `order_up_token_ref`    | Polymarket UP token id for that target window                            |
+| `order_down_token_ref`  | Polymarket DOWN token id for that target window                          |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when

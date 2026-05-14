@@ -61,6 +61,49 @@ describe("buildLiveMakerLimitBuyOrder", () => {
 });
 
 describe("createLiveOrderExecutor", () => {
+  it("discovers the live order market by the target window, not decision time", async () => {
+    const calls: PostedOrder[] = [];
+    const discoveryCalls: Array<{
+      readonly asset: string;
+      readonly timeframe: string;
+      readonly windowStartTsMs: number;
+    }> = [];
+    const targetTsMs = 1_800_000;
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [{ success: true, orderID: "order-target-window" }],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+        discoveryCalls,
+      }),
+      log: () => {},
+      now: () => 1_495_000,
+      sleep: async () => {},
+      streamMarketData: fakeStreamMarketData(),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs,
+      confidence: 0.6,
+    });
+
+    await waitFor(() => calls.length === 1);
+    expect(discoveryCalls.length).toBeGreaterThan(0);
+    expect(
+      discoveryCalls.every(
+        (call) =>
+          call.asset === "btc" &&
+          call.timeframe === "5m" &&
+          call.windowStartTsMs === targetTsMs,
+      ),
+    ).toBe(true);
+  });
+
   it("starts placement immediately after a pre-open decision with one tick below 50c when no quote is available", async () => {
     const calls: PostedOrder[] = [];
     const executor = createLiveOrderExecutor({
@@ -251,13 +294,29 @@ function fakeClient({
 
 function fakeMarketDiscovery({
   market: discoveredMarket,
+  discoveryCalls,
 }: {
   readonly market: TradableMarket;
+  readonly discoveryCalls?: Array<{
+    readonly asset: string;
+    readonly timeframe: string;
+    readonly windowStartTsMs: number;
+  }>;
 }): PolymarketMarketDiscoveryCache {
   return {
     warm: () => {},
-    get: () => discoveredMarket,
-    getOrDiscover: async () => discoveredMarket,
+    get: () => {
+      if (discoveryCalls !== undefined) {
+        return null;
+      }
+      return discoveredMarket;
+    },
+    getOrDiscover: async (input) => {
+      if (discoveryCalls !== undefined) {
+        discoveryCalls.push(input);
+      }
+      return discoveredMarket;
+    },
   };
 }
 

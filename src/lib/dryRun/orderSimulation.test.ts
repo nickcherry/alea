@@ -1,10 +1,14 @@
 import {
   averageWinningVoteConfidence,
+  createDryRunOrderSimulator,
   type DryRunMarketPriceState,
   resolveDryRunOrderFill,
   resolveDryRunOrderPlacement,
 } from "@alea/lib/dryRun/orderSimulation";
+import type { DatabaseClient } from "@alea/lib/db/types";
 import { emptyMarketPriceState } from "@alea/lib/trading/marketPriceState";
+import type { PolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
+import type { TradableMarket } from "@alea/lib/trading/vendor/types";
 import { describe, expect, it } from "bun:test";
 
 const NOW_MS = 1_800_000_003_000;
@@ -256,3 +260,104 @@ describe("averageWinningVoteConfidence", () => {
     ).toBeCloseTo(0.56, 8);
   });
 });
+
+describe("createDryRunOrderSimulator", () => {
+  it("discovers and records the Polymarket market for the target window", async () => {
+    const targetTsMs = 1_800_900_000_000;
+    const updates: Array<Record<string, unknown>> = [];
+    const discoveryCalls: Array<{
+      readonly asset: string;
+      readonly timeframe: string;
+      readonly windowStartTsMs: number;
+    }> = [];
+    const streamedMarkets: TradableMarket[][] = [];
+    const discoveredMarket: TradableMarket = {
+      asset: "eth",
+      vendorRef: "COND-15M",
+      upRef: "UP-15M",
+      downRef: "DOWN-15M",
+      tickSize: 0.01,
+      negRisk: false,
+    };
+    const simulator = createDryRunOrderSimulator({
+      db: fakeDecisionUpdateDb({ updates }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: discoveredMarket,
+        discoveryCalls,
+      }),
+      streamMarketData: ({ markets }) => {
+        streamedMarkets.push([...markets]);
+        return { stop: async () => {} };
+      },
+      log: () => {},
+    });
+
+    await simulator.scheduleOrder({
+      decisionId: "42",
+      asset: "eth",
+      period: "15m",
+      prediction: "d",
+      targetTsMs,
+      confidence: 0.57,
+    });
+    await simulator.stop();
+
+    expect(discoveryCalls).toEqual([
+      {
+        asset: "eth",
+        timeframe: "15m",
+        windowStartTsMs: targetTsMs,
+      },
+    ]);
+    expect(streamedMarkets.at(-1)).toEqual([discoveredMarket]);
+    expect(
+      updates.some(
+        (update) => update.order_expires_at_ms === targetTsMs + 15 * 60_000,
+      ),
+    ).toBe(true);
+    expect(updates).toContainEqual({
+      order_market_ref: "COND-15M",
+      order_up_token_ref: "UP-15M",
+      order_down_token_ref: "DOWN-15M",
+    });
+  });
+});
+
+function fakeDecisionUpdateDb({
+  updates,
+}: {
+  readonly updates: Array<Record<string, unknown>>;
+}): DatabaseClient {
+  return {
+    updateTable: () => ({
+      set: (update: Record<string, unknown>) => ({
+        where: () => ({
+          execute: async () => {
+            updates.push(update);
+          },
+        }),
+      }),
+    }),
+  } as unknown as DatabaseClient;
+}
+
+function fakeMarketDiscovery({
+  market,
+  discoveryCalls,
+}: {
+  readonly market: TradableMarket;
+  readonly discoveryCalls: Array<{
+    readonly asset: string;
+    readonly timeframe: string;
+    readonly windowStartTsMs: number;
+  }>;
+}): PolymarketMarketDiscoveryCache {
+  return {
+    warm: () => {},
+    get: () => null,
+    getOrDiscover: async (input) => {
+      discoveryCalls.push(input);
+      return market;
+    },
+  };
+}

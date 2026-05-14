@@ -495,7 +495,11 @@ async function scoreDecision({
   readonly closedBar: FilterBar;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
-  // Tie handling matches the backtest: close == open ⇒ "up".
+  // Dry-run rows model binary Polymarket-style settlement on the
+  // canonical Pyth proxy: every closed target candle gets a side, and
+  // close == open favors UP.
+  // Training/backtest still ignore tiny proxy moves via the ambiguity
+  // threshold before computing research hit rate.
   const actualUp = closedBar.close >= closedBar.open;
   // Look up the prediction so we know how to score.
   const row = await db

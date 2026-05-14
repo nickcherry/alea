@@ -43,7 +43,7 @@ export const DEFAULT_COMMITTEE_SELECTION_RULES: CommitteeSelectionRules = {
   minAggregateWinRate: 0.525,
   minWorstQuarterWinRate: 0.52,
   worstQuarterMinEngagements: 40,
-  topN: 12,
+  topN: 14,
 };
 
 export const DEFAULT_COMMITTEE_SELECTION_PROFILE: CommitteeSelectionProfile = {

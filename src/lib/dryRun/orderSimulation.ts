@@ -25,6 +25,7 @@ import {
 import type { PolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import { streamPolymarketMarketData } from "@alea/lib/trading/vendor/polymarket/streamMarketData";
 import type {
+  MarketDataStreamCallbacks,
   MarketDataStreamHandle,
   TradableMarket,
 } from "@alea/lib/trading/vendor/types";
@@ -232,10 +233,16 @@ export function createDryRunOrderSimulator({
   db,
   marketDiscovery,
   log,
+  streamMarketData = streamPolymarketMarketData,
 }: {
   readonly db: DatabaseClient;
   readonly marketDiscovery: PolymarketMarketDiscoveryCache;
   readonly log: (event: DryRunOrderLogEvent) => void;
+  readonly streamMarketData?: (
+    input: {
+      readonly markets: readonly TradableMarket[];
+    } & MarketDataStreamCallbacks,
+  ) => MarketDataStreamHandle;
 }): {
   readonly scheduleOrder: (input: {
     readonly decisionId: string;
@@ -281,7 +288,7 @@ export function createDryRunOrderSimulator({
       return;
     }
 
-    streamHandle = streamPolymarketMarketData({
+    streamHandle = streamMarketData({
       markets,
       onEvent: (event) => {
         applyMarketDataEventToMarketPriceState({ event, tokenRoutes });
@@ -316,9 +323,9 @@ export function createDryRunOrderSimulator({
     order,
   }: {
     readonly order: PendingDryRunOrder;
-  }): boolean => {
+  }): OrderSession | null => {
     if (order.marketKey !== null && sessions.has(order.marketKey)) {
-      return true;
+      return sessions.get(order.marketKey) ?? null;
     }
     const key = marketKey({
       asset: order.asset,
@@ -331,11 +338,12 @@ export function createDryRunOrderSimulator({
       windowStartTsMs: order.targetTsMs,
     });
     if (cachedMarket === null) {
-      return false;
+      return null;
     }
     order.marketKey = key;
-    ensureSession({ market: cachedMarket, key }).orderIds.add(order.decisionId);
-    return true;
+    const session = ensureSession({ market: cachedMarket, key });
+    session.orderIds.add(order.decisionId);
+    return session;
   };
 
   const scheduleOrder = async ({
@@ -384,7 +392,9 @@ export function createDryRunOrderSimulator({
       .where("id", "=", decisionId)
       .execute();
 
-    if (attachCachedMarket({ order })) {
+    const cachedSession = attachCachedMarket({ order });
+    if (cachedSession !== null) {
+      await recordOrderMarket({ order, market: cachedSession.market });
       if (Date.now() >= order.orderAtMs) {
         await placeOrder({ order });
       }
@@ -415,6 +425,7 @@ export function createDryRunOrderSimulator({
       }
       order.marketKey = key;
       ensureSession({ market, key }).orderIds.add(decisionId);
+      await recordOrderMarket({ order, market });
       if (Date.now() >= order.orderAtMs) {
         await placeOrder({ order });
       }
@@ -445,7 +456,10 @@ export function createDryRunOrderSimulator({
         continue;
       }
       if (order.status === "pending_placement") {
-        attachCachedMarket({ order });
+        const session = attachCachedMarket({ order });
+        if (session !== null) {
+          await recordOrderMarket({ order, market: session.market });
+        }
         if (nowMs >= order.orderAtMs) {
           await placeOrder({ order });
           continue;
@@ -472,7 +486,10 @@ export function createDryRunOrderSimulator({
   }: {
     readonly order: PendingDryRunOrder;
   }): Promise<void> => {
-    attachCachedMarket({ order });
+    const attached = attachCachedMarket({ order });
+    if (attached !== null) {
+      await recordOrderMarket({ order, market: attached.market });
+    }
     const session =
       order.marketKey === null ? undefined : sessions.get(order.marketKey);
     if (session === undefined) {
@@ -543,6 +560,24 @@ export function createDryRunOrderSimulator({
       limitPrice: placement.limitPrice,
       fillPrice: placement.fillPrice,
     });
+  };
+
+  const recordOrderMarket = async ({
+    order,
+    market,
+  }: {
+    readonly order: PendingDryRunOrder;
+    readonly market: TradableMarket;
+  }): Promise<void> => {
+    await db
+      .updateTable("dry_run_decisions")
+      .set({
+        order_market_ref: market.vendorRef,
+        order_up_token_ref: market.upRef,
+        order_down_token_ref: market.downRef,
+      })
+      .where("id", "=", order.decisionId)
+      .execute();
   };
 
   const fillPlacedOrders = async ({

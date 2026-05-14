@@ -174,6 +174,9 @@ export interface DryRunDecisionTable {
     string | number | bigint | null,
     string | number | bigint | null
   >;
+  readonly order_market_ref: string | null;
+  readonly order_up_token_ref: string | null;
+  readonly order_down_token_ref: string | null;
 }
 
 export interface DryRunDecisionAttemptTable {
