@@ -214,6 +214,14 @@ export type PricePathTimeframeBreakdown = {
   readonly timeframe: ResolutionTimeframe;
   readonly durationMs: number;
   readonly timeBucketMs: number;
+  /**
+   * Left edge of the chart's x-axis, expressed as a sample offsetMs.
+   * Always ≤ 0. When no pre-market data has been captured yet, this is
+   * 0 (axis starts at candle open). As pre-market samples accumulate,
+   * it gradually walks toward `-PRE_MARKET_SAMPLE_LEAD_MS` so charts
+   * grow leftward without wasted empty space.
+   */
+  readonly leftEdgeOffsetMs: number;
   readonly tableMarkersMs: readonly number[];
   readonly slices: readonly PricePathAggregateSlice[];
 };

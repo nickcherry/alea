@@ -292,24 +292,49 @@
       ctx.stroke();
     });
 
-    var columns = slice && slice.heatmap ? slice.heatmap.columns || [] : [];
-    var tickCount = Math.min(6, columns.length);
+    var breakdown = activeBreakdown();
+    if (!breakdown) {
+      ctx.restore();
+      return;
+    }
+    var ticks = niceAxisTicks(
+      breakdown.leftEdgeOffsetMs || 0,
+      breakdown.durationMs,
+    );
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    for (var i = 0; i < tickCount; i += 1) {
-      var rawIndex =
-        tickCount === 1
-          ? 0
-          : Math.round((i / (tickCount - 1)) * (columns.length - 1));
-      var column = columns[rawIndex];
-      if (!column) continue;
-      var x = pad.left + (rawIndex / Math.max(1, columns.length - 1)) * plotW;
-      ctx.fillText(
-        formatRemaining(column.timeRemainingMs),
-        x,
-        pad.top + plotH + 10,
-      );
+    ticks.forEach(function (tick) {
+      var x = pad.left + tick.fractionX * plotW;
+      ctx.fillText(tick.label, x, pad.top + plotH + 10);
+    });
+
+    if ((breakdown.leftEdgeOffsetMs || 0) < 0) {
+      drawOpenDividerCanvas(ctx, breakdown, pad, plotW, plotH);
     }
+    ctx.restore();
+  }
+
+  function drawOpenDividerCanvas(ctx, breakdown, pad, plotW, plotH) {
+    var leftEdge = breakdown.leftEdgeOffsetMs || 0;
+    var span = breakdown.durationMs - leftEdge;
+    if (span <= 0) return;
+    var fraction = (0 - leftEdge) / span;
+    if (fraction < 0 || fraction > 1) return;
+    var x = pad.left + fraction * plotW;
+    ctx.save();
+    ctx.strokeStyle = "rgba(215, 170, 69, 0.75)";
+    ctx.lineWidth = 1.25;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x, pad.top);
+    ctx.lineTo(x, pad.top + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(215, 170, 69, 0.9)";
+    ctx.font = "10px Inter, ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("OPEN", x, pad.top - 4);
     ctx.restore();
   }
 
@@ -422,12 +447,47 @@
   }
 
   function pointToSvgX(point, layout) {
-    return (
-      layout.pad.left +
-      ((layout.duration - Number(point.timeRemainingMs || 0)) /
-        layout.duration) *
-        layout.plotW
-    );
+    var leftEdge = layout.leftEdgeOffsetMs || 0;
+    var span = layout.duration - leftEdge;
+    var offset = layout.duration - Number(point.timeRemainingMs || 0);
+    return layout.pad.left + ((offset - leftEdge) / span) * layout.plotW;
+  }
+
+  /**
+   * Picks tick offsets aligned to a nice minute boundary anchored on
+   * the candle open. Always includes T-0:00 at the right edge so the
+   * chart reads cleanly through the close.
+   */
+  function niceAxisTicks(leftEdgeMs, durationMs) {
+    var span = durationMs - leftEdgeMs;
+    if (span <= 0) return [{ offsetMs: durationMs, label: "T-0:00", fractionX: 1 }];
+    var stepCandidates = [
+      10_000, 30_000, 60_000, 120_000, 300_000, 600_000, 1_800_000,
+    ];
+    var maxTicks = 6;
+    var step = stepCandidates[stepCandidates.length - 1];
+    for (var i = 0; i < stepCandidates.length; i += 1) {
+      if (span / stepCandidates[i] <= maxTicks) {
+        step = stepCandidates[i];
+        break;
+      }
+    }
+    var firstOffset = Math.ceil(leftEdgeMs / step) * step;
+    var ticks = [];
+    for (var offset = firstOffset; offset < durationMs; offset += step) {
+      var timeRemaining = durationMs - offset;
+      ticks.push({
+        offsetMs: offset,
+        label: formatRemaining(timeRemaining),
+        fractionX: (offset - leftEdgeMs) / span,
+      });
+    }
+    ticks.push({
+      offsetMs: durationMs,
+      label: "T-0:00",
+      fractionX: 1,
+    });
+    return ticks;
   }
 
   function shareToSvgY(value, layout, scaleMax) {
@@ -645,34 +705,16 @@
         "%</text>";
     });
 
-    var xTicks = [0, 0.25, 0.5, 0.75, 1];
-    xTicks.forEach(function (v) {
-      var x = pad.left + v * plotW;
-      var remaining = duration * (1 - v);
-      svg +=
-        '<line class="price-path-band-grid" x1="' +
-        x +
-        '" x2="' +
-        x +
-        '" y1="' +
-        pad.top +
-        '" y2="' +
-        (pad.top + plotH) +
-        '"></line>' +
-        '<text class="price-path-band-label" x="' +
-        x +
-        '" y="' +
-        (pad.top + plotH + 22) +
-        '" text-anchor="middle">' +
-        escapeHtml(formatRemaining(remaining)) +
-        "</text>";
-    });
+    var leftEdge = breakdown.leftEdgeOffsetMs || 0;
+    svg += xAxisSvgFor(leftEdge, duration, pad, plotW, plotH);
+    svg += openDividerSvg(leftEdge, duration, pad, plotW, plotH);
 
     svg +=
       pathFor(
         points,
         "withinOneCentShare",
         "band-one",
+        leftEdge,
         duration,
         pad,
         plotW,
@@ -682,6 +724,7 @@
         points,
         "withinTwoCentShare",
         "band-two",
+        leftEdge,
         duration,
         pad,
         plotW,
@@ -691,6 +734,7 @@
         points,
         "withinFiveCentShare",
         "band-five",
+        leftEdge,
         duration,
         pad,
         plotW,
@@ -717,6 +761,7 @@
       plotW: plotW,
       plotH: plotH,
       duration: duration,
+      leftEdgeOffsetMs: leftEdge,
       points: points,
     };
   }
@@ -731,21 +776,74 @@
     );
   }
 
-  function pathFor(points, field, cls, duration, pad, plotW, plotH) {
+  function pathFor(points, field, cls, leftEdge, duration, pad, plotW, plotH) {
+    var span = duration - leftEdge;
+    if (span <= 0) return "";
     var d = "";
     points.forEach(function (point) {
       var value = point[field];
       if (value === null || value === undefined || !point.sampleCount) {
         return;
       }
-      var x =
-        pad.left + ((duration - point.timeRemainingMs) / duration) * plotW;
+      var offset = duration - point.timeRemainingMs;
+      var x = pad.left + ((offset - leftEdge) / span) * plotW;
       var y = pad.top + (1 - value) * plotH;
       d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
     });
     if (!d) return "";
     return (
       '<path class="price-path-band-line ' + cls + '" d="' + d + '"></path>'
+    );
+  }
+
+  function xAxisSvgFor(leftEdge, duration, pad, plotW, plotH) {
+    var ticks = niceAxisTicks(leftEdge, duration);
+    var out = "";
+    ticks.forEach(function (tick) {
+      var x = pad.left + tick.fractionX * plotW;
+      out +=
+        '<line class="price-path-band-grid" x1="' +
+        x +
+        '" x2="' +
+        x +
+        '" y1="' +
+        pad.top +
+        '" y2="' +
+        (pad.top + plotH) +
+        '"></line>' +
+        '<text class="price-path-band-label" x="' +
+        x +
+        '" y="' +
+        (pad.top + plotH + 22) +
+        '" text-anchor="middle">' +
+        escapeHtml(tick.label) +
+        "</text>";
+    });
+    return out;
+  }
+
+  function openDividerSvg(leftEdge, duration, pad, plotW, plotH) {
+    if (leftEdge >= 0) return "";
+    var span = duration - leftEdge;
+    if (span <= 0) return "";
+    var fraction = (0 - leftEdge) / span;
+    if (fraction < 0 || fraction > 1) return "";
+    var x = pad.left + fraction * plotW;
+    return (
+      '<line class="price-path-open-divider" x1="' +
+      x.toFixed(1) +
+      '" x2="' +
+      x.toFixed(1) +
+      '" y1="' +
+      pad.top +
+      '" y2="' +
+      (pad.top + plotH) +
+      '"></line>' +
+      '<text class="price-path-open-label" x="' +
+      x.toFixed(1) +
+      '" y="' +
+      (pad.top - 4) +
+      '" text-anchor="middle">OPEN</text>'
     );
   }
 
@@ -822,36 +920,17 @@
         "%</text>";
     });
 
-    var xTicks = [0, 0.25, 0.5, 0.75, 1];
-    xTicks.forEach(function (v) {
-      var x = pad.left + v * plotW;
-      var remaining = duration * (1 - v);
-      svg +=
-        '<line class="price-path-band-grid" x1="' +
-        x +
-        '" x2="' +
-        x +
-        '" y1="' +
-        pad.top +
-        '" y2="' +
-        (pad.top + plotH) +
-        '"></line>' +
-        '<text class="price-path-band-label" x="' +
-        x +
-        '" y="' +
-        (pad.top + plotH + 22) +
-        '" text-anchor="middle">' +
-        escapeHtml(formatRemaining(remaining)) +
-        "</text>";
-    });
+    var leftEdge = breakdown.leftEdgeOffsetMs || 0;
+    svg += xAxisSvgFor(leftEdge, duration, pad, plotW, plotH);
+    svg += openDividerSvg(leftEdge, duration, pad, plotW, plotH);
 
+    var span = duration - leftEdge;
     var d = "";
     buckets.forEach(function (bucket, i) {
       var s = shares[i];
       if (s === null) return;
-      var x =
-        pad.left +
-        ((duration - Number(bucket.timeRemainingMs || 0)) / duration) * plotW;
+      var offset = duration - Number(bucket.timeRemainingMs || 0);
+      var x = pad.left + ((offset - leftEdge) / span) * plotW;
       var y = pad.top + (1 - s / yMax) * plotH;
       d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
     });
@@ -881,6 +960,7 @@
       plotW: plotW,
       plotH: plotH,
       duration: duration,
+      leftEdgeOffsetMs: leftEdge,
       buckets: buckets,
       yMax: yMax,
     };

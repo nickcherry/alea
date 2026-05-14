@@ -224,6 +224,23 @@
   margin-top: 14px;
 }
 
+/* Vertical divider drawn at offsetMs=0 (candle open) when the chart
+   extends into pre-market time. Dashed gold hairline + small caps
+   "OPEN" tag floating above the plot area. */
+.price-path-open-divider {
+  stroke: rgba(215, 170, 69, 0.75);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+  fill: none;
+}
+
+.price-path-open-label {
+  fill: rgba(215, 170, 69, 0.9);
+  font-family: var(--alea-font-sans);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+
 /* Pre-close Pyth drift charts share chrome with the band-decay panel.
    Two charts: absolute-bps percentiles (top), within-band shares
    (bottom). Color palette extends the same gold/blue/green family with

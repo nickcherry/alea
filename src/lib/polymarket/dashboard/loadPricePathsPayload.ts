@@ -138,6 +138,10 @@ export function buildPricePathsPayloadFromRows({
       const durationMs = resolutionTimeframeStepMs({ timeframe });
       const timeBucketMs = timeBucketMsFor({ durationMs });
       const timeframeWindows = windows.filter((w) => w.timeframe === timeframe);
+      const leftEdgeOffsetMs = computeLeftEdgeOffsetMs({
+        windows: timeframeWindows,
+        timeBucketMs,
+      });
       const assets = sortedAssets({
         assets: new Set(timeframeWindows.map((w) => w.asset)),
       });
@@ -148,6 +152,7 @@ export function buildPricePathsPayloadFromRows({
           windows: timeframeWindows,
           durationMs,
           timeBucketMs,
+          leftEdgeOffsetMs,
         }),
         ...assets.map((asset) =>
           buildAggregateSlice({
@@ -156,6 +161,7 @@ export function buildPricePathsPayloadFromRows({
             windows: timeframeWindows.filter((w) => w.asset === asset),
             durationMs,
             timeBucketMs,
+            leftEdgeOffsetMs,
           }),
         ),
       ];
@@ -163,7 +169,12 @@ export function buildPricePathsPayloadFromRows({
         timeframe,
         durationMs,
         timeBucketMs,
-        tableMarkersMs: tableMarkersMsFor({ durationMs, timeBucketMs }),
+        leftEdgeOffsetMs,
+        tableMarkersMs: tableMarkersMsFor({
+          durationMs,
+          timeBucketMs,
+          leftEdgeOffsetMs,
+        }),
         slices,
       };
     });
@@ -268,15 +279,17 @@ function buildAggregateSlice({
   windows,
   durationMs,
   timeBucketMs,
+  leftEdgeOffsetMs,
 }: {
   readonly asset: string | null;
   readonly label: string;
   readonly windows: readonly PricePathWindow[];
   readonly durationMs: number;
   readonly timeBucketMs: number;
+  readonly leftEdgeOffsetMs: number;
 }): PricePathAggregateSlice {
   const columnCount = Math.ceil(
-    (durationMs + PRE_MARKET_SAMPLE_LEAD_MS) / timeBucketMs,
+    (durationMs - leftEdgeOffsetMs) / timeBucketMs,
   );
   const columns = Array.from({ length: columnCount }, () =>
     createColumnAccumulator(),
@@ -309,6 +322,7 @@ function buildAggregateSlice({
         durationMs,
         timeBucketMs,
         columnCount,
+        leftEdgeOffsetMs,
       });
       const column = columns[columnIndex];
       if (column === undefined) {
@@ -365,6 +379,7 @@ function buildAggregateSlice({
         index,
         durationMs,
         timeBucketMs,
+        leftEdgeOffsetMs,
       }),
     }),
   );
@@ -375,6 +390,7 @@ function buildAggregateSlice({
           index,
           durationMs,
           timeBucketMs,
+          leftEdgeOffsetMs,
         }),
         sampleCount: column.sampleCount,
         counts: column.counts,
@@ -388,6 +404,7 @@ function buildAggregateSlice({
         index,
         durationMs,
         timeBucketMs,
+        leftEdgeOffsetMs,
       }),
       windowsObserved: column.windowsObserved.size,
       windowsWithCrossing: column.windowsWithCrossing.size,
@@ -436,25 +453,28 @@ function buildAggregateSlice({
       maxColumnShare: maxColumnShare({ columns: heatmapColumns }),
     },
     bandSeries,
-    markerShares: tableMarkersMsFor({ durationMs, timeBucketMs }).map(
-      (timeRemainingMs): PricePathMarkerShare => {
-        const point =
-          bandSeries[
-            columnIndexForTimeRemaining({
-              timeRemainingMs,
-              durationMs,
-              timeBucketMs,
-              columnCount,
-            })
-          ];
-        return {
-          timeRemainingMs,
-          label: formatTimeRemaining({ ms: timeRemainingMs }),
-          sampleCount: point?.sampleCount ?? 0,
-          withinOneCentShare: point?.withinOneCentShare ?? null,
-        };
-      },
-    ),
+    markerShares: tableMarkersMsFor({
+      durationMs,
+      timeBucketMs,
+      leftEdgeOffsetMs,
+    }).map((timeRemainingMs): PricePathMarkerShare => {
+      const point =
+        bandSeries[
+          columnIndexForTimeRemaining({
+            timeRemainingMs,
+            durationMs,
+            timeBucketMs,
+            columnCount,
+            leftEdgeOffsetMs,
+          })
+        ];
+      return {
+        timeRemainingMs,
+        label: formatTimeRemaining({ ms: timeRemainingMs }),
+        sampleCount: point?.sampleCount ?? 0,
+        withinOneCentShare: point?.withinOneCentShare ?? null,
+      };
+    }),
     crossings,
   };
 }
@@ -544,9 +564,11 @@ function timeBucketMsFor({
 function tableMarkersMsFor({
   durationMs,
   timeBucketMs,
+  leftEdgeOffsetMs,
 }: {
   readonly durationMs: number;
   readonly timeBucketMs: number;
+  readonly leftEdgeOffsetMs: number;
 }): readonly number[] {
   const inMarket =
     durationMs <= 5 * 60 * millisecondsPerSecond
@@ -573,7 +595,7 @@ function tableMarkersMsFor({
     durationMs + 3 * 60 * millisecondsPerSecond,
     durationMs + 60 * millisecondsPerSecond,
   ];
-  const maxRemaining = durationMs + PRE_MARKET_SAMPLE_LEAD_MS;
+  const maxRemaining = durationMs - leftEdgeOffsetMs;
   return [...preMarket, ...inMarket].filter(
     (ms) => ms <= maxRemaining && ms >= timeBucketMs,
   );
@@ -584,20 +606,21 @@ function columnIndexForOffset({
   durationMs,
   timeBucketMs,
   columnCount,
+  leftEdgeOffsetMs,
 }: {
   readonly offsetMs: number;
   readonly durationMs: number;
   readonly timeBucketMs: number;
   readonly columnCount: number;
+  readonly leftEdgeOffsetMs: number;
 }): number {
-  const minOffsetMs = -PRE_MARKET_SAMPLE_LEAD_MS;
   const boundedOffset = clamp({
     value: offsetMs,
-    min: minOffsetMs,
+    min: leftEdgeOffsetMs,
     max: durationMs - 1,
   });
   return clamp({
-    value: Math.floor((boundedOffset - minOffsetMs) / timeBucketMs),
+    value: Math.floor((boundedOffset - leftEdgeOffsetMs) / timeBucketMs),
     min: 0,
     max: columnCount - 1,
   });
@@ -608,11 +631,13 @@ function columnIndexForTimeRemaining({
   durationMs,
   timeBucketMs,
   columnCount,
+  leftEdgeOffsetMs,
 }: {
   readonly timeRemainingMs: number;
   readonly durationMs: number;
   readonly timeBucketMs: number;
   readonly columnCount: number;
+  readonly leftEdgeOffsetMs: number;
 }): number {
   const offsetMs = durationMs - timeRemainingMs;
   return columnIndexForOffset({
@@ -620,6 +645,7 @@ function columnIndexForTimeRemaining({
     durationMs,
     timeBucketMs,
     columnCount,
+    leftEdgeOffsetMs,
   });
 }
 
@@ -627,14 +653,50 @@ function columnTimeRemainingMs({
   index,
   durationMs,
   timeBucketMs,
+  leftEdgeOffsetMs,
 }: {
   readonly index: number;
   readonly durationMs: number;
   readonly timeBucketMs: number;
+  readonly leftEdgeOffsetMs: number;
 }): number {
-  const offsetMs =
-    -PRE_MARKET_SAMPLE_LEAD_MS + (index + 0.5) * timeBucketMs;
+  const offsetMs = leftEdgeOffsetMs + (index + 0.5) * timeBucketMs;
   return Math.round(durationMs - offsetMs);
+}
+
+/**
+ * Auto-fit the chart's leftmost column to whatever pre-market data has
+ * actually been captured. Without samples in the pre-market region the
+ * function returns 0 (axis starts at candle open), so the charts don't
+ * show empty pre-market space. As `-PRE_MARKET_SAMPLE_LEAD_MS` worth
+ * of pre-market samples accumulates, the result walks down to that
+ * floor and the heatmap, band-decay, and crossings panels extend
+ * leftward in sync.
+ */
+function computeLeftEdgeOffsetMs({
+  windows,
+  timeBucketMs,
+}: {
+  readonly windows: readonly PricePathWindow[];
+  readonly timeBucketMs: number;
+}): number {
+  let minOffsetMs = 0;
+  for (const window of windows) {
+    for (const sample of window.samples) {
+      if (sample.offsetMs < minOffsetMs) {
+        minOffsetMs = sample.offsetMs;
+      }
+    }
+  }
+  if (minOffsetMs === 0) {
+    return 0;
+  }
+  // Round down to the nearest bucket boundary so the leftmost column
+  // exactly contains the earliest sample.
+  const rounded =
+    Math.floor(minOffsetMs / timeBucketMs) * timeBucketMs;
+  const floor = -PRE_MARKET_SAMPLE_LEAD_MS;
+  return Math.max(floor, rounded);
 }
 
 function formatTimeRemaining({ ms }: { readonly ms: number }): string {
