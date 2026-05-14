@@ -1,5 +1,6 @@
 import {
   type DataApiFetch,
+  type PolymarketRawActivity,
   scanPolymarketTradingPerformance,
   type TradingPerformanceScanProgress,
 } from "@alea/lib/trading/vendor/polymarket/scanTradingPerformance";
@@ -119,6 +120,68 @@ describe("scanPolymarketTradingPerformance", () => {
     expect(progress).toEqual([
       { kind: "activity-page", activitiesSoFar: 4 },
       { kind: "positions-page", positionsSoFar: 1 },
+    ]);
+  });
+
+  it("overlaps and dedupes the activity cache boundary", async () => {
+    const cached: PolymarketRawActivity = {
+      type: "TRADE",
+      side: "BUY",
+      conditionId: "cached",
+      title: "BTC Up",
+      slug: "btc-updown-5m-cached",
+      outcome: "Up",
+      usdcSize: 10,
+      timestamp: 1_000,
+    };
+
+    const { mergedActivity } = await scanPolymarketTradingPerformance({
+      funderAddress: "0xfunder",
+      generatedAtMs: 1_777_900_600_000,
+      existingActivity: [cached],
+      dataApiFetch: fakeDataApiFetch({
+        activityPages: [
+          [
+            {
+              type: "TRADE",
+              side: "BUY",
+              conditionId: "newer",
+              title: "ETH Up",
+              slug: "eth-updown-5m-newer",
+              outcome: "Up",
+              usdcSize: 20,
+              timestamp: 1_010,
+            },
+            cached,
+            {
+              type: "REDEEM",
+              conditionId: "late-same-second",
+              title: "SOL Up",
+              slug: "sol-updown-5m-late",
+              outcome: "Up",
+              usdcSize: 5,
+              timestamp: 1_000,
+            },
+            {
+              type: "TRADE",
+              side: "BUY",
+              conditionId: "before-overlap",
+              title: "DOGE Up",
+              slug: "doge-updown-5m-old",
+              outcome: "Up",
+              usdcSize: 5,
+              timestamp: 699,
+            },
+          ],
+        ],
+        positionsPages: [[]],
+      }),
+    });
+
+    expect(mergedActivity.map((row) => row.conditionId)).toEqual([
+      "newer",
+      "cached",
+      "late-same-second",
     ]);
   });
 });

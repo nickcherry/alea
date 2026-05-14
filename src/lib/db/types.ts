@@ -368,6 +368,20 @@ export interface ExplorationPayloadCacheTable {
   >;
 }
 
+export interface ProxyAccuracyPayloadCacheTable {
+  readonly cache_key: string;
+  readonly schema_version: number;
+  readonly resolutions_fingerprint: string;
+  readonly pyth_candle_fingerprint: string;
+  readonly training_threshold_pct: number;
+  readonly payload: unknown;
+  readonly computed_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+}
+
 export interface Database {
   readonly candles: CandleTable;
   readonly market_event: MarketEventTable;
@@ -379,6 +393,7 @@ export interface Database {
   readonly committee_selections: CommitteeSelectionTable;
   readonly committee_backtest_runs: CommitteeBacktestRunTable;
   readonly exploration_payload_cache: ExplorationPayloadCacheTable;
+  readonly proxy_accuracy_payload_cache: ProxyAccuracyPayloadCacheTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
   readonly polymarket_price_samples: PolymarketPriceSampleTable;
 }

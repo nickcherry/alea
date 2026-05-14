@@ -16,6 +16,15 @@ import { resolutionTimeframeValues } from "@alea/types/resolutions";
 import { sql } from "kysely";
 
 const EXTREME_DISAGREEMENT_LIMIT = 50;
+const PROXY_ACCURACY_PAYLOAD_CACHE_KEY = "proxy-accuracy";
+const PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION = 1;
+
+type ProxyAccuracyPayloadCacheKey = {
+  readonly schemaVersion: number;
+  readonly resolutionsFingerprint: string;
+  readonly pythCandleFingerprint: string;
+  readonly trainingThresholdPct: number;
+};
 
 type JoinedRow = {
   readonly asset: string;
@@ -32,6 +41,24 @@ export async function loadProxyAccuracyPayload({
 }: {
   readonly db: DatabaseClient;
   readonly now?: () => number;
+}): Promise<ProxyAccuracyPayload> {
+  const cacheKey = await loadProxyAccuracyPayloadCacheKey({ db });
+  const cached = await loadCachedProxyAccuracyPayload({ db, cacheKey, now });
+  if (cached !== null) {
+    return cached;
+  }
+
+  const payload = await buildProxyAccuracyPayload({ db, now });
+  await persistProxyAccuracyPayloadCache({ db, cacheKey, payload });
+  return payload;
+}
+
+async function buildProxyAccuracyPayload({
+  db,
+  now,
+}: {
+  readonly db: DatabaseClient;
+  readonly now: () => number;
 }): Promise<ProxyAccuracyPayload> {
   // Use a single window-aligned join so the entire dashboard derives
   // from one consistent snapshot. The volume is bounded (~200k rows over
@@ -182,6 +209,182 @@ export async function loadProxyAccuracyPayload({
     breakdowns,
     extremeDisagreements,
   };
+}
+
+async function loadProxyAccuracyPayloadCacheKey({
+  db,
+}: {
+  readonly db: DatabaseClient;
+}): Promise<ProxyAccuracyPayloadCacheKey> {
+  const [resolutionsFingerprint, pythCandleFingerprint] = await Promise.all([
+    loadResolutionsFingerprint({ db }),
+    loadPythCandleFingerprint({ db }),
+  ]);
+
+  return {
+    schemaVersion: PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION,
+    resolutionsFingerprint,
+    pythCandleFingerprint,
+    trainingThresholdPct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+  };
+}
+
+async function loadCachedProxyAccuracyPayload({
+  db,
+  cacheKey,
+  now,
+}: {
+  readonly db: DatabaseClient;
+  readonly cacheKey: ProxyAccuracyPayloadCacheKey;
+  readonly now: () => number;
+}): Promise<ProxyAccuracyPayload | null> {
+  const row = await db
+    .selectFrom("proxy_accuracy_payload_cache")
+    .select(["payload"])
+    .where("cache_key", "=", PROXY_ACCURACY_PAYLOAD_CACHE_KEY)
+    .where("schema_version", "=", cacheKey.schemaVersion)
+    .where("resolutions_fingerprint", "=", cacheKey.resolutionsFingerprint)
+    .where("pyth_candle_fingerprint", "=", cacheKey.pythCandleFingerprint)
+    .where("training_threshold_pct", "=", cacheKey.trainingThresholdPct)
+    .executeTakeFirst();
+
+  if (row === undefined || !isProxyAccuracyPayload(row.payload)) {
+    return null;
+  }
+  return { ...row.payload, generatedAtMs: now() };
+}
+
+async function persistProxyAccuracyPayloadCache({
+  db,
+  cacheKey,
+  payload,
+}: {
+  readonly db: DatabaseClient;
+  readonly cacheKey: ProxyAccuracyPayloadCacheKey;
+  readonly payload: ProxyAccuracyPayload;
+}): Promise<void> {
+  const computedAtMs = Date.now();
+  await db
+    .insertInto("proxy_accuracy_payload_cache")
+    .values({
+      cache_key: PROXY_ACCURACY_PAYLOAD_CACHE_KEY,
+      schema_version: cacheKey.schemaVersion,
+      resolutions_fingerprint: cacheKey.resolutionsFingerprint,
+      pyth_candle_fingerprint: cacheKey.pythCandleFingerprint,
+      training_threshold_pct: cacheKey.trainingThresholdPct,
+      payload,
+      computed_at_ms: computedAtMs,
+    })
+    .onConflict((oc) =>
+      oc.column("cache_key").doUpdateSet({
+        schema_version: cacheKey.schemaVersion,
+        resolutions_fingerprint: cacheKey.resolutionsFingerprint,
+        pyth_candle_fingerprint: cacheKey.pythCandleFingerprint,
+        training_threshold_pct: cacheKey.trainingThresholdPct,
+        payload,
+        computed_at_ms: computedAtMs,
+      }),
+    )
+    .execute();
+}
+
+async function loadResolutionsFingerprint({
+  db,
+}: {
+  readonly db: DatabaseClient;
+}): Promise<string> {
+  const rows = await sql<{ fingerprint: string }>`
+    with grouped as (
+      select
+        asset,
+        timeframe,
+        count(*)::text as n_rows,
+        min(window_start_ts_ms)::text as min_window_start_ts_ms,
+        max(window_start_ts_ms)::text as max_window_start_ts_ms,
+        max(fetched_at_ms)::text as max_fetched_at_ms,
+        sum((window_start_ts_ms % 1000000007))::text as window_checksum,
+        sum((
+          case outcome
+            when 'up' then 1
+            when 'down' then 2
+            else 3
+          end
+        ) * (window_start_ts_ms % 1000003))::text as outcome_checksum
+      from polymarket_resolutions
+      group by asset, timeframe
+    )
+    select coalesce(
+      md5(string_agg(
+        asset || ':' ||
+        timeframe || ':' ||
+        n_rows || ':' ||
+        min_window_start_ts_ms || ':' ||
+        max_window_start_ts_ms || ':' ||
+        max_fetched_at_ms || ':' ||
+        window_checksum || ':' ||
+        outcome_checksum,
+        ',' order by asset, timeframe
+      )),
+      'empty'
+    ) as fingerprint
+    from grouped
+  `.execute(db);
+  return rows.rows[0]?.fingerprint ?? "empty";
+}
+
+async function loadPythCandleFingerprint({
+  db,
+}: {
+  readonly db: DatabaseClient;
+}): Promise<string> {
+  const rows = await sql<{ fingerprint: string }>`
+    with grouped as (
+      select
+        asset,
+        timeframe,
+        count(*)::text as n_rows,
+        min(timestamp)::text as min_timestamp,
+        max(timestamp)::text as max_timestamp,
+        sum((extract(epoch from timestamp)::bigint % 1000000007))::text as ts_checksum,
+        sum((round((open * 100000000)::numeric)::bigint % 1000003))::text as open_checksum,
+        sum((round((close * 100000000)::numeric)::bigint % 1000003))::text as close_checksum
+      from candles
+      where source = 'pyth'
+        and product = 'spot'
+        and timeframe in ('5m', '15m')
+      group by asset, timeframe
+    )
+    select coalesce(
+      md5(string_agg(
+        asset || ':' ||
+        timeframe || ':' ||
+        n_rows || ':' ||
+        min_timestamp || ':' ||
+        max_timestamp || ':' ||
+        ts_checksum || ':' ||
+        open_checksum || ':' ||
+        close_checksum,
+        ',' order by asset, timeframe
+      )),
+      'empty'
+    ) as fingerprint
+    from grouped
+  `.execute(db);
+  return rows.rows[0]?.fingerprint ?? "empty";
+}
+
+function isProxyAccuracyPayload(value: unknown): value is ProxyAccuracyPayload {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as Partial<ProxyAccuracyPayload>;
+  return (
+    typeof candidate.generatedAtMs === "number" &&
+    typeof candidate.trainingThresholdPct === "number" &&
+    candidate.coverage !== undefined &&
+    Array.isArray(candidate.breakdowns) &&
+    Array.isArray(candidate.extremeDisagreements)
+  );
 }
 
 function collectExtremeDisagreements({

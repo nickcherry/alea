@@ -41,6 +41,14 @@ const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
 const cacheDir = resolvePath(tmpDir, ".cache");
+const DASHBOARD_BUILD_CONCURRENCY = 4;
+
+type DashboardBuildIo = { readonly writeStdout: (line: string) => void };
+
+type DashboardPageBuild = {
+  readonly name: string;
+  readonly run: (io: DashboardBuildIo) => Promise<void>;
+};
 
 /**
  * Builds every static dashboard the alea Cloudflare worker serves
@@ -142,33 +150,44 @@ export const dashboardsBuildCommand = defineCommand({
     const shouldBuild = (name: string): boolean =>
       only === null ? true : only.has(name);
 
-    if (shouldBuild("trading")) {
-      await buildTradingDashboard({ io, useCache });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("price-paths")) {
-      await buildPricePathsDashboard({ io });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("exploration")) {
-      await buildExplorationDashboard({ io });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("committee")) {
-      await buildTradeCommitteeDashboard({ io });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("backtest")) {
-      await buildBacktestDashboard({ io });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("dryrun")) {
-      await buildDryRunDashboard({ io });
-      io.writeStdout("\n");
-    }
-    if (shouldBuild("proxy")) {
-      await buildProxyAccuracyDashboard({ io });
-    }
+    const pageBuilds: DashboardPageBuild[] = [
+      {
+        name: "trading",
+        run: (pageIo: DashboardBuildIo) =>
+          buildTradingDashboard({ io: pageIo, useCache }),
+      },
+      {
+        name: "price-paths",
+        run: (pageIo: DashboardBuildIo) =>
+          buildPricePathsDashboard({ io: pageIo }),
+      },
+      {
+        name: "exploration",
+        run: (pageIo: DashboardBuildIo) =>
+          buildExplorationDashboard({ io: pageIo }),
+      },
+      {
+        name: "committee",
+        run: (pageIo: DashboardBuildIo) =>
+          buildTradeCommitteeDashboard({ io: pageIo }),
+      },
+      {
+        name: "backtest",
+        run: (pageIo: DashboardBuildIo) =>
+          buildBacktestDashboard({ io: pageIo }),
+      },
+      {
+        name: "dryrun",
+        run: (pageIo: DashboardBuildIo) => buildDryRunDashboard({ io: pageIo }),
+      },
+      {
+        name: "proxy",
+        run: (pageIo: DashboardBuildIo) =>
+          buildProxyAccuracyDashboard({ io: pageIo }),
+      },
+    ].filter((page) => shouldBuild(page.name));
+
+    await runPageBuilds({ io, pageBuilds });
 
     if (options.deploy) {
       io.writeStdout(`\n${pc.bold("deploying")} ${pc.dim("to alea worker")}\n`);
@@ -186,6 +205,71 @@ export const dashboardsBuildCommand = defineCommand({
     }
   },
 });
+
+async function runPageBuilds({
+  io,
+  pageBuilds,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+  readonly pageBuilds: readonly DashboardPageBuild[];
+}): Promise<void> {
+  const results = new Map<
+    string,
+    { readonly output: string; readonly error?: unknown }
+  >();
+  let nextIndex = 0;
+
+  const workerCount = Math.min(DASHBOARD_BUILD_CONCURRENCY, pageBuilds.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (true) {
+        const page = pageBuilds[nextIndex];
+        nextIndex += 1;
+        if (page === undefined) {
+          return;
+        }
+
+        let output = "";
+        const pageIo = {
+          writeStdout: (line: string) => {
+            output += line;
+          },
+        };
+
+        try {
+          await page.run(pageIo);
+          results.set(page.name, { output });
+        } catch (error) {
+          results.set(page.name, { output, error });
+        }
+      }
+    }),
+  );
+
+  let firstError: {
+    readonly pageName: string;
+    readonly error: unknown;
+  } | null = null;
+  for (const page of pageBuilds) {
+    const result = results.get(page.name);
+    if (result === undefined) {
+      continue;
+    }
+    io.writeStdout(result.output);
+    io.writeStdout("\n");
+    if (result.error !== undefined && firstError === null) {
+      firstError = { pageName: page.name, error: result.error };
+    }
+  }
+
+  if (firstError !== null) {
+    const message =
+      firstError.error instanceof Error
+        ? firstError.error.message
+        : String(firstError.error);
+    throw new Error(`dashboard page ${firstError.pageName} failed: ${message}`);
+  }
+}
 
 async function buildTradingDashboard({
   io,
@@ -239,7 +323,7 @@ async function buildTradingDashboard({
     const newCount =
       existingActivity === undefined
         ? mergedActivity.length
-        : mergedActivity.length - existingActivity.length;
+        : Math.max(0, mergedActivity.length - existingActivity.length);
     io.writeStdout(
       `  ${pc.dim("cache:")} ${mergedActivity.length.toLocaleString()} activity rows ` +
         `(${newCount.toLocaleString()} new this run)\n`,

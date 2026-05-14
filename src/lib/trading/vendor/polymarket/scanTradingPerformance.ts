@@ -11,6 +11,7 @@ import { z } from "zod";
 
 const DATA_API_HOST = "https://data-api.polymarket.com";
 const DATA_API_PAGE_SIZE = 500;
+const ACTIVITY_CACHE_OVERLAP_SECONDS = 5 * 60;
 
 export type TradingPerformanceScanProgress =
   | { readonly kind: "activity-page"; readonly activitiesSoFar: number }
@@ -101,24 +102,31 @@ export async function scanPolymarketTradingPerformance({
    */
   readonly existingActivity?: readonly PolymarketRawActivity[];
 }): Promise<TradingPerformanceScanResult> {
-  const cutoffTimestamp =
+  const latestCachedActivityTimestamp =
     existingActivity === undefined || existingActivity.length === 0
       ? undefined
       : existingActivity.reduce((m, a) => Math.max(m, a.timestamp), 0);
+  const fetchSinceTimestamp =
+    latestCachedActivityTimestamp === undefined
+      ? undefined
+      : Math.max(
+          0,
+          latestCachedActivityTimestamp - ACTIVITY_CACHE_OVERLAP_SECONDS,
+        );
   const [newActivity, positions, tradeRolesByConditionId] = await Promise.all([
     fetchActivitySince({
       funderAddress,
       onProgress,
       dataApiFetch,
-      sinceTimestamp: cutoffTimestamp,
+      sinceTimestamp: fetchSinceTimestamp,
     }),
     fetchAllPositions({ funderAddress, onProgress, dataApiFetch }),
     fetchTradeRoles({ clobClient, onProgress }),
   ]);
-  const mergedActivity =
-    existingActivity === undefined
-      ? newActivity
-      : [...newActivity, ...existingActivity];
+  const mergedActivity = mergeActivityRows({
+    newActivity,
+    existingActivity,
+  });
   const payload = buildTradingPerformancePayload({
     walletAddress: funderAddress,
     generatedAtMs,
@@ -127,6 +135,56 @@ export async function scanPolymarketTradingPerformance({
     tradeRolesByConditionId,
   });
   return { payload, mergedActivity };
+}
+
+function mergeActivityRows({
+  newActivity,
+  existingActivity,
+}: {
+  readonly newActivity: readonly PolymarketRawActivity[];
+  readonly existingActivity: readonly PolymarketRawActivity[] | undefined;
+}): readonly PolymarketRawActivity[] {
+  if (existingActivity === undefined) {
+    return [...newActivity].sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  const overlapCounts = new Map<string, number>();
+  for (const row of newActivity) {
+    const key = activityDedupeKey(row);
+    overlapCounts.set(key, (overlapCounts.get(key) ?? 0) + 1);
+  }
+
+  const merged: PolymarketRawActivity[] = [...newActivity];
+  for (const row of existingActivity) {
+    const key = activityDedupeKey(row);
+    const overlapCount = overlapCounts.get(key) ?? 0;
+    if (overlapCount > 0) {
+      if (overlapCount === 1) {
+        overlapCounts.delete(key);
+      } else {
+        overlapCounts.set(key, overlapCount - 1);
+      }
+      continue;
+    }
+    merged.push(row);
+  }
+  merged.sort((a, b) => b.timestamp - a.timestamp);
+  return merged;
+}
+
+function activityDedupeKey(row: PolymarketRawActivity): string {
+  return [
+    row.timestamp,
+    row.type,
+    row.side ?? "",
+    row.conditionId ?? "",
+    row.title ?? "",
+    row.slug ?? "",
+    row.outcome ?? "",
+    row.usdcSize,
+    row.size ?? "",
+    row.price ?? "",
+  ].join("|");
 }
 
 async function fetchTradeRoles({
