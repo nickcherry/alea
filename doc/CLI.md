@@ -48,6 +48,8 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `reliability:*`
   `reliability:capture`
   `reliability:chart`
+- `say:*`
+  `say:text` — speaks the given text aloud via the built-in macOS `say` binary. Defaults to the `Fred` voice. See [SAY.md](./SAY.md).
 - `telegram:*`
   `telegram:test`
 - `polymarket:*`

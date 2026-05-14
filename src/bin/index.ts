@@ -18,6 +18,7 @@ import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutio
 import { regimesBackfillCommand } from "@alea/bin/regimes/backfill";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
+import { sayTextCommand } from "@alea/bin/say/text";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
 import {
   telemetryBookDepthCommand,
@@ -50,6 +51,7 @@ const cli = createCli({
     reliabilityCaptureCommand,
     reliabilityChartCommand,
     regimesBackfillCommand,
+    sayTextCommand,
     telegramTestCommand,
     telemetryQueryCommand,
     telemetryRejectsCommand,

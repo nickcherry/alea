@@ -67,6 +67,7 @@ starts at `2026-04-01T00:00:00.000Z` and runs through yesterday UTC.
 - [Proxy Accuracy](./doc/PROXY.md) — Pyth vs Polymarket settlement agreement.
 - [Regimes](./doc/REGIMES.md) — market regime classifier.
 - [Reliability Experiment](./doc/RELIABILITY_EXPERIMENT.md) — proxy-feed reliability.
+- [Say](./doc/SAY.md) — macOS text-to-speech wrapper for audible alerts.
 - [Sweeping](./doc/SWEEPING.md) — committee selection/voting sweep plan.
 - [Training](./doc/TRAINING.md) — filter training artifacts.
 
