@@ -3,7 +3,7 @@ import "@alea/lib/filters/all";
 import {
   TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
-  TRADE_DECISION_LEAD_TIME_MS,
+  tradeDecisionLeadTimeMs,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
@@ -152,7 +152,7 @@ export async function runLiveTrading({
         for (const period of selectedPeriods) {
           const periodMs = resolutionTimeframeStepMs({ timeframe: period });
           const nextBoundary = Math.ceil(now / periodMs) * periodMs;
-          const fireTime = nextBoundary - TRADE_DECISION_LEAD_TIME_MS;
+          const fireTime = nextBoundary - tradeDecisionLeadTimeMs({ period });
           nextFireTime = Math.min(nextFireTime, fireTime);
           if (now < fireTime) {
             continue;

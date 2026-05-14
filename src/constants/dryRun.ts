@@ -33,7 +33,7 @@ export const DRY_RUN_ORDER_DEFAULT_TICK_SIZE = 0.01;
 export const DRY_RUN_ORDER_MAX_QUOTE_AGE_MS = Number.MAX_SAFE_INTEGER;
 
 /** How early the runner should discover target Polymarket markets. */
-export const DRY_RUN_MARKET_DISCOVERY_LEAD_MS = 30 * 1000;
+export const DRY_RUN_MARKET_DISCOVERY_LEAD_MS = 5 * 60 * 1000;
 
 /** Same as `DRY_RUN_ORDER_PRICE_WINDOW_CENTS`, expressed as a 0..1 token price. */
 export const DRY_RUN_ORDER_PRICE_WINDOW =

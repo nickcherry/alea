@@ -25,6 +25,21 @@ function formatMarketRegime(value: string | null): string {
   return formatMarketRegimeRaw({ value });
 }
 
+function formatLeadTimes({
+  leadTimeByPeriodMs,
+  periods,
+}: {
+  readonly leadTimeByPeriodMs: { readonly [period: string]: number };
+  readonly periods: readonly string[];
+}): string {
+  return periods
+    .map((period) => {
+      const seconds = Math.round((leadTimeByPeriodMs[period] ?? 0) / 1000);
+      return `${period}: ${seconds.toLocaleString()}s`;
+    })
+    .join(" / ");
+}
+
 const RECENT_TABLE_LIMIT = 50;
 
 export function renderDryRunHtml({
@@ -90,7 +105,11 @@ export function renderDryRunHtml({
               items: [
                 {
                   label: "Decision Lead",
-                  value: `${(payload.decisionConfig.leadTimeMs / 1000).toLocaleString()}s`,
+                  value: formatLeadTimes({
+                    leadTimeByPeriodMs:
+                      payload.decisionConfig.leadTimeByPeriodMs,
+                    periods: payload.decisionConfig.supportedPeriods,
+                  }),
                   tip: "How long before the target candle's open the committee runs.",
                 },
                 {

@@ -36,10 +36,24 @@ export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
 
 /**
- * How long before the target candle opens the loop snapshots the
- * live price and makes its decision.
+ * How long before each target candle opens the loop snapshots the live price
+ * and makes its decision. The order path enters immediately after an
+ * actionable decision.
  */
-export const TRADE_DECISION_LEAD_TIME_MS = 90 * 1000;
+export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
+  Record<TradeDecisionPeriod, number>
+> = {
+  "5m": 2 * 60 * 1000,
+  "15m": 3 * 60 * 1000,
+};
+
+export function tradeDecisionLeadTimeMs({
+  period,
+}: {
+  readonly period: TradeDecisionPeriod;
+}): number {
+  return TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS[period];
+}
 
 /**
  * Closed bars hydrated at startup. This must cover the regime

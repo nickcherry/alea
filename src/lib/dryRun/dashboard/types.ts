@@ -33,7 +33,7 @@ export type DryRunDecisionConfig = {
    * of options the schema allows, not whatever happens to have rows.
    */
   readonly supportedPeriods: readonly string[];
-  readonly leadTimeMs: number;
+  readonly leadTimeByPeriodMs: { readonly [period: string]: number };
   readonly hydratedBars: number;
   readonly maxVotesPerFilter: number;
   readonly minVotesToTrade: number;

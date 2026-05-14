@@ -28,7 +28,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run the committee in dry-run mode against live Pyth prices",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles at T-90s of each configured boundary, synthesizes the active candle from the latest Pyth price, and runs the committee to predict the next bar's direction. Predictions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, and runs the committee to predict the next bar's direction. Predictions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after an actionable decision; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",

@@ -13,9 +13,9 @@ import {
   MIN_COMMITTEE_VOTES_TO_TRADE,
   TRADE_DECISION_FILTER_TIE_BREAK,
   TRADE_DECISION_HYDRATE_BARS,
-  TRADE_DECISION_LEAD_TIME_MS,
   TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
+  tradeDecisionLeadTimeMs,
 } from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -172,7 +172,12 @@ export async function loadDryRunPayload({
     decisionConfig: {
       period: TRADE_DECISION_PRIMARY_PERIOD,
       supportedPeriods: TRADE_DECISION_SUPPORTED_PERIODS,
-      leadTimeMs: TRADE_DECISION_LEAD_TIME_MS,
+      leadTimeByPeriodMs: Object.fromEntries(
+        TRADE_DECISION_SUPPORTED_PERIODS.map((period) => [
+          period,
+          tradeDecisionLeadTimeMs({ period }),
+        ]),
+      ),
       hydratedBars: TRADE_DECISION_HYDRATE_BARS,
       maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
       minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,

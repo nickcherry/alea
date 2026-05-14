@@ -114,7 +114,7 @@ roster (`(asset, regime, period) → selected candidate keys + stats`). See
 At each configured period boundary the loop:
 
 1. Builds the synthetic bar window (real history + the in-flight
-   bar with Pyth's t-90s price as the synthetic close).
+   bar with Pyth's lead-time price as the synthetic close).
 2. Calls `classifyMarketRegime({ bars })`.
    - `null` → abstain entirely; no decision row, no engagement log.
 3. Looks up the roster bucket for `(asset, marketRegime, period)`.
@@ -139,16 +139,16 @@ order so dry-run and live voting stay identical.
 Critical decision settings live in
 [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
 
-| Constant                           |    Default | Meaning                                                                             |
-| ---------------------------------- | ---------: | ----------------------------------------------------------------------------------- |
-| `TRADE_DECISION_DEFAULT_PERIODS`   |  `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
-| `TRADE_DECISION_SUPPORTED_PERIODS` |  `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
-| `TRADE_DECISION_LEAD_TIME_MS`      |    `90000` | Snapshot/live decision lead before target candle open                               |
-| `TRADE_DECISION_HYDRATE_BARS`      |      `150` | Closed bars loaded before the loop starts                                           |
-| `MAX_COMMITTEE_VOTES_PER_FILTER`   |        `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`     |        `3` | Minimum non-abstain votes after filter collapse                                     |
-| `MIN_COMMITTEE_CONSENSUS_FRACTION` |      `0.5` | Winning side must hold at least this share; ties still abstain                      |
-| `TRADE_DECISION_FILTER_TIE_BREAK`  | highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
+| Constant                                |                   Default | Meaning                                                                             |
+| --------------------------------------- | ------------------------: | ----------------------------------------------------------------------------------- |
+| `TRADE_DECISION_DEFAULT_PERIODS`        |                 `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
+| `TRADE_DECISION_SUPPORTED_PERIODS`      |                 `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
+| `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` | `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
+| `TRADE_DECISION_HYDRATE_BARS`           |                     `150` | Closed bars loaded before the loop starts                                           |
+| `MAX_COMMITTEE_VOTES_PER_FILTER`        |                       `1` | One active vote per `filter_id`, even if multiple configs engage                    |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`          |                       `3` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_CONSENSUS_FRACTION`      |                     `0.5` | Winning side must hold at least this share; ties still abstain                      |
+| `TRADE_DECISION_FILTER_TIE_BREAK`       |                highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
 With the current constants, the final decision is simple majority
 after filter-level vote collapse, with at least three engaged filters

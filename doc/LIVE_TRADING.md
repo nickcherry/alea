@@ -75,8 +75,9 @@ For each asset/period:
    subscribes to both UP and DOWN token books. Polymarket currently
    exposes these books much earlier, but 5 minutes keeps the hot path
    settled without carrying a day of subscriptions.
-3. At `T-90s`, it refreshes recent Pyth and Coinbase spot candles for
-   every due asset/period concurrently, fetches the latest Pyth price,
+3. At the configured period lead (`5m` at T-2m, `15m` at T-3m), it
+   refreshes recent Pyth and Coinbase spot candles for every due asset/period
+   concurrently, fetches the latest Pyth price,
    synthesizes the active Pyth candle, aligns Coinbase bars to the
    Pyth timestamps, and asks the committee for a decision. Coinbase
    failures are soft; Pyth failures or stale latest Pyth prices skip
