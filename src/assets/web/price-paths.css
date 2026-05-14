@@ -220,13 +220,8 @@
   fill: var(--alea-green);
 }
 
-.price-path-crossings-table-wrap {
-  margin-top: 14px;
-}
-
-/* Vertical divider drawn at offsetMs=0 (candle open) when the chart
-   extends into pre-market time. Dashed gold hairline + small caps
-   "OPEN" tag floating above the plot area. */
+/* Vertical divider drawn at offsetMs=0 (candle open). Dashed gold
+   hairline + small caps "OPEN" tag floating above the plot area. */
 .price-path-open-divider {
   stroke: rgba(215, 170, 69, 0.75);
   stroke-width: 1.25;
@@ -241,10 +236,7 @@
   letter-spacing: 0.18em;
 }
 
-/* Pre-close Pyth drift charts share chrome with the band-decay panel.
-   Two charts: absolute-bps percentiles (top), within-band shares
-   (bottom). Color palette extends the same gold/blue/green family with
-   a deeper crimson so a 4-line chart still reads at a glance. */
+/* Pre-close Pyth drift chart shares chrome with the band-decay panel. */
 .price-path-drift-chart-wrap {
   position: relative;
   margin-bottom: 14px;
@@ -260,20 +252,12 @@
   overflow: hidden;
 }
 
-.price-path-band-line.drift-p50 {
-  stroke: var(--alea-gold);
-}
-
-.price-path-band-line.drift-p75 {
-  stroke: var(--alea-blue);
-}
-
-.price-path-band-line.drift-p90 {
-  stroke: var(--alea-green);
-}
-
-.price-path-band-line.drift-p99 {
-  stroke: #d05a4a;
+.price-path-section-note {
+  margin: -4px 0 14px;
+  color: var(--alea-text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 720px;
 }
 
 .price-path-band-line.drift-share-2 {
@@ -288,22 +272,6 @@
   stroke: var(--alea-green);
 }
 
-.price-path-band-swatch.drift-p50 {
-  background: var(--alea-gold);
-}
-
-.price-path-band-swatch.drift-p75 {
-  background: var(--alea-blue);
-}
-
-.price-path-band-swatch.drift-p90 {
-  background: var(--alea-green);
-}
-
-.price-path-band-swatch.drift-p99 {
-  background: #d05a4a;
-}
-
 .price-path-band-swatch.drift-share-2 {
   background: var(--alea-gold);
 }
@@ -316,22 +284,6 @@
   background: var(--alea-green);
 }
 
-.price-path-hover-dot.drift-p50 {
-  fill: var(--alea-gold);
-}
-
-.price-path-hover-dot.drift-p75 {
-  fill: var(--alea-blue);
-}
-
-.price-path-hover-dot.drift-p90 {
-  fill: var(--alea-green);
-}
-
-.price-path-hover-dot.drift-p99 {
-  fill: #d05a4a;
-}
-
 .price-path-hover-dot.drift-share-2 {
   fill: var(--alea-gold);
 }
@@ -342,25 +294,6 @@
 
 .price-path-hover-dot.drift-share-10 {
   fill: var(--alea-green);
-}
-
-.price-path-crossings-table {
-  width: 100%;
-  min-width: 460px;
-  table-layout: fixed;
-}
-
-.price-path-crossings-table th,
-.price-path-crossings-table td {
-  white-space: nowrap;
-}
-
-/* Time-remaining column is just `T-X:XX` mono text — pin it to a
-   narrow fixed width so the data columns get the remaining width
-   split evenly between them. */
-.price-path-crossings-table th:first-child,
-.price-path-crossings-table td:first-child {
-  width: 140px;
 }
 
 @media (max-width: 760px) {

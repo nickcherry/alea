@@ -34,10 +34,10 @@ describe("price paths dashboard payload", () => {
     expect(all?.overallWithinOneCentShare).toBe(0.5);
     expect(all?.overallWithinTwoCentShare).toBe(0.75);
     expect(all?.overallWithinFiveCentShare).toBe(0.75);
-    // No pre-market samples in this fixture, so the axis auto-fits to
-    // the candle's duration and the leftmost column is at offsetMs=0.
-    expect(all?.heatmap.columns[0]?.counts[50]).toBe(1);
-    expect(all?.heatmap.columns[6]?.counts[52]).toBe(1);
+    // 30 leftmost columns are pre-market (5m × 10s bucket); the first
+    // intra-market column lands at index 30.
+    expect(all?.heatmap.columns[30]?.counts[50]).toBe(1);
+    expect(all?.heatmap.columns[36]?.counts[52]).toBe(1);
 
     const oneMinuteMarker = all?.markerShares.find((m) => m.label === "T-1:00");
     expect(oneMinuteMarker?.withinOneCentShare).toBe(1);
@@ -82,9 +82,8 @@ describe("price paths dashboard payload", () => {
     expect(all?.crossings.windowsWithAnyCrossing).toBe(1);
     expect(all?.crossings.totalWindows).toBe(2);
     expect(all?.crossings.meanCrossingsPerWindow).toBe(1);
-    // No pre-market samples in this fixture; the axis auto-fits to
-    // the candle's duration (5m / 10s buckets = 30 buckets).
-    expect(all?.crossings.buckets.length).toBe(30);
+    // 5m candle + 5m pre-market lead = 600s, at 10s buckets = 60 buckets.
+    expect(all?.crossings.buckets.length).toBe(60);
     const earlyCrossings = (all?.crossings.buckets ?? [])
       .filter((b) => b.timeRemainingMs > 150_000)
       .reduce((sum, b) => sum + b.crossingCount, 0);
@@ -125,9 +124,9 @@ describe("price paths dashboard payload", () => {
     const all = fiveMinute?.slices[0];
     expect(all?.sampleCount).toBe(2);
     // First tick is reconstructed as 10000 - 4800 = 5200 → bucket 52.
-    // No pre-market samples in this fixture, so axis starts at the open.
-    expect(all?.heatmap.columns[0]?.counts[52]).toBe(1);
-    expect(all?.heatmap.columns[6]?.counts[53]).toBe(1);
+    // 30 pre-market columns sit to the left, so intra-market column 0 → 30.
+    expect(all?.heatmap.columns[30]?.counts[52]).toBe(1);
+    expect(all?.heatmap.columns[36]?.counts[53]).toBe(1);
   });
 
   it("places pre-market negative-offset ticks in left-side columns", () => {

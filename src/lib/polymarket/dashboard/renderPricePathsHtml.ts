@@ -83,15 +83,16 @@ export function renderPricePathsHtml({
           <div id="price-path-crossings-chart" class="price-path-crossings-chart"></div>
           <div id="price-path-crossings-tooltip" class="alea-tooltip"></div>
         </div>
-        <div id="price-path-crossings-table-host"></div>
       </section>
 
       <section class="price-path-section">
         <div class="alea-section-rule"><h2>Pre-close Pyth Drift</h2></div>
-        <div class="price-path-drift-chart-wrap">
-          <div id="price-path-drift-percentiles-chart" class="price-path-drift-chart"></div>
-          <div id="price-path-drift-percentiles-tooltip" class="alea-tooltip"></div>
-        </div>
+        <p class="price-path-section-note">
+          Share of historic Pyth candles whose price <span class="alea-mono">N</span> minutes
+          before close was within <span class="alea-mono">≤2 / ≤5 / ≤10 bps</span> of
+          the eventual close. Higher = the price has effectively settled by that
+          point in the candle's life.
+        </p>
         <div class="price-path-drift-chart-wrap">
           <div id="price-path-drift-shares-chart" class="price-path-drift-chart"></div>
           <div id="price-path-drift-shares-tooltip" class="alea-tooltip"></div>

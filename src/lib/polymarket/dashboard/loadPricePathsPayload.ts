@@ -665,38 +665,21 @@ function columnTimeRemainingMs({
 }
 
 /**
- * Auto-fit the chart's leftmost column to whatever pre-market data has
- * actually been captured. Without samples in the pre-market region the
- * function returns 0 (axis starts at candle open), so the charts don't
- * show empty pre-market space. As `-PRE_MARKET_SAMPLE_LEAD_MS` worth
- * of pre-market samples accumulates, the result walks down to that
- * floor and the heatmap, band-decay, and crossings panels extend
- * leftward in sync.
+ * Always reserve the full pre-market window on the chart's left so
+ * the heatmap, band-decay, and crossings panels read consistently:
+ * pre-market → OPEN → candle → CLOSE. Empty pre-market columns are
+ * expected on a fresh deploy and fill in as samples accumulate.
  */
 function computeLeftEdgeOffsetMs({
-  windows,
+  windows: _windows,
   timeBucketMs,
 }: {
   readonly windows: readonly PricePathWindow[];
   readonly timeBucketMs: number;
 }): number {
-  let minOffsetMs = 0;
-  for (const window of windows) {
-    for (const sample of window.samples) {
-      if (sample.offsetMs < minOffsetMs) {
-        minOffsetMs = sample.offsetMs;
-      }
-    }
-  }
-  if (minOffsetMs === 0) {
-    return 0;
-  }
-  // Round down to the nearest bucket boundary so the leftmost column
-  // exactly contains the earliest sample.
-  const rounded =
-    Math.floor(minOffsetMs / timeBucketMs) * timeBucketMs;
-  const floor = -PRE_MARKET_SAMPLE_LEAD_MS;
-  return Math.max(floor, rounded);
+  return (
+    Math.floor(-PRE_MARKET_SAMPLE_LEAD_MS / timeBucketMs) * timeBucketMs
+  );
 }
 
 function formatTimeRemaining({ ms }: { readonly ms: number }): string {
