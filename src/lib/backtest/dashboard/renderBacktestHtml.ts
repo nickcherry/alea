@@ -10,6 +10,7 @@ import {
   formatDateTime,
   formatMarketRegime,
   formatPercent,
+  infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
@@ -242,16 +243,16 @@ function renderBucketTable({
       <table class="alea-table backtest-table backtest-activity-table">
         <thead>
           <tr>
-            <th>Scope</th>
-            <th>Moments</th>
-            <th>Decisions</th>
-            <th>Scored</th>
-            <th>Wins</th>
-            <th>Losses</th>
-            <th>Ambig.</th>
-            <th>Trade rate</th>
-            <th>WR</th>
-            <th>PnL</th>
+            <th>Scope${infoTip({ text: BACKTEST_TIPS.scope })}</th>
+            <th>Moments${infoTip({ text: BACKTEST_TIPS.moments })}</th>
+            <th>Decisions${infoTip({ text: BACKTEST_TIPS.decisions })}</th>
+            <th>Scored${infoTip({ text: BACKTEST_TIPS.scored })}</th>
+            <th>Wins${infoTip({ text: BACKTEST_TIPS.wins })}</th>
+            <th>Losses${infoTip({ text: BACKTEST_TIPS.losses })}</th>
+            <th>Ambig.${infoTip({ text: BACKTEST_TIPS.ambig })}</th>
+            <th>Trade rate${infoTip({ text: BACKTEST_TIPS.tradeRate })}</th>
+            <th>WR${infoTip({ text: BACKTEST_TIPS.winRate })}</th>
+            <th>PnL${infoTip({ text: BACKTEST_TIPS.pnl })}</th>
           </tr>
         </thead>
         <tbody>${body}</tbody>
@@ -259,6 +260,26 @@ function renderBucketTable({
     </div>
   </section>`;
 }
+
+const BACKTEST_TIPS = {
+  scope:
+    "Asset, period, or asset×period bucket the row aggregates over.",
+  moments:
+    "Candidate decision moments in the training span that fell into this scope (one per asset × period × bar close).",
+  decisions:
+    "Moments where the committee assembled a quorum and voted long or short. The rest were no-ops.",
+  scored:
+    "Decisions whose target window has resolved on Polymarket and can be scored as a win or loss.",
+  wins: "Scored decisions that closed in our predicted direction.",
+  losses: "Scored decisions that closed against our predicted direction.",
+  ambig:
+    "Decisions where Polymarket resolved exactly flat — we count them separately rather than as a win or loss.",
+  tradeRate:
+    "Decisions ÷ moments — how often the committee chose to trade vs. stand aside.",
+  winRate:
+    "Wins ÷ scored (excluding ambiguous). The headline accuracy on resolved bets.",
+  pnl: "Net USD PnL across scored trades, after the stake-per-trade and fees in the run's config.",
+} as const;
 
 function renderBucketRow(row: BacktestBucket): string {
   return `<tr>

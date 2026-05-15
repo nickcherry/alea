@@ -66,7 +66,7 @@
 .trading-performance-table tbody td { padding: 9px 11px; }
 .trading-performance-table th:not(.market-col):not(.status-col),
 .trading-performance-table td:not(.market-col):not(.status-col) {
-  width: 7.5%;
+  width: 8.5%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

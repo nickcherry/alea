@@ -171,14 +171,14 @@ export function renderTradeCommitteeHtml({
             </colgroup>
             <thead>
               <tr>
-                <th class="num-col">Rank</th>
-                <th>Regime</th>
-                <th>Filter</th>
-                <th>Config</th>
-                <th class="num-col">Engagements</th>
-                <th class="num-col">Win Rate</th>
-                <th class="num-col">Wilson Low</th>
-                <th class="num-col">Worst Q WR</th>
+                <th class="num-col">Rank${infoTip({ text: COMMITTEE_TIPS.rank })}</th>
+                <th>Regime${infoTip({ text: COMMITTEE_TIPS.regime })}</th>
+                <th>Filter${infoTip({ text: COMMITTEE_TIPS.filter })}</th>
+                <th>Config${infoTip({ text: COMMITTEE_TIPS.config })}</th>
+                <th class="num-col">Engagements${infoTip({ text: COMMITTEE_TIPS.engagements })}</th>
+                <th class="num-col">Win Rate${infoTip({ text: COMMITTEE_TIPS.winRate })}</th>
+                <th class="num-col">Wilson Low${infoTip({ text: COMMITTEE_TIPS.wilsonLow })}</th>
+                <th class="num-col">Worst Q WR${infoTip({ text: COMMITTEE_TIPS.worstQuarter })}</th>
               </tr>
             </thead>
             <tbody id="committee-rows" aria-live="polite"></tbody>
@@ -192,6 +192,24 @@ export function renderTradeCommitteeHtml({
 </body>
 </html>`;
 }
+
+const COMMITTEE_TIPS = {
+  rank: "Position in the committee after final selection — 1 is the strongest filter.",
+  regime:
+    "Market regime (asset + period) the filter is gated to. A filter only votes on moments matching its regime.",
+  filter:
+    "Filter identifier — the named candle-pattern / indicator rule that emits the long/short signal.",
+  config:
+    "Threshold parameters the filter was tuned with. Two rows can share a filter ID but differ here.",
+  engagements:
+    "Number of historical training moments the filter fired on. Higher = more statistical confidence in the win-rate estimate.",
+  winRate:
+    "Aggregate hit-rate on training data: trades that resolved profitable, divided by total engagements.",
+  wilsonLow:
+    "Lower bound of the 95% Wilson confidence interval on the win rate. The selection rules gate on this so small-sample outliers don't sneak in.",
+  worstQuarter:
+    "Lowest win rate observed in any single calendar quarter of the training span — a robustness check against regime overfitting.",
+} as const;
 
 function formatTrainingStartPolicy({
   value,

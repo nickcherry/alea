@@ -8,6 +8,7 @@ import {
   escapeHtml,
   escapeJsonForHtml,
   formatDateTime,
+  infoTip,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
@@ -21,6 +22,22 @@ import { renderTopNav } from "@alea/lib/ui/topNav";
  * latest N.
  */
 const RECENT_TRADES_LIMIT = 20;
+
+const COLUMN_TIPS = {
+  symbol: "Crypto symbol the market tracks (BTC / ETH / SOL / XRP).",
+  market: "Polymarket question title and slug.",
+  role: "Whether we were maker (resting limit fills), taker (crossing the book), or mixed across this market's fills.",
+  entry: "Volume-weighted average buy price across our fills, in cents.",
+  invested: "Total USDC paid into this market (fees included).",
+  returned:
+    "Total USDC received from this market (redemptions plus closing sells).",
+  current:
+    "Mark-to-market value of any still-held position at the live mid-price. Zero once the market resolves and the balance is gone.",
+  realized:
+    "Settled PnL after the market resolved: returned − invested. Dashed for still-open markets.",
+  status:
+    "Closed = resolved, no balance left. Open = market still running. Redeemable = unclaimed winnings still sitting on Polymarket.",
+} as const;
 
 export function renderTradingPerformanceHtml({
   payload,
@@ -99,16 +116,15 @@ export function renderTradingPerformanceHtml({
           <table class="alea-table trading-performance-table">
             <thead>
               <tr>
-                <th>Symbol</th>
-                <th class="market-col">Market</th>
-                <th>Role</th>
-                <th>Entry</th>
-                <th>Invested</th>
-                <th>Returned</th>
-                <th>Current</th>
-                <th>Realized</th>
-                <th>MTM</th>
-                <th class="status-col">Status</th>
+                <th>Symbol${infoTip({ text: COLUMN_TIPS.symbol })}</th>
+                <th class="market-col">Market${infoTip({ text: COLUMN_TIPS.market })}</th>
+                <th>Role${infoTip({ text: COLUMN_TIPS.role })}</th>
+                <th>Entry${infoTip({ text: COLUMN_TIPS.entry })}</th>
+                <th>Invested${infoTip({ text: COLUMN_TIPS.invested })}</th>
+                <th>Returned${infoTip({ text: COLUMN_TIPS.returned })}</th>
+                <th>Current${infoTip({ text: COLUMN_TIPS.current })}</th>
+                <th>Realized${infoTip({ text: COLUMN_TIPS.realized })}</th>
+                <th class="status-col">Status${infoTip({ text: COLUMN_TIPS.status })}</th>
               </tr>
             </thead>
             <tbody>${visibleMarkets.map(renderMarketRow).join("")}</tbody>
@@ -148,12 +164,6 @@ function renderMetric({
 function renderMarketRow(
   row: TradingPerformancePayload["markets"][number],
 ): string {
-  const pnlClass =
-    row.pnlUsd > 0
-      ? " alea-num-positive"
-      : row.pnlUsd < 0
-        ? " alea-num-negative"
-        : "";
   return `
     <tr>
       <td><span class="symbol-pill">${escapeHtml({ value: row.symbol })}</span></td>
@@ -169,7 +179,6 @@ function renderMarketRow(
       <td class="alea-mono">${formatUnsignedUsd({ value: row.returnedUsd })}</td>
       <td class="alea-mono">${formatUnsignedUsd({ value: row.currentValueUsd })}</td>
       <td class="alea-mono${toneClassForNullable({ value: row.realizedPnlUsd })}">${formatNullableSignedUsd({ value: row.realizedPnlUsd })}</td>
-      <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
       <td class="status-col">${renderStatusPill({ row })}</td>
     </tr>
   `;

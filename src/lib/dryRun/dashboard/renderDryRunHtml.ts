@@ -42,6 +42,33 @@ function formatLeadTimes({
 
 const RECENT_TABLE_LIMIT = 50;
 
+const DRY_RUN_TIPS = {
+  regime:
+    "Market regime (asset + period) the decisions belong to. Each row aggregates calls within one regime.",
+  asset: "Crypto symbol (BTC / ETH / SOL / XRP).",
+  calls:
+    "Number of dry-run decisions in this bucket — every moment the committee chose to vote rather than stand aside.",
+  winRate:
+    "Share of scored calls that closed in the predicted direction. Ambiguous (exactly-flat) calls are excluded from the denominator.",
+  upDown:
+    "Up-calls vs down-calls split. Helps spot whether a filter is one-sided.",
+  time: "Decision timestamp (UTC) — when the committee voted on the bar close.",
+  prediction:
+    "Direction the committee voted: up or down. Drives which side of the Polymarket pair would be bought.",
+  marketRegime:
+    "Asset × period regime label for the moment — the gating regime that filters were matched against.",
+  synthOpen:
+    "Synthetic open price the committee saw at the decision moment (the live mid feeding our paper book).",
+  actualClose:
+    "Polymarket-resolved close price for the window — the ground truth we score against.",
+  move:
+    "Synthetic open → actual close move, in basis points. Sign matches the close direction.",
+  order:
+    "Direction the synthetic order would have taken (mirror of the prediction).",
+  outcome:
+    "Win, loss, ambiguous (exactly flat), or pending (window not yet resolved on Polymarket).",
+} as const;
+
 export function renderDryRunHtml({
   payload,
   assets,
@@ -208,10 +235,10 @@ export function renderDryRunHtml({
           <table class="alea-table dry-run-table">
             <thead>
               <tr>
-                <th>Regime</th>
-                <th class="num-col">Calls</th>
-                <th class="num-col">Win Rate</th>
-                <th class="num-col">U / D</th>
+                <th>Regime${infoTip({ text: DRY_RUN_TIPS.regime })}</th>
+                <th class="num-col">Calls${infoTip({ text: DRY_RUN_TIPS.calls })}</th>
+                <th class="num-col">Win Rate${infoTip({ text: DRY_RUN_TIPS.winRate })}</th>
+                <th class="num-col">U / D${infoTip({ text: DRY_RUN_TIPS.upDown })}</th>
               </tr>
             </thead>
             <tbody id="dry-run-regime-body">
@@ -227,10 +254,10 @@ export function renderDryRunHtml({
           <table class="alea-table dry-run-table">
             <thead>
               <tr>
-                <th>Asset</th>
-                <th class="num-col">Calls</th>
-                <th class="num-col">Win Rate</th>
-                <th class="num-col">U / D</th>
+                <th>Asset${infoTip({ text: DRY_RUN_TIPS.asset })}</th>
+                <th class="num-col">Calls${infoTip({ text: DRY_RUN_TIPS.calls })}</th>
+                <th class="num-col">Win Rate${infoTip({ text: DRY_RUN_TIPS.winRate })}</th>
+                <th class="num-col">U / D${infoTip({ text: DRY_RUN_TIPS.upDown })}</th>
               </tr>
             </thead>
             <tbody id="dry-run-asset-body">
@@ -247,15 +274,15 @@ export function renderDryRunHtml({
           <table class="alea-table dry-run-recent-table">
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Asset</th>
-                <th>Prediction</th>
-                <th>Market Regime</th>
-                <th class="num-col">Synth Open</th>
-                <th class="num-col">Actual Close</th>
-                <th class="num-col">Move</th>
-                <th>Order</th>
-                <th>Outcome</th>
+                <th>Time${infoTip({ text: DRY_RUN_TIPS.time })}</th>
+                <th>Asset${infoTip({ text: DRY_RUN_TIPS.asset })}</th>
+                <th>Prediction${infoTip({ text: DRY_RUN_TIPS.prediction })}</th>
+                <th>Market Regime${infoTip({ text: DRY_RUN_TIPS.marketRegime })}</th>
+                <th class="num-col">Synth Open${infoTip({ text: DRY_RUN_TIPS.synthOpen })}</th>
+                <th class="num-col">Actual Close${infoTip({ text: DRY_RUN_TIPS.actualClose })}</th>
+                <th class="num-col">Move${infoTip({ text: DRY_RUN_TIPS.move })}</th>
+                <th>Order${infoTip({ text: DRY_RUN_TIPS.order })}</th>
+                <th>Outcome${infoTip({ text: DRY_RUN_TIPS.outcome })}</th>
               </tr>
             </thead>
             <tbody id="dry-run-recent-body">

@@ -9,6 +9,7 @@ import {
   aleaBrandMark,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
+import { infoTip } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 
@@ -215,14 +216,14 @@ function renderPerAssetTable({
       <table class="alea-table proxy-asset-table">
         <thead>
           <tr>
-            <th>Asset</th>
-            <th class="num-col">Windows</th>
-            <th class="num-col">Agreement</th>
-            <th class="num-col">Disagreements</th>
-            <th class="num-col">Clear-move</th>
-            <th class="num-col">Below threshold</th>
-            <th class="num-col">Median |move%|</th>
-            <th class="num-col">P90 |move%|</th>
+            <th>Asset${infoTip({ text: PER_ASSET_TIPS.asset })}</th>
+            <th class="num-col">Windows${infoTip({ text: PER_ASSET_TIPS.windows })}</th>
+            <th class="num-col">Agreement${infoTip({ text: PER_ASSET_TIPS.agreement })}</th>
+            <th class="num-col">Disagreements${infoTip({ text: PER_ASSET_TIPS.disagreements })}</th>
+            <th class="num-col">Clear-move${infoTip({ text: PER_ASSET_TIPS.clearMove })}</th>
+            <th class="num-col">Below threshold${infoTip({ text: PER_ASSET_TIPS.belowThreshold })}</th>
+            <th class="num-col">Median |move%|${infoTip({ text: PER_ASSET_TIPS.medianMove })}</th>
+            <th class="num-col">P90 |move%|${infoTip({ text: PER_ASSET_TIPS.p90Move })}</th>
           </tr>
         </thead>
         <tbody>
@@ -272,13 +273,13 @@ function renderExtremeTable({
       <table class="alea-table proxy-extreme-table">
         <thead>
           <tr>
-            <th>Time</th>
-            <th>Asset</th>
-            <th>Polymarket</th>
-            <th>Pyth</th>
-            <th class="num-col">Open</th>
-            <th class="num-col">Close</th>
-            <th class="num-col">|move%|</th>
+            <th>Time${infoTip({ text: EXTREME_TIPS.time })}</th>
+            <th>Asset${infoTip({ text: EXTREME_TIPS.asset })}</th>
+            <th>Polymarket${infoTip({ text: EXTREME_TIPS.polymarket })}</th>
+            <th>Pyth${infoTip({ text: EXTREME_TIPS.pyth })}</th>
+            <th class="num-col">Open${infoTip({ text: EXTREME_TIPS.open })}</th>
+            <th class="num-col">Close${infoTip({ text: EXTREME_TIPS.close })}</th>
+            <th class="num-col">|move%|${infoTip({ text: EXTREME_TIPS.movePct })}</th>
           </tr>
         </thead>
         <tbody>
@@ -302,6 +303,35 @@ function renderExtremeTable({
     </div>
   `;
 }
+
+const PER_ASSET_TIPS = {
+  asset: "Crypto symbol the 5-minute up/down market settled on.",
+  windows:
+    "Number of resolution windows we have both a Polymarket outcome and a Pyth open/close for in this timeframe.",
+  agreement:
+    "Share of windows where Pyth and Polymarket give the same direction. Higher is better — it means Pyth is a faithful proxy for Polymarket's Chainlink settlement.",
+  disagreements:
+    "Windows where Pyth said one direction but Polymarket resolved the other.",
+  clearMove:
+    "Disagreements where the Pyth move was large enough that the direction should have been unambiguous — these are the worrying ones.",
+  belowThreshold:
+    "Share of disagreements where the Pyth move was small enough that noise or fee/dust could have flipped the call.",
+  medianMove:
+    "Median absolute Pyth move (open → close) across disagreements, in basis points.",
+  p90Move:
+    "90th-percentile absolute Pyth move across disagreements — the long-tail magnitude of mismatched calls.",
+} as const;
+
+const EXTREME_TIPS = {
+  time: "Start of the 5-minute resolution window.",
+  asset: "Crypto symbol the market settled on.",
+  polymarket:
+    "Direction Polymarket resolved to (up / down / flat), derived from Chainlink Data Streams.",
+  pyth: "Direction Pyth's open → close move implies.",
+  open: "Pyth price at the window start.",
+  close: "Pyth price at the window end.",
+  movePct: "Absolute Pyth open-to-close move, in basis points.",
+} as const;
 
 function outcomeBadge({
   outcome,
