@@ -2,6 +2,8 @@ import {
   formatTradeDecisionMarkets,
   resolveTradeDecisionMarkets,
   TRADE_DECISION_DEFAULT_MARKETS,
+  TRADE_DECISION_HYDRATE_BARS,
+  tradeDecisionHydrateBars,
 } from "@alea/constants/tradeDecision";
 import { describe, expect, it } from "bun:test";
 
@@ -38,5 +40,11 @@ describe("trade decision market defaults", () => {
       { asset: "xrp", period: "15m" },
       { asset: "doge", period: "15m" },
     ]);
+  });
+
+  it("uses chart-window-sized hydration by period", () => {
+    expect(tradeDecisionHydrateBars({ period: "5m" })).toBe(1152);
+    expect(tradeDecisionHydrateBars({ period: "15m" })).toBe(960);
+    expect(TRADE_DECISION_HYDRATE_BARS).toBe(1152);
   });
 });

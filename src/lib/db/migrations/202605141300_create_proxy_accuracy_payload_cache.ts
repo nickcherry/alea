@@ -14,7 +14,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       schema_version integer not null,
       resolutions_fingerprint text not null,
       pyth_candle_fingerprint text not null,
-      training_threshold_pct double precision not null,
+      outcome_threshold_pct double precision not null,
       payload jsonb not null,
       computed_at_ms bigint not null
     )

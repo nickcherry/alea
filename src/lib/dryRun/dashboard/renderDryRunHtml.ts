@@ -11,19 +11,11 @@ import {
   escapeHtml,
   escapeJsonForHtml,
   formatDateTime,
-  formatMarketRegime as formatMarketRegimeRaw,
   formatPercent,
   infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
-
-function formatMarketRegime(value: string | null): string {
-  if (value === null) {
-    return "—";
-  }
-  return formatMarketRegimeRaw({ value });
-}
 
 function formatLeadTimes({
   leadTimeByPeriodMs,
@@ -40,11 +32,24 @@ function formatLeadTimes({
     .join(" / ");
 }
 
+function formatPeriodCounts({
+  countsByPeriod,
+  periods,
+}: {
+  readonly countsByPeriod: { readonly [period: string]: number };
+  readonly periods: readonly string[];
+}): string {
+  return periods
+    .map(
+      (period) =>
+        `${period}: ${(countsByPeriod[period] ?? 0).toLocaleString()}`,
+    )
+    .join(" / ");
+}
+
 const RECENT_TABLE_LIMIT = 50;
 
 const DRY_RUN_TIPS = {
-  regime:
-    "Market regime (asset + period) the decisions belong to. Each row aggregates calls within one regime.",
   asset: "Crypto symbol (BTC / ETH / SOL / XRP / DOGE).",
   calls:
     "Number of dry-run decisions in this bucket — every returned OpenAI green/red call.",
@@ -54,8 +59,6 @@ const DRY_RUN_TIPS = {
   time: "Decision timestamp (UTC) — when the predictor evaluated the next bar.",
   prediction:
     "Direction predicted by OpenAI: up or down. Drives which side of the Polymarket pair would be bought.",
-  marketRegime:
-    "Legacy asset × period regime label. OpenAI chart decisions store this as empty.",
   actualOpen:
     "Resolved target-bar open from Pyth. Pending or legacy rows fall back to the decision-time synthetic open.",
   actualClose:
@@ -139,7 +142,11 @@ export function renderDryRunHtml({
                 },
                 {
                   label: "Hydrated Bars",
-                  value: payload.decisionConfig.hydratedBars.toLocaleString(),
+                  value: formatPeriodCounts({
+                    countsByPeriod:
+                      payload.decisionConfig.hydratedBarsByPeriod,
+                    periods: payload.decisionConfig.supportedPeriods,
+                  }),
                   tip: "Per-asset history loaded at startup for chart rendering.",
                 },
               ],
@@ -206,25 +213,6 @@ export function renderDryRunHtml({
       </section>
 
       <section class="dry-run-section">
-        <div class="alea-section-rule"><h2>Per Market Regime</h2></div>
-        <div class="alea-table-wrap">
-          <table class="alea-table dry-run-table">
-            <thead>
-              <tr>
-                <th>Regime${infoTip({ text: DRY_RUN_TIPS.regime })}</th>
-                <th class="num-col">Calls${infoTip({ text: DRY_RUN_TIPS.calls })}</th>
-                <th class="num-col">Win Rate${infoTip({ text: DRY_RUN_TIPS.winRate })}</th>
-                <th class="num-col">U / D${infoTip({ text: DRY_RUN_TIPS.upDown })}</th>
-              </tr>
-            </thead>
-            <tbody id="dry-run-regime-body">
-              ${renderRegimeRows({ rows: initialSlice.perRegime })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="dry-run-section">
         <div class="alea-section-rule"><h2>Per Asset</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table dry-run-table">
@@ -253,7 +241,6 @@ export function renderDryRunHtml({
                 <th>Time${infoTip({ text: DRY_RUN_TIPS.time })}</th>
                 <th>Asset${infoTip({ text: DRY_RUN_TIPS.asset })}</th>
                 <th>Prediction${infoTip({ text: DRY_RUN_TIPS.prediction })}</th>
-                <th>Market Regime${infoTip({ text: DRY_RUN_TIPS.marketRegime })}</th>
                 <th class="num-col">Open${infoTip({ text: DRY_RUN_TIPS.actualOpen })}</th>
                 <th class="num-col">Actual Close${infoTip({ text: DRY_RUN_TIPS.actualClose })}</th>
                 <th class="num-col">Move${infoTip({ text: DRY_RUN_TIPS.move })}</th>
@@ -274,32 +261,6 @@ export function renderDryRunHtml({
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
-}
-
-function renderRegimeRows({
-  rows,
-}: {
-  readonly rows: DryRunDashboardPayload["byPeriod"][string]["perRegime"];
-}): string {
-  if (rows.length === 0) {
-    return `<tr><td colspan="4"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>`;
-  }
-  return rows
-    .map((r) => {
-      const wrStr =
-        r.winRate === null
-          ? '<span class="alea-muted">—</span>'
-          : formatPercent({ value: r.winRate });
-      const cls = winRateToneClass({ value: r.winRate });
-      return `
-        <tr>
-          <td><span class="asset-pill">${escapeHtml({ value: formatMarketRegime(r.marketRegime) })}</span></td>
-          <td class="num-col alea-mono">${r.calls.toLocaleString()}</td>
-          <td class="num-col alea-mono${cls}">${wrStr}</td>
-          <td class="num-col alea-mono">${renderDirectionSplit({ up: r.upSettled, down: r.downSettled })}</td>
-        </tr>`;
-    })
-    .join("");
 }
 
 function renderAssetRows({
@@ -344,7 +305,7 @@ function renderRecentRows({
   readonly rows: readonly DryRunDashboardRecentRow[];
 }): string {
   if (rows.length === 0) {
-    return `<tr><td colspan="9"><span class="alea-muted">No decisions yet for this period.</span></td></tr>`;
+    return `<tr><td colspan="8"><span class="alea-muted">No decisions yet for this period.</span></td></tr>`;
   }
   return rows.map(renderRecentRow).join("");
 }
@@ -367,10 +328,6 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
   } else {
     outcome = '<span class="dry-run-outcome loss">LOSS</span>';
   }
-  const regimeCell =
-    row.marketRegime === null
-      ? '<span class="alea-muted">—</span>'
-      : `<span class="asset-pill">${escapeHtml({ value: formatMarketRegime(row.marketRegime) })}</span>`;
   const displayOpen = row.actualOpen ?? row.synthOpen;
   const moveCell = renderMoveCell({
     open: displayOpen,
@@ -381,7 +338,6 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       <td class="alea-mono">${escapeHtml({ value: ts })}</td>
       <td><span class="asset-pill">${escapeHtml({ value: row.asset })}</span></td>
       <td>${tag}</td>
-      <td>${regimeCell}</td>
       <td class="num-col alea-mono">${displayOpen.toFixed(2)}</td>
       <td class="num-col alea-mono">${close}</td>
       <td class="num-col">${moveCell}</td>

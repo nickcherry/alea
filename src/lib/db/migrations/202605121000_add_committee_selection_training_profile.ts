@@ -1,34 +1,14 @@
 import type { Database } from "@alea/lib/db/types";
-import { type Kysely, sql } from "kysely";
-
-const LEGACY_COMMITTEE_SELECTION_PROFILE = "legacy-committee-selection-v0";
+import type { Kysely } from "kysely";
 
 /**
- * Committee rosters are derived from training artifacts. Tag them with the
- * active training profile so dry-run/live loaders can ignore stale rosters
- * after outcome-label or research-window changes.
+ * Retired migration slot for committee-selection profile tags. Kept so
+ * existing Kysely migration history remains valid.
  */
-export async function up(db: Kysely<Database>): Promise<void> {
-  await sql`
-    alter table committee_selections
-    add column if not exists training_profile text
-  `.execute(db);
-
-  await sql`
-    update committee_selections
-    set training_profile = ${LEGACY_COMMITTEE_SELECTION_PROFILE}
-    where training_profile is null
-  `.execute(db);
-
-  await sql`
-    alter table committee_selections
-    alter column training_profile set not null
-  `.execute(db);
+export async function up(_db: Kysely<Database>): Promise<void> {
+  return;
 }
 
-export async function down(db: Kysely<Database>): Promise<void> {
-  await sql`
-    alter table committee_selections
-    drop column if exists training_profile
-  `.execute(db);
+export async function down(_db: Kysely<Database>): Promise<void> {
+  return;
 }

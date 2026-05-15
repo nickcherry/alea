@@ -6,10 +6,10 @@ import {
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
 } from "@alea/constants/dryRun";
 import {
-  TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
   tradeDecisionLeadTimeMs,
+  tradeDecisionHydrateBars,
 } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type {
@@ -18,58 +18,10 @@ import type {
   DryRunDashboardPayload,
   DryRunDashboardPeriodSlice,
   DryRunDashboardRecentRow,
-  DryRunDashboardRegimeAggregate,
   DryRunDashboardSummary,
 } from "@alea/lib/dryRun/dashboard/types";
 
 const RECENT_LIMIT = 200;
-
-/**
- * Parse the historic `regime_votes` JSON shape. Two shapes coexist:
- *
- *   - Pre-rewrite (array): `[{regime, winner, up, down, abstain}, …]`
- *     — per-filter-family breakdown. We sum the up/down/abstain
- *     across families to recover the total tally.
- *   - Current object: `{up, down, abstain}` — OpenAI chart-decision
- *     tally or historical filter-collapsed tally.
- *
- * The dashboard only needs total engagement (up + down) for the
- * "avg engagement" metric, so collapsing both shapes to totals is
- * sufficient.
- */
-function totalsFromVotes(raw: unknown): {
-  readonly up: number;
-  readonly down: number;
-  readonly abstain: number;
-} {
-  if (raw === null || raw === undefined) {
-    return { up: 0, down: 0, abstain: 0 };
-  }
-  if (Array.isArray(raw)) {
-    let up = 0;
-    let down = 0;
-    let abstain = 0;
-    for (const entry of raw) {
-      if (typeof entry !== "object" || entry === null) {
-        continue;
-      }
-      const e = entry as { up?: number; down?: number; abstain?: number };
-      up += Number(e.up ?? 0);
-      down += Number(e.down ?? 0);
-      abstain += Number(e.abstain ?? 0);
-    }
-    return { up, down, abstain };
-  }
-  if (typeof raw === "object") {
-    const o = raw as { up?: number; down?: number; abstain?: number };
-    return {
-      up: Number(o.up ?? 0),
-      down: Number(o.down ?? 0),
-      abstain: Number(o.abstain ?? 0),
-    };
-  }
-  return { up: 0, down: 0, abstain: 0 };
-}
 
 type DryRunDecisionRow = {
   readonly id: string | number;
@@ -82,8 +34,6 @@ type DryRunDecisionRow = {
   readonly actual_open: number | null;
   readonly actual_close: number | null;
   readonly won: number | null;
-  readonly market_regime: string | null;
-  readonly regime_votes: unknown;
   readonly order_status: string;
   readonly order_observed_price: number | null;
   readonly order_limit_price: number | null;
@@ -117,8 +67,6 @@ export async function loadDryRunPayload({
       "actual_open",
       "actual_close",
       "won",
-      "market_regime",
-      "regime_votes",
       "order_status",
       "order_observed_price",
       "order_limit_price",
@@ -145,7 +93,6 @@ export async function loadDryRunPayload({
       actualOpen: r.actual_open,
       actualClose: r.actual_close,
       won: r.won,
-      marketRegime: r.market_regime,
       orderStatus: r.order_status,
       orderObservedPrice: r.order_observed_price,
       orderLimitPrice: r.order_limit_price,
@@ -155,12 +102,10 @@ export async function loadDryRunPayload({
       orderFillLatencyMs: r.order_fill_latency_ms,
     }));
 
-  const candidateCount = 1;
   const byPeriod: { [period: string]: DryRunDashboardPeriodSlice } = {};
   for (const period of TRADE_DECISION_SUPPORTED_PERIODS) {
     byPeriod[period] = buildPeriodSlice({
       rows: allRows.filter((r) => r.period === period),
-      candidateCount,
     });
   }
 
@@ -176,7 +121,12 @@ export async function loadDryRunPayload({
         ]),
       ),
       decisionSource: "openai_chart",
-      hydratedBars: TRADE_DECISION_HYDRATE_BARS,
+      hydratedBarsByPeriod: Object.fromEntries(
+        TRADE_DECISION_SUPPORTED_PERIODS.map((period) => [
+          period,
+          tradeDecisionHydrateBars({ period }),
+        ]),
+      ),
       orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
       orderLimitPricePolicy: DRY_RUN_ORDER_LIMIT_PRICE_POLICY,
       orderPriceWindowCents: DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
@@ -190,10 +140,8 @@ export async function loadDryRunPayload({
 
 function buildPeriodSlice({
   rows,
-  candidateCount,
 }: {
   readonly rows: readonly DryRunDecisionRow[];
-  readonly candidateCount: number;
 }): DryRunDashboardPeriodSlice {
   let total = 0;
   let settled = 0;
@@ -205,8 +153,6 @@ function buildPeriodSlice({
   let downWins = 0;
   let firstAt: number | null = null;
   let lastAt: number | null = null;
-  let engagementSum = 0;
-  let engagementCount = 0;
 
   type AssetAcc = {
     settled: number;
@@ -215,14 +161,7 @@ function buildPeriodSlice({
     upSettled: number;
     downSettled: number;
   };
-  type RegimeAcc = {
-    calls: number;
-    wins: number;
-    upSettled: number;
-    downSettled: number;
-  };
   const byAsset = new Map<string, AssetAcc>();
-  const byRegime = new Map<string | null, RegimeAcc>();
   const settledForChart: { tsMs: number; won: number }[] = [];
 
   for (const r of rows) {
@@ -241,9 +180,6 @@ function buildPeriodSlice({
     if (isSettled) {
       settled += 1;
       wins += wonNum;
-      const totals = totalsFromVotes(r.regime_votes);
-      engagementSum += totals.up + totals.down;
-      engagementCount += 1;
       settledForChart.push({ tsMs: Number(r.ts_ms), won: wonNum });
     } else {
       pending += 1;
@@ -279,23 +215,6 @@ function buildPeriodSlice({
       assetAcc.pending += 1;
     }
     byAsset.set(r.asset, assetAcc);
-
-    if (isSettled) {
-      const regimeAcc = byRegime.get(r.market_regime) ?? {
-        calls: 0,
-        wins: 0,
-        upSettled: 0,
-        downSettled: 0,
-      };
-      regimeAcc.calls += 1;
-      regimeAcc.wins += wonNum;
-      if (r.prediction === "u") {
-        regimeAcc.upSettled += 1;
-      } else if (r.prediction === "d") {
-        regimeAcc.downSettled += 1;
-      }
-      byRegime.set(r.market_regime, regimeAcc);
-    }
   }
 
   const summary: DryRunDashboardSummary = {
@@ -310,9 +229,6 @@ function buildPeriodSlice({
     downWins,
     firstDecisionAtMs: firstAt,
     lastDecisionAtMs: lastAt,
-    candidateCount,
-    avgEngagement:
-      engagementCount === 0 ? null : engagementSum / engagementCount,
   };
 
   const perAsset: DryRunDashboardAssetRow[] = Array.from(byAsset.entries())
@@ -326,31 +242,6 @@ function buildPeriodSlice({
       upSettled: acc.upSettled,
       downSettled: acc.downSettled,
     }));
-
-  const regimeOrder: readonly (string | null)[] = [
-    "low_vol_trending",
-    "low_vol_ranging",
-    "high_vol_trending",
-    "high_vol_ranging",
-    null,
-  ];
-  const perRegime: DryRunDashboardRegimeAggregate[] = Array.from(
-    byRegime.entries(),
-  )
-    .map(([marketRegime, acc]) => ({
-      marketRegime,
-      calls: acc.calls,
-      wins: acc.wins,
-      winRate: acc.calls === 0 ? null : acc.wins / acc.calls,
-      upSettled: acc.upSettled,
-      downSettled: acc.downSettled,
-    }))
-    .filter((r) => r.calls > 0)
-    .sort((a, b) => {
-      const ai = regimeOrder.indexOf(a.marketRegime);
-      const bi = regimeOrder.indexOf(b.marketRegime);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
 
   settledForChart.sort((a, b) => a.tsMs - b.tsMs);
   const cumulative: DryRunDashboardCumulativeRow[] = [];
@@ -367,5 +258,5 @@ function buildPeriodSlice({
     });
   }
 
-  return { summary, perAsset, perRegime, cumulative };
+  return { summary, perAsset, cumulative };
 }

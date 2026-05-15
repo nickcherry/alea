@@ -12,9 +12,9 @@ This isn't the trading model itself. It's the upstream choice of "which sensor g
 
 ## Tooling
 
-`bun alea latency:capture` opens public WebSocket connections to a roster of exchanges, records every BBO mid update for the configured duration, and emits both a JSON snapshot and an interactive HTML chart to `alea/tmp/`.
+`bun alea latency:capture` opens public WebSocket connections to a source set of exchanges, records every BBO mid update for the configured duration, and emits both a JSON snapshot and an interactive HTML chart to `alea/tmp/`.
 
-- **Default mode** (no flag): focused 5-source roster. The four candidate leading indicators plus the Chainlink baseline:
+- **Default mode** (no flag): focused 5-source set. The four primary leading feeds plus the Chainlink baseline:
   - `binance-spot`, `binance-perp` — by far the deepest BTC venues; bookTicker fires on every BBO price-or-quantity change
   - `coinbase-spot`, `coinbase-perp` — Coinbase International perp via `BTC-PERP-INTX`; both via the `level2` channel with same price-or-qty-at-top semantics as Binance
   - `polymarket-chainlink` — the RTDS feed Polymarket itself uses to settle. **This is the baseline.** ~1 Hz, dictated by Chainlink Data Streams' heartbeat
@@ -43,7 +43,7 @@ A handful of multi-minute captures have been enough to confirm the rough lead/la
 - **Coinbase-spot and Coinbase-perp** lag Binance by 0.5-2s and tick at ~2-4 Hz. Real but less dense; useful as a third corroborator.
 - **Polymarket-chainlink** lags spot exchanges by 5-10s during real moves (visible during sharp moves where spot exchanges leap and the Chainlink line catches up over the next few ticks). This is the latency we're exploiting.
 
-All four primary candidates (Binance spot+perp, Coinbase spot+perp) reliably show price movement _before_ polymarket-chainlink does, which is the precondition for the trading strategy to work. Whether the lead is consistent enough at the magnitudes the bot cares about ($X-level moves over Y-second windows) is a question for the trade-model evaluation, not this experiment.
+All four primary feeds (Binance spot+perp, Coinbase spot+perp) reliably show price movement _before_ polymarket-chainlink does, which is the precondition for the trading strategy to work. Whether the lead is consistent enough at the magnitudes the bot cares about ($X-level moves over Y-second windows) is a question for chart-decision evaluation, not this experiment.
 
 ## Notes on data quality
 

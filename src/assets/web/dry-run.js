@@ -5,7 +5,7 @@
  * from `<script id="dry-run-tokens">`. Owns three pieces of state:
  *
  *   1. The page-level 5m/15m period toggle. Switching periods swaps
- *      the summary metrics, the per-regime + per-asset tables, the
+ *      the summary metrics, the per-asset table, the
  *      "Recent Decisions" feed, and the uPlot chart series — every
  *      number on the page comes from `payload.byPeriod[currentPeriod]`
  *      so the page is internally consistent for the active period.
@@ -35,14 +35,9 @@
   var escapeHtml = alea.escapeHtml;
   var percent = alea.formatPercent;
   var toneClass = alea.winRateToneClass;
-  var formatMarketRegime = function (value) {
-    if (value === null || value === undefined) return "—";
-    return alea.formatMarketRegime(value);
-  };
 
   var currentPeriod = decisionConfig.period || supportedPeriods[0] || "5m";
 
-  var regimeBody = document.getElementById("dry-run-regime-body");
   var assetBody = document.getElementById("dry-run-asset-body");
   var recentBody = document.getElementById("dry-run-recent-body");
   var recentMeta = document.getElementById("dry-run-recent-meta");
@@ -74,7 +69,6 @@
     return (
       byPeriod[currentPeriod] || {
         perAsset: [],
-        perRegime: [],
         cumulative: [],
       }
     );
@@ -82,46 +76,9 @@
 
   function renderAll() {
     var slice = activeSlice();
-    renderRegime(slice.perRegime);
     renderAssets(slice.perAsset);
     renderRecent();
     renderChart();
-  }
-
-  function renderRegime(rows) {
-    if (!regimeBody) return;
-    if (rows.length === 0) {
-      regimeBody.innerHTML =
-        '<tr><td colspan="4"><span class="alea-muted">No regime-tagged decisions yet.</span></td></tr>';
-      return;
-    }
-    regimeBody.innerHTML = rows
-      .map(function (r) {
-        var wrStr =
-          r.winRate === null
-            ? '<span class="alea-muted">—</span>'
-            : percent(r.winRate);
-        var cls = toneClass(r.winRate);
-        return (
-          "<tr>" +
-          '<td><span class="asset-pill">' +
-          escapeHtml(formatMarketRegime(r.marketRegime)) +
-          "</span></td>" +
-          '<td class="num-col alea-mono">' +
-          Number(r.calls).toLocaleString() +
-          "</td>" +
-          '<td class="num-col alea-mono' +
-          cls +
-          '">' +
-          wrStr +
-          "</td>" +
-          '<td class="num-col alea-mono">' +
-          directionSplit(r.upSettled, r.downSettled) +
-          "</td>" +
-          "</tr>"
-        );
-      })
-      .join("");
   }
 
   function renderAssets(rows) {
@@ -194,7 +151,7 @@
     }
     if (rows.length === 0) {
       recentBody.innerHTML =
-        '<tr><td colspan="9"><span class="alea-muted">No decisions yet for this period.</span></td></tr>';
+        '<tr><td colspan="8"><span class="alea-muted">No decisions yet for this period.</span></td></tr>';
       return;
     }
     recentBody.innerHTML = rows.map(renderRecentRow).join("");
@@ -218,12 +175,6 @@
     } else {
       outcome = '<span class="dry-run-outcome loss">LOSS</span>';
     }
-    var regimeCell =
-      row.marketRegime === null || row.marketRegime === undefined
-        ? '<span class="alea-muted">—</span>'
-        : '<span class="asset-pill">' +
-          escapeHtml(formatMarketRegime(row.marketRegime)) +
-          "</span>";
     var displayOpen =
       row.actualOpen !== null && row.actualOpen !== undefined
         ? row.actualOpen
@@ -239,9 +190,6 @@
       "</span></td>" +
       "<td>" +
       tag +
-      "</td>" +
-      "<td>" +
-      regimeCell +
       "</td>" +
       '<td class="num-col alea-mono">' +
       Number(displayOpen).toFixed(2) +

@@ -98,7 +98,7 @@ export function renderPricePathsHtml({
           <div id="price-path-drift-shares-tooltip" class="alea-tooltip"></div>
         </div>
         <p id="price-path-drift-empty" class="price-path-empty" hidden="hidden">
-          No 1m Pyth candles found for the training window. Run <span class="alea-mono">bun alea candles:sync --timeframe 1m --sources pyth --products spot</span> to populate this section.
+          No 1m Pyth candles found for the analysis window. Run <span class="alea-mono">bun alea candles:sync --timeframe 1m --sources pyth --products spot</span> to populate this section.
         </p>
       </section>
 

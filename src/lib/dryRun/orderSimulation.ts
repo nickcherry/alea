@@ -8,7 +8,6 @@ import {
 } from "@alea/constants/dryRun";
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import type { FilterPrediction } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import {
   applyMarketDataEventToMarketPriceState,
@@ -207,26 +206,6 @@ export function resolveDryRunOrderFill({
   return isValidTokenPrice(token.ask) && token.ask <= limitPrice
     ? roundPrice(token.ask)
     : null;
-}
-
-export function averageWinningVoteConfidence({
-  prediction,
-  winRates,
-}: {
-  readonly prediction: FilterPrediction;
-  readonly winRates: readonly (number | null)[];
-}): number | null {
-  if (prediction === null) {
-    return null;
-  }
-  const usable = winRates.filter(
-    (value): value is number =>
-      value !== null && Number.isFinite(value) && value >= 0 && value <= 1,
-  );
-  if (usable.length === 0) {
-    return null;
-  }
-  return usable.reduce((sum, value) => sum + value, 0) / usable.length;
 }
 
 export function createDryRunOrderSimulator({

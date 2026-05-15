@@ -3,20 +3,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
-import { loadBacktestPayload } from "@alea/lib/backtest/dashboard/loadBacktestPayload";
-import { writeBacktestArtifacts } from "@alea/lib/backtest/dashboard/writeBacktestArtifacts";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
-import { loadTradeCommitteePayload } from "@alea/lib/committee/dashboard/loadTradeCommitteePayload";
-import { writeTradeCommitteeArtifacts } from "@alea/lib/committee/dashboard/writeTradeCommitteeArtifacts";
 import { runWranglerDeploy } from "@alea/lib/dashboards/runWranglerDeploy";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import { loadDryRunPayload } from "@alea/lib/dryRun/dashboard/loadDryRunPayload";
 import { writeDryRunArtifacts } from "@alea/lib/dryRun/dashboard/writeDryRunArtifacts";
-import { loadExplorationPayload } from "@alea/lib/exploration/loadExplorationPayload";
-import { writeExplorationArtifacts } from "@alea/lib/exploration/writeExplorationArtifacts";
 import { loadPricePathsPayload } from "@alea/lib/polymarket/dashboard/loadPricePathsPayload";
 import { loadProxyAccuracyPayload } from "@alea/lib/polymarket/dashboard/loadProxyAccuracyPayload";
 import { writePricePathsArtifacts } from "@alea/lib/polymarket/dashboard/writePricePathsArtifacts";
@@ -34,9 +28,6 @@ import { z } from "zod";
 const repoRoot = resolvePath(import.meta.dir, "../../..");
 const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
-const explorationDir = resolvePath(webDir, "exploration");
-const committeeDir = resolvePath(webDir, "committee");
-const backtestDir = resolvePath(webDir, "backtest");
 const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
@@ -61,26 +52,18 @@ type DashboardPageBuild = {
  *   tmp/web/price-paths/index.html   ← price-path calibration ("/price-paths/")
  *   tmp/web/price-paths/index.assets/
  *   tmp/web/price-paths/data.json
- *   tmp/web/exploration/index.html   ← filter exploration ("/exploration/")
- *   tmp/web/exploration/index.assets/
- *   tmp/web/exploration/data.json
- *   tmp/web/committee/index.html     ← trade committee ("/committee/")
- *   tmp/web/committee/index.assets/
- *   tmp/web/committee/data.json
- *   tmp/web/backtest/index.html      ← committee backtest ("/backtest/")
- *   tmp/web/backtest/index.assets/
- *   tmp/web/backtest/data.json
+ *   tmp/web/proxy/index.html         ← proxy accuracy ("/proxy/")
+ *   tmp/web/dryrun/index.html        ← dry run ("/dryrun/")
  *
  * Trading page needs Polymarket auth (POLYMARKET_PRIVATE_KEY +
  * POLYMARKET_FUNDER_ADDRESS); when those aren't set we skip it with
- * a warning rather than failing. The research/runtime pages read only
- * local dashboard tables, so they do not need trading credentials.
+ * a warning rather than failing. The other pages read only local tables.
  */
 export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), filter exploration page (/exploration/), trade committee page (/committee/), backtest page (/backtest/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), proxy accuracy page (/proxy/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -120,26 +103,23 @@ export const dashboardsBuildCommand = defineCommand({
               ),
         )
         .describe(
-          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, exploration, committee, backtest, dryrun, proxy.",
+          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, dryrun, proxy.",
         ),
     }),
   ],
   examples: [
     "bun alea dashboards:build",
     "bun alea dashboards:build --deploy",
-    "bun alea dashboards:build --only committee --deploy",
+    "bun alea dashboards:build --only dryrun --deploy",
   ],
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
-    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `filter_runs`, `committee_selections`, `committee_backtest_runs`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
+    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `polymarket_resolutions`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
   async run({ io, options }) {
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
     await mkdir(webDir, { recursive: true });
-    await mkdir(explorationDir, { recursive: true });
-    await mkdir(committeeDir, { recursive: true });
-    await mkdir(backtestDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
@@ -160,21 +140,6 @@ export const dashboardsBuildCommand = defineCommand({
         name: "price-paths",
         run: (pageIo: DashboardBuildIo) =>
           buildPricePathsDashboard({ io: pageIo }),
-      },
-      {
-        name: "exploration",
-        run: (pageIo: DashboardBuildIo) =>
-          buildExplorationDashboard({ io: pageIo }),
-      },
-      {
-        name: "committee",
-        run: (pageIo: DashboardBuildIo) =>
-          buildTradeCommitteeDashboard({ io: pageIo }),
-      },
-      {
-        name: "backtest",
-        run: (pageIo: DashboardBuildIo) =>
-          buildBacktestDashboard({ io: pageIo }),
       },
       {
         name: "dryrun",
@@ -364,114 +329,6 @@ async function buildPricePathsDashboard({
         `  ${pc.dim("windows=")}${payload.windowCount.toLocaleString()}` +
         `  ${pc.dim("lookback=")}${payload.lookbackDays}d` +
         `  ${pc.dim("first=")}${firstWindow}\n` +
-        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-    );
-  } finally {
-    await destroyDatabase(db);
-  }
-}
-
-async function buildExplorationDashboard({
-  io,
-}: {
-  readonly io: { writeStdout: (line: string) => void };
-}): Promise<void> {
-  io.writeStdout(`${pc.bold("exploration")} ${pc.dim("(/exploration/)")}\n`);
-
-  const db = createDatabase();
-  try {
-    const payload = await loadExplorationPayload({ db });
-    const htmlPath = resolvePath(explorationDir, "index.html");
-    const jsonPath = resolvePath(explorationDir, "data.json");
-    await writeExplorationArtifacts({ payload, htmlPath, jsonPath });
-    if (payload.rows.length === 0) {
-      io.writeStdout(
-        `  ${pc.yellow("empty:")} no rows in filter_runs for the active training profile\n` +
-          `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-      );
-      return;
-    }
-    const totalEngagements = payload.rows.reduce(
-      (s, r) => s + r.nEngagements,
-      0,
-    );
-    const topRow = payload.rows[0];
-    const topLabel =
-      topRow === undefined || topRow.winRate === null
-        ? "—"
-        : `${(topRow.winRate * 100).toFixed(1)}% ${topRow.filterId} ${topRow.period}`;
-    io.writeStdout(
-      `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
-        `  ${pc.dim("engagements=")}${totalEngagements.toLocaleString()}` +
-        `  ${pc.dim("top=")}${topLabel}\n` +
-        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-    );
-  } finally {
-    await destroyDatabase(db);
-  }
-}
-
-async function buildTradeCommitteeDashboard({
-  io,
-}: {
-  readonly io: { writeStdout: (line: string) => void };
-}): Promise<void> {
-  io.writeStdout(`${pc.bold("trade committee")} ${pc.dim("(/committee/)")}\n`);
-
-  const db = createDatabase();
-  try {
-    const payload = await loadTradeCommitteePayload({ db });
-    const htmlPath = resolvePath(committeeDir, "index.html");
-    const jsonPath = resolvePath(committeeDir, "data.json");
-    await writeTradeCommitteeArtifacts({ payload, htmlPath, jsonPath });
-    const selectedAt =
-      payload.selectedAtMs === null
-        ? "none"
-        : new Date(payload.selectedAtMs).toISOString().slice(0, 16);
-    io.writeStdout(
-      `  ${pc.green("candidates =")} ${payload.rowCount.toLocaleString()}` +
-        `  ${pc.dim("filters=")}${payload.uniqueFilterCount.toLocaleString()}` +
-        `  ${pc.dim("selected_at=")}${selectedAt}\n` +
-        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-    );
-  } finally {
-    await destroyDatabase(db);
-  }
-}
-
-async function buildBacktestDashboard({
-  io,
-}: {
-  readonly io: { writeStdout: (line: string) => void };
-}): Promise<void> {
-  io.writeStdout(`${pc.bold("backtest")} ${pc.dim("(/backtest/)")}\n`);
-
-  const db = createDatabase();
-  try {
-    const payload = await loadBacktestPayload({ db });
-    const htmlPath = resolvePath(backtestDir, "index.html");
-    const jsonPath = resolvePath(backtestDir, "data.json");
-    await writeBacktestArtifacts({ payload, htmlPath, jsonPath });
-    const latest = payload.latestRun;
-    if (latest === null) {
-      io.writeStdout(
-        `  ${pc.yellow("no persisted committee backtest run")}\n` +
-          `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-      );
-      return;
-    }
-    const wr =
-      latest.totals.winRate === null
-        ? "-"
-        : `${(latest.totals.winRate * 100).toFixed(1)}%`;
-    io.writeStdout(
-      `  ${pc.green("run =")} ${latest.id}` +
-        `  ${pc.dim("decisions=")}${latest.totals.committeeDecisions.toLocaleString()}` +
-        `  ${pc.dim("scored=")}${latest.totals.scoredTrades.toLocaleString()}` +
-        `  ${pc.dim("stake=")}$${latest.stakeUsd.toLocaleString()}` +
-        `  ${pc.dim("wr=")}${wr}` +
-        `  ${pc.dim("pnl=")}$${latest.totals.pnlUsd.toLocaleString()}` +
-        "\n" +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {

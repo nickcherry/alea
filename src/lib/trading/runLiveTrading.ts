@@ -1,18 +1,17 @@
 import {
   resolveTradeDecisionMarkets,
-  TRADE_DECISION_HYDRATE_BARS,
   tradeDecisionLeadTimeMs,
+  tradeDecisionHydrateBars,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
-import type { FilterBar } from "@alea/lib/filters/types";
+import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { getPolymarketClobClient } from "@alea/lib/polymarket/getPolymarketClobClient";
-import type { MarketRegime } from "@alea/lib/regime/types";
 import {
   type FetchCandles,
   hydrateTradeDecisionCandleState,
@@ -61,7 +60,6 @@ export type LiveTradingLogEvent =
       readonly prediction: "u" | "d";
       readonly synthClose: number;
       readonly priceAgeMs: number | null;
-      readonly marketRegime: MarketRegime | null;
       readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
@@ -97,10 +95,11 @@ export async function runLiveTrading({
   }
   const fetchCandles = createMarketEventPythCandleFetcher({ db });
   for (const { asset, period } of selectedMarkets) {
+    const hydrateBars = tradeDecisionHydrateBars({ period });
     const state = await hydrateTradeDecisionCandleState({
       asset,
       period,
-      limit: TRADE_DECISION_HYDRATE_BARS,
+      limit: hydrateBars,
       fetchCandles,
       fetchCoinbaseBarsForHydrate: fetchNoCandles,
     });
@@ -232,15 +231,15 @@ async function refreshStateForDecision({
   readonly fetchCandles: FetchCandles;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<{
-  readonly seriesForDecision: AlignedBarSeries;
-  readonly syntheticBar: FilterBar;
+  readonly seriesForDecision: AlignedMarketSeries;
+  readonly syntheticBar: MarketBar;
   readonly priceAgeMs: number | null;
 } | null> {
   try {
     const refreshed = await refreshTradeDecisionCandleState({
       state,
       nowMs: now,
-      limit: TRADE_DECISION_HYDRATE_BARS,
+      limit: tradeDecisionHydrateBars({ period: state.period }),
       fetchCandles,
       fetchCoinbaseBarsForRefresh: fetchNoCandles,
     });
@@ -283,8 +282,8 @@ async function makeLiveDecision({
 }: {
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
-  readonly series: AlignedBarSeries;
-  readonly synthBar: FilterBar;
+  readonly series: AlignedMarketSeries;
+  readonly synthBar: MarketBar;
   readonly priceAgeMs: number | null;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly log: (event: LiveTradingLogEvent) => void;
@@ -304,7 +303,6 @@ async function makeLiveDecision({
     prediction: evaluated.prediction,
     synthClose: synthBar.close,
     priceAgeMs,
-    marketRegime: null,
     sourceCount: 1,
     up: evaluated.up,
     down: evaluated.down,

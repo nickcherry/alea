@@ -3,6 +3,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { env } from "@alea/constants/env";
+import {
+  buildDefaultMarketChartIndicators,
+  type MarketChartIndicators,
+} from "@alea/lib/candles/chart/buildMarketChartIndicators";
 import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
@@ -21,6 +25,7 @@ type RenderMarketChartImageParams = {
   readonly browserPath?: string;
   readonly showPriceLine?: boolean;
   readonly showTopInfo?: boolean;
+  readonly showIndicators?: boolean;
 };
 
 export type RenderMarketChartImageResult = {
@@ -41,6 +46,8 @@ type MarketChartPayload = {
   readonly showTopInfo: boolean;
   readonly candles: readonly LightweightCandlestick[];
   readonly volume: readonly LightweightVolumeBar[];
+  readonly indicators: MarketChartIndicators | null;
+  readonly indicatorLegend: readonly MarketChartLegendItem[];
 };
 
 type LightweightCandlestick = {
@@ -57,8 +64,14 @@ type LightweightVolumeBar = {
   readonly color: string;
 };
 
+type MarketChartLegendItem = {
+  readonly label: string;
+  readonly color: string;
+};
+
 const upColor = "#16a085";
 const downColor = "#e04f5f";
+const topbarHeight = 76;
 const fallbackBrowserPaths = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
@@ -87,6 +100,7 @@ export async function renderMarketChartImage({
   browserPath,
   showPriceLine = true,
   showTopInfo = true,
+  showIndicators = true,
 }: RenderMarketChartImageParams): Promise<RenderMarketChartImageResult> {
   if (candles.length === 0) {
     throw new Error(
@@ -106,6 +120,7 @@ export async function renderMarketChartImage({
     height,
     showPriceLine,
     showTopInfo,
+    showIndicators,
   });
   const html = await buildMarketChartHtml({ payload });
   const executablePath = await resolveBrowserPath({ browserPath });
@@ -153,6 +168,7 @@ export function marketChartPayload({
   height,
   showPriceLine = true,
   showTopInfo = true,
+  showIndicators = true,
 }: {
   readonly candles: readonly Candle[];
   readonly asset: Asset;
@@ -163,6 +179,7 @@ export function marketChartPayload({
   readonly height: number;
   readonly showPriceLine?: boolean;
   readonly showTopInfo?: boolean;
+  readonly showIndicators?: boolean;
 }): MarketChartPayload {
   const latest = candles[candles.length - 1];
   if (latest === undefined) {
@@ -175,6 +192,9 @@ export function marketChartPayload({
       : ((latest.close - previous.close) / previous.close) * 100;
   const title = `${asset.toUpperCase()}-${product === "spot" ? "USD" : "PERP"} ${timeframe}`;
   const subtitle = `${displaySource(source)} ${product}`;
+  const indicators = showIndicators
+    ? buildDefaultMarketChartIndicators({ candles })
+    : null;
 
   return {
     title,
@@ -203,6 +223,8 @@ export function marketChartPayload({
           ? "rgba(22, 160, 133, 0.42)"
           : "rgba(224, 79, 95, 0.42)",
     })),
+    indicators,
+    indicatorLegend: indicators === null ? [] : indicatorLegend(indicators),
   };
 }
 
@@ -245,9 +267,9 @@ async function buildMarketChartHtml({
       flex-direction: column;
     }
     .topbar {
-      height: 62px;
+      height: ${topbarHeight}px;
       box-sizing: border-box;
-      padding: 13px 18px 10px;
+      padding: 12px 18px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -285,6 +307,29 @@ async function buildMarketChartHtml({
       font-variant-numeric: tabular-nums;
       text-align: right;
     }
+    .indicator-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px 10px;
+      max-width: 880px;
+      font-size: 11px;
+      line-height: 1.15;
+      color: #96a3b5;
+      white-space: normal;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+    }
     .ohlc {
       font-size: 13px;
       color: #d6dde8;
@@ -297,7 +342,7 @@ async function buildMarketChartHtml({
     }
     #chart {
       width: ${payload.width}px;
-      height: ${payload.height - 62}px;
+      height: ${payload.height - topbarHeight}px;
     }
   </style>
 </head>
@@ -307,6 +352,7 @@ async function buildMarketChartHtml({
       <div class="identity">
         <div class="title"><span>${escapeHtml(payload.title)}</span></div>
         <div class="subtitle">${escapeHtml(payload.subtitle)}</div>
+        ${renderIndicatorLegend(payload.indicatorLegend)}
       </div>
       ${
         payload.showTopInfo
@@ -325,7 +371,7 @@ async function buildMarketChartHtml({
     const chartHost = document.getElementById("chart");
     const chart = LightweightCharts.createChart(chartHost, {
       width: payload.width,
-      height: payload.height - 62,
+      height: payload.height - ${topbarHeight},
       autoSize: false,
       layout: {
         background: { type: LightweightCharts.ColorType.Solid, color: "#0b0f16" },
@@ -370,6 +416,17 @@ async function buildMarketChartHtml({
     });
     candleSeries.setData(payload.candles);
 
+    for (const line of payload.indicators?.priceLines ?? []) {
+      if (line.data.length === 0) continue;
+      const series = chart.addSeries(LightweightCharts.LineSeries, {
+        color: line.color,
+        lineWidth: line.lineWidth,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      series.setData(line.data);
+    }
+
     const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
@@ -380,6 +437,47 @@ async function buildMarketChartHtml({
       scaleMargins: { top: 0.82, bottom: 0 },
     });
     volumeSeries.setData(payload.volume);
+
+    if (payload.indicators?.rsi !== null && payload.indicators?.rsi !== undefined) {
+      const rsiSeries = chart.addSeries(LightweightCharts.LineSeries, {
+        color: payload.indicators.rsi.color,
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      }, 1);
+      rsiSeries.setData(payload.indicators.rsi.data);
+      rsiSeries.createPriceLine({
+        price: payload.indicators.rsi.overbought,
+        color: "rgba(255, 107, 107, 0.52)",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: "70",
+      });
+      rsiSeries.createPriceLine({
+        price: payload.indicators.rsi.oversold,
+        color: "rgba(32, 201, 151, 0.52)",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: "30",
+      });
+      rsiSeries.priceScale().applyOptions({
+        scaleMargins: { top: 0.12, bottom: 0.12 },
+      });
+      const panes = chart.panes();
+      if (panes[1] !== undefined) {
+        panes[1].setHeight(Math.max(130, Math.round((payload.height - ${topbarHeight}) * 0.22)));
+      }
+    }
+
+    if ((payload.indicators?.rsiDivergenceMarkers ?? []).length > 0) {
+      LightweightCharts.createSeriesMarkers(
+        candleSeries,
+        payload.indicators.rsiDivergenceMarkers,
+        { zOrder: "top" },
+      );
+    }
 
     chart.timeScale().fitContent();
     requestAnimationFrame(() => {
@@ -430,6 +528,34 @@ function displaySource(source: CandleSource): string {
     case "pyth":
       return "Pyth";
   }
+}
+
+function indicatorLegend(
+  indicators: MarketChartIndicators,
+): readonly MarketChartLegendItem[] {
+  const legend = indicators.priceLines.map((line) => ({
+    label: line.label,
+    color: line.color,
+  }));
+  if (indicators.rsi !== null) {
+    legend.push({ label: indicators.rsi.label, color: indicators.rsi.color });
+    legend.push({ label: "RSI div", color: "#20c997" });
+  }
+  return legend;
+}
+
+function renderIndicatorLegend(
+  legend: readonly MarketChartLegendItem[],
+): string {
+  if (legend.length === 0) {
+    return "";
+  }
+  return `<div class="indicator-legend">${legend
+    .map(
+      (item) =>
+        `<span class="legend-item"><span class="legend-swatch" style="background:${escapeHtml(item.color)}"></span>${escapeHtml(item.label)}</span>`,
+    )
+    .join("")}</div>`;
 }
 
 function formatPrice(value: number): string {

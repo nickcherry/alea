@@ -27,6 +27,8 @@ describe("predictMarketChart helpers", () => {
     expect(prompt).toContain(
       "Predict whether the next candle will be green or red.",
     );
+    expect(prompt).toContain("SMA 20");
+    expect(prompt).toContain("RSI divergence marker labels");
     expect(prompt).toContain('"direction": "green"');
     expect(prompt).toContain('"reasoning"');
     expect(prompt).not.toContain("confidence");

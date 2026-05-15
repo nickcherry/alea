@@ -7,6 +7,7 @@ import {
   OPENAI_TRADE_DECISION_CHART_WIDTH,
   OPENAI_TRADE_DECISION_IMAGE_DETAIL,
 } from "@alea/constants/openAiTradeDecision";
+import { marketChartRecentBarsForTimeframe } from "@alea/constants/marketChart";
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import {
   type ChartPrediction,
@@ -14,8 +15,8 @@ import {
   type PredictMarketChartResult,
 } from "@alea/lib/candles/chart/predictMarketChart";
 import { renderMarketChartImage } from "@alea/lib/candles/chart/renderMarketChartImage";
-import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
-import type { FilterBar } from "@alea/lib/filters/types";
+import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Asset } from "@alea/types/assets";
 import type { Candle } from "@alea/types/candles";
 
@@ -47,7 +48,7 @@ export async function evaluateOpenAiChartTradeDecision({
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs?: number;
-  readonly series: AlignedBarSeries;
+  readonly series: AlignedMarketSeries;
   readonly predictChart?: PredictChart;
   readonly renderChart?: RenderChart;
 }): Promise<OpenAiChartTradeDecision> {
@@ -58,7 +59,9 @@ export async function evaluateOpenAiChartTradeDecision({
   });
 
   await renderChart({
-    candles: pythBarsToCandles({ asset, period, bars: series.pyth }),
+    candles: pythBarsToCandles({ asset, period, bars: series.pyth }).slice(
+      -marketChartRecentBarsForTimeframe({ timeframe: period }),
+    ),
     asset,
     source: "pyth",
     product: "spot",
@@ -68,6 +71,7 @@ export async function evaluateOpenAiChartTradeDecision({
     height: OPENAI_TRADE_DECISION_CHART_HEIGHT,
     showPriceLine: false,
     showTopInfo: false,
+    showIndicators: true,
   });
 
   const result = await predictChart({
@@ -108,7 +112,7 @@ function pythBarsToCandles({
 }: {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
-  readonly bars: readonly FilterBar[];
+  readonly bars: readonly MarketBar[];
 }): readonly Candle[] {
   return bars.map((bar) => ({
     source: "pyth",

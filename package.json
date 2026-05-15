@@ -1,6 +1,6 @@
 {
   "name": "alea",
-  "description": "Filter-committee research toolkit for Polymarket's 5-minute crypto up/down markets, fed by Pyth candles and live Pyth/Chainlink reference streams.",
+  "description": "OpenAI chart-decision trader for Polymarket crypto up/down markets, fed by Pyth candles and live Polymarket books.",
   "type": "module",
   "private": true,
   "bin": {

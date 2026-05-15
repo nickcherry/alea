@@ -3,7 +3,7 @@ import {
   LEAD_MINUTES_BY_PERIOD,
   LEAD_TIME_DRIFT_THRESHOLD_BPS,
 } from "@alea/constants/leadTimeDrift";
-import { TRAINING_WINDOW_END_EXCLUSIVE_MS } from "@alea/constants/researchWindows";
+import { PRICE_PATH_ANALYSIS_END_EXCLUSIVE_MS } from "@alea/constants/analysisWindows";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { Asset } from "@alea/types/assets";
@@ -57,7 +57,7 @@ export type LeadTimeDriftTimeframeBreakdown = {
 
 export type LeadTimeDriftPayload = {
   readonly generatedAtMs: number;
-  readonly trainingWindowEndExclusiveMs: number;
+  readonly analysisWindowEndExclusiveMs: number;
   readonly thresholdsBps: readonly number[];
   readonly hasOneMinuteCandles: boolean;
   readonly firstCandleMs: number | null;
@@ -106,25 +106,25 @@ export async function loadLeadTimeDriftPayload({
   readonly now?: () => number;
 }): Promise<LeadTimeDriftPayload> {
   const generatedAtMs = now();
-  const trainingWindowEndExclusiveMs = TRAINING_WINDOW_END_EXCLUSIVE_MS;
+  const analysisWindowEndExclusiveMs = PRICE_PATH_ANALYSIS_END_EXCLUSIVE_MS;
 
   const hasOneMinuteCandles = await checkOneMinuteCandlesExist({
     db,
-    endExclusiveMs: trainingWindowEndExclusiveMs,
+    endExclusiveMs: analysisWindowEndExclusiveMs,
   });
   if (!hasOneMinuteCandles) {
-    return emptyPayload({ generatedAtMs, trainingWindowEndExclusiveMs });
+    return emptyPayload({ generatedAtMs, analysisWindowEndExclusiveMs });
   }
 
   const rows = await fetchAggregateRows({
     db,
-    endExclusiveMs: trainingWindowEndExclusiveMs,
+    endExclusiveMs: analysisWindowEndExclusiveMs,
   });
 
   return buildLeadTimeDriftPayloadFromAggregateRows({
     rows,
     generatedAtMs,
-    trainingWindowEndExclusiveMs,
+    analysisWindowEndExclusiveMs,
     hasOneMinuteCandles: true,
   });
 }
@@ -132,16 +132,16 @@ export async function loadLeadTimeDriftPayload({
 export function buildLeadTimeDriftPayloadFromAggregateRows({
   rows,
   generatedAtMs,
-  trainingWindowEndExclusiveMs,
+  analysisWindowEndExclusiveMs,
   hasOneMinuteCandles,
 }: {
   readonly rows: readonly LeadTimeDriftAggregateRow[];
   readonly generatedAtMs: number;
-  readonly trainingWindowEndExclusiveMs: number;
+  readonly analysisWindowEndExclusiveMs: number;
   readonly hasOneMinuteCandles: boolean;
 }): LeadTimeDriftPayload {
   if (!hasOneMinuteCandles) {
-    return emptyPayload({ generatedAtMs, trainingWindowEndExclusiveMs });
+    return emptyPayload({ generatedAtMs, analysisWindowEndExclusiveMs });
   }
 
   let firstCandleMs: number | null = null;
@@ -217,7 +217,7 @@ export function buildLeadTimeDriftPayloadFromAggregateRows({
 
   return {
     generatedAtMs,
-    trainingWindowEndExclusiveMs,
+    analysisWindowEndExclusiveMs,
     thresholdsBps: LEAD_TIME_DRIFT_THRESHOLD_BPS,
     hasOneMinuteCandles: true,
     firstCandleMs,
@@ -387,14 +387,14 @@ function aggregateAcrossAssets({
 
 function emptyPayload({
   generatedAtMs,
-  trainingWindowEndExclusiveMs,
+  analysisWindowEndExclusiveMs,
 }: {
   readonly generatedAtMs: number;
-  readonly trainingWindowEndExclusiveMs: number;
+  readonly analysisWindowEndExclusiveMs: number;
 }): LeadTimeDriftPayload {
   return {
     generatedAtMs,
-    trainingWindowEndExclusiveMs,
+    analysisWindowEndExclusiveMs,
     thresholdsBps: LEAD_TIME_DRIFT_THRESHOLD_BPS,
     hasOneMinuteCandles: false,
     firstCandleMs: null,

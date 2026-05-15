@@ -32,7 +32,6 @@ export function liveTradingLogEventToTelemetry(
         prediction: event.prediction,
         synthClose: event.synthClose,
         priceAgeMs: event.priceAgeMs,
-        marketRegime: event.marketRegime,
         decisionSourceCount: event.sourceCount,
         upVotes: event.up,
         downVotes: event.down,

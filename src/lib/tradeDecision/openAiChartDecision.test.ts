@@ -1,6 +1,7 @@
 import { resolve as resolvePath } from "node:path";
 
-import type { FilterBar } from "@alea/lib/filters/types";
+import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import {
   chartPredictionToTradeDecision,
   evaluateOpenAiChartTradeDecision,
@@ -60,6 +61,7 @@ describe("chartPredictionToTradeDecision", () => {
           timeframe: params.timeframe,
           showPriceLine: params.showPriceLine,
           showTopInfo: params.showTopInfo,
+          showIndicators: params.showIndicators,
           candleCount: params.candles.length,
         };
         return {
@@ -89,6 +91,7 @@ describe("chartPredictionToTradeDecision", () => {
     expect(renderedChart.timeframe).toBe("5m");
     expect(renderedChart.showPriceLine).toBe(false);
     expect(renderedChart.showTopInfo).toBe(false);
+    expect(renderedChart.showIndicators).toBe(true);
     expect(renderedChart.candleCount).toBe(2);
     const imagePath = requireString(predictedImagePath);
     expect(
@@ -96,6 +99,49 @@ describe("chartPredictionToTradeDecision", () => {
     ).toBe(true);
     expect(imagePath).toContain("2026-01-02T03-04-05-006Z-btc-5m-");
     expect(imagePath.endsWith(".png")).toBe(true);
+  });
+
+  it("trims trading charts to the period-specific lookback window", async () => {
+    const cases: readonly {
+      readonly period: TradeDecisionPeriod;
+      readonly inputBars: number;
+      readonly expectedRenderedBars: number;
+    }[] = [
+      { period: "5m", inputBars: 1300, expectedRenderedBars: 1152 },
+      { period: "15m", inputBars: 1200, expectedRenderedBars: 960 },
+    ];
+
+    for (const testCase of cases) {
+      let renderedCandleCount = 0;
+      await evaluateOpenAiChartTradeDecision({
+        asset: "btc",
+        period: testCase.period,
+        series: {
+          pyth: Array.from({ length: testCase.inputBars }, (_, i) =>
+            bar({ i }),
+          ),
+          coinbase: Array.from({ length: testCase.inputBars }, () => null),
+        },
+        renderChart: async (params) => {
+          renderedCandleCount = params.candles.length;
+          return {
+            outPath: params.outPath,
+            candleCount: params.candles.length,
+            start: params.candles[0]!.timestamp,
+            end: params.candles[params.candles.length - 1]!.timestamp,
+          };
+        },
+        predictChart: async () => ({
+          model: "gpt-5.4",
+          prediction: {
+            direction: "green",
+            reasoning: "The visible chart supports continuation.",
+          },
+        }),
+      });
+
+      expect(renderedCandleCount).toBe(testCase.expectedRenderedBars);
+    }
   });
 });
 
@@ -105,6 +151,7 @@ type RenderedChartParams = {
   readonly timeframe: string;
   readonly showPriceLine: boolean | undefined;
   readonly showTopInfo: boolean | undefined;
+  readonly showIndicators: boolean | undefined;
   readonly candleCount: number;
 };
 
@@ -124,7 +171,7 @@ function requireString(value: string | null): string {
   return value;
 }
 
-function bar({ i }: { readonly i: number }): FilterBar {
+function bar({ i }: { readonly i: number }): MarketBar {
   return {
     openTimeMs: i * 5 * 60 * 1000,
     open: 100 + i,

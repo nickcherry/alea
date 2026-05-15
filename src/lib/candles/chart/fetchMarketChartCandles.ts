@@ -1,4 +1,5 @@
 import { candlesPerFetchPage } from "@alea/constants/candles";
+import { marketChartRecentBarsForTimeframe } from "@alea/constants/marketChart";
 import { alignTimeframeWindow } from "@alea/lib/candles/alignTimeframeWindow";
 import { fetchCandlesPage } from "@alea/lib/candles/sources/fetchCandlesPage";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
@@ -20,8 +21,15 @@ type FetchMarketChartCandlesParams = {
 export type MarketChartCandleWindow = {
   readonly start: Date;
   readonly end: Date;
-  readonly mode: "recent" | "range";
-};
+} & (
+  | {
+      readonly mode: "recent";
+      readonly bars: number;
+    }
+  | {
+      readonly mode: "range";
+    }
+);
 
 const maxMarketChartCandles = 2000;
 
@@ -73,9 +81,7 @@ export async function fetchMarketChartCandles({
   }
 
   const sorted = filterCandlesForChartWindow({ candles, window });
-  return window.mode === "recent" && bars !== undefined
-    ? sorted.slice(-bars)
-    : sorted;
+  return window.mode === "recent" ? sorted.slice(-window.bars) : sorted;
 }
 
 export function filterCandlesForChartWindow({
@@ -125,13 +131,22 @@ export function marketChartCandleWindow({
   }
 
   if (bars === undefined) {
-    throw new Error("recent chart mode requires a bar count");
+    const resolvedBars = marketChartRecentBarsForTimeframe({ timeframe });
+    return {
+      start: new Date(
+        alignedEnd.getTime() - resolvedBars * timeframeMs({ timeframe }),
+      ),
+      end: alignedEnd,
+      mode: "recent",
+      bars: resolvedBars,
+    };
   }
 
   return {
     start: new Date(alignedEnd.getTime() - bars * timeframeMs({ timeframe })),
     end: alignedEnd,
     mode: "recent",
+    bars,
   };
 }
 

@@ -4,13 +4,8 @@ import type { Asset } from "@alea/types/assets";
 /**
  * Vendor-shared shapes for the Polymarket market-data WebSocket
  * stream (consumed by `marketCapture` to record book/trade
- * snapshots). The richer Vendor abstraction that used to live here —
- * order placement, cancels, user-fill streams, market hydration —
- * was tied to the deleted regime/live-trading framework and is gone.
- *
- * When live trading comes back on the new filter-committee framework
- * it will land here as a fresh, narrower interface; the abandoned
- * Vendor draft isn't worth resurrecting.
+ * snapshots). Order placement, authenticated user streams, and market
+ * discovery live in narrower Polymarket-specific modules.
  */
 
 /**

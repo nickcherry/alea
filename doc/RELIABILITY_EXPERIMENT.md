@@ -6,20 +6,22 @@
 as practical proxies for Polymarket's Chainlink-settled 5-minute crypto
 markets.
 
-Training and live trading intentionally use Coinbase/Binance spot and perp
-prices instead of Polymarket's Chainlink stream:
+The chart-decision and live-trading path can compare Pyth, Coinbase/Binance
+spot, and perp prices instead of relying directly on Polymarket's Chainlink
+stream:
 
 - Historical Chainlink Data Streams data is not available to us in the form we
-  need for broad local training without paid/enterprise access.
+  need for broad local analysis without paid/enterprise access.
 - Coinbase/Binance spot and perp feeds are easier to capture historically and
   arrive faster live.
 - That speed is the point: the exchange feeds may be small leading indicators
   for the slower Chainlink-derived Polymarket settlement feed.
 
 The risk is proxy drift. If Binance/Coinbase often end a 5-minute window on the
-opposite side from Polymarket's Chainlink feed, then training on those feeds
-would teach the model the wrong settlement target and live trading would be
-measuring the wrong line. This experiment exists to detect that failure mode.
+opposite side from Polymarket's Chainlink feed, then those feeds would point
+the chart-decision path at the wrong settlement target and live trading would
+be measuring the wrong line. This experiment exists to detect that failure
+mode.
 
 This is not an absolute price-accuracy test. Coinbase, Binance, spot, and perps
 can all carry different bases. The required property is narrower: when each
@@ -59,10 +61,10 @@ Ties favor `UP`, matching the existing trading code and Polymarket's current
 
 The command deliberately uses live boundary ticks rather than OHLC candles.
 Polymarket's market wording is beginning-price vs ending-price over the titled
-time range, sourced from Chainlink Data Streams. For training, our historical
-pipeline approximates that with candle open/close values from the exchange
-series we can actually store and replay. This experiment checks whether that
-proxy is directionally reliable enough to keep using.
+time range, sourced from Chainlink Data Streams. For historical analysis, Alea
+approximates that with candle open/close values from the exchange series it can
+store and replay. This experiment checks whether that proxy is directionally
+reliable enough to keep using.
 
 ## Commands
 

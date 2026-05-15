@@ -13,15 +13,6 @@
   var WR_POSITIVE_MIN = 0.52;
   var WR_NEGATIVE_MAX = 0.48;
 
-  var FAMILY_LABELS = {
-    band_reversion: "band reversion",
-    oscillator_reversion: "oscillator reversion",
-    velocity_fade: "velocity fade",
-    ma_position: "ma position",
-    pattern: "pattern",
-    divergence: "divergence",
-  };
-
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -33,14 +24,6 @@
 
   function formatPercent(value) {
     return (Number(value) * 100).toFixed(1) + "%";
-  }
-
-  function formatMarketRegime(value) {
-    return String(value).replace(/_/g, " ");
-  }
-
-  function familyLabel(family) {
-    return FAMILY_LABELS[family] || String(family).replace(/_/g, " ");
   }
 
   function winRateToneClass(wr) {
@@ -70,11 +53,8 @@
   window.alea = {
     escapeHtml: escapeHtml,
     formatPercent: formatPercent,
-    formatMarketRegime: formatMarketRegime,
-    familyLabel: familyLabel,
     winRateToneClass: winRateToneClass,
     infoTip: infoTip,
-    FAMILY_LABELS: FAMILY_LABELS,
     WR_POSITIVE_MIN: WR_POSITIVE_MIN,
     WR_NEGATIVE_MAX: WR_NEGATIVE_MAX,
   };

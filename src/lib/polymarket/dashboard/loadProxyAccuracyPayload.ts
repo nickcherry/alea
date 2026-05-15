@@ -1,4 +1,4 @@
-import { TRAINING_OUTCOME_MIN_ABS_MOVE_PCT } from "@alea/constants/training";
+import { OUTCOME_MIN_ABS_MOVE_PCT } from "@alea/constants/outcome";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
   aggregateProxyAccuracy,
@@ -17,13 +17,13 @@ import { sql } from "kysely";
 
 const EXTREME_DISAGREEMENT_LIMIT = 50;
 const PROXY_ACCURACY_PAYLOAD_CACHE_KEY = "proxy-accuracy";
-const PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION = 1;
+const PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION = 2;
 
 type ProxyAccuracyPayloadCacheKey = {
   readonly schemaVersion: number;
   readonly resolutionsFingerprint: string;
   readonly pythCandleFingerprint: string;
-  readonly trainingThresholdPct: number;
+  readonly outcomeThresholdPct: number;
 };
 
 type JoinedRow = {
@@ -180,7 +180,7 @@ async function buildProxyAccuracyPayload({
         asset,
         aggregate: aggregateProxyAccuracy({
           entries,
-          clearMovePct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+          clearMovePct: OUTCOME_MIN_ABS_MOVE_PCT,
         }),
       }));
 
@@ -188,7 +188,7 @@ async function buildProxyAccuracyPayload({
       timeframe,
       aggregate: aggregateProxyAccuracy({
         entries: allEntries,
-        clearMovePct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+        clearMovePct: OUTCOME_MIN_ABS_MOVE_PCT,
       }),
       perAsset,
       moveBucketsAll: histogramByMovePct({
@@ -205,7 +205,7 @@ async function buildProxyAccuracyPayload({
   return {
     generatedAtMs: now(),
     coverage,
-    trainingThresholdPct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+    outcomeThresholdPct: OUTCOME_MIN_ABS_MOVE_PCT,
     breakdowns,
     extremeDisagreements,
   };
@@ -225,7 +225,7 @@ async function loadProxyAccuracyPayloadCacheKey({
     schemaVersion: PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION,
     resolutionsFingerprint,
     pythCandleFingerprint,
-    trainingThresholdPct: TRAINING_OUTCOME_MIN_ABS_MOVE_PCT,
+    outcomeThresholdPct: OUTCOME_MIN_ABS_MOVE_PCT,
   };
 }
 
@@ -245,7 +245,7 @@ async function loadCachedProxyAccuracyPayload({
     .where("schema_version", "=", cacheKey.schemaVersion)
     .where("resolutions_fingerprint", "=", cacheKey.resolutionsFingerprint)
     .where("pyth_candle_fingerprint", "=", cacheKey.pythCandleFingerprint)
-    .where("training_threshold_pct", "=", cacheKey.trainingThresholdPct)
+    .where("outcome_threshold_pct", "=", cacheKey.outcomeThresholdPct)
     .executeTakeFirst();
 
   if (row === undefined || !isProxyAccuracyPayload(row.payload)) {
@@ -271,7 +271,7 @@ async function persistProxyAccuracyPayloadCache({
       schema_version: cacheKey.schemaVersion,
       resolutions_fingerprint: cacheKey.resolutionsFingerprint,
       pyth_candle_fingerprint: cacheKey.pythCandleFingerprint,
-      training_threshold_pct: cacheKey.trainingThresholdPct,
+      outcome_threshold_pct: cacheKey.outcomeThresholdPct,
       payload,
       computed_at_ms: computedAtMs,
     })
@@ -280,7 +280,7 @@ async function persistProxyAccuracyPayloadCache({
         schema_version: cacheKey.schemaVersion,
         resolutions_fingerprint: cacheKey.resolutionsFingerprint,
         pyth_candle_fingerprint: cacheKey.pythCandleFingerprint,
-        training_threshold_pct: cacheKey.trainingThresholdPct,
+        outcome_threshold_pct: cacheKey.outcomeThresholdPct,
         payload,
         computed_at_ms: computedAtMs,
       }),
@@ -380,7 +380,7 @@ function isProxyAccuracyPayload(value: unknown): value is ProxyAccuracyPayload {
   const candidate = value as Partial<ProxyAccuracyPayload>;
   return (
     typeof candidate.generatedAtMs === "number" &&
-    typeof candidate.trainingThresholdPct === "number" &&
+    typeof candidate.outcomeThresholdPct === "number" &&
     candidate.coverage !== undefined &&
     Array.isArray(candidate.breakdowns) &&
     Array.isArray(candidate.extremeDisagreements)

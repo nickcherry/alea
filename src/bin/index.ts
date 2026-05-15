@@ -1,11 +1,7 @@
 #!/usr/bin/env bun
-import { trainingRunCommand } from "@alea/bin/backtest/run";
-import { backtestRunCommand } from "@alea/bin/backtest/runCommittee";
-import { backtestSweepCommitteeCommand } from "@alea/bin/backtest/sweepCommittee";
 import { candlesChartCommand } from "@alea/bin/candles/chart";
 import { candlesFillGapsCommand } from "@alea/bin/candles/fillGaps";
 import { candlesSyncCommand } from "@alea/bin/candles/sync";
-import { committeeSelectCommand } from "@alea/bin/committee/select";
 import { dashboardsBuildCommand } from "@alea/bin/dashboards/build";
 import { dataCaptureCommand } from "@alea/bin/data/capture";
 import { dataIngestPendingCommand } from "@alea/bin/data/ingestPending";
@@ -17,7 +13,6 @@ import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
 import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
 import { predictChartCommand } from "@alea/bin/predict/chart";
-import { regimesBackfillCommand } from "@alea/bin/regimes/backfill";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { sayTextCommand } from "@alea/bin/say/text";
@@ -35,16 +30,12 @@ import { createCli } from "@alea/lib/cli/createCli";
 
 const cli = createCli({
   name: "alea",
-  summary: "Polymarket crypto up/down filter-committee trader",
+  summary: "Polymarket crypto up/down OpenAI chart trader",
   commands: [
     dbMigrateCommand,
     candlesSyncCommand,
     candlesFillGapsCommand,
     candlesChartCommand,
-    trainingRunCommand,
-    backtestRunCommand,
-    backtestSweepCommitteeCommand,
-    committeeSelectCommand,
     dryRunCommand,
     dashboardsBuildCommand,
     dataCaptureCommand,
@@ -53,7 +44,6 @@ const cli = createCli({
     latencyChartCommand,
     reliabilityCaptureCommand,
     reliabilityChartCommand,
-    regimesBackfillCommand,
     sayTextCommand,
     telegramTestCommand,
     telemetryQueryCommand,

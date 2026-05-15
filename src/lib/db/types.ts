@@ -50,73 +50,7 @@ export interface MarketEventTable {
 }
 
 /**
- * Aggregate cache for filter training artifacts: one row per
- * (filter_id, filter_version, config_canon, period, asset). See
- * migration `202605110000_create_filter_runs.ts` for the original
- * rationale. Per-prediction detail lives in the relational
- * `filter_engagements` table.
- * The columns left here exist purely to support fast leaderboard
- * queries without scanning engagements. `training_profile` identifies
- * the outcome-labeling rule and research window used to produce the
- * derived row.
- */
-export interface FilterRunTable {
-  readonly run_hash: string;
-  readonly filter_id: string;
-  readonly filter_version: number;
-  readonly training_profile: string;
-  readonly config: unknown;
-  readonly config_canon: string;
-  readonly period: string;
-  readonly asset: string;
-  readonly range_first_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly range_last_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly n_bars: number;
-  readonly n_engagements_up: number;
-  readonly n_wins_up: number;
-  readonly n_engagements_down: number;
-  readonly n_wins_down: number;
-  readonly computed_at_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-}
-
-/**
- * Append-only per-prediction tape. One row per non-abstain engagement
- * of any candidate. `run_hash` joins to `filter_runs`; `ts_ms` is the
- * open-time of the candle being predicted (NOT the candle the filter
- * last saw). `direction` is the filter's vote ('u' or 'd'); `won` is
- * 1 iff the realised direction matched.
- *
- * Quarter buckets are derived from `ts_ms` at query time
- * (`extract(quarter from to_timestamp(ts_ms / 1000.0))`); there's no
- * separate `quarter` column to keep the table narrow.
- */
-export interface FilterEngagementTable {
-  readonly run_hash: string;
-  readonly ts_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly direction: "u" | "d";
-  readonly won: number;
-}
-
-/**
- * One row per committee decision made by the dry-run runner. The
- * vote tally stored in `regime_votes` is after the shared
- * one-vote-per-filter policy. See
+ * One row per OpenAI chart decision made by the dry-run runner. See
  * migration `202605120100_create_dry_run_decisions.ts` for the
  * column-by-column rationale. `actual_close` / `won` start null
  * and get filled in once the target bar settles.
@@ -137,11 +71,10 @@ export interface DryRunDecisionTable {
   readonly period: string;
   readonly prediction: "u" | "d";
   readonly synth_open: number;
-  readonly regime_votes: unknown;
+  readonly decision_audit: unknown;
   readonly actual_open: number | null;
   readonly actual_close: number | null;
   readonly won: number | null;
-  readonly market_regime: string | null;
   readonly decision_started_at_ms: ColumnType<
     string | null,
     string | number | bigint | null,
@@ -200,8 +133,7 @@ export interface DryRunDecisionAttemptTable {
   >;
   readonly decision_duration_ms: number;
   readonly prediction: "u" | "d" | null;
-  readonly market_regime: string | null;
-  readonly roster_size: number;
+  readonly source_count: number;
   readonly up_votes: number;
   readonly down_votes: number;
   readonly abstain_votes: number;
@@ -215,17 +147,6 @@ export interface DryRunDecisionAttemptTable {
     string | number | bigint | null,
     string | number | bigint | null
   >;
-}
-
-export interface BarRegimeTable {
-  readonly asset: string;
-  readonly period: string;
-  readonly ts_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly market_regime: string | null;
 }
 
 /**
@@ -305,80 +226,12 @@ export interface PolymarketPriceSampleTable {
   readonly samples: Buffer;
 }
 
-export interface CommitteeSelectionTable {
-  readonly training_profile: string;
-  readonly asset: string;
-  readonly market_regime: string;
-  readonly period: string;
-  readonly filter_id: string;
-  readonly filter_version: number;
-  readonly config_canon: string;
-  readonly rank: number;
-  readonly n_engagements: number;
-  readonly n_wins: number;
-  readonly win_rate: number;
-  readonly wilson_low: number;
-  readonly worst_quarter_wr: number | null;
-  readonly selected_at_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-}
-
-export interface CommitteeBacktestRunTable {
-  readonly id: Generated<string>;
-  readonly run_profile: string;
-  readonly training_profile: string;
-  readonly selected_at_ms: ColumnType<
-    string | null,
-    string | number | bigint | null,
-    string | number | bigint | null
-  >;
-  readonly window_start_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly window_end_exclusive_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly started_at_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly completed_at_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-  readonly duration_ms: number;
-  readonly summary_json: unknown;
-}
-
-export interface ExplorationPayloadCacheTable {
-  readonly training_profile: string;
-  readonly schema_version: number;
-  readonly active_candidate_fingerprint: string;
-  readonly filter_runs_fingerprint: string;
-  readonly bar_regimes_fingerprint: string;
-  readonly payload: unknown;
-  readonly computed_at_ms: ColumnType<
-    string,
-    string | number | bigint,
-    string | number | bigint
-  >;
-}
-
 export interface ProxyAccuracyPayloadCacheTable {
   readonly cache_key: string;
   readonly schema_version: number;
   readonly resolutions_fingerprint: string;
   readonly pyth_candle_fingerprint: string;
-  readonly training_threshold_pct: number;
+  readonly outcome_threshold_pct: number;
   readonly payload: unknown;
   readonly computed_at_ms: ColumnType<
     string,
@@ -390,14 +243,8 @@ export interface ProxyAccuracyPayloadCacheTable {
 export interface Database {
   readonly candles: CandleTable;
   readonly market_event: MarketEventTable;
-  readonly filter_runs: FilterRunTable;
-  readonly filter_engagements: FilterEngagementTable;
   readonly dry_run_decisions: DryRunDecisionTable;
   readonly dry_run_decision_attempts: DryRunDecisionAttemptTable;
-  readonly bar_regimes: BarRegimeTable;
-  readonly committee_selections: CommitteeSelectionTable;
-  readonly committee_backtest_runs: CommitteeBacktestRunTable;
-  readonly exploration_payload_cache: ExplorationPayloadCacheTable;
   readonly proxy_accuracy_payload_cache: ProxyAccuracyPayloadCacheTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
   readonly polymarket_price_samples: PolymarketPriceSampleTable;

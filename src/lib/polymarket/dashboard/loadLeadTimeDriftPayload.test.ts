@@ -5,7 +5,7 @@ import {
 import { describe, expect, it } from "bun:test";
 
 const generatedAtMs = 1_778_517_600_000;
-const trainingWindowEndExclusiveMs = 1_780_000_000_000;
+const analysisWindowEndExclusiveMs = 1_780_000_000_000;
 
 function aggregateRow(
   overrides: Partial<LeadTimeDriftAggregateRow> &
@@ -36,7 +36,7 @@ describe("lead-time drift payload", () => {
     const payload = buildLeadTimeDriftPayloadFromAggregateRows({
       rows: [],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: false,
     });
     expect(payload.hasOneMinuteCandles).toBe(false);
@@ -55,7 +55,7 @@ describe("lead-time drift payload", () => {
         aggregateRow({ asset: "btc", timeframe: "15m", leadMinutes: 3 }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
 
@@ -82,7 +82,7 @@ describe("lead-time drift payload", () => {
         }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
     const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
@@ -101,7 +101,7 @@ describe("lead-time drift payload", () => {
         }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
     const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
@@ -144,7 +144,7 @@ describe("lead-time drift payload", () => {
         }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
     const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
@@ -182,7 +182,7 @@ describe("lead-time drift payload", () => {
         }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
     const fiveMinute = payload.breakdowns.find((b) => b.timeframe === "5m");
@@ -214,7 +214,7 @@ describe("lead-time drift payload", () => {
         }),
       ],
       generatedAtMs,
-      trainingWindowEndExclusiveMs,
+      analysisWindowEndExclusiveMs,
       hasOneMinuteCandles: true,
     });
     expect(payload.firstCandleMs).toBe(1_650_000_000_000);

@@ -1,5 +1,3 @@
-import type { FilterFamily } from "@alea/lib/filters/types";
-
 /**
  * Shared formatting and HTML helpers for Alea dashboard renderers.
  *
@@ -66,39 +64,6 @@ export function formatDateTime({ ms }: { readonly ms: number }): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-/** Underscore-separated regime id → spaced label ("low_vol_ranging" → "low vol ranging"). */
-export function formatMarketRegime({
-  value,
-}: {
-  readonly value: string;
-}): string {
-  return value.replaceAll("_", " ");
-}
-
-/** Snake-case filter family id → spaced label ("band_reversion" → "band reversion"). */
-export function familyLabel({
-  family,
-}: {
-  readonly family: FilterFamily;
-}): string {
-  switch (family) {
-    case "band_reversion":
-      return "band reversion";
-    case "oscillator_reversion":
-      return "oscillator reversion";
-    case "velocity_fade":
-      return "velocity fade";
-    case "ma_position":
-      return "ma position";
-    case "pattern":
-      return "pattern";
-    case "divergence":
-      return "divergence";
-    default:
-      return family.replaceAll("_", " ");
-  }
 }
 
 /** Resolve a tone band for a (possibly-missing) win rate. */

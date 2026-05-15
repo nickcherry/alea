@@ -4,8 +4,8 @@ import {
 } from "@alea/constants/dryRun";
 import {
   resolveTradeDecisionMarkets,
-  TRADE_DECISION_HYDRATE_BARS,
   tradeDecisionLeadTimeMs,
+  tradeDecisionHydrateBars,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
@@ -15,10 +15,9 @@ import {
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
-import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
-import type { FilterBar } from "@alea/lib/filters/types";
+import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
-import type { MarketRegime } from "@alea/lib/regime/types";
 import {
   type FetchCandles,
   hydrateTradeDecisionCandleState,
@@ -61,7 +60,6 @@ export type DryRunLogEvent =
       readonly tsMs: number;
       readonly prediction: "u" | "d";
       readonly synthClose: number;
-      readonly marketRegime: MarketRegime | null;
       readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
@@ -134,10 +132,11 @@ export async function runDryRun({
   const fetchCandles = createMarketEventPythCandleFetcher({ db });
   // Hydrate.
   for (const { asset, period } of selectedMarkets) {
+    const hydrateBars = tradeDecisionHydrateBars({ period });
     const state = await hydrateTradeDecisionCandleState({
       asset,
       period,
-      limit: TRADE_DECISION_HYDRATE_BARS,
+      limit: hydrateBars,
       fetchCandles,
       fetchCoinbaseBarsForHydrate: fetchNoCandles,
     });
@@ -201,7 +200,7 @@ export async function runDryRun({
                 refreshed = await refreshTradeDecisionCandleState({
                   state,
                   nowMs: now,
-                  limit: TRADE_DECISION_HYDRATE_BARS,
+                  limit: tradeDecisionHydrateBars({ period: state.period }),
                   fetchCandles,
                   fetchCoinbaseBarsForRefresh: fetchNoCandles,
                 });
@@ -277,8 +276,8 @@ async function makePrediction({
   readonly db: DatabaseClient;
   readonly state: TradeDecisionCandleState;
   readonly targetTsMs: number;
-  readonly series: AlignedBarSeries;
-  readonly synthBar: FilterBar;
+  readonly series: AlignedMarketSeries;
+  readonly synthBar: MarketBar;
   readonly pendingByState: Map<string, Map<number, string>>;
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
@@ -299,7 +298,6 @@ async function makePrediction({
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
     synthClose: synthBar.close,
-    marketRegime: null,
     sourceCount: 1,
     up: evaluated.up,
     down: evaluated.down,
@@ -315,9 +313,6 @@ async function makePrediction({
   // the prior bar AND the open we're betting the next bar moves away
   // from.
   //
-  // `regime_votes` keeps its legacy column name but now stores the
-  // OpenAI chart audit object. Old rows may still hold committee vote
-  // tallies; the dashboard loader handles both shapes.
   const inserted = await db
     .insertInto("dry_run_decisions")
     .values({
@@ -327,7 +322,7 @@ async function makePrediction({
       period: state.period,
       prediction,
       synth_open: synthBar.close,
-      regime_votes: JSON.stringify({
+      decision_audit: JSON.stringify({
         source: "openai_chart",
         model: evaluated.model,
         direction: evaluated.direction,
@@ -336,7 +331,6 @@ async function makePrediction({
         down: evaluated.down,
         abstain: evaluated.abstain,
       }),
-      market_regime: null,
       decision_started_at_ms: decisionStartedAtMs,
       decision_completed_at_ms: decisionCompletedAtMs,
       decision_duration_ms: decisionDurationMs,
@@ -351,8 +345,7 @@ async function makePrediction({
     decisionCompletedAtMs,
     decisionDurationMs,
     prediction,
-    marketRegime: null,
-    rosterSize: 1,
+    sourceCount: 1,
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
@@ -385,8 +378,7 @@ async function recordDecisionAttempt({
   decisionCompletedAtMs,
   decisionDurationMs,
   prediction,
-  marketRegime,
-  rosterSize,
+  sourceCount,
   up,
   down,
   abstain,
@@ -402,8 +394,7 @@ async function recordDecisionAttempt({
   readonly decisionCompletedAtMs: number;
   readonly decisionDurationMs: number;
   readonly prediction: "u" | "d" | null;
-  readonly marketRegime: MarketRegime | null;
-  readonly rosterSize: number;
+  readonly sourceCount: number;
   readonly up: number;
   readonly down: number;
   readonly abstain: number;
@@ -422,8 +413,7 @@ async function recordDecisionAttempt({
       decision_completed_at_ms: decisionCompletedAtMs,
       decision_duration_ms: decisionDurationMs,
       prediction,
-      market_regime: marketRegime,
-      roster_size: rosterSize,
+      source_count: sourceCount,
       up_votes: up,
       down_votes: down,
       abstain_votes: abstain,
@@ -481,7 +471,7 @@ async function scorePendingDecisions({
   if (pending === undefined) {
     return;
   }
-  const barsByOpenTime = new Map<number, FilterBar>();
+  const barsByOpenTime = new Map<number, MarketBar>();
   for (const bar of state.bars) {
     barsByOpenTime.set(bar.openTimeMs, bar);
   }
@@ -511,14 +501,12 @@ async function scoreDecision({
   readonly db: DatabaseClient;
   readonly state: TradeDecisionCandleState;
   readonly decisionId: string;
-  readonly closedBar: FilterBar;
+  readonly closedBar: MarketBar;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   // Dry-run rows model binary Polymarket-style settlement on the
   // canonical Pyth proxy: every closed target candle gets a side, and
   // close == open favors UP.
-  // Training/backtest still ignore tiny proxy moves via the ambiguity
-  // threshold before computing research hit rate.
   const actualUp = closedBar.close >= closedBar.open;
   // Look up the prediction so we know how to score.
   const row = await db

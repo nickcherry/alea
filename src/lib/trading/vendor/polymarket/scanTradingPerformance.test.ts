@@ -115,7 +115,7 @@ describe("scanPolymarketTradingPerformance", () => {
     expect(payload.summary.marketCount).toBe(2);
     expect(payload.summary.winningMarketCount).toBe(1);
     expect(payload.summary.losingMarketCount).toBe(1);
-    expect(payload.summary.redeemablePositionCount).toBe(1);
+    expect(payload.summary.redeemablePositionCount).toBe(0);
     expect(payload.walletAddress).toBe("0xfunder");
     expect(progress).toEqual([
       { kind: "activity-page", activitiesSoFar: 4 },

@@ -3,7 +3,7 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * Adds timing telemetry for the dry-run path. `dry_run_decision_attempts`
- * records every scheduled committee evaluation, including abstains, while
+ * records every scheduled chart evaluation, including skipped calls, while
  * the extra order columns time simulated placement and first fillability.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
@@ -25,8 +25,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       decision_completed_at_ms bigint not null,
       decision_duration_ms integer not null,
       prediction text,
-      market_regime text,
-      roster_size integer not null,
+      source_count integer not null,
       up_votes integer not null,
       down_votes integer not null,
       abstain_votes integer not null,

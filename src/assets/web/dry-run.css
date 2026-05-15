@@ -133,27 +133,3 @@
   color: var(--alea-text);
   background: rgba(215, 170, 69, 0.04);
 }
-
-.regime-chip {
-  display: inline-block;
-  padding: 1px 6px;
-  margin-right: 3px;
-  border-radius: 4px;
-  font-family: var(--alea-font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  border: 1px solid var(--alea-border-muted);
-}
-
-.regime-chip.u {
-  color: var(--alea-green);
-  border-color: rgba(70, 195, 123, 0.45);
-  background: rgba(70, 195, 123, 0.07);
-}
-
-.regime-chip.d {
-  color: var(--alea-red);
-  border-color: rgba(216, 90, 79, 0.45);
-  background: rgba(216, 90, 79, 0.07);
-}

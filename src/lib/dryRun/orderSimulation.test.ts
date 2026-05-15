@@ -1,5 +1,4 @@
 import {
-  averageWinningVoteConfidence,
   createDryRunOrderSimulator,
   type DryRunMarketPriceState,
   resolveDryRunOrderFill,
@@ -101,7 +100,7 @@ describe("resolveDryRunOrderPlacement", () => {
     });
   });
 
-  it("places even when committee confidence is below the limit price", () => {
+  it("places even when chart confidence is below the limit price", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.515, ask: 0.525 });
 
@@ -120,7 +119,7 @@ describe("resolveDryRunOrderPlacement", () => {
     });
   });
 
-  it("places even when committee confidence is missing", () => {
+  it("places even when chart confidence is missing", () => {
     const state = emptyState();
     setQuote({ state, side: "up", bid: 0.515, ask: 0.525 });
 
@@ -247,17 +246,6 @@ describe("resolveDryRunOrderFill", () => {
         nowMs: NOW_MS,
       }),
     ).toBe(0.5);
-  });
-});
-
-describe("averageWinningVoteConfidence", () => {
-  it("averages usable selected-regime win rates", () => {
-    expect(
-      averageWinningVoteConfidence({
-        prediction: "up",
-        winRates: [0.54, null, 0.58],
-      }),
-    ).toBeCloseTo(0.56, 8);
   });
 });
 

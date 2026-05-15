@@ -2,6 +2,10 @@ import { resolve as resolvePath } from "node:path";
 
 import { assetValues } from "@alea/constants/assets";
 import { candleTimeframeValues } from "@alea/constants/candles";
+import {
+  marketChartRecentBarsForTimeframe,
+  marketChartRecentWindowLabel,
+} from "@alea/constants/marketChart";
 import { productValues } from "@alea/constants/products";
 import { candleSourceValues } from "@alea/constants/sources";
 import { fetchMarketChartCandles } from "@alea/lib/candles/chart/fetchMarketChartCandles";
@@ -17,7 +21,6 @@ import { candleSourceSchema } from "@alea/types/sources";
 import pc from "picocolors";
 import { z } from "zod";
 
-const defaultBars = 288;
 const defaultWidth = 1600;
 const defaultHeight = 900;
 
@@ -25,7 +28,7 @@ export const candlesChartCommand = defineCommand({
   name: "candles:chart",
   summary: "Render a market candle chart PNG",
   description:
-    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range.",
+    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG with the default indicator bundle. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range.",
   options: [
     defineValueOption({
       key: "asset",
@@ -72,9 +75,9 @@ export const candlesChartCommand = defineCommand({
         .int()
         .min(20)
         .max(2000)
-        .default(defaultBars)
+        .optional()
         .describe(
-          "Number of recent completed candles to render when --start is omitted.",
+          "Number of recent completed candles to render when --start is omitted. Defaults by timeframe.",
         ),
     }),
     defineValueOption({
@@ -157,6 +160,14 @@ export const candlesChartCommand = defineCommand({
         .describe("Hide the top OHLC/change/range information block."),
     }),
     defineFlagOption({
+      key: "noIndicators",
+      long: "--no-indicators",
+      schema: z
+        .boolean()
+        .default(false)
+        .describe("Hide SMA/EMA overlays, RSI, and divergence markers."),
+    }),
+    defineFlagOption({
       key: "noOpen",
       long: "--no-open",
       schema: z
@@ -168,22 +179,26 @@ export const candlesChartCommand = defineCommand({
   examples: [
     "bun alea candles:chart",
     "bun alea candles:chart --asset btc --timeframe 5m",
-    "bun alea candles:chart --asset eth --timeframe 15m --source coinbase --bars 192",
+    "bun alea candles:chart --asset eth --timeframe 15m --source coinbase",
     "bun alea candles:chart --asset btc --timeframe 5m --start 2026-05-15T09:30:00Z --end 2026-05-15T13:30:00Z",
     "bun alea candles:chart --asset btc --timeframe 5m --no-price-line --no-top-info",
+    "bun alea candles:chart --asset btc --timeframe 5m --no-indicators",
     "bun alea candles:chart --source pyth --asset sol --out tmp/charts/sol-pyth.png --no-open",
   ],
   output: "Prints the rendered PNG path and candle window.",
   sideEffects:
     "Hits the configured candle source API, writes one PNG file, and opens it on macOS unless --no-open is set.",
   async run({ io, options }) {
+    const recentBars =
+      options.bars ??
+      marketChartRecentBarsForTimeframe({ timeframe: options.timeframe });
     const outPath = resolvePath(
       options.out ??
         `tmp/charts/${options.source}-${options.product}-${options.asset}-${options.timeframe}-${timestampForFilename(new Date())}.png`,
     );
 
     io.writeStdout(
-      `${pc.bold("alea candles:chart")} ${pc.cyan(`${options.source}/${options.product}/${options.asset}/${options.timeframe}`)} ${pc.dim(chartWindowLabel({ start: options.start, end: options.end, bars: options.bars }))}\n`,
+      `${pc.bold("alea candles:chart")} ${pc.cyan(`${options.source}/${options.product}/${options.asset}/${options.timeframe}`)} ${pc.dim(chartWindowLabel({ timeframe: options.timeframe, start: options.start, end: options.end, bars: recentBars, explicitBars: options.bars !== undefined }))}\n`,
     );
 
     const candles = await fetchMarketChartCandles({
@@ -191,7 +206,7 @@ export const candlesChartCommand = defineCommand({
       asset: options.asset,
       product: options.product,
       timeframe: options.timeframe,
-      bars: options.bars,
+      bars: recentBars,
       start: options.start,
       end: options.end,
     });
@@ -208,6 +223,7 @@ export const candlesChartCommand = defineCommand({
       browserPath: options.browserPath,
       showPriceLine: !options.noPriceLine,
       showTopInfo: !options.noTopInfo,
+      showIndicators: !options.noIndicators,
     });
 
     io.writeStdout(
@@ -237,17 +253,23 @@ function optionalDateSchema(description: string) {
 }
 
 function chartWindowLabel({
+  timeframe,
   start,
   end,
   bars,
+  explicitBars,
 }: {
+  readonly timeframe: (typeof candleTimeframeValues)[number];
   readonly start: Date | undefined;
   readonly end: Date | undefined;
   readonly bars: number;
+  readonly explicitBars: boolean;
 }): string {
   if (start !== undefined) {
     const endLabel = end === undefined ? "now" : end.toISOString();
     return `range=${start.toISOString()}..${endLabel}`;
   }
-  return `bars=${bars}`;
+  return explicitBars
+    ? `bars=${bars}`
+    : `recent=${marketChartRecentWindowLabel({ timeframe })}`;
 }

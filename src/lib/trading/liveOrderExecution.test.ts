@@ -178,7 +178,7 @@ describe("createLiveOrderExecutor", () => {
     expect(calls.map((call) => call.userOrder.price)).toEqual([0.5, 0.49]);
   });
 
-  it("posts even when committee confidence is below the limit price", async () => {
+  it("posts even when chart confidence is below the limit price", async () => {
     const calls: PostedOrder[] = [];
     const executor = createLiveOrderExecutor({
       client: fakeClient({

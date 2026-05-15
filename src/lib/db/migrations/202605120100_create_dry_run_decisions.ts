@@ -2,22 +2,19 @@ import type { Database } from "@alea/lib/db/types";
 import { type Kysely, sql } from "kysely";
 
 /**
- * Append-only log of every committee decision the dry-run runner
- * makes. One row per (asset, ts_ms) where the committee chose to
- * make an actionable prediction — abstains are dropped because they have no actionable
- * downstream behaviour and would bloat the table.
+ * Append-only log of every OpenAI chart decision the dry-run runner
+ * makes. One row per (asset, ts_ms) where the predictor returned an
+ * actionable up/down call.
  *
- * - `ts_ms`: open time of the candle the committee predicts.
+ * - `ts_ms`: open time of the candle the predictor targets.
  * - `decided_at_ms`: when the decision was made (slightly before
- *   `ts_ms` — the runner snapshots Pyth's price ~5 s before the
- *   5-minute boundary and treats that as the prior candle's close
- *   to drive the prediction).
+ *   `ts_ms`).
  * - `prediction`: 'u' or 'd' — never null, abstains aren't written.
  * - `synth_open`: the price used as the synthetic prior-bar close
  *   (and the assumed open of the target bar). Stored so the
  *   dashboard can show "we predicted UP from $63,841.20".
- * - `regime_votes`: jsonb dump of the filter-collapsed committee
- *   tally for audit.
+ * - `decision_audit`: jsonb dump of the OpenAI chart response and
+ *   audit counters.
  * - `actual_close`: filled in later (`null` until the target bar
  *   actually closes) — the canonical close from `candles` once
  *   the bar settles. Used to determine `won`.
@@ -37,7 +34,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       period text not null,
       prediction char(1) not null,
       synth_open double precision not null,
-      regime_votes jsonb not null,
+      decision_audit jsonb not null,
       actual_close double precision,
       won smallint,
       constraint dry_run_prediction check (prediction in ('u', 'd')),

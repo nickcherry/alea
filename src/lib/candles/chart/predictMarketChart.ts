@@ -131,7 +131,9 @@ export function chartPredictionPrompt(): string {
   return [
     "Predict whether the next candle will be green or red.",
     "Use green when the next candle is expected to close above its open; use red when it is expected to close below its open.",
-    "Reasoning should be concise and based on the visible candle, trend, volatility, support/resistance, and volume structure.",
+    "The chart may include SMA 20, SMA 50, EMA 9, EMA 21, an RSI 14 pane, and RSI divergence markers.",
+    "RSI divergence marker labels mean: Bull div = regular bullish divergence, Bear div = regular bearish divergence, H bull = hidden bullish divergence, H bear = hidden bearish divergence.",
+    "Reasoning should be concise and based on the visible candle, trend, moving averages, RSI, RSI divergence, volatility, support/resistance, and volume structure.",
     "",
     "Return exactly this JSON shape with no markdown or extra keys:",
     JSON.stringify(sampleChartPredictionResponse, null, 2),

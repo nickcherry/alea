@@ -24,24 +24,15 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `db:*`
   `db:migrate`
 - `candles:*`
-  `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run`, `backtest:run`, or Polymarket resolution sync trade hourly markets.
+  `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run` or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
-  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG with SMA/EMA overlays, an RSI pane, and RSI-divergence markers. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
 - `predict:*`
   `predict:chart` — sends a rendered chart image to OpenAI's Responses API for a Zod-validated next-candle green/red prediction. Requires `OPENAI_API_KEY`.
-- `training:*`
-  `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against aligned Pyth/Coinbase spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
-- `backtest:*`
-  `backtest:run` — replays the selected trade committee over the holdout window, persists one `committee_backtest_runs` row, and feeds the `/backtest/` dashboard.
-  `backtest:sweep-committee` — runs transient committee selection/voting replays, writes a ranked sweep artifact, and can send Telegram updates after each trial. See [SWEEPING.md](./SWEEPING.md).
-- `regimes:*`
-  `regimes:backfill` — classifies every bar in `candles` into a market regime and writes the tags to `bar_regimes`. See [REGIMES.md](./REGIMES.md).
-- `committee:*`
-  `committee:select` — picks the top-N candidates per `(asset, market_regime, period)` from asset/regime-stratified training stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
 - `dry:*`
   `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, renders a chart with the price line/top info hidden, asks OpenAI for a next-candle prediction, persists every returned green/red prediction to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
-  `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, `/exploration/`, `/committee/`, `/backtest/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
+  `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`
@@ -75,9 +66,14 @@ PNG without depending on local candle sync state. The command fetches
 directly from the requested source/product/asset/timeframe and renders
 the image with TradingView Lightweight Charts through local Chrome.
 
-Recent-window mode uses `--bars`:
+Recent-window mode is the default. Trading timeframes use the same
+history window sent to OpenAI: `5m` charts render the most recent 4 days
+of completed candles, and `15m` charts render the most recent 10 days.
+Use `--bars` only when you need to override that default:
 
 ```sh
+bun alea candles:chart --asset btc --timeframe 5m
+bun alea candles:chart --asset btc --timeframe 15m
 bun alea candles:chart --asset btc --timeframe 5m --bars 288
 ```
 
@@ -95,7 +91,12 @@ bun alea candles:chart --asset btc --timeframe 5m \
   --out tmp/charts/btc-pyth-5m.png
 ```
 
-For visual replay/backtesting, use `--no-price-line` to hide the latest
+By default, chart images include the indicator bundle used by OpenAI:
+`SMA 20`, `SMA 50`, `EMA 9`, `EMA 21`, `RSI 14`, and RSI-divergence
+markers (`Bull div`, `H bull`, `Bear div`, `H bear`) on every chart. Use
+`--no-indicators` for a plain candlestick + volume chart.
+
+For visual replay, use `--no-price-line` to hide the latest
 price horizontal line and right-edge last-value label, and use
 `--no-top-info` to hide the OHLC/change/range block at the top:
 

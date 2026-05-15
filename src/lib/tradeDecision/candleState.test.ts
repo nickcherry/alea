@@ -4,14 +4,14 @@ import {
   hydrateTradeDecisionCandleState,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
-  upsertFilterBars,
+  upsertMarketBars,
 } from "@alea/lib/tradeDecision/candleState";
 import type { Candle } from "@alea/types/candles";
 import { describe, expect, it } from "bun:test";
 
-describe("upsertFilterBars", () => {
+describe("upsertMarketBars", () => {
   it("replaces duplicate bars and trims to the newest limit", () => {
-    const bars = upsertFilterBars({
+    const bars = upsertMarketBars({
       existing: [bar(0, 1, 2), bar(300_000, 2, 3)],
       incoming: [bar(300_000, 20, 30), bar(600_000, 3, 4)],
       limit: 2,

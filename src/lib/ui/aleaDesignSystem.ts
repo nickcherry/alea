@@ -1,6 +1,6 @@
 /**
- * Shared visual identity for Alea's HTML reports (training:distributions,
- * latency:capture, ...). Tokens, base layout, and reusable component styles
+ * Shared visual identity for Alea's HTML reports and dashboards. Tokens,
+ * base layout, and reusable component styles
  * live in `src/assets/web/alea.css` — copied into each report's
  * `<page>_<ts>.assets/` folder at generation time so reports stay
  * self-contained and frozen-in-time.

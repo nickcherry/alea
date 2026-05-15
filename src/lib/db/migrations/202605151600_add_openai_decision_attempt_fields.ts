@@ -3,7 +3,8 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * Stores OpenAI chart-decision details on every dry-run attempt. Confidence
- * fields are legacy nullable columns retained for old rows.
+ * fields are nullable because the chart-decision parser no longer emits a
+ * dedicated confidence scalar.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`

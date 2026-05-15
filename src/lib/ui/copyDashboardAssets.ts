@@ -27,11 +27,11 @@ const ASSET_SOURCE_DIR = resolve(
  *
  * @example
  *   const { stylesheets, scripts } = await copyDashboardAssets({
- *     htmlPath: "/.../tmp/web/exploration/index.html",
- *     pageAssets: ["exploration.css", "exploration.js"],
+ *     htmlPath: "/.../tmp/web/dryrun/index.html",
+ *     pageAssets: ["dry-run.css", "dry-run.js"],
  *   });
- *   // stylesheets = ["index.assets/alea.css", "index.assets/exploration.css"]
- *   // scripts     = ["index.assets/alea-utils.js", "index.assets/alea-info-tooltips.js", "index.assets/exploration.js"]
+ *   // stylesheets = ["index.assets/alea.css", "index.assets/dry-run.css"]
+ *   // scripts     = ["index.assets/alea-utils.js", "index.assets/alea-info-tooltips.js", "index.assets/dry-run.js"]
  */
 export async function copyDashboardAssets({
   htmlPath,

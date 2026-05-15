@@ -5,11 +5,11 @@ This is the historical, ground-truth version of the live
 
 ## Purpose
 
-We train and live-trade off Pyth open/close candles, but Polymarket's
+We make chart decisions from Pyth open/close candles, but Polymarket's
 crypto up/down markets settle on a Chainlink Data Streams price feed.
 That difference would be a problem if Pyth said "up" on enough bars
-where Chainlink said "down" — training would learn the wrong target and
-the live committee would predict the wrong line.
+where Chainlink said "down" — the chart decision path would optimize
+against the wrong historical target.
 
 `reliability:capture` checks this with live boundary ticks, but it can
 only run forward in time. The proxy-accuracy dashboard answers the
@@ -38,13 +38,13 @@ open→close direction match the Chainlink-derived winner?
 - **Agreement rate** is over joined windows only. Void Polymarket rows
   and missing Pyth bars are surfaced separately in the coverage strip.
 - **Below threshold share** is the share of disagreements whose Pyth
-  move% is smaller than `TRAINING_OUTCOME_MIN_ABS_MOVE_PCT`. The
-  training pipeline already filters those bars out, so a high share
-  means the proxy's disagreements are mostly already-filtered noise.
-- **Clear-move disagreements** count flips that *survive* the training
-  filter — each one is a window where Pyth would have given training or
-  live trading the wrong side. Watch this number more than the overall
-  agreement rate.
+  move% is smaller than `OUTCOME_MIN_ABS_MOVE_PCT`. The
+  threshold marks tiny Pyth moves as noise for proxy interpretation, so
+  a high share means disagreements are mostly small-move noise.
+- **Clear-move disagreements** count flips above that threshold — each
+  one is a window where Pyth would have shown the chart-decision path
+  the wrong side. Watch this number more than the overall agreement
+  rate.
 - **Disagreement histogram** vs **all-windows histogram** is the
   diagnostic: if disagreements are over-represented at higher move
   buckets relative to where bars naturally live, the proxy is drifting

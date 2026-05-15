@@ -1,11 +1,13 @@
-import type { MarketRegime } from "@alea/lib/regime/types";
+import {
+  MAX_MARKET_CHART_RECENT_BARS,
+  marketChartRecentBarsForTimeframe,
+} from "@alea/constants/marketChart";
 import type { Asset } from "@alea/types/assets";
 
 /**
- * Source-of-truth knobs for turning committee votes into an
- * actionable trade decision. Dry-run and live trading must read
- * these same constants so both modes accept or reject trades by the
- * same policy.
+ * Source-of-truth knobs for OpenAI chart decisions. Dry-run and live trading
+ * must read these same constants so both modes evaluate the same markets with
+ * the same timing and candle context.
  */
 
 /**
@@ -23,36 +25,6 @@ export type TradeDecisionMarket = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
 };
-
-export type CommitteeDecisionRules = {
-  readonly maxVotesPerFilter: number;
-  readonly minVotesToTrade: number;
-  readonly minConsensusFraction: number;
-};
-
-/**
- * Market regimes allowed to produce an actionable trade. This includes
- * every classified regime: regime is recorded for analysis, not used as a
- * high/low-vol trade gate.
- */
-export const TRADE_DECISION_ALLOWED_MARKET_REGIMES = [
-  "low_vol_trending",
-  "low_vol_ranging",
-  "high_vol_trending",
-  "high_vol_ranging",
-] as const satisfies readonly MarketRegime[];
-
-export type TradeDecisionAllowedMarketRegime =
-  (typeof TRADE_DECISION_ALLOWED_MARKET_REGIMES)[number];
-
-export function isTradeDecisionMarketRegimeAllowed(
-  marketRegime: MarketRegime | null,
-): marketRegime is TradeDecisionAllowedMarketRegime {
-  return (
-    marketRegime !== null &&
-    TRADE_DECISION_ALLOWED_MARKET_REGIMES.includes(marketRegime)
-  );
-}
 
 /**
  * Exact no-flag dry-run/live market set. The operational default trades every
@@ -114,10 +86,19 @@ export function tradeDecisionLeadTimeMs({
 }
 
 /**
- * Closed bars hydrated at startup. This must cover the regime
- * classifier and the deepest registered filter lookback.
+ * Maximum closed bars hydrated at startup. Period-specific callers should use
+ * `tradeDecisionHydrateBars`; this fallback keeps tests/helper defaults large
+ * enough for the longest trading chart window.
  */
-export const TRADE_DECISION_HYDRATE_BARS = 150;
+export const TRADE_DECISION_HYDRATE_BARS = MAX_MARKET_CHART_RECENT_BARS;
+
+export function tradeDecisionHydrateBars({
+  period,
+}: {
+  readonly period: TradeDecisionPeriod;
+}): number {
+  return marketChartRecentBarsForTimeframe({ timeframe: period });
+}
 
 /**
  * Once startup hydration has populated the in-memory bar window, decision-time
@@ -139,30 +120,6 @@ export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
  * normal sync/backfill retry policy would miss the market boundary.
  */
 export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
-
-/**
- * A single filter may have multiple selected configs in a regime
- * bucket, but it can contribute only one active vote to a trade.
- */
-export const MAX_COMMITTEE_VOTES_PER_FILTER = 1;
-
-/** Minimum non-abstain, filter-collapsed votes required to trade. */
-export const MIN_COMMITTEE_VOTES_TO_TRADE = 2;
-
-/**
- * Minimum share of non-abstain votes that the winning side must
- * hold. Ties still abstain separately, so 0.5 is simple majority.
- */
-export const MIN_COMMITTEE_CONSENSUS_FRACTION = 0.5;
-
-export const DEFAULT_COMMITTEE_DECISION_RULES: CommitteeDecisionRules = {
-  maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
-  minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
-  minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
-};
-
-export const TRADE_DECISION_FILTER_TIE_BREAK =
-  "highest_win_rate_then_engagements_then_rank";
 
 export function resolveTradeDecisionMarkets({
   markets,

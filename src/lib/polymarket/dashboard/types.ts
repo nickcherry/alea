@@ -44,7 +44,7 @@ export type ProxyAccuracyAggregate = {
   /**
    * `clearMovePct` is the threshold we use to call a disagreement
    * "clear" rather than "noisy boundary jitter". Currently mirrors the
-   * `TRAINING_OUTCOME_MIN_ABS_MOVE_PCT` constant.
+   * `OUTCOME_MIN_ABS_MOVE_PCT` constant.
    */
   readonly clearMovePct: number;
   /**
@@ -122,7 +122,7 @@ export type ProxyAccuracyCoverage = {
 export type ProxyAccuracyPayload = {
   readonly generatedAtMs: number;
   readonly coverage: ProxyAccuracyCoverage;
-  readonly trainingThresholdPct: number;
+  readonly outcomeThresholdPct: number;
   readonly breakdowns: readonly ProxyAccuracyTimeframeBreakdown[];
   /**
    * The most-extreme disagreements (largest absolute move %), capped at

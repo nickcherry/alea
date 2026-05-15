@@ -354,7 +354,7 @@ export function buildPricePathsPayloadFromRows({
       leadTimeDrift ??
       ({
         generatedAtMs,
-        trainingWindowEndExclusiveMs: 0,
+        analysisWindowEndExclusiveMs: 0,
         thresholdsBps: LEAD_TIME_DRIFT_THRESHOLD_BPS,
         hasOneMinuteCandles: false,
         firstCandleMs: null,

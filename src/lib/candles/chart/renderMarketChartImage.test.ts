@@ -17,6 +17,40 @@ describe("market chart helpers", () => {
     expect(window.start.toISOString()).toBe("2026-05-15T11:15:00.000Z");
     expect(window.end.toISOString()).toBe("2026-05-15T12:15:00.000Z");
     expect(window.mode).toBe("recent");
+    if (window.mode !== "recent") {
+      throw new Error("expected recent window");
+    }
+    expect(window.bars).toBe(12);
+  });
+
+  it("defaults 5m charts to the most recent 4 days", () => {
+    const window = marketChartCandleWindow({
+      timeframe: "5m",
+      end: new Date("2026-05-15T12:17:33.000Z"),
+    });
+
+    expect(window.start.toISOString()).toBe("2026-05-11T12:15:00.000Z");
+    expect(window.end.toISOString()).toBe("2026-05-15T12:15:00.000Z");
+    expect(window.mode).toBe("recent");
+    if (window.mode !== "recent") {
+      throw new Error("expected recent window");
+    }
+    expect(window.bars).toBe(1152);
+  });
+
+  it("defaults 15m charts to the most recent 10 days", () => {
+    const window = marketChartCandleWindow({
+      timeframe: "15m",
+      end: new Date("2026-05-15T12:17:33.000Z"),
+    });
+
+    expect(window.start.toISOString()).toBe("2026-05-05T12:15:00.000Z");
+    expect(window.end.toISOString()).toBe("2026-05-15T12:15:00.000Z");
+    expect(window.mode).toBe("recent");
+    if (window.mode !== "recent") {
+      throw new Error("expected recent window");
+    }
+    expect(window.bars).toBe(960);
   });
 
   it("aligns an explicit chart time range", () => {
@@ -87,9 +121,38 @@ describe("market chart helpers", () => {
       { time: 1778846700, open: 102, high: 104, low: 101, close: 101 },
     ]);
     expect(payload.volume.map((bar) => bar.value)).toEqual([10, 12]);
+    expect(payload.indicators).not.toBeNull();
+    expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["SMA 20", "SMA 50", "EMA 9", "EMA 21"]),
+    );
     expect(payload.showPriceLine).toBe(true);
     expect(payload.showTopInfo).toBe(true);
     expect(payload.latestLabel).toContain("-0.98%");
+  });
+
+  it("adds the RSI and RSI-divergence legend when enough bars are visible", () => {
+    const payload = marketChartPayload({
+      candles: Array.from({ length: 80 }, (_, i) =>
+        candle({
+          timestamp: new Date(Date.UTC(2026, 4, 15, 12, i * 5)).toISOString(),
+          open: 100 + Math.sin(i / 5),
+          high: 102 + Math.sin(i / 5),
+          low: 98 + Math.sin(i / 5),
+          close: 100 + Math.cos(i / 5),
+          volume: 10,
+        }),
+      ),
+      asset: "btc",
+      source: "coinbase",
+      product: "spot",
+      timeframe: "5m",
+      width: 1600,
+      height: 900,
+    });
+
+    expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["RSI 14", "RSI div"]),
+    );
   });
 
   it("can disable future-state chart overlays for visual replay", () => {
@@ -112,10 +175,12 @@ describe("market chart helpers", () => {
       height: 900,
       showPriceLine: false,
       showTopInfo: false,
+      showIndicators: false,
     });
 
     expect(payload.showPriceLine).toBe(false);
     expect(payload.showTopInfo).toBe(false);
+    expect(payload.indicators).toBeNull();
   });
 });
 

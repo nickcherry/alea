@@ -1,7 +1,5 @@
 /**
- * Constants the trading layer still consults after the 2026-05-10
- * reset to the filter-committee framework. Everything regime / lookup
- * / model-probability related is gone with the old strategy.
+ * Constants for live trading, order placement, and PnL math.
  */
 
 /** Polymarket pays $1 per winning YES share on resolution. */

@@ -73,18 +73,16 @@ when we change a CSS rule.
 ## Config references must read the actual constant
 
 Any setting, threshold, or config knob surfaced on a dashboard page —
-training thresholds, vote floors, hydrate counts, supported periods, the
-trade-decision period, etc. — must come from the same exported
+outcome thresholds, hydrate counts, supported periods, the
+trade-decision period, order-placement settings, etc. — must come from the same exported
 constant the rest of the codebase reads, not a hard-coded literal in the
 renderer or loader. The loader threads the value onto the payload, the
 renderer reads it from the payload, and the test asserts the rendered
 output reflects the live constant. If you change the constant, the
 dashboard updates with no second edit. Examples:
 
-- [`TRAINING_OUTCOME_MIN_ABS_MOVE_PCT`](../src/constants/training.ts)
-  → `payload.trainingThresholdPct` on the proxy accuracy page and
-  `selectionConfig.trainingOutcomeMinAbsMovePct` on the trade committee
-  page.
+- [`OUTCOME_MIN_ABS_MOVE_PCT`](../src/constants/outcome.ts)
+  → `payload.outcomeThresholdPct` on the proxy accuracy page.
 - [`TRADE_DECISION_PRIMARY_PERIOD`](../src/constants/tradeDecision.ts) and
   [`TRADE_DECISION_SUPPORTED_PERIODS`](../src/constants/tradeDecision.ts)
   → `decisionConfig.period` and `decisionConfig.supportedPeriods` on the
@@ -253,27 +251,20 @@ serves a single multi-page dashboard. Each page is still a standalone
 static HTML asset following the contract above; the worker just
 arranges them under one host and one shared top nav.
 
-The dashboard sequence is a research-to-production funnel, not a set
-of interchangeable reports:
+The dashboard sequence moves from data calibration to runtime results:
 
-| Phase                 | Page               | Decision it supports                                                                                                                    |
-| --------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                                          |
-| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                                                     |
-| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                                            |
-| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                                              |
-| Backtest              | Backtest           | Latest committee holdout replay: decisions, scored trades, notional size, WR, PnL proxy, PnL curve, and period/asset/regime breakdowns. |
-| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.                                      |
-| Production            | Live trading PnL   | Track realized results from actual order placement.                                                                                     |
+| Phase                 | Page             | Decision it supports                                                                               |
+| --------------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy   | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                     |
+| Market microstructure | Price paths      | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                |
+| Live-like rehearsal   | Dry run          | Validate OpenAI chart decisions plus quote observation and fill simulation without placing orders. |
+| Production            | Live trading PnL | Track realized results from actual order placement.                                                |
 
 | Route           | Page               | Source                                                                                              |
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
 | `/proxy/`       | Proxy accuracy     | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
 | `/price-paths/` | Price paths        | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
-| `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
-| `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
-| `/backtest/`    | Backtest           | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
 | `/dryrun/`      | Dry-run decisions  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
@@ -307,18 +298,6 @@ tmp/web/
     index.html             ← price-path calibration (served at /price-paths/)
     index.assets/
     data.json
-  exploration/
-    index.html             ← filter exploration (served at /exploration/)
-    index.assets/
-    data.json
-  committee/
-    index.html             ← trade committee (served at /committee/)
-    index.assets/
-    data.json
-  backtest/
-    index.html             ← committee backtest (served at /backtest/)
-    index.assets/
-    data.json
   dryrun/
     index.html             ← dry-run decisions (served at /dryrun/)
     index.assets/
@@ -331,12 +310,9 @@ needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
 `POLYMARKET_FUNDER_ADDRESS`); when those aren't set the build skips
 it with a warning so the rest of the site can still rebuild. The
 price-path page builds from `polymarket_price_samples`, the proxy page builds
-from `polymarket_resolutions` + Pyth candles, the exploration page builds from
-`filter_runs` + `bar_regimes`, the trade committee page builds from
-`committee_selections`, the backtest page builds from `committee_backtest_runs`, and the
-dry-run page builds from `dry_run_decisions` plus the shared trade-decision
-constants shown on the page — all research/runtime pages work without trading
-creds.
+from `polymarket_resolutions` + Pyth candles, and the dry-run page builds
+from `dry_run_decisions` plus the shared trade-decision constants shown on
+the page. Those pages work without trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);
