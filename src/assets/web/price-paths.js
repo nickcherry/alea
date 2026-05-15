@@ -410,10 +410,17 @@
   }
 
   /**
-   * Map a clientX over a chart host to the index of the closest data
-   * point. `layout.svgWidth` + `layout.pad` define the SVG viewBox
-   * coordinate system; the chart host's bounding rect scales those
-   * viewBox units to pixel space.
+   * Map a clientX over a chart host to the index of the column under
+   * the cursor. Data points are positioned at column centers — i.e.
+   * fraction `(i + 0.5) / count` along the plot — so the cursor's
+   * fraction `t` maps to column `floor(t * count)`. Using
+   * `round(t * (count - 1))` here (treating points as evenly spaced
+   * from t=0 to t=1) would shift the highlight by up to half a column
+   * away from the cursor near the chart edges.
+   *
+   * `layout.svgWidth` + `layout.pad` define the SVG viewBox coordinate
+   * system; the chart host's bounding rect scales those viewBox units
+   * to pixel space.
    */
   function bucketIndexFor(host, clientX, layout, count) {
     var rect = host.getBoundingClientRect();
@@ -421,7 +428,7 @@
     var svgX = ((clientX - rect.left) / rect.width) * layout.svgWidth;
     var t = (svgX - layout.pad.left) / layout.plotW;
     if (t < 0 || t > 1) return -1;
-    var idx = Math.round(t * (count - 1));
+    var idx = Math.floor(t * count);
     if (idx < 0) idx = 0;
     if (idx > count - 1) idx = count - 1;
     return idx;
