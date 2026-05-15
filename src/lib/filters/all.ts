@@ -26,8 +26,10 @@
  * prune extended the per-filter grid, then a fourth trim again
  * unregistered every filter that earned zero committee seats under
  * the expanded grid. A later redundancy prune removed active
- * registrations for filters that duplicated stronger peers' engagement
- * patterns, plus two weak continuation holdouts.
+ * registrations for filters that duplicated stronger peers'
+ * engagement patterns, plus two weak continuation holdouts. A
+ * follow-up sweep retired low-Wilson / low-committee-usage filters
+ * whose removal held or improved the committee replay.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -38,26 +40,21 @@
  * independent signals.
  */
 import "@alea/lib/filters/aroonReversion";
-import "@alea/lib/filters/atrBurstFade";
 import "@alea/lib/filters/balanceOfPowerMeanrev";
 import "@alea/lib/filters/bodyClimaxFade";
 import "@alea/lib/filters/bollingerPercentB";
-import "@alea/lib/filters/bollingerRecovery";
 import "@alea/lib/filters/bollingerReversion";
 import "@alea/lib/filters/cciMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
 import "@alea/lib/filters/donchianReversion";
-import "@alea/lib/filters/effortVsResultFade";
 import "@alea/lib/filters/emaPosition";
 import "@alea/lib/filters/failedCloseBreakoutFade";
 import "@alea/lib/filters/heikinAshiReversion";
-import "@alea/lib/filters/highVolumeFailedBreakoutFade";
 import "@alea/lib/filters/hullMaPosition";
 import "@alea/lib/filters/internalBarStrengthMeanrev";
 import "@alea/lib/filters/keltnerReversion";
 import "@alea/lib/filters/lateVolumeClimaxFade";
 import "@alea/lib/filters/lowVolumeBreakoutFade";
-import "@alea/lib/filters/macdHistogramTurnFade";
 import "@alea/lib/filters/madReversion";
 import "@alea/lib/filters/multiBarReturnFade";
 import "@alea/lib/filters/percentRankMeanRev";
@@ -70,5 +67,4 @@ import "@alea/lib/filters/signedVolumeImbalanceFade";
 import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochasticMeanRev";
 import "@alea/lib/filters/streakFade";
-import "@alea/lib/filters/supertrendRetestFollow";
 import "@alea/lib/filters/tsiMeanRev";
