@@ -26,6 +26,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run`, `backtest:run`, or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Coinbase spot BTC `5m`; use `--start`/`--end` for an explicit time range.
 - `training:*`
   `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against aligned Pyth/Coinbase spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `backtest:*`
@@ -64,6 +65,36 @@ Everything that matters is reachable through one non-interactive entrypoint:
   Built-in. `alea help <command>` prints detailed help; `alea help` is equivalent to `alea` with no arguments.
 
 Update this section whenever a new family or command is registered in `src/bin/index.ts`.
+
+## Candle Chart Images
+
+Use `candles:chart` when you want a Coinbase-style market chart as a
+PNG without depending on local candle sync state. The command fetches
+directly from the requested source/product/asset/timeframe and renders
+the image with TradingView Lightweight Charts through local Chrome.
+
+Recent-window mode uses `--bars`:
+
+```sh
+bun alea candles:chart --asset btc --timeframe 5m --source coinbase --bars 288
+```
+
+Explicit range mode uses `--start` and optional `--end`. Both values are
+floored to the selected timeframe boundary; if `--end` is omitted, the
+range runs through the latest completed candle. Ranges are capped at
+2,000 bars.
+
+```sh
+bun alea candles:chart --asset btc --timeframe 5m --source coinbase \
+  --start 2026-05-15T09:30:00Z \
+  --end 2026-05-15T13:30:00Z \
+  --out tmp/charts/btc-coinbase-5m.png
+```
+
+The default chart is Coinbase spot BTC `5m`. Use `--source`, `--product`,
+`--asset`, and `--timeframe` to change the market, and `--browser-path`
+or `ALEA_CHART_BROWSER_PATH` if Chrome is installed outside the standard
+macOS/Linux paths.
 
 ## Adding A Command
 

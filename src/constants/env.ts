@@ -48,6 +48,12 @@ export const env = {
   get axiomDomain(): string {
     return optionalEnv("AXIOM_DOMAIN") ?? "https://api.axiom.co";
   },
+  get chartBrowserPath(): string | undefined {
+    return optionalEnv("ALEA_CHART_BROWSER_PATH");
+  },
+  get playwrightChromiumExecutablePath(): string | undefined {
+    return optionalEnv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH");
+  },
 };
 
 function optionalEnv(name: string): string | undefined {

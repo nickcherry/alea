@@ -2,6 +2,7 @@
 import { trainingRunCommand } from "@alea/bin/backtest/run";
 import { backtestRunCommand } from "@alea/bin/backtest/runCommittee";
 import { backtestSweepCommitteeCommand } from "@alea/bin/backtest/sweepCommittee";
+import { candlesChartCommand } from "@alea/bin/candles/chart";
 import { candlesFillGapsCommand } from "@alea/bin/candles/fillGaps";
 import { candlesSyncCommand } from "@alea/bin/candles/sync";
 import { committeeSelectCommand } from "@alea/bin/committee/select";
@@ -38,6 +39,7 @@ const cli = createCli({
     dbMigrateCommand,
     candlesSyncCommand,
     candlesFillGapsCommand,
+    candlesChartCommand,
     trainingRunCommand,
     backtestRunCommand,
     backtestSweepCommitteeCommand,

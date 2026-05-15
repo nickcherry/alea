@@ -31,9 +31,11 @@
     "@polymarket/clob-client-v2": "^1.0.3",
     "ethers": "5",
     "kysely": "^0.28.15",
+    "lightweight-charts": "^5.2.0",
     "pg": "^8.20.0",
     "pg-cursor": "^2.19.0",
     "picocolors": "^1.1.1",
+    "playwright-core": "^1.60.0",
     "zod": "^4.3.6"
   }
 }
