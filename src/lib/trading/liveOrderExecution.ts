@@ -912,12 +912,7 @@ function classifyPostOrderFailureKind({
   ) {
     return "auth";
   }
-  if (
-    lower.includes("banned") ||
-    lower.includes("closed only") ||
-    lower.includes("cancel-only") ||
-    lower.includes("new orders are not accepted")
-  ) {
+  if (lower.includes("banned") || lower.includes("closed only")) {
     return "closed_or_banned";
   }
   if (
@@ -931,6 +926,8 @@ function classifyPostOrderFailureKind({
   if (
     lower.includes("not yet ready") ||
     lower.includes("service not ready") ||
+    lower.includes("cancel-only") ||
+    lower.includes("new orders are not accepted") ||
     lower.includes("too early") ||
     status === 425
   ) {

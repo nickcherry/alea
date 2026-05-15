@@ -283,13 +283,9 @@ describe("createLiveOrderExecutor", () => {
     expect(sleeps[0]).toBe(100);
   });
 
-  it("does not spam retries while Polymarket is cancel-only", async () => {
+  it("retries pre-open cancel-only responses", async () => {
     const calls: PostedOrder[] = [];
-    const events: Array<{
-      readonly status: string;
-      readonly failureKind: string | null;
-      readonly message: string | null;
-    }> = [];
+    const sleeps: number[] = [];
     const executor = createLiveOrderExecutor({
       client: fakeClient({
         calls,
@@ -300,23 +296,17 @@ describe("createLiveOrderExecutor", () => {
               "Trading is currently cancel-only. New orders are not accepted, but cancels are allowed.",
             status: 503,
           },
-          { success: true, orderID: "should-not-post" },
+          { success: true, orderID: "order-after-cancel-only" },
         ],
       }),
       marketDiscovery: fakeMarketDiscovery({
         market: market({ tickSize: 0.01, negRisk: false }),
       }),
-      log: (event) => {
-        if (event.kind === "live-order") {
-          events.push({
-            status: event.status,
-            failureKind: event.failureKind,
-            message: event.message,
-          });
-        }
-      },
+      log: () => {},
       now: () => 1_795_000,
-      sleep: async () => {},
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
       streamMarketData: fakeStreamMarketData(),
     });
 
@@ -328,14 +318,8 @@ describe("createLiveOrderExecutor", () => {
       confidence: null,
     });
 
-    await waitFor(() => events.some((event) => event.status === "rejected"));
-    expect(calls).toHaveLength(1);
-    expect(events).toContainEqual({
-      status: "rejected",
-      failureKind: "closed_or_banned",
-      message:
-        "Trading is currently cancel-only. New orders are not accepted, but cancels are allowed.",
-    });
+    await waitFor(() => calls.length === 2);
+    expect(sleeps[0]).toBe(100);
   });
 });
 
