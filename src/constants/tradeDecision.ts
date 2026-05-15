@@ -61,15 +61,16 @@ export function isTradeDecisionMarketRegimeAllowed(
 }
 
 /**
- * Exact no-flag dry-run/live market set. This is narrower than the full
- * supported asset universe because the latest committee backtest showed
- * `5m` BTC/SOL were too marginal for the operational default, while ETH
- * `5m` and all three `15m` slices paid well enough to keep.
+ * Exact no-flag dry-run/live market set. Top-12 committee selection trims the
+ * marginal low-rank voters enough to put the full BTC/ETH/SOL 5m+15m surface
+ * back in the operational default.
  */
 export const TRADE_DECISION_DEFAULT_MARKETS = [
+  { asset: "btc", period: "5m" },
   { asset: "btc", period: "15m" },
   { asset: "eth", period: "5m" },
   { asset: "eth", period: "15m" },
+  { asset: "sol", period: "5m" },
   { asset: "sol", period: "15m" },
 ] as const satisfies readonly TradeDecisionMarket[];
 
@@ -217,9 +218,7 @@ export function formatTradeDecisionMarkets({
 }: {
   readonly markets: readonly TradeDecisionMarket[];
 }): string {
-  return markets
-    .map((market) => `${market.period}/${market.asset}`)
-    .join(",");
+  return markets.map((market) => `${market.period}/${market.asset}`).join(",");
 }
 
 function uniqueTradeDecisionMarkets({

@@ -19,10 +19,10 @@ Selection is **manual** — operator runs it after a fresh
 
 **Evaluation** runs at each configured trade-decision boundary,
 inside the dry-run / live loop. The no-flag default market set is
-`15m/btc`, `5m/eth`, `15m/eth`, and `15m/sol`; the CLI can override the
-asset/period grid. Classify the bar's regime → apply the shared
-allowed-regime gate → look up the roster for `(asset, regime, period)` →
-evaluate each candidate → apply the shared vote policy.
+the full BTC/ETH/SOL `5m` + `15m` surface; the CLI can override the
+asset/period grid. Classify the bar's regime → apply the shared allowed-regime
+gate → look up the roster for `(asset, regime, period)` → evaluate each
+candidate → apply the shared vote policy.
 
 ## Selection: eligibility + ranking
 
@@ -30,11 +30,12 @@ For a `(filter, config)` candidate to qualify for asset A and regime R's
 committee, **within that asset/regime bucket** it must clear the base
 rules, then any matching scoped override:
 
-| Rule                             | Default   | Why                                             |
-| -------------------------------- | --------- | ----------------------------------------------- |
-| Min engagements in asset/regime  | `≥ 80`    | Below this the WR is too noisy to act on        |
-| Aggregate WR in asset/regime     | `≥ 53.8%` | Proves a base-rate edge over coin-flip          |
-| Worst-quarter WR in asset/regime | `≥ 52%`   | Rejects "one good year, several bad" candidates |
+| Rule                             | Default   | Why                                                      |
+| -------------------------------- | --------- | -------------------------------------------------------- |
+| Min engagements in asset/regime  | `≥ 80`    | Below this the WR is too noisy to act on                 |
+| Aggregate WR in asset/regime     | `≥ 53.8%` | Proves a base-rate edge over coin-flip                   |
+| Worst-quarter WR in asset/regime | `≥ 52%`   | Rejects "one good year, several bad" candidates          |
+| Top distinct filters per bucket  | `≤ 12`    | Keeps lower-ranked marginal voters out of live decisions |
 
 The worst-quarter check only applies to quarters with at least 40
 engagements inside this asset/regime bucket. Candidates with no quarter that meaningful
@@ -48,8 +49,9 @@ Sweep experiments over these knobs live in
 between trials.
 
 The current default uses no scoped asset/period overrides. A 2026-05-15
-profile sweep found the no-override profile produced the best combined
-holdout PnL and still kept every active asset slice above 55% WR.
+follow-up sweep found that the no-override profile with `topN = 12`
+kept the strong WR of the narrower market set while restoring the full
+BTC/ETH/SOL `5m` + `15m` surface.
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -64,7 +66,7 @@ highest-ranked config, then take the bucket's configured top-N distinct
 filters.
 
 Final selection: top-N distinct filters per `(asset, market_regime, period)`.
-With the current base cap, the table usually holds about 500 rows.
+With the current base cap, the table usually holds about 365 rows.
 
 ```sh
 bun alea committee:select
@@ -138,19 +140,19 @@ order so dry-run and live voting stay identical.
 Critical decision settings live in
 [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
 
-| Constant                                |                   Default | Meaning                                                                             |
-| --------------------------------------- | ------------------------: | ----------------------------------------------------------------------------------- |
-| `TRADE_DECISION_DEFAULT_MARKETS`        | `15m/btc, 5m/eth, 15m/eth, 15m/sol` | No-flag dry-run/live/backtest market set                              |
-| `TRADE_DECISION_DEFAULT_PERIODS`        |                 `5m, 15m` | Period fallback when an operator overrides only assets                              |
-| `TRADE_DECISION_DEFAULT_ASSETS`         |           `btc, eth, sol` | Asset fallback when an operator overrides only periods                              |
-| `TRADE_DECISION_SUPPORTED_PERIODS`      |                 `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
-| `TRADE_DECISION_ALLOWED_MARKET_REGIMES` |      low-vol regimes only | Regimes allowed to produce actionable backtest/dry-run/live trades                  |
-| `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` | `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
-| `TRADE_DECISION_HYDRATE_BARS`           |                     `150` | Closed bars loaded before the loop starts                                           |
-| `MAX_COMMITTEE_VOTES_PER_FILTER`        |                       `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`          |                       `2` | Minimum non-abstain votes after filter collapse                                     |
-| `MIN_COMMITTEE_CONSENSUS_FRACTION`      |                     `0.5` | Winning side must hold at least this share; ties still abstain                      |
-| `TRADE_DECISION_FILTER_TIE_BREAK`       |                highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
+| Constant                                |                                             Default | Meaning                                                                             |
+| --------------------------------------- | --------------------------------------------------: | ----------------------------------------------------------------------------------- |
+| `TRADE_DECISION_DEFAULT_MARKETS`        | `5m/btc, 15m/btc, 5m/eth, 15m/eth, 5m/sol, 15m/sol` | No-flag dry-run/live/backtest market set                                            |
+| `TRADE_DECISION_DEFAULT_PERIODS`        |                                           `5m, 15m` | Period fallback when an operator overrides only assets                              |
+| `TRADE_DECISION_DEFAULT_ASSETS`         |                                     `btc, eth, sol` | Asset fallback when an operator overrides only periods                              |
+| `TRADE_DECISION_SUPPORTED_PERIODS`      |                                           `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
+| `TRADE_DECISION_ALLOWED_MARKET_REGIMES` |                                low-vol regimes only | Regimes allowed to produce actionable backtest/dry-run/live trades                  |
+| `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` |                           `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
+| `TRADE_DECISION_HYDRATE_BARS`           |                                               `150` | Closed bars loaded before the loop starts                                           |
+| `MAX_COMMITTEE_VOTES_PER_FILTER`        |                                                 `1` | One active vote per `filter_id`, even if multiple configs engage                    |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`          |                                                 `2` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_CONSENSUS_FRACTION`      |                                               `0.5` | Winning side must hold at least this share; ties still abstain                      |
+| `TRADE_DECISION_FILTER_TIE_BREAK`       |                                          highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
 With the current constants, the final decision is simple majority
 after filter-level vote collapse, with at least two engaged filters

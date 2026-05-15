@@ -6,15 +6,18 @@ import {
 import { describe, expect, it } from "bun:test";
 
 describe("trade decision market defaults", () => {
-  it("uses the curated no-override default market set exactly", () => {
+  it("uses the selected no-override default market set exactly", () => {
     expect(resolveTradeDecisionMarkets({})).toEqual([
+      { asset: "btc", period: "5m" },
       { asset: "btc", period: "15m" },
       { asset: "eth", period: "5m" },
       { asset: "eth", period: "15m" },
+      { asset: "sol", period: "5m" },
       { asset: "sol", period: "15m" },
     ]);
-    expect(formatTradeDecisionMarkets({ markets: TRADE_DECISION_DEFAULT_MARKETS }))
-      .toBe("15m/btc,5m/eth,15m/eth,15m/sol");
+    expect(
+      formatTradeDecisionMarkets({ markets: TRADE_DECISION_DEFAULT_MARKETS }),
+    ).toBe("5m/btc,15m/btc,5m/eth,15m/eth,5m/sol,15m/sol");
   });
 
   it("expands explicit asset or period overrides as a grid", () => {
