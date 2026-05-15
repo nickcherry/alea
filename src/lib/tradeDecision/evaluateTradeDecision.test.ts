@@ -13,19 +13,21 @@ import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDeci
 import { describe, expect, it } from "bun:test";
 
 describe("trade decision regime policy", () => {
-  it("centralizes the low-vol-only allow-list", () => {
+  it("allows every classified regime", () => {
     expect(TRADE_DECISION_ALLOWED_MARKET_REGIMES).toEqual([
       "low_vol_trending",
       "low_vol_ranging",
+      "high_vol_trending",
+      "high_vol_ranging",
     ]);
     expect(isTradeDecisionMarketRegimeAllowed("low_vol_trending")).toBe(true);
     expect(isTradeDecisionMarketRegimeAllowed("low_vol_ranging")).toBe(true);
-    expect(isTradeDecisionMarketRegimeAllowed("high_vol_trending")).toBe(false);
-    expect(isTradeDecisionMarketRegimeAllowed("high_vol_ranging")).toBe(false);
+    expect(isTradeDecisionMarketRegimeAllowed("high_vol_trending")).toBe(true);
+    expect(isTradeDecisionMarketRegimeAllowed("high_vol_ranging")).toBe(true);
     expect(isTradeDecisionMarketRegimeAllowed(null)).toBe(false);
   });
 
-  it("blocks actionable votes in high-volatility regimes", () => {
+  it("does not discard high-volatility roster buckets before evaluation", () => {
     const candidate = fakeCandidate();
     const key = candidateRosterKey({
       filterId: candidate.filterId,
@@ -57,7 +59,7 @@ describe("trade decision regime policy", () => {
     expect(evaluated).toEqual({
       prediction: null,
       marketRegime: "high_vol_ranging",
-      rosterSize: 0,
+      rosterSize: 1,
       up: 0,
       down: 0,
       abstain: 0,

@@ -19,10 +19,11 @@ Selection is **manual** — operator runs it after a fresh
 
 **Evaluation** runs at each configured trade-decision boundary,
 inside the dry-run / live loop. The no-flag default market set is
-the full BTC/ETH/SOL `5m` + `15m` surface; the CLI can override the
-asset/period grid. Classify the bar's regime → apply the shared allowed-regime
-gate → look up the roster for `(asset, regime, period)` → evaluate each
-candidate → apply the shared vote policy.
+the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` surface; the CLI can override the
+asset/period grid. Classify the bar's regime → look up the roster for
+`(asset, regime, period)` → evaluate each candidate → apply the shared vote
+policy. Regime is an analysis/bucketing dimension, not a high/low-vol trade
+gate.
 
 ## Selection: eligibility + ranking
 
@@ -48,10 +49,9 @@ Sweep experiments over these knobs live in
 `bun alea backtest:sweep-committee` rather than by editing constants
 between trials.
 
-The current default uses no scoped asset/period overrides. A 2026-05-15
-follow-up sweep found that the no-override profile with `topN = 12`
-kept the strong WR of the narrower market set while restoring the full
-BTC/ETH/SOL `5m` + `15m` surface.
+The current default uses no scoped asset/period overrides. The live
+OpenAI decision path trades the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m`
+surface.
 
 There is no global fallback roster. If a bucket has fewer qualifiers
 than its top-N cap, that bucket's committee is simply smaller than the
@@ -140,32 +140,27 @@ order so dry-run and live voting stay identical.
 Critical decision settings live in
 [`src/constants/tradeDecision.ts`](../src/constants/tradeDecision.ts).
 
-| Constant                                |                                             Default | Meaning                                                                             |
-| --------------------------------------- | --------------------------------------------------: | ----------------------------------------------------------------------------------- |
-| `TRADE_DECISION_DEFAULT_MARKETS`        | `5m/btc, 15m/btc, 5m/eth, 15m/eth, 5m/sol, 15m/sol` | No-flag dry-run/live/backtest market set                                            |
-| `TRADE_DECISION_DEFAULT_PERIODS`        |                                           `5m, 15m` | Period fallback when an operator overrides only assets                              |
-| `TRADE_DECISION_DEFAULT_ASSETS`         |                                     `btc, eth, sol` | Asset fallback when an operator overrides only periods                              |
-| `TRADE_DECISION_SUPPORTED_PERIODS`      |                                           `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
-| `TRADE_DECISION_ALLOWED_MARKET_REGIMES` |                                low-vol regimes only | Regimes allowed to produce actionable backtest/dry-run/live trades                  |
-| `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` |                           `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
-| `TRADE_DECISION_HYDRATE_BARS`           |                                               `150` | Closed bars loaded before the loop starts                                           |
-| `MAX_COMMITTEE_VOTES_PER_FILTER`        |                                                 `1` | One active vote per `filter_id`, even if multiple configs engage                    |
-| `MIN_COMMITTEE_VOTES_TO_TRADE`          |                                                 `2` | Minimum non-abstain votes after filter collapse                                     |
-| `MIN_COMMITTEE_CONSENSUS_FRACTION`      |                                               `0.5` | Winning side must hold at least this share; ties still abstain                      |
-| `TRADE_DECISION_FILTER_TIE_BREAK`       |                                          highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
+| Constant                                |                                     Default | Meaning                                                                             |
+| --------------------------------------- | ------------------------------------------: | ----------------------------------------------------------------------------------- |
+| `TRADE_DECISION_DEFAULT_MARKETS`        | full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` grid | No-flag dry-run/live/backtest market set                                            |
+| `TRADE_DECISION_DEFAULT_PERIODS`        |                                   `5m, 15m` | Period fallback when an operator overrides only assets                              |
+| `TRADE_DECISION_DEFAULT_ASSETS`         |                  `btc, eth, sol, xrp, doge` | Asset fallback when an operator overrides only periods                              |
+| `TRADE_DECISION_SUPPORTED_PERIODS`      |                                   `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
+| `TRADE_DECISION_ALLOWED_MARKET_REGIMES` |                      all classified regimes | Regimes recorded for analysis; not a high/low-vol trade gate                        |
+| `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` |                   `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
+| `TRADE_DECISION_HYDRATE_BARS`           |                                       `150` | Closed bars loaded before the loop starts                                           |
+| `MAX_COMMITTEE_VOTES_PER_FILTER`        |                                         `1` | One active vote per `filter_id`, even if multiple configs engage                    |
+| `MIN_COMMITTEE_VOTES_TO_TRADE`          |                                         `2` | Minimum non-abstain votes after filter collapse                                     |
+| `MIN_COMMITTEE_CONSENSUS_FRACTION`      |                                       `0.5` | Winning side must hold at least this share; ties still abstain                      |
+| `TRADE_DECISION_FILTER_TIE_BREAK`       |                                  highest WR | Same-filter engaged configs rank by win rate, then engagements, then selection rank |
 
 With the current constants, the final decision is simple majority
 after filter-level vote collapse, with at least two engaged filters
 required. Changing `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both
 dry-run and live. Changing `TRADE_DECISION_DEFAULT_MARKETS` changes the
 no-flag default market set for committee backtest, dry-run, and live.
-Changing
-`TRADE_DECISION_ALLOWED_MARKET_REGIMES` changes which classified
-environments can produce trades for backtest, dry-run, and live.
-The high-vol regime names are intentionally left as commented entries
-beside the allow-list in `src/constants/tradeDecision.ts`; adding them
-back should be followed by `bun alea backtest:run` and a restart of
-any running dry-run/live process.
+`TRADE_DECISION_ALLOWED_MARKET_REGIMES` now includes every classified
+regime so high/low-vol labels do not block trades.
 
 Every actionable decision lands in `dry_run_decisions` with the regime
 tag, the up/down/abstain tally, and the synthetic-open price. See

@@ -1,3 +1,5 @@
+import { resolve as resolvePath } from "node:path";
+
 import type { FilterBar } from "@alea/lib/filters/types";
 import {
   chartPredictionToTradeDecision,
@@ -6,76 +8,51 @@ import {
 import { describe, expect, it } from "bun:test";
 
 describe("chartPredictionToTradeDecision", () => {
-  it("turns a confident green chart prediction into UP", () => {
+  it("turns a green chart prediction into UP", () => {
     expect(
       chartPredictionToTradeDecision({
         chartPrediction: {
           direction: "green",
-          confidence: 0.72,
           reasoning: "Continuation is favored.",
         },
         model: "gpt-5.4",
-        minConfidence: 0.7,
       }),
     ).toEqual({
       prediction: "u",
       direction: "green",
-      confidence: 0.72,
       reasoning: "Continuation is favored.",
       model: "gpt-5.4",
-      minConfidence: 0.7,
       up: 1,
       down: 0,
       abstain: 0,
     });
   });
 
-  it("turns a confident red chart prediction into DOWN", () => {
+  it("turns a red chart prediction into DOWN", () => {
     expect(
       chartPredictionToTradeDecision({
         chartPrediction: {
           direction: "red",
-          confidence: 0.81,
           reasoning: "Rejection is favored.",
         },
         model: "gpt-5.4",
-        minConfidence: 0.7,
       }).prediction,
     ).toBe("d");
   });
 
-  it("abstains when OpenAI confidence is below threshold", () => {
-    expect(
-      chartPredictionToTradeDecision({
-        chartPrediction: {
-          direction: "green",
-          confidence: 0.69,
-          reasoning: "Mixed setup.",
-        },
-        model: "gpt-5.4",
-        minConfidence: 0.7,
-      }),
-    ).toMatchObject({
-      prediction: null,
-      confidence: 0.69,
-      minConfidence: 0.7,
-      up: 0,
-      down: 0,
-      abstain: 1,
-    });
-  });
-
   it("renders the visible Pyth chart before asking OpenAI", async () => {
     let rendered: RenderedChartParams | null = null;
+    let predictedImagePath: string | null = null;
+    const targetTsMs = Date.UTC(2026, 0, 2, 3, 4, 5, 6);
 
     const decision = await evaluateOpenAiChartTradeDecision({
       asset: "btc",
       period: "5m",
+      targetTsMs,
       series: {
         pyth: [bar({ i: 0 }), bar({ i: 1 })],
         coinbase: [null, null],
       },
-      minConfidence: 0.8,
       renderChart: async (params) => {
         rendered = {
           source: params.source,
@@ -92,13 +69,13 @@ describe("chartPredictionToTradeDecision", () => {
           end: params.candles[params.candles.length - 1]!.timestamp,
         };
       },
-      predictChart: async ({ detail }) => {
+      predictChart: async ({ detail, imagePath }) => {
+        predictedImagePath = imagePath;
         expect(detail).toBe("high");
         return {
           model: "gpt-5.4",
           prediction: {
             direction: "red",
-            confidence: 0.82,
             reasoning: "The last candle rejected higher prices.",
           },
         };
@@ -113,6 +90,12 @@ describe("chartPredictionToTradeDecision", () => {
     expect(renderedChart.showPriceLine).toBe(false);
     expect(renderedChart.showTopInfo).toBe(false);
     expect(renderedChart.candleCount).toBe(2);
+    const imagePath = requireString(predictedImagePath);
+    expect(
+      imagePath.startsWith(`${resolvePath("tmp", "openai-chart-decisions")}/`),
+    ).toBe(true);
+    expect(imagePath).toContain("2026-01-02T03-04-05-006Z-btc-5m-");
+    expect(imagePath.endsWith(".png")).toBe(true);
   });
 });
 
@@ -132,6 +115,13 @@ function requireRenderedChart(
     throw new Error("expected chart renderer to be called");
   }
   return rendered;
+}
+
+function requireString(value: string | null): string {
+  if (value === null) {
+    throw new Error("expected string value");
+  }
+  return value;
 }
 
 function bar({ i }: { readonly i: number }): FilterBar {

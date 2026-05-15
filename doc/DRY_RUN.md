@@ -4,11 +4,10 @@ The dry-run loop is the rehearsal path for live trading: a long-running
 process that keeps recent Pyth candles in memory, refreshes them just
 before each market boundary, synthesizes the active Pyth candle from
 the latest Pyth price, renders the visible chart, asks OpenAI to
-predict the next candle, and persists decisions whose confidence clears
-the configured threshold to `dry_run_decisions`. No real orders are
-placed. The loop also simulates whether a configured pre-open
-Polymarket order would have been eligible, placed, filled, or left
-unfilled.
+predict the next candle, and persists every returned green/red
+decision to `dry_run_decisions`. No real orders are placed. The loop
+also simulates whether a configured pre-open Polymarket order would
+have been eligible, placed, filled, or left unfilled.
 
 Run it:
 
@@ -16,8 +15,9 @@ Run it:
 bun alea dry:run
 ```
 
-By default the runner uses the full BTC/ETH/SOL `5m` + `15m` market set:
-`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`.
+By default the runner uses the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` market set:
+`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, `15m/sol`, `5m/xrp`,
+`15m/xrp`, `5m/doge`, and `15m/doge`.
 Override either axis with comma-separated lists:
 
 ```sh
@@ -26,9 +26,7 @@ bun alea dry:run --assets eth --periods 5m,15m
 ```
 
 Stays running until SIGINT / SIGTERM. The OpenAI chart-decision logic
-is identical to what live trading uses. Set
-`OPENAI_TRADE_DECISION_MIN_CONFIDENCE` or pass
-`--openai-min-confidence`; the default is `0.7`.
+is identical to what live trading uses.
 
 ## What it does, per asset/period
 
@@ -48,10 +46,8 @@ grid:
    synthetic active candle for the about-to-finalize bar. Render the
    visible Pyth chart with the price line and top OHLC block hidden,
    send that image to OpenAI, and map `green` to UP and `red` to
-   DOWN. If `confidence < minConfidence`, abstain; otherwise persist
-   the decision.
-4. **Simulate order** — immediately after an actionable OpenAI
-   decision, read the live UP/DOWN book/BBO
+   DOWN. Persist every returned green/red decision.
+4. **Simulate order** — immediately after an OpenAI decision, read the live UP/DOWN book/BBO
    market data for the predicted side. The runner pre-discovers
    current and next markets before entry so the market subscription is
    already available when the simulated placement time arrives. If the
@@ -105,10 +101,18 @@ for each configured asset/period market:
    synthetic active candle.
 2. Render the chart with [`renderMarketChartImage`](../src/lib/candles/chart/renderMarketChartImage.ts).
 3. Ask OpenAI through [`predictMarketChart`](../src/lib/candles/chart/predictMarketChart.ts).
-4. Validate the response with Zod as `{ direction, confidence, reasoning }`.
+4. Validate the response with Zod as `{ direction, reasoning }`.
 5. Map `direction=green` to `prediction='u'` and `direction=red` to
    `prediction='d'`.
-6. Persist and simulate an order only when `confidence >= minConfidence`.
+6. Persist the decision and simulate an order.
+
+Each OpenAI chart attempt appends one JSONL row to
+`OPENAI_CHART_PROMPT_LOG_PATH`, defaulting to
+`tmp/openai-chart-prompts.jsonl`. The row includes the model,
+instructions, prompt text, rendered chart image path, and either the
+validated response or the error. Dry-run/live chart images are kept
+under `tmp/openai-chart-decisions/` so the logged image path remains
+inspectable after the request finishes.
 
 ## Order simulation
 
@@ -143,8 +147,9 @@ equal to the simulated limit price. Trade prints are
 intentionally not fill evidence, because seeing a trade does not prove
 our resting order would have been next in queue.
 
-Dry-run records the OpenAI chart confidence as `order_confidence` and
-uses it as the decision gate before an order is simulated.
+OpenAI chart decisions no longer carry a model-provided confidence
+score. The legacy `order_confidence` column is left null for new
+OpenAI rows.
 
 Market discovery is centralized in
 [`src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts`](../src/lib/trading/vendor/polymarket/marketDiscoveryCache.ts).
@@ -159,32 +164,32 @@ Append-only. One row per non-abstain decision. Schema:
 and the `market_regime` column added by
 [`202605120200_dry_run_market_regime`](../src/lib/db/migrations/202605120200_dry_run_market_regime.ts).
 
-| Column                  | Meaning                                                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `id`                    | bigserial PK                                                                                                             |
-| `ts_ms`                 | Open-time of the target bar (the bar being predicted)                                                                    |
-| `decided_at_ms`         | Wall-clock when the prediction was made                                                                                  |
-| `asset`, `period`       | Self-explanatory                                                                                                         |
-| `prediction`            | `'u'` or `'d'`                                                                                                           |
-| `synth_open`            | Pyth price snapshotted at decision lead — used as the bar's synthetic open                                               |
-| `actual_open`           | Nullable audit column retained for legacy dry-run rows                                                                   |
-| `regime_votes`          | JSON OpenAI audit object including `{source, model, direction, confidence, minConfidence, reasoning, up, down, abstain}` |
-| `actual_close`          | Filled in once the target bar settles                                                                                    |
-| `won`                   | 0/1, null until scored                                                                                                   |
-| `market_regime`         | Legacy column; OpenAI chart decisions write `null`                                                                       |
-| `decision_duration_ms`  | Chart render + OpenAI decision time before persistence                                                                   |
-| `order_status`          | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason                                                       |
-| `order_placed_at_ms`    | Simulated order-placement wall-clock                                                                                     |
-| `order_observed_price`  | Predicted-side token price read at simulated placement                                                                   |
-| `order_limit_price`     | Simulated limit-buy price                                                                                                |
-| `order_confidence`      | OpenAI chart confidence for the persisted prediction                                                                     |
-| `order_filled_at_ms`    | When the simulated order first became fillable                                                                           |
-| `order_fill_price`      | Simulated fill price                                                                                                     |
-| `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence                                                      |
-| `order_expires_at_ms`   | Target market close; placed orders still unfilled here expire                                                            |
-| `order_market_ref`      | Polymarket condition id for the target window used by order simulation                                                   |
-| `order_up_token_ref`    | Polymarket UP token id for that target window                                                                            |
-| `order_down_token_ref`  | Polymarket DOWN token id for that target window                                                                          |
+| Column                  | Meaning                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `id`                    | bigserial PK                                                                                  |
+| `ts_ms`                 | Open-time of the target bar (the bar being predicted)                                         |
+| `decided_at_ms`         | Wall-clock when the prediction was made                                                       |
+| `asset`, `period`       | Self-explanatory                                                                              |
+| `prediction`            | `'u'` or `'d'`                                                                                |
+| `synth_open`            | Pyth price snapshotted at decision lead — used as the bar's synthetic open                    |
+| `actual_open`           | Filled with the resolved target-bar open once scored; null for pending or legacy rows         |
+| `regime_votes`          | JSON OpenAI audit object including `{source, model, direction, reasoning, up, down, abstain}` |
+| `actual_close`          | Filled in once the target bar settles                                                         |
+| `won`                   | 0/1, null until scored                                                                        |
+| `market_regime`         | Legacy column; OpenAI chart decisions write `null`                                            |
+| `decision_duration_ms`  | Chart render + OpenAI decision time before persistence                                        |
+| `order_status`          | `pending_placement`, `filled`, `unfilled`, or a `skipped_*` reason                            |
+| `order_placed_at_ms`    | Simulated order-placement wall-clock                                                          |
+| `order_observed_price`  | Predicted-side token price read at simulated placement                                        |
+| `order_limit_price`     | Simulated limit-buy price                                                                     |
+| `order_confidence`      | Legacy confidence column; null for current OpenAI chart decisions                             |
+| `order_filled_at_ms`    | When the simulated order first became fillable                                                |
+| `order_fill_price`      | Simulated fill price                                                                          |
+| `order_fill_latency_ms` | Milliseconds from simulated placement to first fillability evidence                           |
+| `order_expires_at_ms`   | Target market close; placed orders still unfilled here expire                                 |
+| `order_market_ref`      | Polymarket condition id for the target window used by order simulation                        |
+| `order_up_token_ref`    | Polymarket UP token id for that target window                                                 |
+| `order_down_token_ref`  | Polymarket DOWN token id for that target window                                               |
 
 Abstain decisions are **not** written. Pending rows have
 `actual_close = null` and `won = null`; the loop fills them in when
@@ -192,12 +197,10 @@ the target bar closes. Older rows created before order simulation are
 marked `order_status = 'untracked'`.
 
 `dry_run_decision_attempts` is the timing table for every scheduled
-OpenAI chart evaluation, including confidence-threshold abstains. It
-records target window, asset, period, decision duration, OpenAI model,
-direction, confidence, threshold, reasoning, and the linked
-`dry_run_decisions.id` when the attempt produced a trade. Legacy
-vote/roster columns are filled with OpenAI-source counts for schema
-compatibility.
+OpenAI chart evaluation. It records target window, asset, period,
+decision duration, OpenAI model, direction, reasoning, and the linked
+`dry_run_decisions.id`. Legacy confidence and roster columns remain
+for schema compatibility and are null or fixed for new OpenAI rows.
 
 ## CLI output
 
@@ -207,10 +210,10 @@ The CLI streams one line per event:
 13:21:05 hydrated 5m/btc bars=150
 13:21:05 hydrated 15m/btc bars=150
 ...
-13:21:05 predictor openai_chart minConfidence=0.7
+13:21:05 predictor openai_chart
 13:21:05 ready
-13:24:55 UP     5m/eth   target=13:25 synth=2335.23 source=openai conf=0.74 min=0.70 model=gpt-5.4 reason=...
-13:24:55 abstain 15m/btc target=13:30 synth=80876.38 source=openai conf=0.58 min=0.70 model=gpt-5.4 reason=...
+13:24:55 UP     5m/eth   target=13:25 synth=2335.23 source=openai model=gpt-5.4 reason=...
+13:24:55 DOWN   15m/btc  target=13:30 synth=80876.38 source=openai model=gpt-5.4 reason=...
 ...
 13:25:01 WIN  5m/eth   bar=13:20 pred=u open=2329.42 close=2330.27
 ```
@@ -219,6 +222,11 @@ Event kinds: `hydrated`, `predictor`, `ready`, `decision`, `order`,
 `outcome`, `error`. See
 [`bin/dry/run.ts`](../src/bin/dry/run.ts) for the styling
 contract.
+
+When `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set, each
+`outcome` event also sends a Telegram message with the market result,
+prediction, order fill status, and session right/wrong plus
+filled/unfilled/open/skipped counts.
 
 ## Failure modes
 
@@ -229,8 +237,6 @@ contract.
 - **OpenAI auth/scope failure** — the process fails fast at startup
   when `OPENAI_API_KEY` is missing. Restricted keys must have
   Responses API write scope.
-- **Low OpenAI confidence** — logged as `abstain`; no
-  `dry_run_decisions` row or simulated order is created.
 
 ## Dashboard
 

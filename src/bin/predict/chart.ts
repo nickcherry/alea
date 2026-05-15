@@ -53,7 +53,7 @@ export const predictChartCommand = defineCommand({
     "bun alea predict:chart tmp/charts/btc-pyth-5m.png --detail auto",
   ],
   output:
-    "Prints the model name, predicted next-candle direction, confidence, and reasoning.",
+    "Prints the model name, predicted next-candle direction, and reasoning.",
   sideEffects:
     "Reads the local image and calls the OpenAI Responses API. Does not write files or mutate trading state.",
   async run({ io, positionals, options }) {
@@ -69,7 +69,6 @@ export const predictChartCommand = defineCommand({
     io.writeStdout(
       [
         `${pc.bold("direction")} ${prediction.direction}`,
-        `${pc.bold("confidence")} ${prediction.confidence}`,
         "",
         `${pc.bold("reasoning")}`,
         prediction.reasoning,

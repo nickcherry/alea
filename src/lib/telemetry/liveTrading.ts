@@ -19,7 +19,6 @@ export function liveTradingLogEventToTelemetry(
         event: "predictor_loaded",
         mode: "live",
         source: event.source,
-        minConfidence: event.minConfidence,
       };
     case "decision":
       return {
@@ -38,8 +37,6 @@ export function liveTradingLogEventToTelemetry(
         upVotes: event.up,
         downVotes: event.down,
         abstainVotes: event.abstain,
-        confidence: event.confidence,
-        minConfidence: event.minConfidence,
         model: event.model,
         reasoning: event.reasoning,
       };

@@ -1,5 +1,7 @@
-import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
-import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
+import {
+  DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
+  type DryRunOrderStatus,
+} from "@alea/constants/dryRun";
 import {
   resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
@@ -37,7 +39,6 @@ export type DryRunOptions = {
   readonly assets?: readonly Asset[];
   readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
-  readonly openAiMinConfidence?: number;
   readonly log: (event: DryRunLogEvent) => void;
 };
 
@@ -52,22 +53,19 @@ export type DryRunLogEvent =
   | {
       readonly kind: "predictor";
       readonly source: "openai_chart";
-      readonly minConfidence: number;
     }
   | {
       readonly kind: "decision";
       readonly asset: Asset;
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
-      readonly prediction: "u" | "d" | null;
+      readonly prediction: "u" | "d";
       readonly synthClose: number;
       readonly marketRegime: MarketRegime | null;
       readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
-      readonly confidence: number | null;
-      readonly minConfidence: number;
       readonly model: string | null;
       readonly reasoning: string | null;
     }
@@ -80,6 +78,9 @@ export type DryRunLogEvent =
       readonly actualClose: number;
       readonly actualOpen: number;
       readonly won: boolean;
+      readonly orderStatus: DryRunOrderStatus;
+      readonly orderLimitPrice: number | null;
+      readonly orderFillPrice: number | null;
     }
   | DryRunOrderLogEvent
   | { readonly kind: "error"; readonly message: string };
@@ -95,9 +96,9 @@ export type DryRunLogEvent =
  *      candles into the in-memory buffer and synthesize the active
  *      candle from the latest one-shot Pyth price.
  *   3. Render the refreshed/synthetic bar set as a chart, ask OpenAI for the
- *      next-candle direction, and persist it only above the confidence floor.
- *   4. For non-abstain decisions, simulate the configured pre-open
- *      Polymarket order and track whether it fills before expiry.
+ *      next-candle direction, and persist the returned direction.
+ *   4. Simulate the configured pre-open Polymarket order and track whether it
+ *      fills before expiry.
  *
  * The dry-run loop is single-threaded by design — all state lives
  * in the closure, no locking required. Persistence is the only
@@ -108,7 +109,6 @@ export async function runDryRun({
   assets,
   markets,
   periods,
-  openAiMinConfidence = OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
   log,
 }: DryRunOptions): Promise<DryRunHandle> {
   const selectedMarkets = resolveTradeDecisionMarkets({
@@ -148,7 +148,6 @@ export async function runDryRun({
   log({
     kind: "predictor",
     source: "openai_chart",
-    minConfidence: openAiMinConfidence,
   });
 
   let running = true;
@@ -160,6 +159,10 @@ export async function runDryRun({
       new Map(),
     );
   }
+  await hydratePendingDryRunDecisions({
+    db,
+    pendingByState,
+  });
   const marketDiscovery = createPolymarketMarketDiscoveryCache();
   const orderSimulator = createDryRunOrderSimulator({
     db,
@@ -236,7 +239,6 @@ export async function runDryRun({
                 targetTsMs: nextBoundary,
                 series: refreshed.seriesForDecision,
                 synthBar: refreshed.syntheticBar,
-                openAiMinConfidence,
                 pendingByState,
                 orderSimulator,
                 log,
@@ -268,7 +270,6 @@ async function makePrediction({
   targetTsMs,
   series,
   synthBar,
-  openAiMinConfidence,
   pendingByState,
   orderSimulator,
   log,
@@ -278,7 +279,6 @@ async function makePrediction({
   readonly targetTsMs: number;
   readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
-  readonly openAiMinConfidence: number;
   readonly pendingByState: Map<string, Map<number, string>>;
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
@@ -287,8 +287,8 @@ async function makePrediction({
   const evaluated = await evaluateOpenAiChartTradeDecision({
     asset: state.asset,
     period: state.period,
+    targetTsMs,
     series,
-    minConfidence: openAiMinConfidence,
   });
   const decisionCompletedAtMs = Date.now();
   const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
@@ -304,34 +304,9 @@ async function makePrediction({
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
-    confidence: evaluated.confidence,
-    minConfidence: evaluated.minConfidence,
     model: evaluated.model,
     reasoning: evaluated.reasoning,
   });
-  if (evaluated.prediction === null) {
-    await recordDecisionAttempt({
-      db,
-      state,
-      targetTsMs,
-      decisionStartedAtMs,
-      decisionCompletedAtMs,
-      decisionDurationMs,
-      prediction: null,
-      marketRegime: null,
-      rosterSize: 1,
-      up: evaluated.up,
-      down: evaluated.down,
-      abstain: evaluated.abstain,
-      openAiModel: evaluated.model,
-      openAiDirection: evaluated.direction,
-      openAiConfidence: evaluated.confidence,
-      openAiMinConfidence: evaluated.minConfidence,
-      openAiReasoning: evaluated.reasoning,
-      decisionId: null,
-    });
-    return;
-  }
   const prediction = evaluated.prediction;
   // Persist. The target bar's open = targetTsMs (i.e. the upcoming
   // period boundary). Its open price is approximately the current
@@ -356,8 +331,6 @@ async function makePrediction({
         source: "openai_chart",
         model: evaluated.model,
         direction: evaluated.direction,
-        confidence: evaluated.confidence,
-        minConfidence: evaluated.minConfidence,
         reasoning: evaluated.reasoning,
         up: evaluated.up,
         down: evaluated.down,
@@ -385,8 +358,6 @@ async function makePrediction({
     abstain: evaluated.abstain,
     openAiModel: evaluated.model,
     openAiDirection: evaluated.direction,
-    openAiConfidence: evaluated.confidence,
-    openAiMinConfidence: evaluated.minConfidence,
     openAiReasoning: evaluated.reasoning,
     decisionId: String(inserted.id),
   });
@@ -402,7 +373,7 @@ async function makePrediction({
     period: state.period,
     prediction,
     targetTsMs,
-    confidence: evaluated.confidence,
+    confidence: null,
   });
 }
 
@@ -421,8 +392,6 @@ async function recordDecisionAttempt({
   abstain,
   openAiModel,
   openAiDirection,
-  openAiConfidence,
-  openAiMinConfidence,
   openAiReasoning,
   decisionId,
 }: {
@@ -440,8 +409,6 @@ async function recordDecisionAttempt({
   readonly abstain: number;
   readonly openAiModel: string | null;
   readonly openAiDirection: string | null;
-  readonly openAiConfidence: number | null;
-  readonly openAiMinConfidence: number | null;
   readonly openAiReasoning: string | null;
   readonly decisionId: string | null;
 }): Promise<void> {
@@ -462,12 +429,39 @@ async function recordDecisionAttempt({
       abstain_votes: abstain,
       openai_model: openAiModel,
       openai_direction: openAiDirection,
-      openai_confidence: openAiConfidence,
-      openai_min_confidence: openAiMinConfidence,
+      openai_confidence: null,
+      openai_min_confidence: null,
       openai_reasoning: openAiReasoning,
       dry_run_decision_id: decisionId,
     })
     .execute();
+}
+
+async function hydratePendingDryRunDecisions({
+  db,
+  pendingByState,
+}: {
+  readonly db: DatabaseClient;
+  readonly pendingByState: Map<string, Map<number, string>>;
+}): Promise<void> {
+  const rows = await db
+    .selectFrom("dry_run_decisions")
+    .select(["id", "ts_ms", "asset", "period"])
+    .where("won", "is", null)
+    .execute();
+
+  for (const row of rows) {
+    const pending = pendingByState.get(
+      dryRunStateKey({
+        asset: row.asset as Asset,
+        period: row.period as TradeDecisionPeriod,
+      }),
+    );
+    if (pending === undefined) {
+      continue;
+    }
+    pending.set(Number(row.ts_ms), String(row.id));
+  }
 }
 
 async function scorePendingDecisions({
@@ -529,7 +523,12 @@ async function scoreDecision({
   // Look up the prediction so we know how to score.
   const row = await db
     .selectFrom("dry_run_decisions")
-    .select(["prediction"])
+    .select([
+      "prediction",
+      "order_status",
+      "order_limit_price",
+      "order_fill_price",
+    ])
     .where("id", "=", decisionId)
     .executeTakeFirstOrThrow();
   const predictedUp = row.prediction === "u";
@@ -537,6 +536,7 @@ async function scoreDecision({
   await db
     .updateTable("dry_run_decisions")
     .set({
+      actual_open: closedBar.open,
       actual_close: closedBar.close,
       won,
     })
@@ -551,6 +551,9 @@ async function scoreDecision({
     actualClose: closedBar.close,
     actualOpen: closedBar.open,
     won: won === 1,
+    orderStatus: row.order_status,
+    orderLimitPrice: row.order_limit_price,
+    orderFillPrice: row.order_fill_price,
   });
 }
 

@@ -39,7 +39,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `committee:*`
   `committee:select` — picks the top-N candidates per `(asset, market_regime, period)` from asset/regime-stratified training stats and writes the voter roster to `committee_selections`. See [COMMITTEE.md](./COMMITTEE.md).
 - `dry:*`
-  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, renders a chart with the price line/top info hidden, asks OpenAI for a next-candle prediction, persists predictions above the configured confidence threshold to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
+  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, renders a chart with the price line/top info hidden, asks OpenAI for a next-candle prediction, persists every returned green/red prediction to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
   `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, `/exploration/`, `/committee/`, `/backtest/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
@@ -60,7 +60,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `polymarket:price-sample` — long-running sampler that records compact live 5m/15m Polymarket UP price paths into `polymarket_price_samples`, feeding the `/price-paths/` dashboard's 50c calibration views.
   `polymarket:resolutions-sync` — backfills settled Polymarket up/down crypto market outcomes into `polymarket_resolutions`. Pair with Pyth candles to drive the proxy-accuracy dashboard. See [PROXY.md](./PROXY.md).
 - `trading:*`
-  `trading:run` — long-running live trader. Uses the same OpenAI chart-decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders for predictions above the configured confidence threshold. Defaults to the full BTC/ETH/SOL `5m` + `15m` market set; use `--assets` / `--periods` to override. See [LIVE_TRADING.md](./LIVE_TRADING.md).
+  `trading:run` — long-running live trader. Uses the same OpenAI chart-decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders for every returned green/red prediction. Defaults to the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` market set; use `--assets` / `--periods` to override. See [LIVE_TRADING.md](./LIVE_TRADING.md).
   `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
   `trading:performance` — print the latest lifetime PnL summary scanned from Polymarket data-api.
 - `help`
@@ -116,9 +116,12 @@ Chrome is installed outside the standard macOS/Linux paths.
 
 Use `predict:chart` to predict the next candle from an already-rendered
 chart image. The command sends the image through the OpenAI Responses API,
-requires the model to return `{ direction, confidence, reasoning }`, and
-validates that response with Zod before printing it. It defaults to
+requires the model to return `{ direction, reasoning }`, and validates
+that response with Zod before printing it. It defaults to
 `OPENAI_CHART_MODEL` or `gpt-5.4`.
+Each request appends a JSONL audit row to
+`OPENAI_CHART_PROMPT_LOG_PATH`, defaulting to
+`tmp/openai-chart-prompts.jsonl`.
 
 ```sh
 bun alea predict:chart tmp/charts/btc-pyth-5m.png

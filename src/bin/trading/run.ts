@@ -1,5 +1,4 @@
 import { env } from "@alea/constants/env";
-import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   formatTradeDecisionMarkets,
   resolveTradeDecisionMarkets,
@@ -43,7 +42,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live OpenAI chart trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after each actionable prediction above the confidence threshold. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after each returned green/red prediction. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
   options: [
     defineValueOption({
       key: "periods",
@@ -61,24 +60,10 @@ export const tradingRunCommand = defineCommand({
         `Comma-separated assets. With --periods only, defaults to ${TRADE_DECISION_DEFAULT_ASSETS.join(",")}.`,
       ),
     }),
-    defineValueOption({
-      key: "openAiMinConfidence",
-      long: "--openai-min-confidence",
-      valueName: "N",
-      schema: z.coerce
-        .number()
-        .min(0)
-        .max(1)
-        .optional()
-        .describe(
-          `Minimum OpenAI chart confidence required to place a live trade. Defaults to OPENAI_TRADE_DECISION_MIN_CONFIDENCE or ${OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE}.`,
-        ),
-    }),
   ],
   examples: [
     "bun alea trading:run",
     "bun alea trading:run --periods 15m",
-    "bun alea trading:run --openai-min-confidence 0.7",
     "bun alea trading:run --assets eth --periods 5m,15m",
   ],
   output:
@@ -90,15 +75,11 @@ export const tradingRunCommand = defineCommand({
       assets: options.assets,
       periods: options.periods,
     });
-    const openAiMinConfidence =
-      options.openAiMinConfidence ??
-      env.openaiTradeDecisionMinConfidence ??
-      OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE;
     if (env.openaiApiKey === undefined) {
       throw new Error("OPENAI_API_KEY is required for live trading decisions.");
     }
     io.writeStdout(
-      `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })} openaiMinConfidence=${openAiMinConfidence}`)}\n\n`,
+      `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
     );
     const runId = createTelemetryRunId();
     const telemetry = createAxiomTelemetrySink({
@@ -138,7 +119,6 @@ export const tradingRunCommand = defineCommand({
       handle = await runLiveTrading({
         db,
         markets,
-        openAiMinConfidence,
         log: (event) => {
           try {
             telemetry.emit(liveTradingLogEventToTelemetry(event));
@@ -157,20 +137,14 @@ export const tradingRunCommand = defineCommand({
               break;
             case "predictor":
               io.writeStdout(
-                `${pc.dim(ts)} ${pc.green("predictor")} ${event.source} ${pc.dim(`minConfidence=${event.minConfidence}`)}\n`,
+                `${pc.dim(ts)} ${pc.green("predictor")} ${event.source}\n`,
               );
               break;
             case "decision": {
               const tag =
-                event.prediction === null
-                  ? pc.dim("abstain")
-                  : event.prediction === "u"
-                    ? pc.green("UP    ")
-                    : pc.red("DOWN  ");
-              const confidence =
-                event.confidence === null
-                  ? "-"
-                  : formatConfidence(event.confidence);
+                event.prediction === "u"
+                  ? pc.green("UP    ")
+                  : pc.red("DOWN  ");
               const priceAge =
                 event.priceAgeMs === null
                   ? ""
@@ -178,7 +152,7 @@ export const tradingRunCommand = defineCommand({
               const reason =
                 event.reasoning === null ? "" : ` reason=${event.reasoning}`;
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("source=openai conf=" + confidence + " min=" + formatConfidence(event.minConfidence) + " model=" + (event.model ?? "-") + priceAge + reason)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("source=openai model=" + (event.model ?? "-") + priceAge + reason)}\n`,
               );
               break;
             }

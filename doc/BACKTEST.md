@@ -25,9 +25,8 @@ result.
 
 `backtest:run` replays the operational default market set from
 `TRADE_DECISION_DEFAULT_MARKETS`. The current no-flag set is `5m/btc`,
-`15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`, paired with the
-top-12 committee selection cap to keep the full BTC/ETH/SOL surface while
-trimming weaker lower-ranked voters.
+`15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, `15m/sol`, `5m/xrp`, `15m/xrp`,
+`5m/doge`, and `15m/doge`.
 
 ## Window
 
@@ -49,8 +48,8 @@ At each historical decision moment, the runner:
    ending with a synthetic in-flight period bar from completed `1m` candles
    available at the configured decision lead.
 2. Classifies the current market regime.
-3. Applies `TRADE_DECISION_ALLOWED_MARKET_REGIMES`; high-vol regimes
-   currently abstain before any vote can become a trade.
+3. Applies `TRADE_DECISION_ALLOWED_MARKET_REGIMES`, which currently includes
+   every classified regime so high/low-vol labels do not block trades.
 4. Loads the selected committee roster for `(asset, regime, period)`.
 5. Runs `evaluateCommittee`, including the shared one-vote-per-filter
    and consensus policy.

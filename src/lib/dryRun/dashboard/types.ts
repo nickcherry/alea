@@ -33,7 +33,6 @@ export type DryRunDecisionConfig = {
   readonly supportedPeriods: readonly string[];
   readonly leadTimeByPeriodMs: { readonly [period: string]: number };
   readonly decisionSource: string;
-  readonly openAiMinConfidence: number;
   readonly hydratedBars: number;
   readonly orderPlacementDelayMs: number;
   readonly orderLimitPricePolicy: string;
@@ -62,6 +61,7 @@ export type DryRunDashboardRecentRow = {
   readonly period: string;
   readonly prediction: "u" | "d";
   readonly synthOpen: number;
+  readonly actualOpen: number | null;
   readonly actualClose: number | null;
   readonly won: number | null;
   readonly marketRegime: string | null;

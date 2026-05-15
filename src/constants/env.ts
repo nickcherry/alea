@@ -1,5 +1,3 @@
-import { parseOpenAiTradeDecisionMinConfidence } from "@alea/constants/openAiTradeDecision";
-
 const defaultDatabaseUrl = "postgres://localhost:5432/alea";
 
 /**
@@ -62,11 +60,11 @@ export const env = {
   get openaiChartModel(): string | undefined {
     return optionalEnv("OPENAI_CHART_MODEL");
   },
-  get openaiTradeDecisionMinConfidence(): number | undefined {
-    const raw = optionalEnv("OPENAI_TRADE_DECISION_MIN_CONFIDENCE");
-    return raw === undefined
-      ? undefined
-      : parseOpenAiTradeDecisionMinConfidence({ raw });
+  get openaiChartPromptLogPath(): string {
+    return (
+      optionalEnv("OPENAI_CHART_PROMPT_LOG_PATH") ??
+      "tmp/openai-chart-prompts.jsonl"
+    );
   },
 };
 

@@ -212,7 +212,7 @@
         : Number(row.actualClose).toFixed(2);
     var outcome;
     if (row.won === null) {
-      outcome = '<span class="alea-muted">—</span>';
+      outcome = '<span class="alea-muted">pending</span>';
     } else if (row.won === 1) {
       outcome = '<span class="dry-run-outcome win">WIN</span>';
     } else {
@@ -224,7 +224,11 @@
         : '<span class="asset-pill">' +
           escapeHtml(formatMarketRegime(row.marketRegime)) +
           "</span>";
-    var moveCell = renderMoveCell(row.synthOpen, row.actualClose);
+    var displayOpen =
+      row.actualOpen !== null && row.actualOpen !== undefined
+        ? row.actualOpen
+        : row.synthOpen;
+    var moveCell = renderMoveCell(displayOpen, row.actualClose);
     return (
       "<tr>" +
       '<td class="alea-mono">' +
@@ -240,7 +244,7 @@
       regimeCell +
       "</td>" +
       '<td class="num-col alea-mono">' +
-      Number(row.synthOpen).toFixed(2) +
+      Number(displayOpen).toFixed(2) +
       "</td>" +
       '<td class="num-col alea-mono">' +
       close +
@@ -309,11 +313,11 @@
     return (Number(value) * 100).toFixed(1) + "c";
   }
 
-  function renderMoveCell(synthOpen, actualClose) {
-    if (actualClose === null || actualClose === undefined || !synthOpen) {
+  function renderMoveCell(open, actualClose) {
+    if (actualClose === null || actualClose === undefined || !open) {
       return '<span class="alea-muted">—</span>';
     }
-    var pct = ((actualClose - synthOpen) / synthOpen) * 100;
+    var pct = ((actualClose - open) / open) * 100;
     var sign = pct > 0 ? "+" : pct < 0 ? "" : "";
     var cls =
       pct > 0

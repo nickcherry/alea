@@ -14,5 +14,7 @@ describe("Pyth candle mappings", () => {
     expect(pythSymbol({ asset: "btc" })).toBe("Crypto.BTC/USD");
     expect(pythSymbol({ asset: "eth" })).toBe("Crypto.ETH/USD");
     expect(pythSymbol({ asset: "sol" })).toBe("Crypto.SOL/USD");
+    expect(pythSymbol({ asset: "xrp" })).toBe("Crypto.XRP/USD");
+    expect(pythSymbol({ asset: "doge" })).toBe("Crypto.DOGE/USD");
   });
 });

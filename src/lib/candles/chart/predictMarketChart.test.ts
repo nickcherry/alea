@@ -28,8 +28,8 @@ describe("predictMarketChart helpers", () => {
       "Predict whether the next candle will be green or red.",
     );
     expect(prompt).toContain('"direction": "green"');
-    expect(prompt).toContain('"confidence": 0.62');
     expect(prompt).toContain('"reasoning"');
+    expect(prompt).not.toContain("confidence");
     expect(prompt).not.toContain("Answer the user's chart question");
     expect(prompt).not.toContain("treat that as intentional anti-leak context");
   });
@@ -41,15 +41,14 @@ describe("predictMarketChart helpers", () => {
     expect(() =>
       chartPredictionSchema.parse({
         direction: "up",
-        confidence: 0.75,
         reasoning: "Momentum is rising.",
       }),
     ).toThrow();
     expect(() =>
       chartPredictionSchema.parse({
         direction: "red",
-        confidence: 1.25,
         reasoning: "Momentum is rolling over.",
+        confidence: 0.75,
       }),
     ).toThrow();
   });

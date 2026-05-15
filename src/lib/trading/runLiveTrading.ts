@@ -1,4 +1,3 @@
-import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
@@ -39,7 +38,6 @@ export type LiveTradingOptions = {
   readonly assets?: readonly Asset[];
   readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
-  readonly openAiMinConfidence?: number;
   readonly log: (event: LiveTradingLogEvent) => void;
 };
 
@@ -54,14 +52,13 @@ export type LiveTradingLogEvent =
   | {
       readonly kind: "predictor";
       readonly source: "openai_chart";
-      readonly minConfidence: number;
     }
   | {
       readonly kind: "decision";
       readonly asset: Asset;
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
-      readonly prediction: "u" | "d" | null;
+      readonly prediction: "u" | "d";
       readonly synthClose: number;
       readonly priceAgeMs: number | null;
       readonly marketRegime: MarketRegime | null;
@@ -69,8 +66,6 @@ export type LiveTradingLogEvent =
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
-      readonly confidence: number | null;
-      readonly minConfidence: number;
       readonly model: string | null;
       readonly reasoning: string | null;
     }
@@ -83,7 +78,6 @@ export async function runLiveTrading({
   assets,
   markets,
   periods,
-  openAiMinConfidence = OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
   log,
 }: LiveTradingOptions): Promise<LiveTradingHandle> {
   const selectedMarkets = resolveTradeDecisionMarkets({
@@ -117,7 +111,6 @@ export async function runLiveTrading({
   log({
     kind: "predictor",
     source: "openai_chart",
-    minConfidence: openAiMinConfidence,
   });
 
   const client = await getPolymarketClobClient();
@@ -161,7 +154,6 @@ export async function runLiveTrading({
                 now,
                 fetchCandles,
                 targetTsMs: nextBoundary,
-                openAiMinConfidence,
                 orderExecutor,
                 log,
               }),
@@ -192,7 +184,6 @@ async function processDueLiveDecision({
   now,
   fetchCandles,
   targetTsMs,
-  openAiMinConfidence,
   orderExecutor,
   log,
 }: {
@@ -200,7 +191,6 @@ async function processDueLiveDecision({
   readonly now: number;
   readonly fetchCandles: FetchCandles;
   readonly targetTsMs: number;
-  readonly openAiMinConfidence: number;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
@@ -220,7 +210,6 @@ async function processDueLiveDecision({
       series: refreshed.seriesForDecision,
       synthBar: refreshed.syntheticBar,
       priceAgeMs: refreshed.priceAgeMs,
-      openAiMinConfidence,
       orderExecutor,
       log,
     });
@@ -289,7 +278,6 @@ async function makeLiveDecision({
   series,
   synthBar,
   priceAgeMs,
-  openAiMinConfidence,
   orderExecutor,
   log,
 }: {
@@ -298,7 +286,6 @@ async function makeLiveDecision({
   readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
   readonly priceAgeMs: number | null;
-  readonly openAiMinConfidence: number;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
@@ -306,8 +293,8 @@ async function makeLiveDecision({
   const evaluated = await evaluateOpenAiChartTradeDecision({
     asset: state.asset,
     period: state.period,
+    targetTsMs,
     series,
-    minConfidence: openAiMinConfidence,
   });
   log({
     kind: "decision",
@@ -322,20 +309,15 @@ async function makeLiveDecision({
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
-    confidence: evaluated.confidence,
-    minConfidence: evaluated.minConfidence,
     model: evaluated.model,
     reasoning: evaluated.reasoning,
   });
-  if (evaluated.prediction === null) {
-    return;
-  }
   await orderExecutor.scheduleOrder({
     asset: state.asset,
     period: state.period,
     prediction: evaluated.prediction,
     targetTsMs,
-    confidence: evaluated.confidence,
+    confidence: null,
   });
 }
 

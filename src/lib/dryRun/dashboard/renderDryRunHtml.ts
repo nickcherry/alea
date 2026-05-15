@@ -45,9 +45,9 @@ const RECENT_TABLE_LIMIT = 50;
 const DRY_RUN_TIPS = {
   regime:
     "Market regime (asset + period) the decisions belong to. Each row aggregates calls within one regime.",
-  asset: "Crypto symbol (BTC / ETH / SOL / XRP).",
+  asset: "Crypto symbol (BTC / ETH / SOL / XRP / DOGE).",
   calls:
-    "Number of dry-run decisions in this bucket — every moment the predictor cleared the confidence threshold.",
+    "Number of dry-run decisions in this bucket — every returned OpenAI green/red call.",
   winRate:
     "Share of scored calls that closed in the predicted direction. Ambiguous (exactly-flat) calls are excluded from the denominator.",
   upDown: "Up-calls vs down-calls split.",
@@ -56,10 +56,11 @@ const DRY_RUN_TIPS = {
     "Direction predicted by OpenAI: up or down. Drives which side of the Polymarket pair would be bought.",
   marketRegime:
     "Legacy asset × period regime label. OpenAI chart decisions store this as empty.",
-  synthOpen: "Synthetic open price visible at the decision moment.",
+  actualOpen:
+    "Resolved target-bar open from Pyth. Pending or legacy rows fall back to the decision-time synthetic open.",
   actualClose:
     "Polymarket-resolved close price for the window — the ground truth we score against.",
-  move: "Synthetic open → actual close move, in basis points. Sign matches the close direction.",
+  move: "Open → actual close move, in basis points. Sign matches the close direction.",
   order:
     "Direction the synthetic order would have taken (mirror of the prediction).",
   outcome:
@@ -152,11 +153,6 @@ export function renderDryRunHtml({
                     value: payload.decisionConfig.decisionSource,
                   }),
                   tip: "Runtime decision source used before order simulation.",
-                },
-                {
-                  label: "Min Confidence",
-                  value: `>= ${payload.decisionConfig.openAiMinConfidence.toFixed(2)}`,
-                  tip: "OpenAI chart confidence required before the runner simulates an order.",
                 },
               ],
             })}
@@ -258,7 +254,7 @@ export function renderDryRunHtml({
                 <th>Asset${infoTip({ text: DRY_RUN_TIPS.asset })}</th>
                 <th>Prediction${infoTip({ text: DRY_RUN_TIPS.prediction })}</th>
                 <th>Market Regime${infoTip({ text: DRY_RUN_TIPS.marketRegime })}</th>
-                <th class="num-col">Synth Open${infoTip({ text: DRY_RUN_TIPS.synthOpen })}</th>
+                <th class="num-col">Open${infoTip({ text: DRY_RUN_TIPS.actualOpen })}</th>
                 <th class="num-col">Actual Close${infoTip({ text: DRY_RUN_TIPS.actualClose })}</th>
                 <th class="num-col">Move${infoTip({ text: DRY_RUN_TIPS.move })}</th>
                 <th>Order${infoTip({ text: DRY_RUN_TIPS.order })}</th>
@@ -365,7 +361,7 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       : row.actualClose.toFixed(2);
   let outcome: string;
   if (row.won === null) {
-    outcome = '<span class="alea-muted">—</span>';
+    outcome = '<span class="alea-muted">pending</span>';
   } else if (row.won === 1) {
     outcome = '<span class="dry-run-outcome win">WIN</span>';
   } else {
@@ -375,8 +371,9 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
     row.marketRegime === null
       ? '<span class="alea-muted">—</span>'
       : `<span class="asset-pill">${escapeHtml({ value: formatMarketRegime(row.marketRegime) })}</span>`;
+  const displayOpen = row.actualOpen ?? row.synthOpen;
   const moveCell = renderMoveCell({
-    synthOpen: row.synthOpen,
+    open: displayOpen,
     actualClose: row.actualClose,
   });
   return `
@@ -385,7 +382,7 @@ function renderRecentRow(row: DryRunDashboardRecentRow): string {
       <td><span class="asset-pill">${escapeHtml({ value: row.asset })}</span></td>
       <td>${tag}</td>
       <td>${regimeCell}</td>
-      <td class="num-col alea-mono">${row.synthOpen.toFixed(2)}</td>
+      <td class="num-col alea-mono">${displayOpen.toFixed(2)}</td>
       <td class="num-col alea-mono">${close}</td>
       <td class="num-col">${moveCell}</td>
       <td>${renderOrderCell(row)}</td>
@@ -525,16 +522,16 @@ function formatQuoteAgeLimit({ value }: { readonly value: number }): string {
  * down. `—` while the bar is still pending.
  */
 function renderMoveCell({
-  synthOpen,
+  open,
   actualClose,
 }: {
-  readonly synthOpen: number;
+  readonly open: number;
   readonly actualClose: number | null;
 }): string {
-  if (actualClose === null || synthOpen === 0) {
+  if (actualClose === null || open === 0) {
     return '<span class="alea-muted">—</span>';
   }
-  const pct = ((actualClose - synthOpen) / synthOpen) * 100;
+  const pct = ((actualClose - open) / open) * 100;
   const sign = pct > 0 ? "+" : pct < 0 ? "" : "";
   const cls =
     pct > 0

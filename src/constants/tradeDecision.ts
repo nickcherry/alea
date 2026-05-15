@@ -31,19 +31,15 @@ export type CommitteeDecisionRules = {
 };
 
 /**
- * Market regimes allowed to produce an actionable trade. Backtest,
- * dry-run, and live trading all consult this same allow-list after
- * classifying the current bar window.
- *
- * Keep this list deliberately small. To re-enable high-vol trading,
- * add one or both high-vol regimes below and rerun `backtest:run`
- * before restarting dry-run/live processes.
+ * Market regimes allowed to produce an actionable trade. This includes
+ * every classified regime: regime is recorded for analysis, not used as a
+ * high/low-vol trade gate.
  */
 export const TRADE_DECISION_ALLOWED_MARKET_REGIMES = [
   "low_vol_trending",
   "low_vol_ranging",
-  // "high_vol_trending",
-  // "high_vol_ranging",
+  "high_vol_trending",
+  "high_vol_ranging",
 ] as const satisfies readonly MarketRegime[];
 
 export type TradeDecisionAllowedMarketRegime =
@@ -54,16 +50,13 @@ export function isTradeDecisionMarketRegimeAllowed(
 ): marketRegime is TradeDecisionAllowedMarketRegime {
   return (
     marketRegime !== null &&
-    TRADE_DECISION_ALLOWED_MARKET_REGIMES.includes(
-      marketRegime as TradeDecisionAllowedMarketRegime,
-    )
+    TRADE_DECISION_ALLOWED_MARKET_REGIMES.includes(marketRegime)
   );
 }
 
 /**
- * Exact no-flag dry-run/live market set. Top-12 committee selection trims the
- * marginal low-rank voters enough to put the full BTC/ETH/SOL 5m+15m surface
- * back in the operational default.
+ * Exact no-flag dry-run/live market set. The operational default trades every
+ * supported crypto asset across both Polymarket chart periods.
  */
 export const TRADE_DECISION_DEFAULT_MARKETS = [
   { asset: "btc", period: "5m" },
@@ -72,6 +65,10 @@ export const TRADE_DECISION_DEFAULT_MARKETS = [
   { asset: "eth", period: "15m" },
   { asset: "sol", period: "5m" },
   { asset: "sol", period: "15m" },
+  { asset: "xrp", period: "5m" },
+  { asset: "xrp", period: "15m" },
+  { asset: "doge", period: "5m" },
+  { asset: "doge", period: "15m" },
 ] as const satisfies readonly TradeDecisionMarket[];
 
 /**
@@ -86,6 +83,8 @@ export const TRADE_DECISION_DEFAULT_ASSETS = [
   "btc",
   "eth",
   "sol",
+  "xrp",
+  "doge",
 ] as const satisfies readonly Asset[];
 
 /**

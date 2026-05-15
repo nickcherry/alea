@@ -2,9 +2,8 @@
 
 `bun alea trading:run` is the real-money version of the OpenAI chart
 decision runner. It uses the same Pyth chart rendering, OpenAI
-prediction, confidence threshold, and order-placement policy as
-dry-run. The difference is execution: actionable decisions place real
-Polymarket orders.
+prediction, and order-placement policy as dry-run. The difference is
+execution: returned green/red decisions place real Polymarket orders.
 
 Run it:
 
@@ -12,8 +11,9 @@ Run it:
 bun alea trading:run
 ```
 
-By default it trades the full BTC/ETH/SOL `5m` + `15m` market set:
-`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`. Use
+By default it trades the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` market set:
+`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, `15m/sol`, `5m/xrp`,
+`15m/xrp`, `5m/doge`, and `15m/doge`. Use
 `--assets` and/or `--periods` to override the grid:
 
 ```sh
@@ -24,7 +24,6 @@ bun alea trading:run --assets eth --periods 5m,15m
 Required environment:
 
 - `OPENAI_API_KEY`
-- `OPENAI_TRADE_DECISION_MIN_CONFIDENCE` optional, defaults to `0.7`
 - `POLYMARKET_PRIVATE_KEY`
 - `POLYMARKET_FUNDER_ADDRESS`
 - `DATABASE_URL` if not using the local default
@@ -83,10 +82,9 @@ For each configured asset/period market:
    refreshes recent Pyth candles for every due asset/period, fetches
    the latest Pyth price, synthesizes the active Pyth candle, renders
    the chart with the price line and top OHLC block hidden, and asks
-   OpenAI for a Zod-validated `{ direction, confidence, reasoning }`
-   response. Pyth failures or stale latest Pyth prices skip the
-   decision. Confidence below the configured threshold abstains.
-4. If the decision is actionable, live placement starts immediately.
+   OpenAI for a Zod-validated `{ direction, reasoning }` response.
+   Pyth failures or stale latest Pyth prices skip the decision.
+4. Live placement starts immediately after the returned direction.
    Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
    `15m` crypto up/down markets were already `active`, `accepting`,
    and serving books before their window opened. The live path treats
@@ -109,8 +107,6 @@ Live trading only places predicted-side maker buys:
 - Notional: `STAKE_USD`.
 - Price band: `50c +/- LIVE_TRADING_ORDER_PRICE_WINDOW_CENTS`, today
   `+/- 3c`.
-- Confidence: OpenAI chart confidence; must clear
-  `OPENAI_TRADE_DECISION_MIN_CONFIDENCE` before any order is scheduled.
 
 If placement is rejected or the book moves, the runner recomputes from
 the latest known book and retries up to

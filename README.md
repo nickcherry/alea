@@ -4,8 +4,7 @@ Filter-committee research toolkit for Polymarket crypto up/down
 markets. Alea trains deterministic filters over aligned Pyth and
 Coinbase spot candles, selects an asset/regime-aware trade committee,
 and replays that committee over a holdout window. Dry-run/live trading
-currently use OpenAI chart decisions with a configurable confidence
-threshold.
+currently use OpenAI chart decisions.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
@@ -41,8 +40,7 @@ committee decisions without order-book or fill modeling.
 4. **Backtest** replays the selected committee over the holdout window
    without Polymarket order-book or fill modeling.
 5. **Dry run / live** render the visible Pyth chart and use OpenAI to
-   decide whether confidence is high enough to trade; only order
-   placement differs.
+   choose UP or DOWN; only order placement differs.
 6. **Dashboards** expose proxy calibration, price paths, exploration,
    committee roster, backtest, dry run, and live performance.
 

@@ -5,8 +5,6 @@ import {
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
 } from "@alea/constants/dryRun";
-import { env } from "@alea/constants/env";
-import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_PRIMARY_PERIOD,
@@ -81,6 +79,7 @@ type DryRunDecisionRow = {
   readonly period: string;
   readonly prediction: "u" | "d";
   readonly synth_open: number;
+  readonly actual_open: number | null;
   readonly actual_close: number | null;
   readonly won: number | null;
   readonly market_regime: string | null;
@@ -115,6 +114,7 @@ export async function loadDryRunPayload({
       "period",
       "prediction",
       "synth_open",
+      "actual_open",
       "actual_close",
       "won",
       "market_regime",
@@ -142,6 +142,7 @@ export async function loadDryRunPayload({
       period: r.period,
       prediction: r.prediction,
       synthOpen: r.synth_open,
+      actualOpen: r.actual_open,
       actualClose: r.actual_close,
       won: r.won,
       marketRegime: r.market_regime,
@@ -175,9 +176,6 @@ export async function loadDryRunPayload({
         ]),
       ),
       decisionSource: "openai_chart",
-      openAiMinConfidence:
-        env.openaiTradeDecisionMinConfidence ??
-        OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
       hydratedBars: TRADE_DECISION_HYDRATE_BARS,
       orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
       orderLimitPricePolicy: DRY_RUN_ORDER_LIMIT_PRICE_POLICY,

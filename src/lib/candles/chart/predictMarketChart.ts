@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { extname } from "node:path";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { dirname, extname, resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
 import OpenAI from "openai";
@@ -17,11 +17,6 @@ export const chartPredictionSchema = z
     direction: z
       .enum(["green", "red"])
       .describe("Predicted next-candle color."),
-    confidence: z
-      .number()
-      .min(0)
-      .max(1)
-      .describe("Confidence in the predicted direction, from 0 to 1."),
     reasoning: z
       .string()
       .min(1)
@@ -33,7 +28,6 @@ export type ChartPrediction = z.infer<typeof chartPredictionSchema>;
 
 export const sampleChartPredictionResponse: ChartPrediction = {
   direction: "green",
-  confidence: 0.62,
   reasoning:
     "The last visible candles are holding above a recent support shelf with modest upward closes, so continuation is slightly favored.",
 };
@@ -61,37 +55,69 @@ export async function predictMarketChart({
 
   const resolvedModel =
     model ?? env.openaiChartModel ?? defaultOpenAiChartModel;
+  const prompt = chartPredictionPrompt();
   const client = new OpenAI({ apiKey });
-  const response = await client.responses.parse({
+  const requestLog = {
+    at: new Date().toISOString(),
     model: resolvedModel,
+    detail,
+    imagePath,
     instructions: chartPredictionInstructions,
-    text: {
-      format: zodTextFormat(chartPredictionSchema, "chart_prediction"),
-    },
-    input: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: chartPredictionPrompt(),
-          },
-          {
-            type: "input_image",
-            image_url: await imageDataUrl({ imagePath }),
-            detail,
-          },
-        ],
+    prompt,
+  };
+  let response: Awaited<ReturnType<typeof client.responses.parse>>;
+  try {
+    response = await client.responses.parse({
+      model: resolvedModel,
+      instructions: chartPredictionInstructions,
+      text: {
+        format: zodTextFormat(chartPredictionSchema, "chart_prediction"),
       },
-    ],
-  });
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: prompt,
+            },
+            {
+              type: "input_image",
+              image_url: await imageDataUrl({ imagePath }),
+              detail,
+            },
+          ],
+        },
+      ],
+    });
+  } catch (error) {
+    await appendOpenAiChartPromptLog({
+      ...requestLog,
+      error: errorMessage(error),
+    });
+    throw error;
+  }
 
   if (response.output_parsed === null) {
+    await appendOpenAiChartPromptLog({
+      ...requestLog,
+      responseId: response.id,
+      outputText: response.output_text,
+      error: "OpenAI did not return a parseable chart prediction.",
+    });
     throw new Error("OpenAI did not return a parseable chart prediction.");
   }
 
+  const prediction = chartPredictionSchema.parse(response.output_parsed);
+  await appendOpenAiChartPromptLog({
+    ...requestLog,
+    responseId: response.id,
+    outputText: response.output_text,
+    response: prediction,
+  });
+
   return {
-    prediction: chartPredictionSchema.parse(response.output_parsed),
+    prediction,
     model: resolvedModel,
   };
 }
@@ -100,7 +126,6 @@ export function chartPredictionPrompt(): string {
   return [
     "Predict whether the next candle will be green or red.",
     "Use green when the next candle is expected to close above its open; use red when it is expected to close below its open.",
-    "Return confidence as a number from 0 to 1. Use values near 0.5 for weak or mixed setups, and higher values only when the visible setup is clearer.",
     "Reasoning should be concise and based on the visible candle, trend, volatility, support/resistance, and volume structure.",
     "",
     "Return exactly this JSON shape with no markdown or extra keys:",
@@ -137,4 +162,21 @@ export function imageMimeTypeForPath({
         `unsupported chart image type: ${imagePath}. Use PNG, JPG, WEBP, or GIF.`,
       );
   }
+}
+
+async function appendOpenAiChartPromptLog(
+  entry: Record<string, unknown>,
+): Promise<void> {
+  const logPath = resolvePath(env.openaiChartPromptLogPath);
+  await mkdir(dirname(logPath), { recursive: true });
+  await appendFile(logPath, `${JSON.stringify(entry)}\n`, "utf8");
+}
+
+function errorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return redactSecretLikeText({ text: message });
+}
+
+function redactSecretLikeText({ text }: { readonly text: string }): string {
+  return text.replace(/sk-[A-Za-z0-9_*.-]{8,}/g, "sk-[redacted]");
 }
