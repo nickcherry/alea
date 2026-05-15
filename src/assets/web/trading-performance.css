@@ -44,10 +44,12 @@
 }
 
 /* Trading-page table runs denser than the shared default. Lay out
-   columns on a fixed grid (`table-layout: fixed`) so the non-Market
-   columns share a single uniform width and the Market column gets
-   roughly twice that — keeps the eye on the question text without
-   making any single narrow column visually dominant.
+   columns on a fixed grid (`table-layout: fixed`) so the numeric
+   columns share a uniform width and the Market column gets roughly
+   twice that — keeps the eye on the question text without making
+   any single narrow column visually dominant. Status gets a wider
+   slot since "redeemable win/loss" pills don't fit the numeric
+   width.
 
    `min-width: 1160px` is the readability floor for the accounting
    columns. The wrapping `.alea-table-wrap`
@@ -62,15 +64,17 @@
 }
 .trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
 .trading-performance-table tbody td { padding: 9px 11px; }
-.trading-performance-table th:not(.market-col),
-.trading-performance-table td:not(.market-col) {
-  width: 8%;
+.trading-performance-table th:not(.market-col):not(.status-col),
+.trading-performance-table td:not(.market-col):not(.status-col) {
+  width: 7.5%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .trading-performance-table th.market-col,
 .trading-performance-table td.market-col { width: 28%; }
+.trading-performance-table th.status-col,
+.trading-performance-table td.status-col { width: 12%; }
 
 .trade-market {
   display: flex;

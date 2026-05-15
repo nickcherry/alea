@@ -108,7 +108,7 @@ export function renderTradingPerformanceHtml({
                 <th>Current</th>
                 <th>Realized</th>
                 <th>MTM</th>
-                <th>Status</th>
+                <th class="status-col">Status</th>
               </tr>
             </thead>
             <tbody>${visibleMarkets.map(renderMarketRow).join("")}</tbody>
@@ -170,7 +170,7 @@ function renderMarketRow(
       <td class="alea-mono">${formatUnsignedUsd({ value: row.currentValueUsd })}</td>
       <td class="alea-mono${toneClassForNullable({ value: row.realizedPnlUsd })}">${formatNullableSignedUsd({ value: row.realizedPnlUsd })}</td>
       <td class="alea-mono${pnlClass}">${formatSignedUsd({ value: row.pnlUsd })}</td>
-      <td>${renderStatusPill({ row })}</td>
+      <td class="status-col">${renderStatusPill({ row })}</td>
     </tr>
   `;
 }
