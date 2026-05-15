@@ -139,6 +139,24 @@ export const candlesChartCommand = defineCommand({
         ),
     }),
     defineFlagOption({
+      key: "noPriceLine",
+      long: "--no-price-line",
+      schema: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Hide the latest-price horizontal line and last-value label.",
+        ),
+    }),
+    defineFlagOption({
+      key: "noTopInfo",
+      long: "--no-top-info",
+      schema: z
+        .boolean()
+        .default(false)
+        .describe("Hide the top OHLC/change/range information block."),
+    }),
+    defineFlagOption({
       key: "noOpen",
       long: "--no-open",
       schema: z
@@ -152,6 +170,7 @@ export const candlesChartCommand = defineCommand({
     "bun alea candles:chart --asset btc --timeframe 5m",
     "bun alea candles:chart --asset eth --timeframe 15m --source coinbase --bars 192",
     "bun alea candles:chart --asset btc --timeframe 5m --start 2026-05-15T09:30:00Z --end 2026-05-15T13:30:00Z",
+    "bun alea candles:chart --asset btc --timeframe 5m --no-price-line --no-top-info",
     "bun alea candles:chart --source pyth --asset sol --out tmp/charts/sol-pyth.png --no-open",
   ],
   output: "Prints the rendered PNG path and candle window.",
@@ -187,6 +206,8 @@ export const candlesChartCommand = defineCommand({
       width: options.width,
       height: options.height,
       browserPath: options.browserPath,
+      showPriceLine: !options.noPriceLine,
+      showTopInfo: !options.noTopInfo,
     });
 
     io.writeStdout(

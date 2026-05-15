@@ -91,6 +91,18 @@ bun alea candles:chart --asset btc --timeframe 5m --source coinbase \
   --out tmp/charts/btc-coinbase-5m.png
 ```
 
+For visual replay/backtesting, use `--no-price-line` to hide the latest
+price horizontal line and right-edge last-value label, and use
+`--no-top-info` to hide the OHLC/change/range block at the top:
+
+```sh
+bun alea candles:chart --asset btc --timeframe 5m --source coinbase \
+  --start 2026-05-15T09:30:00Z \
+  --end 2026-05-15T13:30:00Z \
+  --no-price-line \
+  --no-top-info
+```
+
 The default chart is Coinbase spot BTC `5m`. Use `--source`, `--product`,
 `--asset`, and `--timeframe` to change the market, and `--browser-path`
 or `ALEA_CHART_BROWSER_PATH` if Chrome is installed outside the standard

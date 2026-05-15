@@ -19,6 +19,8 @@ type RenderMarketChartImageParams = {
   readonly width: number;
   readonly height: number;
   readonly browserPath?: string;
+  readonly showPriceLine?: boolean;
+  readonly showTopInfo?: boolean;
 };
 
 export type RenderMarketChartImageResult = {
@@ -35,6 +37,8 @@ type MarketChartPayload = {
   readonly rangeLabel: string;
   readonly width: number;
   readonly height: number;
+  readonly showPriceLine: boolean;
+  readonly showTopInfo: boolean;
   readonly candles: readonly LightweightCandlestick[];
   readonly volume: readonly LightweightVolumeBar[];
 };
@@ -81,6 +85,8 @@ export async function renderMarketChartImage({
   width,
   height,
   browserPath,
+  showPriceLine = true,
+  showTopInfo = true,
 }: RenderMarketChartImageParams): Promise<RenderMarketChartImageResult> {
   if (candles.length === 0) {
     throw new Error(
@@ -98,6 +104,8 @@ export async function renderMarketChartImage({
     timeframe,
     width,
     height,
+    showPriceLine,
+    showTopInfo,
   });
   const html = await buildMarketChartHtml({ payload });
   const executablePath = await resolveBrowserPath({ browserPath });
@@ -143,6 +151,8 @@ export function marketChartPayload({
   timeframe,
   width,
   height,
+  showPriceLine = true,
+  showTopInfo = true,
 }: {
   readonly candles: readonly Candle[];
   readonly asset: Asset;
@@ -151,6 +161,8 @@ export function marketChartPayload({
   readonly timeframe: CandleTimeframe;
   readonly width: number;
   readonly height: number;
+  readonly showPriceLine?: boolean;
+  readonly showTopInfo?: boolean;
 }): MarketChartPayload {
   const latest = candles[candles.length - 1];
   if (latest === undefined) {
@@ -174,6 +186,8 @@ export function marketChartPayload({
     rangeLabel: `${formatUtc(candles[0]!.timestamp)} to ${formatUtc(latest.timestamp)} UTC`,
     width,
     height,
+    showPriceLine,
+    showTopInfo,
     candles: candles.map((candle) => ({
       time: Math.floor(candle.timestamp.getTime() / 1000),
       open: candle.open,
@@ -294,10 +308,14 @@ async function buildMarketChartHtml({
         <div class="title"><span>${escapeHtml(payload.title)}</span></div>
         <div class="subtitle">${escapeHtml(payload.subtitle)}</div>
       </div>
-      <div class="latest">
+      ${
+        payload.showTopInfo
+          ? `<div class="latest">
         <div class="ohlc">${escapeHtml(payload.latestLabel)}</div>
         <div class="range">${escapeHtml(payload.rangeLabel)}</div>
-      </div>
+      </div>`
+          : ""
+      }
     </div>
     <div id="chart"></div>
   </div>
@@ -347,7 +365,8 @@ async function buildMarketChartHtml({
       wickUpColor: "${upColor}",
       wickDownColor: "${downColor}",
       priceLineColor: "rgba(214, 221, 232, 0.55)",
-      lastValueVisible: true,
+      priceLineVisible: payload.showPriceLine,
+      lastValueVisible: payload.showPriceLine,
     });
     candleSeries.setData(payload.candles);
 

@@ -63,7 +63,35 @@ describe("market chart helpers", () => {
       { time: 1778846700, open: 102, high: 104, low: 101, close: 101 },
     ]);
     expect(payload.volume.map((bar) => bar.value)).toEqual([10, 12]);
+    expect(payload.showPriceLine).toBe(true);
+    expect(payload.showTopInfo).toBe(true);
     expect(payload.latestLabel).toContain("-0.98%");
+  });
+
+  it("can disable future-state chart overlays for visual replay", () => {
+    const payload = marketChartPayload({
+      candles: [
+        candle({
+          timestamp: "2026-05-15T12:00:00.000Z",
+          open: 100,
+          high: 103,
+          low: 99,
+          close: 102,
+          volume: 10,
+        }),
+      ],
+      asset: "btc",
+      source: "coinbase",
+      product: "spot",
+      timeframe: "5m",
+      width: 1600,
+      height: 900,
+      showPriceLine: false,
+      showTopInfo: false,
+    });
+
+    expect(payload.showPriceLine).toBe(false);
+    expect(payload.showTopInfo).toBe(false);
   });
 });
 
