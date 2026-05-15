@@ -65,13 +65,11 @@ export const percentRankMeanRev: Filter<Config> = {
 registerFilter({
   filter: percentRankMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    { length: 20, oversold: 5, overbought: 95 },
-    { length: 50, oversold: 5, overbought: 95 },
-    { length: 14, oversold: 10, overbought: 90 },
-    { length: 20, oversold: 10, overbought: 90 },
-    { length: 20, oversold: 15, overbought: 85 },
+    { length: 30, oversold: 2, overbought: 98 },
     { length: 20, oversold: 2, overbought: 98 },
-    { length: 100, oversold: 5, overbought: 95 },
     { length: 30, oversold: 5, overbought: 95 },
+    { length: 14, oversold: 5, overbought: 95 },
+    { length: 14, oversold: 2, overbought: 98 },
+    { length: 50, oversold: 2, overbought: 98 },
   ],
 });

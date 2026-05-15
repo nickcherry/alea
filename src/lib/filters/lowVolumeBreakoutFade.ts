@@ -1,8 +1,4 @@
-import {
-  highestHigh,
-  lowestLow,
-  meanVolume,
-} from "@alea/lib/filters/_barMath";
+import { highestHigh, lowestLow, meanVolume } from "@alea/lib/filters/_barMath";
 import { registerFilter } from "@alea/lib/filters/registry";
 import type { Filter } from "@alea/lib/filters/types";
 import { computeAtrSeries } from "@alea/lib/indicators/atr";
@@ -107,11 +103,59 @@ registerFilter({
   filter: lowVolumeBreakoutFade as Filter<unknown>,
   defaultConfigs: () => [
     {
-      lookback: 20,
+      lookback: 14,
       volLength: 20,
       maxRelVol: 0.7,
+      atrLength: 7,
+      minBreakAtr: 0,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 14,
+      volLength: 20,
+      maxRelVol: 0.75,
+      atrLength: 7,
+      minBreakAtr: 0,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 14,
+      volLength: 20,
+      maxRelVol: 0.8,
+      atrLength: 7,
+      minBreakAtr: 0,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 14,
+      volLength: 20,
+      maxRelVol: 0.65,
+      atrLength: 7,
+      minBreakAtr: 0,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 20,
+      volLength: 20,
+      maxRelVol: 0.65,
       atrLength: 14,
       minBreakAtr: 0,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 20,
+      volLength: 50,
+      maxRelVol: 0.7,
+      atrLength: 14,
+      minBreakAtr: 0.05,
+      minCloseBeyondAtr: 0,
+    },
+    {
+      lookback: 30,
+      volLength: 50,
+      maxRelVol: 0.7,
+      atrLength: 14,
+      minBreakAtr: 0.05,
       minCloseBeyondAtr: 0,
     },
     {
@@ -123,52 +167,12 @@ registerFilter({
       minCloseBeyondAtr: 0,
     },
     {
-      lookback: 30,
+      lookback: 20,
       volLength: 50,
       maxRelVol: 0.6,
       atrLength: 14,
       minBreakAtr: 0.05,
-      minCloseBeyondAtr: 0.02,
-    },
-    {
-      lookback: 14,
-      volLength: 20,
-      maxRelVol: 0.75,
-      atrLength: 7,
-      minBreakAtr: 0,
       minCloseBeyondAtr: 0,
-    },
-    {
-      lookback: 50,
-      volLength: 50,
-      maxRelVol: 0.55,
-      atrLength: 20,
-      minBreakAtr: 0.1,
-      minCloseBeyondAtr: 0.02,
-    },
-    {
-      lookback: 20,
-      volLength: 20,
-      maxRelVol: 0.8,
-      atrLength: 14,
-      minBreakAtr: 0,
-      minCloseBeyondAtr: 0,
-    },
-    {
-      lookback: 20,
-      volLength: 20,
-      maxRelVol: 0.5,
-      atrLength: 14,
-      minBreakAtr: 0.05,
-      minCloseBeyondAtr: 0,
-    },
-    {
-      lookback: 20,
-      volLength: 20,
-      maxRelVol: 0.7,
-      atrLength: 14,
-      minBreakAtr: 0.1,
-      minCloseBeyondAtr: 0.05,
     },
   ],
 });

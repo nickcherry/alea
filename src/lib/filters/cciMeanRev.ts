@@ -62,14 +62,13 @@ export const cciMeanRev: Filter<Config> = {
 registerFilter({
   filter: cciMeanRev as Filter<unknown>,
   defaultConfigs: () => [
-    { length: 20, oversold: -250, overbought: 250 },
-    { length: 14, oversold: -200, overbought: 200 },
-    { length: 20, oversold: -200, overbought: 200 },
-    { length: 30, oversold: -200, overbought: 200 },
-    { length: 14, oversold: -150, overbought: 150 },
-    { length: 20, oversold: -300, overbought: 300 },
-    { length: 30, oversold: -250, overbought: 250 },
     { length: 14, oversold: -300, overbought: 300 },
+    { length: 30, oversold: -250, overbought: 250 },
+    { length: 14, oversold: -150, overbought: 150 },
+    { length: 30, oversold: -200, overbought: 200 },
     { length: 50, oversold: -200, overbought: 200 },
+    { length: 10, oversold: -150, overbought: 150 },
+    { length: 20, oversold: -200, overbought: 200 },
+    { length: 10, oversold: -200, overbought: 200 },
   ],
 });

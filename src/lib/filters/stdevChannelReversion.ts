@@ -85,14 +85,13 @@ export const stdevChannelReversion: Filter<Config> = {
 registerFilter({
   filter: stdevChannelReversion as Filter<unknown>,
   defaultConfigs: () => [
-    { length: 20, multiplier: 3 },
-    { length: 20, multiplier: 2.5 },
-    { length: 50, multiplier: 2.5 },
-    { length: 14, multiplier: 2 },
     { length: 20, multiplier: 2 },
-    { length: 20, multiplier: 3.5 },
-    { length: 14, multiplier: 2.5 },
+    { length: 20, multiplier: 2.25 },
     { length: 30, multiplier: 2.5 },
-    { length: 14, multiplier: 3 },
+    { length: 30, multiplier: 3 },
+    { length: 30, multiplier: 2.25 },
+    { length: 50, multiplier: 3 },
+    { length: 50, multiplier: 2.25 },
+    { length: 50, multiplier: 2.5 },
   ],
 });

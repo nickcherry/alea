@@ -72,14 +72,10 @@ export const streakFade: Filter<Config> = {
 registerFilter({
   filter: streakFade as Filter<unknown>,
   defaultConfigs: () => [
-    { minStreak: 10 },
-    { minStreak: 7 },
-    { minStreak: 6 },
-    { minStreak: 9 },
     { minStreak: 5 },
     { minStreak: 4 },
-    { minStreak: 8 },
-    { minStreak: 11 },
-    { minStreak: 12 },
+    { minStreak: 3 },
+    { minStreak: 7 },
+    { minStreak: 6 },
   ],
 });

@@ -42,14 +42,14 @@ export const balanceOfPowerMeanrev: Filter<Config> = {
 registerFilter({
   filter: balanceOfPowerMeanrev as Filter<unknown>,
   defaultConfigs: () => [
+    { length: 5, threshold: 0.55 },
+    { length: 3, threshold: 0.55 },
     { length: 3, threshold: 0.6 },
     { length: 5, threshold: 0.5 },
-    { length: 10, threshold: 0.4 },
-    { length: 14, threshold: 0.35 },
-    { length: 20, threshold: 0.3 },
-    { length: 3, threshold: 0.7 },
-    { length: 5, threshold: 0.6 },
-    { length: 2, threshold: 0.6 },
-    { length: 7, threshold: 0.45 },
+    { length: 5, threshold: 0.45 },
+    { length: 3, threshold: 0.5 },
+    { length: 7, threshold: 0.55 },
+    { length: 7, threshold: 0.6 },
+    { length: 7, threshold: 0.5 },
   ],
 });

@@ -62,13 +62,14 @@ export const bollingerReversion: Filter<Config> = {
 registerFilter({
   filter: bollingerReversion as Filter<unknown>,
   defaultConfigs: () => [
-    { period: 14, multiplier: 3 },
-    { period: 14, multiplier: 2.5 },
-    { period: 20, multiplier: 3 },
-    { period: 20, multiplier: 2.5 },
     { period: 14, multiplier: 2 },
-    { period: 14, multiplier: 3.5 },
-    { period: 10, multiplier: 2.5 },
+    { period: 20, multiplier: 2.5 },
+    { period: 10, multiplier: 2 },
+    { period: 20, multiplier: 2 },
+    { period: 14, multiplier: 2.5 },
+    { period: 30, multiplier: 3.5 },
+    { period: 30, multiplier: 3 },
+    { period: 14, multiplier: 3 },
     { period: 20, multiplier: 3.5 },
   ],
 });

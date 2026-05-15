@@ -74,14 +74,14 @@ export const bollingerPercentB: Filter<Config> = {
 registerFilter({
   filter: bollingerPercentB as Filter<unknown>,
   defaultConfigs: () => [
-    { length: 20, lowerEnter: -0.2, multiplier: 2, upperEnter: 1.2 },
-    { length: 20, lowerEnter: -0.1, multiplier: 2.5, upperEnter: 1.1 },
-    { length: 20, lowerEnter: -0.15, multiplier: 2, upperEnter: 1.15 },
-    { length: 20, lowerEnter: 0, multiplier: 2.5, upperEnter: 1 },
     { length: 20, lowerEnter: -0.1, multiplier: 2, upperEnter: 1.1 },
+    { length: 14, lowerEnter: 0, multiplier: 2, upperEnter: 1 },
+    { length: 20, lowerEnter: 0, multiplier: 2.5, upperEnter: 1 },
+    { length: 14, lowerEnter: -0.1, multiplier: 2, upperEnter: 1.1 },
+    { length: 20, lowerEnter: -0.15, multiplier: 2, upperEnter: 1.15 },
     { length: 14, lowerEnter: -0.2, multiplier: 2, upperEnter: 1.2 },
     { length: 30, lowerEnter: -0.2, multiplier: 2, upperEnter: 1.2 },
-    { length: 20, lowerEnter: -0.25, multiplier: 2, upperEnter: 1.25 },
-    { length: 14, lowerEnter: -0.2, multiplier: 2.5, upperEnter: 1.2 },
+    { length: 30, lowerEnter: -0.15, multiplier: 2, upperEnter: 1.15 },
+    { length: 20, lowerEnter: 0, multiplier: 2, upperEnter: 1 },
   ],
 });
