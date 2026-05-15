@@ -930,6 +930,7 @@ function classifyPostOrderFailureKind({
   }
   if (
     lower.includes("not yet ready") ||
+    lower.includes("service not ready") ||
     lower.includes("too early") ||
     status === 425
   ) {

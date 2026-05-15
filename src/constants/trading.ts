@@ -48,13 +48,13 @@ export const LIVE_TRADING_MAX_ORDER_ATTEMPTS = 800;
  * not ready yet, matching-engine restarts, rate limits, or transient network
  * failures occur.
  */
-export const LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS = 2500;
+export const LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS = 10_000;
 
 /** Minimum retry window for late decisions. */
 export const LIVE_TRADING_ORDER_MIN_RETRY_WINDOW_MS = 1000;
 
 /** Delay between failed live order placement retries. */
-export const LIVE_TRADING_ORDER_RETRY_DELAY_MS = 50;
+export const LIVE_TRADING_ORDER_RETRY_DELAY_MS = 100;
 
 /** First retry delay after venue rate limiting. Scales linearly by attempt. */
 export const LIVE_TRADING_ORDER_RATE_LIMIT_RETRY_BASE_MS = 500;

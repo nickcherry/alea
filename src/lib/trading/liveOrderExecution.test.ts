@@ -249,6 +249,40 @@ describe("createLiveOrderExecutor", () => {
     expect(sleeps[0]).toBe(500);
   });
 
+  it("retries early-open service-not-ready responses", async () => {
+    const calls: PostedOrder[] = [];
+    const sleeps: number[] = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [
+          { success: false, error: "service not ready", status: 400 },
+          { success: true, orderID: "order-after-ready" },
+        ],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+      }),
+      log: () => {},
+      now: () => 1_800_000,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      streamMarketData: fakeStreamMarketData(),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: null,
+    });
+
+    await waitFor(() => calls.length === 2);
+    expect(sleeps[0]).toBe(100);
+  });
+
   it("does not spam retries while Polymarket is cancel-only", async () => {
     const calls: PostedOrder[] = [];
     const events: Array<{
