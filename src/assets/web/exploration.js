@@ -29,6 +29,7 @@
   var stack = document.getElementById("filter-stack");
   var periodTabs = document.querySelectorAll(".period-tab");
   var regimeTabs = document.querySelectorAll(".regime-tab");
+  var assetTabs = document.querySelectorAll(".asset-tab");
 
   // Default period is 5m — the higher-volume timeframe most filters
   // were originally designed around. Tabs let the user swap to 15m
@@ -40,6 +41,11 @@
   // user can see "how does this filter perform when the market is
   // ...".
   var currentRegime = "all";
+  // Asset filter: "all" shows engagements summed across every asset
+  // (the default headline numbers). Selecting a specific asset projects
+  // to `byAsset[asset]`. Combined with a non-"all" regime, the view is
+  // `byAsset[asset].byRegime[regime]` — the full cross-product slice.
+  var currentAsset = "all";
 
   var alea = window.alea;
   var escapeHtml = alea.escapeHtml;
@@ -85,6 +91,15 @@
       render();
     });
   });
+  Array.prototype.forEach.call(assetTabs, function (tab) {
+    tab.addEventListener("click", function () {
+      currentAsset = tab.dataset.asset;
+      Array.prototype.forEach.call(assetTabs, function (t) {
+        t.setAttribute("aria-selected", t === tab ? "true" : "false");
+      });
+      render();
+    });
+  });
 
   // Per-filterId open/closed flag. Persisted across renders so that
   // switching tabs doesn't blow away the user's expand/collapse
@@ -104,9 +119,9 @@
     var filtered = rows.filter(function (r) {
       return r.period === currentPeriod;
     });
-    if (currentRegime !== "all") {
+    if (currentAsset !== "all" || currentRegime !== "all") {
       filtered = filtered.map(function (r) {
-        return projectRegime(r, currentRegime);
+        return projectScope(r, currentAsset, currentRegime);
       });
     }
     var groups = groupByFilter(filtered);
@@ -126,48 +141,69 @@
   }
 
   // Returns a shallow-copied row where every engagement/win field comes
-  // from `byRegime[regime]` — totals, up/down split, quarter strip,
-  // CI bounds. The all-bars row is preserved untouched so the user
-  // can flip back to "all" without re-fetching.
-  function projectRegime(r, regime) {
-    var by = (r.byRegime && r.byRegime[regime]) || null;
-    if (by === null) {
-      return Object.assign({}, r, {
-        nEngagements: 0,
-        nWins: 0,
-        winRate: null,
-        ciLow: 0,
-        ciHigh: 0,
-        nEngagementsUp: 0,
-        nWinsUp: 0,
-        winRateUp: null,
-        nEngagementsDown: 0,
-        nWinsDown: 0,
-        winRateDown: null,
-        quarters: [],
-        quarterWinRateMin: null,
-        quarterWinRateMax: null,
-      });
+  // from the selected scope cell. The four combinations of (asset,
+  // regime):
+  //   - all,all  → the row itself (no projection needed; caller handles)
+  //   - all,R    → row.byRegime[R]
+  //   - A,all    → row.byAsset[A]
+  //   - A,R      → row.byAsset[A].byRegime[R]
+  // The all-bars row is preserved untouched so the user can flip back
+  // to "all" without re-fetching.
+  function projectScope(r, asset, regime) {
+    var cell = null;
+    if (asset === "all" && regime === "all") {
+      return r;
+    }
+    if (asset === "all") {
+      cell = (r.byRegime && r.byRegime[regime]) || null;
+    } else {
+      var byAsset = (r.byAsset && r.byAsset[asset]) || null;
+      if (byAsset !== null) {
+        cell =
+          regime === "all"
+            ? byAsset
+            : (byAsset.byRegime && byAsset.byRegime[regime]) || null;
+      }
+    }
+    if (cell === null) {
+      return Object.assign({}, r, EMPTY_CELL);
     }
     return Object.assign({}, r, {
-      nEngagements: by.nEngagements,
-      nWins: by.nWins,
-      winRate: by.winRate,
-      ciLow: by.ciLow,
-      ciHigh: by.ciHigh,
-      nEngagementsUp: by.nEngagementsUp,
-      nWinsUp: by.nWinsUp,
-      winRateUp: by.winRateUp,
-      nEngagementsDown: by.nEngagementsDown,
-      nWinsDown: by.nWinsDown,
-      winRateDown: by.winRateDown,
-      quarters: by.quarters || [],
+      nEngagements: cell.nEngagements,
+      nWins: cell.nWins,
+      winRate: cell.winRate,
+      ciLow: cell.ciLow,
+      ciHigh: cell.ciHigh,
+      nEngagementsUp: cell.nEngagementsUp,
+      nWinsUp: cell.nWinsUp,
+      winRateUp: cell.winRateUp,
+      nEngagementsDown: cell.nEngagementsDown,
+      nWinsDown: cell.nWinsDown,
+      winRateDown: cell.winRateDown,
+      quarters: cell.quarters || [],
       quarterWinRateMin:
-        by.quarterWinRateMin === undefined ? null : by.quarterWinRateMin,
+        cell.quarterWinRateMin === undefined ? null : cell.quarterWinRateMin,
       quarterWinRateMax:
-        by.quarterWinRateMax === undefined ? null : by.quarterWinRateMax,
+        cell.quarterWinRateMax === undefined ? null : cell.quarterWinRateMax,
     });
   }
+
+  var EMPTY_CELL = {
+    nEngagements: 0,
+    nWins: 0,
+    winRate: null,
+    ciLow: 0,
+    ciHigh: 0,
+    nEngagementsUp: 0,
+    nWinsUp: 0,
+    winRateUp: null,
+    nEngagementsDown: 0,
+    nWinsDown: 0,
+    winRateDown: null,
+    quarters: [],
+    quarterWinRateMin: null,
+    quarterWinRateMax: null,
+  };
 
   // Delegated click handler — the card markup is rebuilt on every
   // tab switch, so attaching listeners per-card would leak across

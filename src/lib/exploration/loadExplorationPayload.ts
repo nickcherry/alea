@@ -7,10 +7,11 @@ import type { DatabaseClient } from "@alea/lib/db/types";
 import { loadQuarterAggregates } from "@alea/lib/exploration/loadQuarterAggregates";
 import { loadRegimeAggregates } from "@alea/lib/exploration/loadRegimeAggregates";
 import type {
+  ExplorationAssetStats,
   ExplorationCandidateRow,
   ExplorationPayload,
   ExplorationQuarter,
-  ExplorationRegimeStats,
+  ExplorationStatsCell,
 } from "@alea/lib/exploration/types";
 import { wilsonInterval95 } from "@alea/lib/exploration/wilsonInterval";
 import {
@@ -23,7 +24,7 @@ import { getFilter } from "@alea/lib/filters/registry";
 import type { FilterFamily } from "@alea/lib/filters/types";
 import { sql } from "kysely";
 
-const EXPLORATION_PAYLOAD_CACHE_SCHEMA_VERSION = 1;
+const EXPLORATION_PAYLOAD_CACHE_SCHEMA_VERSION = 2;
 
 /**
  * Loads every active-profile row in `filter_runs`, then collapses across
@@ -96,55 +97,59 @@ async function buildExplorationPayload({
     ),
   );
 
-  // First, map run_hash -> the (filter, version, config_canon, period)
-  // bucket it contributes to, so we can join quarter rows back.
+  // Map run_hash -> (bucketKey, asset). run_hash is unique per
+  // (filter, version, config, period, asset), so quarter / regime
+  // aggregate rows (which carry only run_hash) get fully attributed
+  // back to both the bucket and the asset sub-bucket.
   const runHashToBucketKey = new Map<string, string>();
+  const runHashToAsset = new Map<string, string>();
   for (const r of perAssetRows) {
     runHashToBucketKey.set(r.run_hash, bucketKey(r));
+    runHashToAsset.set(r.run_hash, r.asset);
   }
 
-  // Aggregate per-asset rows into per-bucket totals.
-  type Bucket = {
+  // Aggregate per-asset rows into per-bucket totals. The cross-product
+  // (asset × regime × quarter) is kept so the dashboard can compose
+  // an asset filter with the existing regime filter without re-querying.
+  type CellTotals = {
+    nEngagementsUp: number;
+    nWinsUp: number;
+    nEngagementsDown: number;
+    nWinsDown: number;
+    quartersByLabel: Map<string, QuarterTotals>;
+  };
+  type QuarterTotals = {
+    year: number;
+    quarter: number;
+    nEngagements: number;
+    nWins: number;
+  };
+  type AssetBucket = CellTotals & {
+    regimes: Map<string, CellTotals>;
+  };
+  type Bucket = CellTotals & {
     filterId: string;
     filterVersion: number;
     config: unknown;
     configCanon: string;
     period: string;
     nBars: number; // max across assets — informational, not summed
-    nEngagements: number;
-    nWins: number;
-    nEngagementsUp: number;
-    nWinsUp: number;
-    nEngagementsDown: number;
-    nWinsDown: number;
-    quartersByLabel: Map<
-      string,
-      {
-        year: number;
-        quarter: number;
-        nEngagements: number;
-        nWins: number;
-      }
-    >;
-    regimes: Map<
-      string,
-      {
-        nEngagementsUp: number;
-        nWinsUp: number;
-        nEngagementsDown: number;
-        nWinsDown: number;
-        quartersByLabel: Map<
-          string,
-          {
-            year: number;
-            quarter: number;
-            nEngagements: number;
-            nWins: number;
-          }
-        >;
-      }
-    >;
+    regimes: Map<string, CellTotals>;
+    assets: Map<string, AssetBucket>;
   };
+
+  const newCellTotals = (): CellTotals => ({
+    nEngagementsUp: 0,
+    nWinsUp: 0,
+    nEngagementsDown: 0,
+    nWinsDown: 0,
+    quartersByLabel: new Map(),
+  });
+  const newAssetBucket = (): AssetBucket => ({
+    ...newCellTotals(),
+    regimes: new Map(),
+  });
+
   const buckets = new Map<string, Bucket>();
   for (const r of perAssetRows) {
     const key = bucketKey(r);
@@ -157,63 +162,88 @@ async function buildExplorationPayload({
         configCanon: r.config_canon,
         period: r.period,
         nBars: 0,
-        nEngagements: 0,
-        nWins: 0,
-        nEngagementsUp: 0,
-        nWinsUp: 0,
-        nEngagementsDown: 0,
-        nWinsDown: 0,
-        quartersByLabel: new Map(),
+        ...newCellTotals(),
         regimes: new Map(),
+        assets: new Map(),
       };
       buckets.set(key, b);
     }
     b.nBars = Math.max(b.nBars, r.n_bars);
-    b.nEngagements += r.n_engagements_up + r.n_engagements_down;
-    b.nWins += r.n_wins_up + r.n_wins_down;
     b.nEngagementsUp += r.n_engagements_up;
     b.nWinsUp += r.n_wins_up;
     b.nEngagementsDown += r.n_engagements_down;
     b.nWinsDown += r.n_wins_down;
+
+    let ab = b.assets.get(r.asset);
+    if (ab === undefined) {
+      ab = newAssetBucket();
+      b.assets.set(r.asset, ab);
+    }
+    ab.nEngagementsUp += r.n_engagements_up;
+    ab.nWinsUp += r.n_wins_up;
+    ab.nEngagementsDown += r.n_engagements_down;
+    ab.nWinsDown += r.n_wins_down;
   }
 
-  // Fold quarter aggregates into their buckets. Each (run_hash,
-  // year, quarter, direction) row contributes to one bucket's quarter
-  // total.
+  const accumulateQuarter = (
+    target: Map<string, QuarterTotals>,
+    year: number,
+    quarter: number,
+    nEngagements: number,
+    nWins: number,
+  ): void => {
+    const label = `${year}-Q${quarter}`;
+    let qb = target.get(label);
+    if (qb === undefined) {
+      qb = { year, quarter, nEngagements: 0, nWins: 0 };
+      target.set(label, qb);
+    }
+    qb.nEngagements += nEngagements;
+    qb.nWins += nWins;
+  };
+
+  // Fold quarter aggregates into their buckets. Each (run_hash, year,
+  // quarter) row contributes to one bucket's quarter total AND to the
+  // bucket's per-asset quarter total.
   for (const q of quarterRows) {
     const key = runHashToBucketKey.get(q.run_hash);
-    if (key === undefined) {
+    const asset = runHashToAsset.get(q.run_hash);
+    if (key === undefined || asset === undefined) {
       continue;
     }
     const b = buckets.get(key);
     if (b === undefined) {
       continue;
     }
-    const label = `${q.year}-Q${q.quarter}`;
-    let qb = b.quartersByLabel.get(label);
-    if (qb === undefined) {
-      qb = {
-        year: q.year,
-        quarter: q.quarter,
-        nEngagements: 0,
-        nWins: 0,
-      };
-      b.quartersByLabel.set(label, qb);
+    accumulateQuarter(
+      b.quartersByLabel,
+      q.year,
+      q.quarter,
+      q.n_engagements,
+      q.n_wins,
+    );
+    const ab = b.assets.get(asset);
+    if (ab !== undefined) {
+      accumulateQuarter(
+        ab.quartersByLabel,
+        q.year,
+        q.quarter,
+        q.n_engagements,
+        q.n_wins,
+      );
     }
-    qb.nEngagements += q.n_engagements;
-    qb.nWins += q.n_wins;
   }
 
-  // Fold per-(run_hash, market_regime, direction, year, quarter)
-  // rows into buckets. Each row contributes to one bucket → one
-  // regime → one direction bucket AND one quarter cell. The TS
-  // here is the same shape as the SQL grouping, summed along the
-  // axes the dashboard slices: direction for up/down splits,
-  // quarter for the strip chart, both axes summed together for the
-  // headline regime total.
+  // Fold per-(run_hash, market_regime, direction, year, quarter) rows
+  // into buckets. Each row contributes to (i) the all-assets regime
+  // total, (ii) the per-asset regime total, and (iii) each one's
+  // quarter strip. The four-axis fan-out is the price of letting the
+  // dashboard compose asset + regime filters without going back to
+  // the database.
   for (const rr of regimeRows) {
     const key = runHashToBucketKey.get(rr.run_hash);
-    if (key === undefined) {
+    const asset = runHashToAsset.get(rr.run_hash);
+    if (key === undefined || asset === undefined) {
       continue;
     }
     const b = buckets.get(key);
@@ -222,60 +252,53 @@ async function buildExplorationPayload({
     }
     let rb = b.regimes.get(rr.market_regime);
     if (rb === undefined) {
-      rb = {
-        nEngagementsUp: 0,
-        nWinsUp: 0,
-        nEngagementsDown: 0,
-        nWinsDown: 0,
-        quartersByLabel: new Map(),
-      };
+      rb = newCellTotals();
       b.regimes.set(rr.market_regime, rb);
+    }
+    const ab = b.assets.get(asset);
+    let arb: CellTotals | undefined;
+    if (ab !== undefined) {
+      arb = ab.regimes.get(rr.market_regime);
+      if (arb === undefined) {
+        arb = newCellTotals();
+        ab.regimes.set(rr.market_regime, arb);
+      }
     }
     if (rr.direction === "u") {
       rb.nEngagementsUp += rr.n_engagements;
       rb.nWinsUp += rr.n_wins;
+      if (arb !== undefined) {
+        arb.nEngagementsUp += rr.n_engagements;
+        arb.nWinsUp += rr.n_wins;
+      }
     } else {
       rb.nEngagementsDown += rr.n_engagements;
       rb.nWinsDown += rr.n_wins;
+      if (arb !== undefined) {
+        arb.nEngagementsDown += rr.n_engagements;
+        arb.nWinsDown += rr.n_wins;
+      }
     }
-    const label = `${rr.year}-Q${rr.quarter}`;
-    let qb = rb.quartersByLabel.get(label);
-    if (qb === undefined) {
-      qb = {
-        year: rr.year,
-        quarter: rr.quarter,
-        nEngagements: 0,
-        nWins: 0,
-      };
-      rb.quartersByLabel.set(label, qb);
+    accumulateQuarter(
+      rb.quartersByLabel,
+      rr.year,
+      rr.quarter,
+      rr.n_engagements,
+      rr.n_wins,
+    );
+    if (arb !== undefined) {
+      accumulateQuarter(
+        arb.quartersByLabel,
+        rr.year,
+        rr.quarter,
+        rr.n_engagements,
+        rr.n_wins,
+      );
     }
-    qb.nEngagements += rr.n_engagements;
-    qb.nWins += rr.n_wins;
   }
 
   const enriched: ExplorationCandidateRow[] = [];
   for (const [id, b] of buckets.entries()) {
-    const ci = wilsonInterval95({ wins: b.nWins, n: b.nEngagements });
-    const quarters: ExplorationQuarter[] = Array.from(
-      b.quartersByLabel.entries(),
-    )
-      .map(([label, qb]) => ({
-        label,
-        year: qb.year,
-        quarter: qb.quarter,
-        nEngagements: qb.nEngagements,
-        nWins: qb.nWins,
-        winRate: qb.nEngagements === 0 ? null : qb.nWins / qb.nEngagements,
-      }))
-      .sort((a, c) => {
-        if (a.year !== c.year) {
-          return a.year - c.year;
-        }
-        return a.quarter - c.quarter;
-      });
-    const quarterRates = quarters
-      .map((q) => q.winRate)
-      .filter((v): v is number => v !== null);
     const family = familyOf(b.filterId);
     if (family === null) {
       // Filter row exists in `filter_runs` but the file isn't
@@ -283,55 +306,19 @@ async function buildExplorationPayload({
       // shouldn't appear on the dashboard.
       continue;
     }
-    const byRegime: Record<string, ExplorationRegimeStats> = {};
+    const topLevel = buildStatsCell(b);
+    const byRegime: Record<string, ExplorationStatsCell> = {};
     for (const [regime, stats] of b.regimes.entries()) {
-      const rEngagements = stats.nEngagementsUp + stats.nEngagementsDown;
-      const rWins = stats.nWinsUp + stats.nWinsDown;
-      const rci = wilsonInterval95({ wins: rWins, n: rEngagements });
-      const rQuarters: ExplorationQuarter[] = Array.from(
-        stats.quartersByLabel.entries(),
-      )
-        .map(([label, qb]) => ({
-          label,
-          year: qb.year,
-          quarter: qb.quarter,
-          nEngagements: qb.nEngagements,
-          nWins: qb.nWins,
-          winRate: qb.nEngagements === 0 ? null : qb.nWins / qb.nEngagements,
-        }))
-        .sort((a, c) => {
-          if (a.year !== c.year) {
-            return a.year - c.year;
-          }
-          return a.quarter - c.quarter;
-        });
-      const rQuarterRates = rQuarters
-        .map((q) => q.winRate)
-        .filter((v): v is number => v !== null);
-      byRegime[regime] = {
-        nEngagements: rEngagements,
-        nWins: rWins,
-        winRate: rEngagements === 0 ? null : rWins / rEngagements,
-        ciLow: rEngagements === 0 ? 0 : rci.low,
-        ciHigh: rEngagements === 0 ? 0 : rci.high,
-        nEngagementsUp: stats.nEngagementsUp,
-        nWinsUp: stats.nWinsUp,
-        winRateUp:
-          stats.nEngagementsUp === 0
-            ? null
-            : stats.nWinsUp / stats.nEngagementsUp,
-        nEngagementsDown: stats.nEngagementsDown,
-        nWinsDown: stats.nWinsDown,
-        winRateDown:
-          stats.nEngagementsDown === 0
-            ? null
-            : stats.nWinsDown / stats.nEngagementsDown,
-        quarters: rQuarters,
-        quarterWinRateMin:
-          rQuarterRates.length === 0 ? null : Math.min(...rQuarterRates),
-        quarterWinRateMax:
-          rQuarterRates.length === 0 ? null : Math.max(...rQuarterRates),
-      };
+      byRegime[regime] = buildStatsCell(stats);
+    }
+    const byAsset: Record<string, ExplorationAssetStats> = {};
+    for (const [asset, stats] of b.assets.entries()) {
+      const assetCell = buildStatsCell(stats);
+      const assetByRegime: Record<string, ExplorationStatsCell> = {};
+      for (const [regime, regimeStats] of stats.regimes.entries()) {
+        assetByRegime[regime] = buildStatsCell(regimeStats);
+      }
+      byAsset[asset] = { ...assetCell, byRegime: assetByRegime };
     }
     enriched.push({
       id,
@@ -341,29 +328,14 @@ async function buildExplorationPayload({
       configCanon: b.configCanon,
       period: b.period as ExplorationCandidateRow["period"],
       nBars: b.nBars,
-      nEngagements: b.nEngagements,
-      nWins: b.nWins,
-      winRate: b.nEngagements === 0 ? null : b.nWins / b.nEngagements,
-      ciLow: b.nEngagements === 0 ? 0 : ci.low,
-      ciHigh: b.nEngagements === 0 ? 0 : ci.high,
-      nEngagementsUp: b.nEngagementsUp,
-      nWinsUp: b.nWinsUp,
-      winRateUp: b.nEngagementsUp === 0 ? null : b.nWinsUp / b.nEngagementsUp,
-      nEngagementsDown: b.nEngagementsDown,
-      nWinsDown: b.nWinsDown,
-      winRateDown:
-        b.nEngagementsDown === 0 ? null : b.nWinsDown / b.nEngagementsDown,
-      quarters,
-      quarterWinRateMin:
-        quarterRates.length === 0 ? null : Math.min(...quarterRates),
-      quarterWinRateMax:
-        quarterRates.length === 0 ? null : Math.max(...quarterRates),
+      ...topLevel,
       family,
       // The browser does not render peer overlaps today. Keeping this
       // empty preserves the payload shape without running the exact
       // co-engagement self-join that dominated dashboard build time.
       topPeers: [],
       byRegime,
+      byAsset,
     });
   }
 
@@ -585,4 +557,57 @@ function bucketKey(row: {
 function familyOf(filterId: string): FilterFamily | null {
   const entry = getFilter(filterId);
   return entry === undefined ? null : entry.filter.family;
+}
+
+type QuarterTotalsForCell = {
+  readonly year: number;
+  readonly quarter: number;
+  readonly nEngagements: number;
+  readonly nWins: number;
+};
+type CellTotalsForCell = {
+  readonly nEngagementsUp: number;
+  readonly nWinsUp: number;
+  readonly nEngagementsDown: number;
+  readonly nWinsDown: number;
+  readonly quartersByLabel: ReadonlyMap<string, QuarterTotalsForCell>;
+};
+
+function buildStatsCell(cell: CellTotalsForCell): ExplorationStatsCell {
+  const nEngagements = cell.nEngagementsUp + cell.nEngagementsDown;
+  const nWins = cell.nWinsUp + cell.nWinsDown;
+  const ci = wilsonInterval95({ wins: nWins, n: nEngagements });
+  const quarters: ExplorationQuarter[] = Array.from(cell.quartersByLabel.entries())
+    .map(([label, qb]) => ({
+      label,
+      year: qb.year,
+      quarter: qb.quarter,
+      nEngagements: qb.nEngagements,
+      nWins: qb.nWins,
+      winRate: qb.nEngagements === 0 ? null : qb.nWins / qb.nEngagements,
+    }))
+    .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.quarter - b.quarter));
+  const quarterRates = quarters
+    .map((q) => q.winRate)
+    .filter((v): v is number => v !== null);
+  return {
+    nEngagements,
+    nWins,
+    winRate: nEngagements === 0 ? null : nWins / nEngagements,
+    ciLow: nEngagements === 0 ? 0 : ci.low,
+    ciHigh: nEngagements === 0 ? 0 : ci.high,
+    nEngagementsUp: cell.nEngagementsUp,
+    nWinsUp: cell.nWinsUp,
+    winRateUp:
+      cell.nEngagementsUp === 0 ? null : cell.nWinsUp / cell.nEngagementsUp,
+    nEngagementsDown: cell.nEngagementsDown,
+    nWinsDown: cell.nWinsDown,
+    winRateDown:
+      cell.nEngagementsDown === 0 ? null : cell.nWinsDown / cell.nEngagementsDown,
+    quarters,
+    quarterWinRateMin:
+      quarterRates.length === 0 ? null : Math.min(...quarterRates),
+    quarterWinRateMax:
+      quarterRates.length === 0 ? null : Math.max(...quarterRates),
+  };
 }

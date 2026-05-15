@@ -1,3 +1,4 @@
+import { assetValues } from "@alea/constants/assets";
 import type { ExplorationPayload } from "@alea/lib/exploration/types";
 import {
   aleaBrandMark,
@@ -60,6 +61,15 @@ export function renderExplorationHtml({
         <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
           <button class="alea-pill-tab is-prominent period-tab" role="tab" data-period="5m" aria-selected="true">5m</button>
           <button class="alea-pill-tab is-prominent period-tab" role="tab" data-period="15m" aria-selected="false">15m</button>
+        </div>
+        <div class="alea-pill-tabs" role="tablist" aria-label="Asset">
+          <button class="alea-pill-tab asset-tab" role="tab" data-asset="all" aria-selected="true">All</button>
+          ${assetValues
+            .map(
+              (asset) =>
+                `<button class="alea-pill-tab asset-tab" role="tab" data-asset="${asset}" aria-selected="false">${asset.toUpperCase()}</button>`,
+            )
+            .join("\n          ")}
         </div>
         <div class="alea-pill-tabs alea-page-controls-right" role="tablist" aria-label="Market regime">
           <button class="alea-pill-tab regime-tab" role="tab" data-regime="all" aria-selected="true">All</button>

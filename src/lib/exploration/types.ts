@@ -31,6 +31,47 @@ export type ExplorationQuarter = {
 };
 
 /**
+ * Aggregated engagement/win counts + Wilson CI + per-quarter slice
+ * for one scope. The "scope" is implicit in where the cell appears:
+ * the top of the row is "all bars across all assets", `byRegime[r]`
+ * is "all assets while in regime r", `byAsset[a]` is "asset a across
+ * all regimes", and `byAsset[a].byRegime[r]` is "asset a while in
+ * regime r". Every shape is the same so the client renders identically
+ * regardless of which axes the user has filtered by.
+ */
+export type ExplorationStatsCell = {
+  readonly nEngagements: number;
+  readonly nWins: number;
+  readonly winRate: number | null;
+  readonly ciLow: number;
+  readonly ciHigh: number;
+  readonly nEngagementsUp: number;
+  readonly nWinsUp: number;
+  readonly winRateUp: number | null;
+  readonly nEngagementsDown: number;
+  readonly nWinsDown: number;
+  readonly winRateDown: number | null;
+  readonly quarters: readonly ExplorationQuarter[];
+  readonly quarterWinRateMin: number | null;
+  readonly quarterWinRateMax: number | null;
+};
+
+/**
+ * Back-compat alias. The regime cells under `byRegime` carry the same
+ * shape as the top-level row stats and the per-asset cells.
+ */
+export type ExplorationRegimeStats = ExplorationStatsCell;
+
+/**
+ * Per-asset slice of one candidate. Carries the same headline stats
+ * as the top-level row plus a nested `byRegime` map so the user can
+ * drill into "this filter, on btc, while in high_vol_trending".
+ */
+export type ExplorationAssetStats = ExplorationStatsCell & {
+  readonly byRegime: Readonly<Record<string, ExplorationStatsCell>>;
+};
+
+/**
  * One trained candidate at one timeframe, aggregated across every
  * asset in the universe. A filter that crushes on xrp but flops on
  * btc/eth/sol shows up here as a single number that reflects all of
@@ -45,7 +86,7 @@ export type ExplorationQuarter = {
  * summed across assets. `quarterWinRateMin` / `quarterWinRateMax`
  * summarise the spread — a tight spread means stable across regimes.
  */
-export type ExplorationCandidateRow = {
+export type ExplorationCandidateRow = ExplorationStatsCell & {
   readonly id: string;
   readonly filterId: string;
   readonly filterVersion: number;
@@ -53,20 +94,6 @@ export type ExplorationCandidateRow = {
   readonly configCanon: string;
   readonly period: CandleTimeframe;
   readonly nBars: number;
-  readonly nEngagements: number;
-  readonly nWins: number;
-  readonly winRate: number | null;
-  readonly ciLow: number;
-  readonly ciHigh: number;
-  readonly nEngagementsUp: number;
-  readonly nWinsUp: number;
-  readonly winRateUp: number | null;
-  readonly nEngagementsDown: number;
-  readonly nWinsDown: number;
-  readonly winRateDown: number | null;
-  readonly quarters: readonly ExplorationQuarter[];
-  readonly quarterWinRateMin: number | null;
-  readonly quarterWinRateMax: number | null;
   /**
    * Which strategy family this filter belongs to. This is distinct
    * from market regime.
@@ -79,37 +106,20 @@ export type ExplorationCandidateRow = {
    */
   readonly topPeers: readonly FilterPeerOverlap[];
   /**
-   * Per-market-regime stratification of this candidate's engagements.
-   * Map keys are `MarketRegime` strings (e.g. "low_vol_trending").
-   * Missing entries mean the regime had zero engagements for this row.
-   * Only populated when `bar_regimes` is non-empty — empty before
-   * the backfill runs.
+   * Per-market-regime stratification of this candidate's engagements,
+   * summed across every asset. Map keys are `MarketRegime` strings
+   * (e.g. "low_vol_trending"). Missing entries mean the regime had
+   * zero engagements for this row. Only populated when `bar_regimes`
+   * is non-empty — empty before the backfill runs.
    */
-  readonly byRegime: Readonly<Record<string, ExplorationRegimeStats>>;
-};
-
-/**
- * Aggregated engagement/win counts and Wilson CI for one (candidate,
- * regime) cell. `quarters` is the chronological per-quarter slice
- * within this regime — same shape as the all-bars `quarters` array
- * on the parent row but filtered to engagements that happened while the
- * market was in this regime.
- */
-export type ExplorationRegimeStats = {
-  readonly nEngagements: number;
-  readonly nWins: number;
-  readonly winRate: number | null;
-  readonly ciLow: number;
-  readonly ciHigh: number;
-  readonly nEngagementsUp: number;
-  readonly nWinsUp: number;
-  readonly winRateUp: number | null;
-  readonly nEngagementsDown: number;
-  readonly nWinsDown: number;
-  readonly winRateDown: number | null;
-  readonly quarters: readonly ExplorationQuarter[];
-  readonly quarterWinRateMin: number | null;
-  readonly quarterWinRateMax: number | null;
+  readonly byRegime: Readonly<Record<string, ExplorationStatsCell>>;
+  /**
+   * Per-asset stratification of this candidate's engagements. Map keys
+   * are the lower-case asset codes ("btc", "eth", …). Each entry carries
+   * the asset's headline stats plus its own `byRegime` map so the
+   * dashboard can compose asset + regime filters.
+   */
+  readonly byAsset: Readonly<Record<string, ExplorationAssetStats>>;
 };
 
 export type ExplorationPayload = {
