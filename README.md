@@ -75,6 +75,7 @@ Research artifacts:
 
 - [Filter Prune 2026-05-11](./doc/results-artifacts/filter-prune-2026-05-11.md)
 - [Round 2 Price Filter Prune 2026-05-12](./doc/results-artifacts/round2-price-filter-prune-2026-05-12.md)
+- [Filter Redundancy Prune 2026-05-15](./doc/results-artifacts/filter-redundancy-prune-2026-05-15.md)
 
 ## Typical workflow
 

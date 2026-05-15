@@ -25,7 +25,9 @@
  * selection profile. A subsequent broad config expansion plus a dud
  * prune extended the per-filter grid, then a fourth trim again
  * unregistered every filter that earned zero committee seats under
- * the expanded grid.
+ * the expanded grid. A later redundancy prune removed active
+ * registrations for filters that duplicated stronger peers' engagement
+ * patterns, plus two weak continuation holdouts.
  */
 /**
  * Each registered filter tests a SINGLE hypothesis on a single
@@ -43,9 +45,7 @@ import "@alea/lib/filters/bollingerPercentB";
 import "@alea/lib/filters/bollingerRecovery";
 import "@alea/lib/filters/bollingerReversion";
 import "@alea/lib/filters/cciMeanRev";
-import "@alea/lib/filters/cmoMeanRev";
 import "@alea/lib/filters/demaBollingerReversion";
-import "@alea/lib/filters/disparityIndexReversion";
 import "@alea/lib/filters/donchianReversion";
 import "@alea/lib/filters/effortVsResultFade";
 import "@alea/lib/filters/emaPosition";
@@ -63,18 +63,12 @@ import "@alea/lib/filters/multiBarReturnFade";
 import "@alea/lib/filters/percentRankMeanRev";
 import "@alea/lib/filters/priceVolumeDisagreementFade";
 import "@alea/lib/filters/qstickBodyBiasFade";
-import "@alea/lib/filters/rangeExpansionFade";
 import "@alea/lib/filters/rollingVwapBandReclaim";
 import "@alea/lib/filters/rsiMeanRev";
 import "@alea/lib/filters/rsiVelocity";
 import "@alea/lib/filters/signedVolumeImbalanceFade";
-import "@alea/lib/filters/smaPosition";
-import "@alea/lib/filters/squeezeBreakoutFollow";
 import "@alea/lib/filters/stdevChannelReversion";
 import "@alea/lib/filters/stochasticMeanRev";
 import "@alea/lib/filters/streakFade";
 import "@alea/lib/filters/supertrendRetestFollow";
 import "@alea/lib/filters/tsiMeanRev";
-import "@alea/lib/filters/volumeDryupPullbackFollow";
-import "@alea/lib/filters/williamsRMeanRev";
-import "@alea/lib/filters/zscoreReversion";
