@@ -80,9 +80,11 @@ bun alea candles:chart --asset btc --timeframe 5m --source coinbase --bars 288
 ```
 
 Explicit range mode uses `--start` and optional `--end`. Both values are
-floored to the selected timeframe boundary; if `--end` is omitted, the
-range runs through the latest completed candle. Ranges are capped at
-2,000 bars.
+floored to the selected timeframe boundary, and `--end` is an exclusive
+cutoff: a `5m` chart with `--end 2026-05-15T13:30:00Z` shows the candle
+that opened at `13:25:00Z`, not the candle that opens at `13:30:00Z`. If
+`--end` is omitted, the range runs through the latest completed candle.
+Ranges are capped at 2,000 bars.
 
 ```sh
 bun alea candles:chart --asset btc --timeframe 5m --source coinbase \

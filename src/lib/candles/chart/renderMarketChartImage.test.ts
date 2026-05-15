@@ -1,4 +1,7 @@
-import { marketChartCandleWindow } from "@alea/lib/candles/chart/fetchMarketChartCandles";
+import {
+  filterCandlesForChartWindow,
+  marketChartCandleWindow,
+} from "@alea/lib/candles/chart/fetchMarketChartCandles";
 import { marketChartPayload } from "@alea/lib/candles/chart/renderMarketChartImage";
 import type { Candle } from "@alea/types/candles";
 import { describe, expect, it } from "bun:test";
@@ -26,6 +29,27 @@ describe("market chart helpers", () => {
     expect(window.start.toISOString()).toBe("2026-05-15T09:30:00.000Z");
     expect(window.end.toISOString()).toBe("2026-05-15T13:30:00.000Z");
     expect(window.mode).toBe("range");
+  });
+
+  it("treats the chart end as an exclusive cutoff", () => {
+    const candles = filterCandlesForChartWindow({
+      window: {
+        start: new Date("2026-05-15T09:30:00.000Z"),
+        end: new Date("2026-05-15T10:30:00.000Z"),
+        mode: "range",
+      },
+      candles: [
+        candle({ timestamp: "2026-05-15T09:25:00.000Z" }),
+        candle({ timestamp: "2026-05-15T09:30:00.000Z" }),
+        candle({ timestamp: "2026-05-15T10:25:00.000Z" }),
+        candle({ timestamp: "2026-05-15T10:30:00.000Z" }),
+      ],
+    });
+
+    expect(candles.map((c) => c.timestamp.toISOString())).toEqual([
+      "2026-05-15T09:30:00.000Z",
+      "2026-05-15T10:25:00.000Z",
+    ]);
   });
 
   it("builds lightweight chart candle and volume series", () => {
@@ -97,18 +121,18 @@ describe("market chart helpers", () => {
 
 function candle({
   timestamp,
-  open,
-  high,
-  low,
-  close,
-  volume,
+  open = 100,
+  high = 103,
+  low = 99,
+  close = 102,
+  volume = 10,
 }: {
   readonly timestamp: string;
-  readonly open: number;
-  readonly high: number;
-  readonly low: number;
-  readonly close: number;
-  readonly volume: number;
+  readonly open?: number;
+  readonly high?: number;
+  readonly low?: number;
+  readonly close?: number;
+  readonly volume?: number;
 }): Candle {
   return {
     source: "coinbase",

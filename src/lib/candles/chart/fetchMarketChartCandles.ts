@@ -72,10 +72,27 @@ export async function fetchMarketChartCandles({
     );
   }
 
-  const sorted = dedupeAndSortCandles({ candles });
+  const sorted = filterCandlesForChartWindow({ candles, window });
   return window.mode === "recent" && bars !== undefined
     ? sorted.slice(-bars)
     : sorted;
+}
+
+export function filterCandlesForChartWindow({
+  candles,
+  window,
+}: {
+  readonly candles: readonly Candle[];
+  readonly window: MarketChartCandleWindow;
+}): Candle[] {
+  const startMs = window.start.getTime();
+  const endMs = window.end.getTime();
+  return dedupeAndSortCandles({
+    candles: candles.filter((candle) => {
+      const timestampMs = candle.timestamp.getTime();
+      return timestampMs >= startMs && timestampMs < endMs;
+    }),
+  });
 }
 
 export function marketChartCandleWindow({
