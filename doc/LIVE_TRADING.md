@@ -12,11 +12,13 @@ Run it:
 bun alea trading:run
 ```
 
-By default it trades all supported assets across both `5m` and `15m`.
-Use `--periods` to restrict the grid:
+By default it trades the curated market set `15m/btc`, `5m/eth`,
+`15m/eth`, and `15m/sol`. Use `--assets` and/or `--periods` to override
+the grid:
 
 ```sh
-bun alea trading:run --periods 5m
+bun alea trading:run --periods 15m
+bun alea trading:run --assets eth --periods 5m,15m
 ```
 
 Required environment:
@@ -64,7 +66,7 @@ bun alea telemetry:query --apl "['alea-live'] | limit 10"
 
 ## Timing
 
-For each asset/period:
+For each configured asset/period market:
 
 1. The runner hydrates recent Pyth and Coinbase spot bars into
    parallel in-memory buffers. Pyth is the canonical timeline;

@@ -91,7 +91,7 @@ dashboard updates with no second edit. Examples:
   dry-run page. The page-level period toggle reads `supportedPeriods` so
   the option set matches the schema's `dry_run_period` CHECK constraint;
   the dry-run process defaults to
-  [`TRADE_DECISION_DEFAULT_PERIODS`](../src/constants/tradeDecision.ts).
+  [`TRADE_DECISION_DEFAULT_MARKETS`](../src/constants/tradeDecision.ts).
 
 If a value appears on a page and there is no constant for it, add the
 constant under `src/constants/` first; do not inline it into the

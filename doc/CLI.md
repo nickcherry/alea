@@ -57,7 +57,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `polymarket:price-sample` — long-running sampler that records compact live 5m/15m Polymarket UP price paths into `polymarket_price_samples`, feeding the `/price-paths/` dashboard's 50c calibration views.
   `polymarket:resolutions-sync` — backfills settled Polymarket up/down crypto market outcomes into `polymarket_resolutions`. Pair with Pyth candles to drive the proxy-accuracy dashboard. See [PROXY.md](./PROXY.md).
 - `trading:*`
-  `trading:run` — long-running live trader. Uses the same source-aware committee decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders immediately at market open. See [LIVE_TRADING.md](./LIVE_TRADING.md).
+  `trading:run` — long-running live trader. Uses the same source-aware committee decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders immediately at market open. Defaults to the curated `15m/btc`, `5m/eth`, `15m/eth`, `15m/sol` market set; use `--assets` / `--periods` to override. See [LIVE_TRADING.md](./LIVE_TRADING.md).
   `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
   `trading:performance` — print the latest lifetime PnL summary scanned from Polymarket data-api.
 - `help`

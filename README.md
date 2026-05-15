@@ -79,6 +79,7 @@ Research artifacts:
 - [Filter Config Sweep 2026-05-15](./doc/results-artifacts/filter-config-sweep-2026-05-15.md)
 - [Filter Weak-Signal Prune 2026-05-15](./doc/results-artifacts/filter-weak-signal-prune-2026-05-15.md)
 - [Committee Selection/Voting Sweep 2026-05-15](./doc/results-artifacts/committee-selection-voting-sweep-2026-05-15.md)
+- [Trade Decision Default Markets 2026-05-15](./doc/results-artifacts/trade-decision-default-markets-2026-05-15.md)
 
 ## Typical workflow
 

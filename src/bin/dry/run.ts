@@ -1,6 +1,8 @@
-import { assetValues } from "@alea/constants/assets";
 import {
-  TRADE_DECISION_DEFAULT_PERIODS,
+  formatTradeDecisionMarkets,
+  resolveTradeDecisionMarkets,
+  TRADE_DECISION_DEFAULT_ASSETS,
+  TRADE_DECISION_DEFAULT_MARKETS,
   TRADE_DECISION_SUPPORTED_PERIODS,
 } from "@alea/constants/tradeDecision";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
@@ -8,10 +10,25 @@ import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import { runDryRun } from "@alea/lib/dryRun/runDryRun";
+import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
 
 const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
+const commaSeparatedPeriodsSchema = z
+  .string()
+  .optional()
+  .transform((v) =>
+    v === undefined ? undefined : v.split(",").map((s) => s.trim()),
+  )
+  .pipe(z.array(tradeDecisionPeriodSchema).min(1).optional());
+const commaSeparatedAssetsSchema = z
+  .string()
+  .optional()
+  .transform((v) =>
+    v === undefined ? undefined : v.split(",").map((s) => s.trim()),
+  )
+  .pipe(z.array(assetSchema).min(1).optional());
 
 /**
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
@@ -34,31 +51,35 @@ export const dryRunCommand = defineCommand({
       key: "periods",
       long: "--periods",
       valueName: "LIST",
-      schema: z
-        .string()
-        .optional()
-        .transform((v) =>
-          v === undefined ? undefined : v.split(",").map((s) => s.trim()),
-        )
-        .pipe(
-          z
-            .array(tradeDecisionPeriodSchema)
-            .min(1)
-            .default([...TRADE_DECISION_DEFAULT_PERIODS]),
-        )
-        .describe(
-          `Comma-separated trade periods (default: ${TRADE_DECISION_DEFAULT_PERIODS.join(",")}).`,
-        ),
+      schema: commaSeparatedPeriodsSchema.describe(
+        `Comma-separated trade periods. With no asset/period override, defaults to ${formatTradeDecisionMarkets({ markets: TRADE_DECISION_DEFAULT_MARKETS })}.`,
+      ),
+    }),
+    defineValueOption({
+      key: "assets",
+      long: "--assets",
+      valueName: "LIST",
+      schema: commaSeparatedAssetsSchema.describe(
+        `Comma-separated assets. With --periods only, defaults to ${TRADE_DECISION_DEFAULT_ASSETS.join(",")}.`,
+      ),
     }),
   ],
-  examples: ["bun alea dry:run", "bun alea dry:run --periods 15m"],
+  examples: [
+    "bun alea dry:run",
+    "bun alea dry:run --periods 15m",
+    "bun alea dry:run --assets eth --periods 5m,15m",
+  ],
   output:
     "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",
   sideEffects:
     "Fetches Pyth candles/latest prices and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
   async run({ io, options }) {
+    const markets = resolveTradeDecisionMarkets({
+      assets: options.assets,
+      periods: options.periods,
+    });
     io.writeStdout(
-      `${pc.bold("dry:run")} ${pc.dim(`periods=${options.periods.join(",")} assets=${assetValues.join(",")}`)}\n\n`,
+      `${pc.bold("dry:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
     );
     const db = createDatabase();
     let handle: Awaited<ReturnType<typeof runDryRun>> | null = null;
@@ -78,8 +99,7 @@ export const dryRunCommand = defineCommand({
     try {
       handle = await runDryRun({
         db,
-        assets: [...assetValues],
-        periods: options.periods,
+        markets,
         log: (event) => {
           const ts = new Date().toISOString().slice(11, 19);
           switch (event.kind) {

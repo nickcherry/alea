@@ -54,8 +54,7 @@ describe("createPolymarketMarketDiscoveryCache", () => {
     });
 
     cache.warm({
-      assets: ["btc"],
-      timeframes: ["5m"],
+      markets: [{ asset: "btc", timeframe: "5m" }],
       nowMs: 1_800_000_296_000,
       discoveryLeadMs: 30_000,
     });

@@ -15,11 +15,13 @@ Run it:
 bun alea dry:run
 ```
 
-By default the runner trades both `5m` and `15m`. Override the grid
-with a comma-separated list:
+By default the runner uses the curated market set `15m/btc`, `5m/eth`,
+`15m/eth`, and `15m/sol`. Override either axis with comma-separated
+lists:
 
 ```sh
 bun alea dry:run --periods 15m
+bun alea dry:run --assets eth --periods 5m,15m
 ```
 
 Stays running until SIGINT / SIGTERM. The committee logic is
@@ -28,8 +30,8 @@ identical to what live trading will use; see
 
 ## What it does, per asset/period
 
-For each configured period, defaulting to `5m,15m`, and each of the
-5 supported assets (`btc`, `eth`, `sol`, `xrp`, `doge`):
+For each configured asset/period market in the default set or override
+grid:
 
 1. **Hydrate** — load the most recent
    `TRADE_DECISION_HYDRATE_BARS` closed bars for that period for
@@ -106,7 +108,7 @@ book state, not committee candle construction.
 ## Committee evaluation
 
 At the configured lead for each boundary (`5m` at T-2m, `15m` at T-3m),
-for each asset:
+for each configured asset/period market:
 
 1. Classify the regime from the bar window (real history + the
    in-flight bar with Pyth's lead-time price as the synthetic close).

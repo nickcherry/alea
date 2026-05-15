@@ -2,9 +2,11 @@ import "@alea/lib/filters/all";
 
 import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
 import {
-  TRADE_DECISION_DEFAULT_PERIODS,
+  resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
   tradeDecisionLeadTimeMs,
+  type TradeDecisionMarket,
+  tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
@@ -38,7 +40,8 @@ export type DryRunHandle = {
 
 export type DryRunOptions = {
   readonly db: DatabaseClient;
-  readonly assets: readonly Asset[];
+  readonly assets?: readonly Asset[];
+  readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
   readonly log: (event: DryRunLogEvent) => void;
 };
@@ -105,13 +108,22 @@ export type DryRunLogEvent =
 export async function runDryRun({
   db,
   assets,
-  periods = TRADE_DECISION_DEFAULT_PERIODS,
+  markets,
+  periods,
   log,
 }: DryRunOptions): Promise<DryRunHandle> {
-  const selectedPeriods: TradeDecisionPeriod[] =
-    periods.length === 0
-      ? [...TRADE_DECISION_DEFAULT_PERIODS]
-      : Array.from(new Set(periods));
+  const selectedMarkets = resolveTradeDecisionMarkets({
+    markets,
+    assets,
+    periods,
+  });
+  const selectedPeriods = tradeDecisionMarketPeriods({
+    markets: selectedMarkets,
+  });
+  const discoveryMarkets = selectedMarkets.map(({ asset, period }) => ({
+    asset,
+    timeframe: period,
+  }));
   const states = new Map<string, TradeDecisionCandleState>();
   const statesByPeriod = new Map<
     TradeDecisionPeriod,
@@ -122,18 +134,16 @@ export async function runDryRun({
   }
   const fetchCandles = createMarketEventPythCandleFetcher({ db });
   // Hydrate.
-  for (const asset of assets) {
-    for (const period of selectedPeriods) {
-      const state = await hydrateTradeDecisionCandleState({
-        asset,
-        period,
-        limit: TRADE_DECISION_HYDRATE_BARS,
-        fetchCandles,
-      });
-      states.set(dryRunStateKey({ asset, period }), state);
-      statesByPeriod.get(period)?.push(state);
-      log({ kind: "hydrated", asset, period, barCount: state.bars.length });
-    }
+  for (const { asset, period } of selectedMarkets) {
+    const state = await hydrateTradeDecisionCandleState({
+      asset,
+      period,
+      limit: TRADE_DECISION_HYDRATE_BARS,
+      fetchCandles,
+    });
+    states.set(dryRunStateKey({ asset, period }), state);
+    statesByPeriod.get(period)?.push(state);
+    log({ kind: "hydrated", asset, period, barCount: state.bars.length });
   }
   const candidates = listCommitteeCandidates();
   const roster = await loadCommitteeRoster({ db });
@@ -186,8 +196,7 @@ export async function runDryRun({
       try {
         const now = Date.now();
         marketDiscovery.warm({
-          assets,
-          timeframes: selectedPeriods,
+          markets: discoveryMarkets,
           nowMs: now,
           discoveryLeadMs: DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
         });

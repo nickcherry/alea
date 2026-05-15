@@ -1,9 +1,11 @@
 import "@alea/lib/filters/all";
 
 import {
-  TRADE_DECISION_DEFAULT_PERIODS,
+  resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
   tradeDecisionLeadTimeMs,
+  type TradeDecisionMarket,
+  tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
@@ -41,7 +43,8 @@ export type LiveTradingHandle = {
 
 export type LiveTradingOptions = {
   readonly db: DatabaseClient;
-  readonly assets: readonly Asset[];
+  readonly assets?: readonly Asset[];
+  readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
   readonly log: (event: LiveTradingLogEvent) => void;
 };
@@ -82,13 +85,18 @@ export type LiveTradingLogEvent =
 export async function runLiveTrading({
   db,
   assets,
-  periods = TRADE_DECISION_DEFAULT_PERIODS,
+  markets,
+  periods,
   log,
 }: LiveTradingOptions): Promise<LiveTradingHandle> {
-  const selectedPeriods: TradeDecisionPeriod[] =
-    periods.length === 0
-      ? [...TRADE_DECISION_DEFAULT_PERIODS]
-      : Array.from(new Set(periods));
+  const selectedMarkets = resolveTradeDecisionMarkets({
+    markets,
+    assets,
+    periods,
+  });
+  const selectedPeriods = tradeDecisionMarketPeriods({
+    markets: selectedMarkets,
+  });
   const statesByPeriod = new Map<
     TradeDecisionPeriod,
     TradeDecisionCandleState[]
@@ -97,17 +105,15 @@ export async function runLiveTrading({
     statesByPeriod.set(period, []);
   }
   const fetchCandles = createMarketEventPythCandleFetcher({ db });
-  for (const asset of assets) {
-    for (const period of selectedPeriods) {
-      const state = await hydrateTradeDecisionCandleState({
-        asset,
-        period,
-        limit: TRADE_DECISION_HYDRATE_BARS,
-        fetchCandles,
-      });
-      statesByPeriod.get(period)?.push(state);
-      log({ kind: "hydrated", asset, period, barCount: state.bars.length });
-    }
+  for (const { asset, period } of selectedMarkets) {
+    const state = await hydrateTradeDecisionCandleState({
+      asset,
+      period,
+      limit: TRADE_DECISION_HYDRATE_BARS,
+      fetchCandles,
+    });
+    statesByPeriod.get(period)?.push(state);
+    log({ kind: "hydrated", asset, period, barCount: state.bars.length });
   }
 
   const candidates = listCommitteeCandidates();
@@ -142,8 +148,7 @@ export async function runLiveTrading({
       try {
         const now = Date.now();
         orderExecutor.warm({
-          assets,
-          timeframes: selectedPeriods,
+          markets: selectedMarkets,
           nowMs: now,
           discoveryLeadMs: LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
         });

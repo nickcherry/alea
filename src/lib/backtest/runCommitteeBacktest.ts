@@ -1,6 +1,5 @@
 import "@alea/lib/filters/all";
 
-import { assetValues } from "@alea/constants/assets";
 import {
   COMMITTEE_BACKTEST_PROFILE_ID,
   COMMITTEE_BACKTEST_SCHEMA_VERSION,
@@ -13,10 +12,13 @@ import {
   type CommitteeDecisionRules,
   DEFAULT_COMMITTEE_DECISION_RULES,
   isTradeDecisionMarketRegimeAllowed,
+  resolveTradeDecisionMarkets,
   TRADE_DECISION_ALLOWED_MARKET_REGIMES,
-  TRADE_DECISION_DEFAULT_PERIODS,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
+  type TradeDecisionMarket,
+  tradeDecisionMarketAssets,
+  tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { STAKE_USD } from "@alea/constants/trading";
@@ -186,7 +188,8 @@ export async function runCommitteeBacktest({
   const rosterCandidatesByBucket = buildRosterCandidatesByBucket({
     roster: activeRoster,
   });
-  const loaded = await loadBacktestBars({ db, windowEndExclusiveMs });
+  const markets = resolveTradeDecisionMarkets({});
+  const loaded = await loadBacktestBars({ db, markets, windowEndExclusiveMs });
   const acc = createAccumulator();
 
   for (const series of loaded) {
@@ -211,8 +214,8 @@ export async function runCommitteeBacktest({
     windowStartMs: BACKTEST_WINDOW_START_MS,
     windowEndExclusiveMs,
     stakeUsd: STAKE_USD,
-    periods: TRADE_DECISION_DEFAULT_PERIODS,
-    assets: assetValues,
+    periods: tradeDecisionMarketPeriods({ markets }),
+    assets: tradeDecisionMarketAssets({ markets }),
     tradeDecisionConfig: {
       hydrateBars: TRADE_DECISION_HYDRATE_BARS,
       leadTimeByPeriodMs: TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS,
@@ -244,24 +247,24 @@ export async function runCommitteeBacktest({
 
 async function loadBacktestBars({
   db,
+  markets,
   windowEndExclusiveMs,
 }: {
   readonly db: DatabaseClient;
+  readonly markets: readonly TradeDecisionMarket[];
   readonly windowEndExclusiveMs: number;
 }): Promise<readonly LoadedBars[]> {
   const loaded: LoadedBars[] = [];
-  for (const period of TRADE_DECISION_DEFAULT_PERIODS) {
+  for (const { asset, period } of markets) {
     const warmupMs = TRADE_DECISION_HYDRATE_BARS * periodMs[period];
-    for (const asset of assetValues) {
-      const series = await loadHistoricalDecisionSeries({
-        db,
-        asset,
-        period,
-        windowStartMs: BACKTEST_WINDOW_START_MS - warmupMs,
-        windowEndExclusiveMs,
-      });
-      loaded.push({ asset, period, series });
-    }
+    const series = await loadHistoricalDecisionSeries({
+      db,
+      asset,
+      period,
+      windowStartMs: BACKTEST_WINDOW_START_MS - warmupMs,
+      windowEndExclusiveMs,
+    });
+    loaded.push({ asset, period, series });
   }
   return loaded;
 }

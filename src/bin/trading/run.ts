@@ -1,7 +1,9 @@
-import { assetValues } from "@alea/constants/assets";
 import { env } from "@alea/constants/env";
 import {
-  TRADE_DECISION_DEFAULT_PERIODS,
+  formatTradeDecisionMarkets,
+  resolveTradeDecisionMarkets,
+  TRADE_DECISION_DEFAULT_ASSETS,
+  TRADE_DECISION_DEFAULT_MARKETS,
   TRADE_DECISION_SUPPORTED_PERIODS,
 } from "@alea/constants/tradeDecision";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
@@ -16,10 +18,25 @@ import {
 } from "@alea/lib/telemetry/axiom";
 import { liveTradingLogEventToTelemetry } from "@alea/lib/telemetry/liveTrading";
 import { runLiveTrading } from "@alea/lib/trading/runLiveTrading";
+import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
 
 const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
+const commaSeparatedPeriodsSchema = z
+  .string()
+  .optional()
+  .transform((v) =>
+    v === undefined ? undefined : v.split(",").map((s) => s.trim()),
+  )
+  .pipe(z.array(tradeDecisionPeriodSchema).min(1).optional());
+const commaSeparatedAssetsSchema = z
+  .string()
+  .optional()
+  .transform((v) =>
+    v === undefined ? undefined : v.split(",").map((s) => s.trim()),
+  )
+  .pipe(z.array(assetSchema).min(1).optional());
 
 export const tradingRunCommand = defineCommand({
   name: "trading:run",
@@ -31,31 +48,35 @@ export const tradingRunCommand = defineCommand({
       key: "periods",
       long: "--periods",
       valueName: "LIST",
-      schema: z
-        .string()
-        .optional()
-        .transform((v) =>
-          v === undefined ? undefined : v.split(",").map((s) => s.trim()),
-        )
-        .pipe(
-          z
-            .array(tradeDecisionPeriodSchema)
-            .min(1)
-            .default([...TRADE_DECISION_DEFAULT_PERIODS]),
-        )
-        .describe(
-          `Comma-separated trade periods (default: ${TRADE_DECISION_DEFAULT_PERIODS.join(",")}).`,
-        ),
+      schema: commaSeparatedPeriodsSchema.describe(
+        `Comma-separated trade periods. With no asset/period override, defaults to ${formatTradeDecisionMarkets({ markets: TRADE_DECISION_DEFAULT_MARKETS })}.`,
+      ),
+    }),
+    defineValueOption({
+      key: "assets",
+      long: "--assets",
+      valueName: "LIST",
+      schema: commaSeparatedAssetsSchema.describe(
+        `Comma-separated assets. With --periods only, defaults to ${TRADE_DECISION_DEFAULT_ASSETS.join(",")}.`,
+      ),
     }),
   ],
-  examples: ["bun alea trading:run", "bun alea trading:run --periods 5m"],
+  examples: [
+    "bun alea trading:run",
+    "bun alea trading:run --periods 15m",
+    "bun alea trading:run --assets eth --periods 5m,15m",
+  ],
   output:
     "Streams market subscription, decision, and live-order placement events to stdout. Live order/fill state remains in Polymarket, not the local DB.",
   sideEffects:
     "Places real Polymarket post-only maker orders. Reads committee/candle data from the DB and uses authenticated Polymarket CLOB APIs. Runs until killed.",
   async run({ io, options }) {
+    const markets = resolveTradeDecisionMarkets({
+      assets: options.assets,
+      periods: options.periods,
+    });
     io.writeStdout(
-      `${pc.bold("trading:run")} ${pc.dim(`periods=${options.periods.join(",")} assets=${assetValues.join(",")}`)}\n\n`,
+      `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
     );
     const runId = createTelemetryRunId();
     const telemetry = createAxiomTelemetrySink({
@@ -94,8 +115,7 @@ export const tradingRunCommand = defineCommand({
     try {
       handle = await runLiveTrading({
         db,
-        assets: [...assetValues],
-        periods: options.periods,
+        markets,
         log: (event) => {
           try {
             telemetry.emit(liveTradingLogEventToTelemetry(event));

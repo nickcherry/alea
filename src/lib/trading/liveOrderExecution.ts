@@ -161,8 +161,10 @@ export function createLiveOrderExecutor({
   readonly sleep?: (ms: number) => Promise<void>;
 }): {
   readonly warm: (input: {
-    readonly assets: readonly Asset[];
-    readonly timeframes: readonly TradeDecisionPeriod[];
+    readonly markets: readonly {
+      readonly asset: Asset;
+      readonly period: TradeDecisionPeriod;
+    }[];
     readonly nowMs: number;
     readonly discoveryLeadMs: number;
   }) => void;
@@ -288,32 +290,29 @@ export function createLiveOrderExecutor({
   };
 
   const warm: ReturnType<typeof createLiveOrderExecutor>["warm"] = ({
-    assets,
-    timeframes,
+    markets,
     nowMs,
     discoveryLeadMs,
   }) => {
     pruneExpiredSessions({ nowMs });
-    for (const timeframe of timeframes) {
-      const stepMs = resolutionTimeframeStepMs({ timeframe });
+    for (const { asset, period } of markets) {
+      const stepMs = resolutionTimeframeStepMs({ timeframe: period });
       const currentStart = Math.floor(nowMs / stepMs) * stepMs;
       const nextStart = currentStart + stepMs;
       if (nowMs + discoveryLeadMs < nextStart) {
         continue;
       }
-      for (const asset of assets) {
-        void ensureMarketSession({
-          asset,
-          period: timeframe,
-          targetTsMs: nextStart,
-        }).catch((error) =>
-          log({
-            kind: "live-market",
-            status: "stream-disconnected",
-            message: `market warm failed ${timeframe}/${asset}: ${String(error)}`,
-          }),
-        );
-      }
+      void ensureMarketSession({
+        asset,
+        period,
+        targetTsMs: nextStart,
+      }).catch((error) =>
+        log({
+          kind: "live-market",
+          status: "stream-disconnected",
+          message: `market warm failed ${period}/${asset}: ${String(error)}`,
+        }),
+      );
     }
   };
 

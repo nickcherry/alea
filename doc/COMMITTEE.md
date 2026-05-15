@@ -18,10 +18,11 @@ Selection is **manual** — operator runs it after a fresh
 `training:run` pass or a `regimes:backfill`.
 
 **Evaluation** runs at each configured trade-decision boundary,
-inside the dry-run / live loop. Dry-run defaults to `5m,15m`, and
-the CLI can override that set. Classify the bar's regime → apply the
-shared allowed-regime gate → look up the roster for `(asset, regime,
-period)` → evaluate each candidate → apply the shared vote policy.
+inside the dry-run / live loop. The no-flag default market set is
+`15m/btc`, `5m/eth`, `15m/eth`, and `15m/sol`; the CLI can override the
+asset/period grid. Classify the bar's regime → apply the shared
+allowed-regime gate → look up the roster for `(asset, regime, period)` →
+evaluate each candidate → apply the shared vote policy.
 
 ## Selection: eligibility + ranking
 
@@ -139,7 +140,9 @@ Critical decision settings live in
 
 | Constant                                |                   Default | Meaning                                                                             |
 | --------------------------------------- | ------------------------: | ----------------------------------------------------------------------------------- |
-| `TRADE_DECISION_DEFAULT_PERIODS`        |                 `5m, 15m` | Periods dry-run evaluates unless overridden by CLI                                  |
+| `TRADE_DECISION_DEFAULT_MARKETS`        | `15m/btc, 5m/eth, 15m/eth, 15m/sol` | No-flag dry-run/live/backtest market set                              |
+| `TRADE_DECISION_DEFAULT_PERIODS`        |                 `5m, 15m` | Period fallback when an operator overrides only assets                              |
+| `TRADE_DECISION_DEFAULT_ASSETS`         |           `btc, eth, sol` | Asset fallback when an operator overrides only periods                              |
 | `TRADE_DECISION_SUPPORTED_PERIODS`      |                 `5m, 15m` | Periods supported by committee/dry-run persistence                                  |
 | `TRADE_DECISION_ALLOWED_MARKET_REGIMES` |      low-vol regimes only | Regimes allowed to produce actionable backtest/dry-run/live trades                  |
 | `TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS` | `5m=120000`, `15m=180000` | Snapshot/live decision lead before target candle open                               |
@@ -152,7 +155,9 @@ Critical decision settings live in
 With the current constants, the final decision is simple majority
 after filter-level vote collapse, with at least two engaged filters
 required. Changing `MIN_COMMITTEE_VOTES_TO_TRADE` changes that for both
-dry-run and live. Changing
+dry-run and live. Changing `TRADE_DECISION_DEFAULT_MARKETS` changes the
+no-flag default market set for committee backtest, dry-run, and live.
+Changing
 `TRADE_DECISION_ALLOWED_MARKET_REGIMES` changes which classified
 environments can produce trades for backtest, dry-run, and live.
 The high-vol regime names are intentionally left as commented entries

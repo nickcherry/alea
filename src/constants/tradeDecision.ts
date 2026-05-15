@@ -1,4 +1,5 @@
 import type { MarketRegime } from "@alea/lib/regime/types";
+import type { Asset } from "@alea/types/assets";
 
 /**
  * Source-of-truth knobs for turning committee votes into an
@@ -17,6 +18,11 @@ export const TRADE_DECISION_SUPPORTED_PERIODS = ["5m", "15m"] as const;
 
 export type TradeDecisionPeriod =
   (typeof TRADE_DECISION_SUPPORTED_PERIODS)[number];
+
+export type TradeDecisionMarket = {
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+};
 
 export type CommitteeDecisionRules = {
   readonly maxVotesPerFilter: number;
@@ -55,17 +61,37 @@ export function isTradeDecisionMarketRegimeAllowed(
 }
 
 /**
- * Candle periods the dry-run trader predicts when the CLI does not
- * provide an override.
+ * Exact no-flag dry-run/live market set. This is narrower than the full
+ * supported asset universe because the latest committee backtest showed
+ * `5m` BTC/SOL were too marginal for the operational default, while ETH
+ * `5m` and all three `15m` slices paid well enough to keep.
+ */
+export const TRADE_DECISION_DEFAULT_MARKETS = [
+  { asset: "btc", period: "15m" },
+  { asset: "eth", period: "5m" },
+  { asset: "eth", period: "15m" },
+  { asset: "sol", period: "15m" },
+] as const satisfies readonly TradeDecisionMarket[];
+
+/**
+ * Default assets/periods used when an operator provides only one axis,
+ * e.g. `--periods 15m` or `--assets eth`. With no override at all, use
+ * `TRADE_DECISION_DEFAULT_MARKETS` exactly.
  */
 export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
   TRADE_DECISION_SUPPORTED_PERIODS;
 
+export const TRADE_DECISION_DEFAULT_ASSETS = [
+  "btc",
+  "eth",
+  "sol",
+] as const satisfies readonly Asset[];
+
 /**
  * Dashboard/default display period. The runner itself uses
- * `TRADE_DECISION_DEFAULT_PERIODS`.
+ * `TRADE_DECISION_DEFAULT_MARKETS`.
  */
-export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "5m";
+export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "15m";
 
 /**
  * How long before each target candle opens the loop snapshots the live price
@@ -137,3 +163,79 @@ export const DEFAULT_COMMITTEE_DECISION_RULES: CommitteeDecisionRules = {
 
 export const TRADE_DECISION_FILTER_TIE_BREAK =
   "highest_win_rate_then_engagements_then_rank";
+
+export function resolveTradeDecisionMarkets({
+  markets,
+  assets,
+  periods,
+}: {
+  readonly markets?: readonly TradeDecisionMarket[];
+  readonly assets?: readonly Asset[];
+  readonly periods?: readonly TradeDecisionPeriod[];
+}): readonly TradeDecisionMarket[] {
+  if (markets !== undefined) {
+    return uniqueTradeDecisionMarkets({ markets });
+  }
+  if (assets === undefined && periods === undefined) {
+    return [...TRADE_DECISION_DEFAULT_MARKETS];
+  }
+  const selectedAssets =
+    assets === undefined || assets.length === 0
+      ? TRADE_DECISION_DEFAULT_ASSETS
+      : assets;
+  const selectedPeriods =
+    periods === undefined || periods.length === 0
+      ? TRADE_DECISION_DEFAULT_PERIODS
+      : periods;
+  const expanded: TradeDecisionMarket[] = [];
+  for (const asset of selectedAssets) {
+    for (const period of selectedPeriods) {
+      expanded.push({ asset, period });
+    }
+  }
+  return uniqueTradeDecisionMarkets({ markets: expanded });
+}
+
+export function tradeDecisionMarketPeriods({
+  markets,
+}: {
+  readonly markets: readonly TradeDecisionMarket[];
+}): readonly TradeDecisionPeriod[] {
+  return [...new Set(markets.map((market) => market.period))];
+}
+
+export function tradeDecisionMarketAssets({
+  markets,
+}: {
+  readonly markets: readonly TradeDecisionMarket[];
+}): readonly Asset[] {
+  return [...new Set(markets.map((market) => market.asset))];
+}
+
+export function formatTradeDecisionMarkets({
+  markets,
+}: {
+  readonly markets: readonly TradeDecisionMarket[];
+}): string {
+  return markets
+    .map((market) => `${market.period}/${market.asset}`)
+    .join(",");
+}
+
+function uniqueTradeDecisionMarkets({
+  markets,
+}: {
+  readonly markets: readonly TradeDecisionMarket[];
+}): readonly TradeDecisionMarket[] {
+  const seen = new Set<string>();
+  const out: TradeDecisionMarket[] = [];
+  for (const market of markets) {
+    const key = `${market.asset}|${market.period}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push(market);
+  }
+  return out;
+}

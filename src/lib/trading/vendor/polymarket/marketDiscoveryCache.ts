@@ -8,8 +8,7 @@ type DiscoverMarket = typeof discoverPolymarketMarket;
 
 export type PolymarketMarketDiscoveryCache = {
   readonly warm: (input: {
-    readonly assets: readonly Asset[];
-    readonly timeframes: readonly ResolutionTimeframe[];
+    readonly markets: readonly WarmMarket[];
     readonly nowMs: number;
     readonly discoveryLeadMs: number;
   }) => void;
@@ -23,6 +22,11 @@ type MarketDiscoveryInput = {
   readonly asset: Asset;
   readonly timeframe: ResolutionTimeframe;
   readonly windowStartTsMs: number;
+};
+
+type WarmMarket = {
+  readonly asset: Asset;
+  readonly timeframe: ResolutionTimeframe;
 };
 
 export function createPolymarketMarketDiscoveryCache({
@@ -92,20 +96,17 @@ export function createPolymarketMarketDiscoveryCache({
   };
 
   const warm: PolymarketMarketDiscoveryCache["warm"] = ({
-    assets,
-    timeframes,
+    markets: marketsToWarm,
     nowMs,
     discoveryLeadMs,
   }) => {
-    for (const timeframe of timeframes) {
+    for (const { asset, timeframe } of marketsToWarm) {
       const stepMs = resolutionTimeframeStepMs({ timeframe });
       const currentStart = Math.floor(nowMs / stepMs) * stepMs;
       const nextStart = currentStart + stepMs;
-      for (const asset of assets) {
-        void getOrDiscover({ asset, timeframe, windowStartTsMs: currentStart });
-        if (nowMs + discoveryLeadMs >= nextStart) {
-          void getOrDiscover({ asset, timeframe, windowStartTsMs: nextStart });
-        }
+      void getOrDiscover({ asset, timeframe, windowStartTsMs: currentStart });
+      if (nowMs + discoveryLeadMs >= nextStart) {
+        void getOrDiscover({ asset, timeframe, windowStartTsMs: nextStart });
       }
     }
   };
