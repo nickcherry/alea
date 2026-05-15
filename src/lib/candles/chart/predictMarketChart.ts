@@ -2,6 +2,7 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname, extname, resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
+import { OPENAI_TRADE_DECISION_REQUEST_TIMEOUT_MS } from "@alea/constants/openAiTradeDecision";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
@@ -56,7 +57,11 @@ export async function predictMarketChart({
   const resolvedModel =
     model ?? env.openaiChartModel ?? defaultOpenAiChartModel;
   const prompt = chartPredictionPrompt();
-  const client = new OpenAI({ apiKey });
+  const client = new OpenAI({
+    apiKey,
+    maxRetries: 0,
+    timeout: OPENAI_TRADE_DECISION_REQUEST_TIMEOUT_MS,
+  });
   const requestLog = {
     at: new Date().toISOString(),
     model: resolvedModel,
