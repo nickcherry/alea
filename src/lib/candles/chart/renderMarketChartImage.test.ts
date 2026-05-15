@@ -121,27 +121,41 @@ describe("market chart helpers", () => {
       { time: 1778846700, open: 102, high: 104, low: 101, close: 101 },
     ]);
     expect(payload.volume.map((bar) => bar.value)).toEqual([10, 12]);
+    expect(payload.hasVolume).toBe(true);
     expect(payload.indicators).not.toBeNull();
     expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["SMA 20", "SMA 50", "EMA 9", "EMA 21"]),
+      expect.arrayContaining(["SMA 20", "SMA 50"]),
+    );
+    expect(payload.indicatorLegend.map((item) => item.label)).not.toContain(
+      "EMA 9",
     );
     expect(payload.showPriceLine).toBe(true);
     expect(payload.showTopInfo).toBe(true);
     expect(payload.latestLabel).toContain("-0.98%");
   });
 
-  it("adds the RSI and RSI-divergence legend when enough bars are visible", () => {
+  it("omits zero-volume panes and adds sparse sweep-rejection context", () => {
     const payload = marketChartPayload({
-      candles: Array.from({ length: 80 }, (_, i) =>
+      candles: [
+        ...Array.from({ length: 24 }, (_, i) =>
+          candle({
+            timestamp: new Date(Date.UTC(2026, 4, 15, 12, i * 5)).toISOString(),
+            open: 100 + i * 0.1,
+            high: 104,
+            low: 99,
+            close: 101 + i * 0.1,
+            volume: 0,
+          }),
+        ),
         candle({
-          timestamp: new Date(Date.UTC(2026, 4, 15, 12, i * 5)).toISOString(),
-          open: 100 + Math.sin(i / 5),
-          high: 102 + Math.sin(i / 5),
-          low: 98 + Math.sin(i / 5),
-          close: 100 + Math.cos(i / 5),
-          volume: 10,
+          timestamp: "2026-05-15T13:00:00.000Z",
+          open: 102,
+          high: 108,
+          low: 101,
+          close: 103,
+          volume: 0,
         }),
-      ),
+      ],
       asset: "btc",
       source: "coinbase",
       product: "spot",
@@ -150,8 +164,9 @@ describe("market chart helpers", () => {
       height: 900,
     });
 
+    expect(payload.hasVolume).toBe(false);
     expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["RSI 14", "RSI div"]),
+      expect.arrayContaining(["Sweep rejection"]),
     );
   });
 

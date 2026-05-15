@@ -1,4 +1,3 @@
-import { computeEmaSeries } from "@alea/lib/indicators/ema";
 import { computeWilderRsiSeries } from "@alea/lib/indicators/rsi";
 import {
   computeRsiDivergenceSignals,
@@ -10,8 +9,16 @@ import {
   type TimeValuePoint,
 } from "@alea/lib/indicators/shared/series";
 import { computeSmaSeries } from "@alea/lib/indicators/sma";
+import {
+  computeWickRejectionSignals,
+  type WickRejectionKind,
+} from "@alea/lib/indicators/wickRejection";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Candle } from "@alea/types/candles";
+
+type ComputedWickRejectionSignal = ReturnType<
+  typeof computeWickRejectionSignals
+>[number];
 
 export type MarketChartIndicatorLine = {
   readonly id: string;
@@ -30,18 +37,19 @@ export type MarketChartRsiDivergenceMarker = {
   readonly shape: "arrowUp" | "arrowDown";
 };
 
-export type MarketChartRsiIndicator = {
-  readonly label: string;
+export type MarketChartPriceActionMarker = {
+  readonly time: number;
+  readonly kind: WickRejectionKind;
+  readonly text: string;
   readonly color: string;
-  readonly overbought: number;
-  readonly oversold: number;
-  readonly data: readonly TimeValuePoint[];
+  readonly position: "aboveBar" | "belowBar";
+  readonly shape: "arrowUp" | "arrowDown";
 };
 
 export type MarketChartIndicators = {
   readonly priceLines: readonly MarketChartIndicatorLine[];
-  readonly rsi: MarketChartRsiIndicator | null;
   readonly rsiDivergenceMarkers: readonly MarketChartRsiDivergenceMarker[];
+  readonly priceActionMarkers: readonly MarketChartPriceActionMarker[];
 };
 
 const defaultSmaLines = [
@@ -49,13 +57,9 @@ const defaultSmaLines = [
   { id: "sma50", label: "SMA 50", period: 50, color: "#2d9cdb" },
 ] as const;
 
-const defaultEmaLines = [
-  { id: "ema9", label: "EMA 9", period: 9, color: "#bb6bd9" },
-  { id: "ema21", label: "EMA 21", period: 21, color: "#f2994a" },
-] as const;
-
 const rsiPeriod = 14;
-const rsiColor = "#d7dce6";
+const maxRsiDivergenceMarkers = 28;
+const maxPriceActionMarkers = 10;
 
 export function buildDefaultMarketChartIndicators({
   candles,
@@ -79,45 +83,35 @@ export function buildDefaultMarketChartIndicators({
     });
   }
 
-  for (const spec of defaultEmaLines) {
-    priceLines.push({
-      id: spec.id,
-      label: spec.label,
-      color: spec.color,
-      lineWidth: 1,
-      data: nullableSeriesToTimeValuePoints({
-        bars,
-        values: computeEmaSeries({ closes, period: spec.period }),
-      }),
-    });
-  }
-
   const rsiValues = computeWilderRsiSeries({ closes, period: rsiPeriod });
-  const rsiData = nullableSeriesToTimeValuePoints({
-    bars,
-    values: rsiValues,
-  });
 
   return {
     priceLines,
-    rsi:
-      rsiData.length === 0
-        ? null
-        : {
-            label: `RSI ${rsiPeriod}`,
-            color: rsiColor,
-            overbought: 70,
-            oversold: 30,
-            data: rsiData,
-          },
-    rsiDivergenceMarkers: computeRsiDivergenceSignals({
-      bars,
-      rsi: rsiValues,
-      leftBars: 5,
-      rightBars: 5,
-      minPivotDistance: 5,
-      maxPivotDistance: 60,
-    }).map((signal) => divergenceMarker({ bars, signal })),
+    rsiDivergenceMarkers: latestItems({
+      items: computeRsiDivergenceSignals({
+        bars,
+        rsi: rsiValues,
+        leftBars: 5,
+        rightBars: 5,
+        minPivotDistance: 12,
+        maxPivotDistance: 96,
+      }).map((signal) => divergenceMarker({ bars, signal })),
+      maxItems: maxRsiDivergenceMarkers,
+    }),
+    priceActionMarkers: latestItems({
+      items: recentWickRejectionSignals({
+        bars,
+        signals: thinNearbyWickRejectionSignals({
+          signals: computeWickRejectionSignals({
+            bars,
+            lookbackBars: 24,
+            minWickToRange: 0.6,
+          }),
+          minIndexDistance: 10,
+        }),
+      }).map((signal) => wickRejectionMarker({ bars, signal })),
+      maxItems: maxPriceActionMarkers,
+    }),
   };
 }
 
@@ -165,3 +159,71 @@ function divergenceLabel(kind: RsiDivergenceKind): string {
   }
 }
 
+function wickRejectionMarker({
+  bars,
+  signal,
+}: {
+  readonly bars: readonly MarketBar[];
+  readonly signal: ComputedWickRejectionSignal;
+}): MarketChartPriceActionMarker {
+  const bar = bars[signal.index];
+  const bullish = signal.kind === "bullish_low_sweep";
+  return {
+    time: Math.floor((bar?.openTimeMs ?? 0) / 1000),
+    kind: signal.kind,
+    text: bullish ? "Low sweep" : "High sweep",
+    color: bullish ? "#2ee59d" : "#ff7b72",
+    position: bullish ? "belowBar" : "aboveBar",
+    shape: bullish ? "arrowUp" : "arrowDown",
+  };
+}
+
+function latestItems<T>({
+  items,
+  maxItems,
+}: {
+  readonly items: readonly T[];
+  readonly maxItems: number;
+}): readonly T[] {
+  if (items.length <= maxItems) {
+    return items;
+  }
+  return items.slice(-maxItems);
+}
+
+function recentWickRejectionSignals({
+  bars,
+  signals,
+}: {
+  readonly bars: readonly MarketBar[];
+  readonly signals: readonly ComputedWickRejectionSignal[];
+}) {
+  const recentBars = Math.max(120, Math.round(bars.length * 0.2));
+  const minIndex = Math.max(0, bars.length - recentBars);
+  return signals.filter((signal) => signal.index >= minIndex);
+}
+
+function thinNearbyWickRejectionSignals({
+  signals,
+  minIndexDistance,
+}: {
+  readonly signals: readonly ComputedWickRejectionSignal[];
+  readonly minIndexDistance: number;
+}) {
+  const thinned: ComputedWickRejectionSignal[] = [];
+  for (const signal of signals) {
+    const previousIndex = thinned.findLastIndex(
+      (candidate) =>
+        candidate.kind === signal.kind &&
+        signal.index - candidate.index < minIndexDistance,
+    );
+    if (previousIndex === -1) {
+      thinned.push(signal);
+      continue;
+    }
+    if (signal.wickToRange > thinned[previousIndex]!.wickToRange) {
+      thinned[previousIndex] = signal;
+    }
+  }
+  return thinned;
+}

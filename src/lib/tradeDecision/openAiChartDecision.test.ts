@@ -94,6 +94,7 @@ describe("chartPredictionToTradeDecision", () => {
     expect(renderedChart.showIndicators).toBe(true);
     expect(renderedChart.candleCount).toBe(2);
     const imagePath = requireString(predictedImagePath);
+    expect(decision.imagePath).toBe(imagePath);
     expect(
       imagePath.startsWith(`${resolvePath("tmp", "openai-chart-decisions")}/`),
     ).toBe(true);

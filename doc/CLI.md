@@ -26,7 +26,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run` or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
-  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG with SMA/EMA overlays, an RSI pane, and RSI-divergence markers. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG with SMA 20/50 overlays, RSI-divergence markers, and sparse sweep-rejection markers. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
 - `predict:*`
   `predict:chart` — sends a rendered chart image to OpenAI's Responses API for a Zod-validated next-candle green/red prediction. Requires `OPENAI_API_KEY`.
 - `dry:*`
@@ -92,9 +92,10 @@ bun alea candles:chart --asset btc --timeframe 5m \
 ```
 
 By default, chart images include the indicator bundle used by OpenAI:
-`SMA 20`, `SMA 50`, `EMA 9`, `EMA 21`, `RSI 14`, and RSI-divergence
-markers (`Bull div`, `H bull`, `Bear div`, `H bear`) on every chart. Use
-`--no-indicators` for a plain candlestick + volume chart.
+`SMA 20`, `SMA 50`, RSI-divergence markers (`Bull div`, `H bull`,
+`Bear div`, `H bear`), and sparse sweep-rejection markers (`High sweep`,
+`Low sweep`). Use `--no-indicators` for a plain candlestick + volume
+chart.
 
 For visual replay, use `--no-price-line` to hide the latest
 price horizontal line and right-edge last-value label, and use
@@ -109,8 +110,8 @@ bun alea candles:chart --asset btc --timeframe 5m \
 ```
 
 The default chart is Pyth spot BTC `5m`, matching Alea's canonical
-price/outcome source. Pyth does not publish venue volume, so its volume
-pane is empty; pass `--source coinbase` when you want Coinbase trade
+price/outcome source. Pyth does not publish venue volume, so the volume
+pane is omitted; pass `--source coinbase` when you want Coinbase trade
 volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
 change the market, and `--browser-path` or `ALEA_CHART_BROWSER_PATH` if
 Chrome is installed outside the standard macOS/Linux paths.

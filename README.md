@@ -20,8 +20,8 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 ## How the pieces fit
 
 1. **Candles** sync and store Pyth/Coinbase OHLCV history.
-2. **Chart rendering** produces Lightweight Charts PNGs with SMA, EMA,
-   RSI, and RSI-divergence annotations.
+2. **Chart rendering** produces Lightweight Charts PNGs with SMA 20/50,
+   RSI-divergence annotations, and sparse sweep-rejection markers.
 3. **OpenAI prediction** reads the rendered chart and returns a
    validated green/red next-candle direction.
 4. **Dry run / live** share the chart-decision path; dry run simulates

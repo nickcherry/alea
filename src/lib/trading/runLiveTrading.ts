@@ -1,7 +1,7 @@
 import {
   resolveTradeDecisionMarkets,
-  tradeDecisionLeadTimeMs,
   tradeDecisionHydrateBars,
+  tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
@@ -20,6 +20,7 @@ import {
 } from "@alea/lib/tradeDecision/candleState";
 import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
 import { evaluateOpenAiChartTradeDecision } from "@alea/lib/tradeDecision/openAiChartDecision";
+import { createLiveDecisionTelegramNotifier } from "@alea/lib/trading/liveDecisionTelegram";
 import {
   createLiveOrderExecutor,
   type LiveTradingMarketLogEvent,
@@ -116,10 +117,22 @@ export async function runLiveTrading({
   const marketDiscovery = createPolymarketMarketDiscoveryCache({
     retryMs: 2_000,
   });
+  const telegramNotifier = createLiveDecisionTelegramNotifier({ log });
+  const orderLog = (
+    event:
+      | LiveTradingOrderLogEvent
+      | LiveTradingMarketLogEvent
+      | { readonly kind: "error"; readonly message: string },
+  ) => {
+    log(event);
+    if (event.kind === "live-order") {
+      void telegramNotifier.handleOrderEvent(event);
+    }
+  };
   const orderExecutor = createLiveOrderExecutor({
     client,
     marketDiscovery,
-    log,
+    log: orderLog,
   });
   let running = true;
   log({ kind: "ready" });
@@ -154,6 +167,7 @@ export async function runLiveTrading({
                 fetchCandles,
                 targetTsMs: nextBoundary,
                 orderExecutor,
+                telegramNotifier,
                 log,
               }),
             );
@@ -184,6 +198,7 @@ async function processDueLiveDecision({
   fetchCandles,
   targetTsMs,
   orderExecutor,
+  telegramNotifier,
   log,
 }: {
   readonly state: TradeDecisionCandleState;
@@ -191,6 +206,9 @@ async function processDueLiveDecision({
   readonly fetchCandles: FetchCandles;
   readonly targetTsMs: number;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
+  readonly telegramNotifier: ReturnType<
+    typeof createLiveDecisionTelegramNotifier
+  >;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
   try {
@@ -210,6 +228,7 @@ async function processDueLiveDecision({
       synthBar: refreshed.syntheticBar,
       priceAgeMs: refreshed.priceAgeMs,
       orderExecutor,
+      telegramNotifier,
       log,
     });
   } catch (e) {
@@ -278,6 +297,7 @@ async function makeLiveDecision({
   synthBar,
   priceAgeMs,
   orderExecutor,
+  telegramNotifier,
   log,
 }: {
   readonly state: TradeDecisionCandleState;
@@ -286,6 +306,9 @@ async function makeLiveDecision({
   readonly synthBar: MarketBar;
   readonly priceAgeMs: number | null;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
+  readonly telegramNotifier: ReturnType<
+    typeof createLiveDecisionTelegramNotifier
+  >;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
   state.lastPredictedBoundary = targetTsMs;
@@ -308,6 +331,14 @@ async function makeLiveDecision({
     down: evaluated.down,
     abstain: evaluated.abstain,
     model: evaluated.model,
+    reasoning: evaluated.reasoning,
+  });
+  telegramNotifier.trackDecision({
+    asset: state.asset,
+    period: state.period,
+    targetTsMs,
+    prediction: evaluated.prediction,
+    imagePath: evaluated.imagePath,
     reasoning: evaluated.reasoning,
   });
   await orderExecutor.scheduleOrder({

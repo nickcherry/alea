@@ -46,6 +46,7 @@ type MarketChartPayload = {
   readonly showTopInfo: boolean;
   readonly candles: readonly LightweightCandlestick[];
   readonly volume: readonly LightweightVolumeBar[];
+  readonly hasVolume: boolean;
   readonly indicators: MarketChartIndicators | null;
   readonly indicatorLegend: readonly MarketChartLegendItem[];
 };
@@ -223,6 +224,7 @@ export function marketChartPayload({
           ? "rgba(22, 160, 133, 0.42)"
           : "rgba(224, 79, 95, 0.42)",
     })),
+    hasVolume: candles.some((candle) => candle.volume > 0),
     indicators,
     indicatorLegend: indicators === null ? [] : indicatorLegend(indicators),
   };
@@ -389,7 +391,7 @@ async function buildMarketChartHtml({
       },
       rightPriceScale: {
         borderColor: "rgba(93, 110, 132, 0.34)",
-        scaleMargins: { top: 0.08, bottom: 0.24 },
+        scaleMargins: { top: 0.08, bottom: payload.hasVolume ? 0.24 : 0.08 },
       },
       timeScale: {
         borderColor: "rgba(93, 110, 132, 0.34)",
@@ -427,54 +429,27 @@ async function buildMarketChartHtml({
       series.setData(line.data);
     }
 
-    const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
-      priceFormat: { type: "volume" },
-      priceScaleId: "",
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.82, bottom: 0 },
-    });
-    volumeSeries.setData(payload.volume);
-
-    if (payload.indicators?.rsi !== null && payload.indicators?.rsi !== undefined) {
-      const rsiSeries = chart.addSeries(LightweightCharts.LineSeries, {
-        color: payload.indicators.rsi.color,
-        lineWidth: 2,
+    if (payload.hasVolume) {
+      const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
+        priceFormat: { type: "volume" },
+        priceScaleId: "",
         priceLineVisible: false,
         lastValueVisible: false,
-      }, 1);
-      rsiSeries.setData(payload.indicators.rsi.data);
-      rsiSeries.createPriceLine({
-        price: payload.indicators.rsi.overbought,
-        color: "rgba(255, 107, 107, 0.52)",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true,
-        title: "70",
       });
-      rsiSeries.createPriceLine({
-        price: payload.indicators.rsi.oversold,
-        color: "rgba(32, 201, 151, 0.52)",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true,
-        title: "30",
+      volumeSeries.priceScale().applyOptions({
+        scaleMargins: { top: 0.82, bottom: 0 },
       });
-      rsiSeries.priceScale().applyOptions({
-        scaleMargins: { top: 0.12, bottom: 0.12 },
-      });
-      const panes = chart.panes();
-      if (panes[1] !== undefined) {
-        panes[1].setHeight(Math.max(130, Math.round((payload.height - ${topbarHeight}) * 0.22)));
-      }
+      volumeSeries.setData(payload.volume);
     }
 
-    if ((payload.indicators?.rsiDivergenceMarkers ?? []).length > 0) {
+    const markers = [
+      ...(payload.indicators?.rsiDivergenceMarkers ?? []),
+      ...(payload.indicators?.priceActionMarkers ?? []),
+    ].sort((a, b) => a.time - b.time);
+    if (markers.length > 0) {
       LightweightCharts.createSeriesMarkers(
         candleSeries,
-        payload.indicators.rsiDivergenceMarkers,
+        markers,
         { zOrder: "top" },
       );
     }
@@ -537,9 +512,11 @@ function indicatorLegend(
     label: line.label,
     color: line.color,
   }));
-  if (indicators.rsi !== null) {
-    legend.push({ label: indicators.rsi.label, color: indicators.rsi.color });
+  if (indicators.rsiDivergenceMarkers.length > 0) {
     legend.push({ label: "RSI div", color: "#20c997" });
+  }
+  if (indicators.priceActionMarkers.length > 0) {
+    legend.push({ label: "Sweep rejection", color: "#ff7b72" });
   }
   return legend;
 }

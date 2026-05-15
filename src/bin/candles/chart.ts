@@ -165,7 +165,7 @@ export const candlesChartCommand = defineCommand({
       schema: z
         .boolean()
         .default(false)
-        .describe("Hide SMA/EMA overlays, RSI, and divergence markers."),
+        .describe("Hide SMA overlays, divergence, and rejection markers."),
     }),
     defineFlagOption({
       key: "noOpen",

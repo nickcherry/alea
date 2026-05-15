@@ -29,9 +29,11 @@ describe("predictMarketChart helpers", () => {
     );
     expect(prompt).toContain("SMA 20");
     expect(prompt).toContain("RSI divergence marker labels");
+    expect(prompt).toContain("Sweep-rejection marker labels");
     expect(prompt).toContain('"direction": "green"');
     expect(prompt).toContain('"reasoning"');
     expect(prompt).not.toContain("confidence");
+    expect(prompt).not.toContain("RSI 14 pane");
     expect(prompt).not.toContain("Answer the user's chart question");
     expect(prompt).not.toContain("treat that as intentional anti-leak context");
   });

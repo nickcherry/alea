@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
+import { marketChartRecentBarsForTimeframe } from "@alea/constants/marketChart";
 import {
   OPENAI_TRADE_DECISION_CHART_HEIGHT,
   OPENAI_TRADE_DECISION_CHART_WIDTH,
   OPENAI_TRADE_DECISION_IMAGE_DETAIL,
 } from "@alea/constants/openAiTradeDecision";
-import { marketChartRecentBarsForTimeframe } from "@alea/constants/marketChart";
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import {
   type ChartPrediction,
@@ -20,7 +20,7 @@ import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Asset } from "@alea/types/assets";
 import type { Candle } from "@alea/types/candles";
 
-export type OpenAiChartTradeDecision = {
+export type ChartTradeDecision = {
   readonly prediction: "u" | "d";
   readonly direction: ChartPrediction["direction"];
   readonly reasoning: string;
@@ -28,6 +28,10 @@ export type OpenAiChartTradeDecision = {
   readonly up: number;
   readonly down: number;
   readonly abstain: number;
+};
+
+export type OpenAiChartTradeDecision = ChartTradeDecision & {
+  readonly imagePath: string;
 };
 
 type PredictChart = (params: {
@@ -79,10 +83,13 @@ export async function evaluateOpenAiChartTradeDecision({
     detail: OPENAI_TRADE_DECISION_IMAGE_DETAIL,
   });
 
-  return chartPredictionToTradeDecision({
-    chartPrediction: result.prediction,
-    model: result.model,
-  });
+  return {
+    ...chartPredictionToTradeDecision({
+      chartPrediction: result.prediction,
+      model: result.model,
+    }),
+    imagePath,
+  };
 }
 
 export function chartPredictionToTradeDecision({
@@ -91,7 +98,7 @@ export function chartPredictionToTradeDecision({
 }: {
   readonly chartPrediction: ChartPrediction;
   readonly model: string;
-}): OpenAiChartTradeDecision {
+}): ChartTradeDecision {
   const prediction =
     chartPrediction.direction === "green" ? ("u" as const) : ("d" as const);
   return {
