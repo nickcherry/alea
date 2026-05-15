@@ -179,6 +179,7 @@ export function buildTradingPerformancePayload({
     const status = positionStatus({
       hasPosition: position !== null,
       redeemable: position?.redeemable ?? false,
+      currentValueUsd,
     });
     const equityPnlUsd = m.returned + currentValueUsd - m.invested;
     const realizedPnlUsd = status === "open" ? null : m.returned - m.invested;
@@ -327,14 +328,29 @@ function deriveFeeUsd({
   return fee;
 }
 
+/**
+ * Redeemable-position current values at or below this (in USD) are
+ * dust — the losing side of a resolved market, worth effectively zero
+ * but still sitting on /positions because we never burned the worthless
+ * tokens. Treat them as closed so the row reads as a plain win/loss
+ * instead of "redeemable win/loss". Real unclaimed winnings ($payout
+ * × shares) are well above the threshold and stay flagged as redeemable.
+ */
+const REDEEMABLE_DUST_THRESHOLD_USD = 0.01;
+
 function positionStatus({
   hasPosition,
   redeemable,
+  currentValueUsd,
 }: {
   readonly hasPosition: boolean;
   readonly redeemable: boolean;
+  readonly currentValueUsd: number;
 }): TradingPerformanceMarketStatus {
   if (!hasPosition) {
+    return "closed";
+  }
+  if (redeemable && currentValueUsd < REDEEMABLE_DUST_THRESHOLD_USD) {
     return "closed";
   }
   return redeemable ? "redeemable" : "open";

@@ -81,8 +81,33 @@ describe("buildTradingPerformancePayload", () => {
       ],
     });
     expect(payload.summary.lifetimePnlUsd).toBeCloseTo(-50, 9);
-    expect(payload.markets[0]?.status).toBe("redeemable");
+    // Dust-valued redeemable positions are demoted to "closed" so the
+    // row reads as a plain loss, not "redeemable loss".
+    expect(payload.markets[0]?.status).toBe("closed");
     expect(payload.markets[0]?.result).toBe("loss");
+  });
+
+  it("keeps redeemable status when the position still holds non-dust value (unclaimed winnings)", () => {
+    const payload = buildTradingPerformancePayload({
+      walletAddress: "0xfunder",
+      generatedAtMs: 0,
+      activity: [buy({ conditionId: "win", usdcSize: 10 })],
+      positions: [
+        {
+          conditionId: "win",
+          title: "BTC Up",
+          slug: "btc-updown-5m",
+          outcome: "Up",
+          size: 100,
+          currentPrice: 1,
+          currentValueUsd: 100,
+          endDateMs: 1_777_900_000_000,
+          redeemable: true,
+        },
+      ],
+    });
+    expect(payload.markets[0]?.status).toBe("redeemable");
+    expect(payload.markets[0]?.result).toBe("win");
   });
 
   it("includes mark-to-market value of currently-open positions", () => {
