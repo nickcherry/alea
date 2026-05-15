@@ -43,8 +43,8 @@ describe("trade decision market defaults", () => {
   });
 
   it("uses chart-window-sized hydration by period", () => {
-    expect(tradeDecisionHydrateBars({ period: "5m" })).toBe(1152);
-    expect(tradeDecisionHydrateBars({ period: "15m" })).toBe(960);
-    expect(TRADE_DECISION_HYDRATE_BARS).toBe(1152);
+    expect(tradeDecisionHydrateBars({ period: "5m" })).toBe(576);
+    expect(tradeDecisionHydrateBars({ period: "15m" })).toBe(384);
+    expect(TRADE_DECISION_HYDRATE_BARS).toBe(576);
   });
 });

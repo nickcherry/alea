@@ -108,8 +108,8 @@ describe("chartPredictionToTradeDecision", () => {
       readonly inputBars: number;
       readonly expectedRenderedBars: number;
     }[] = [
-      { period: "5m", inputBars: 1300, expectedRenderedBars: 1152 },
-      { period: "15m", inputBars: 1200, expectedRenderedBars: 960 },
+      { period: "5m", inputBars: 1300, expectedRenderedBars: 576 },
+      { period: "15m", inputBars: 1200, expectedRenderedBars: 384 },
     ];
 
     for (const testCase of cases) {

@@ -67,8 +67,8 @@ directly from the requested source/product/asset/timeframe and renders
 the image with TradingView Lightweight Charts through local Chrome.
 
 Recent-window mode is the default. Trading timeframes use the same
-history window sent to OpenAI: `5m` charts render the most recent 4 days
-of completed candles, and `15m` charts render the most recent 10 days.
+history window sent to OpenAI: `5m` charts render the most recent 2 days
+of completed candles, and `15m` charts render the most recent 4 days.
 Use `--bars` only when you need to override that default:
 
 ```sh

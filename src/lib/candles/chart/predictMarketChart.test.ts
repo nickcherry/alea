@@ -24,12 +24,11 @@ describe("predictMarketChart helpers", () => {
   it("prompts for a fixed next-candle prediction response shape", () => {
     const prompt = chartPredictionPrompt();
 
-    expect(prompt).toContain(
-      "Predict whether the next candle will be green or red.",
-    );
+    expect(prompt).toContain("Predict whether the next candle will be green");
+    expect(prompt).toContain("Polymarket");
     expect(prompt).toContain("SMA 20");
-    expect(prompt).toContain("RSI divergence marker labels");
-    expect(prompt).toContain("Sweep-rejection marker labels");
+    expect(prompt).toContain("RSI divergence markers");
+    expect(prompt).toContain("Sweep-rejection markers");
     expect(prompt).toContain('"direction": "green"');
     expect(prompt).toContain('"reasoning"');
     expect(prompt).not.toContain("confidence");

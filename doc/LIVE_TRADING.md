@@ -69,8 +69,8 @@ bun alea telemetry:query --apl "['alea-live'] | limit 10"
 
 For each configured asset/period market:
 
-1. The runner hydrates recent Pyth bars into an in-memory buffer: 4 days
-   for `5m` charts and 10 days for `15m` charts.
+1. The runner hydrates recent Pyth bars into an in-memory buffer: 2 days
+   for `5m` charts and 4 days for `15m` charts.
    Pyth is the canonical timeline and chart source for the OpenAI
    decision path.
 2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 15m` before the

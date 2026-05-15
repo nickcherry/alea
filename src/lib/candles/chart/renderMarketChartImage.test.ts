@@ -23,9 +23,24 @@ describe("market chart helpers", () => {
     expect(window.bars).toBe(12);
   });
 
-  it("defaults 5m charts to the most recent 4 days", () => {
+  it("defaults 5m charts to the most recent 2 days", () => {
     const window = marketChartCandleWindow({
       timeframe: "5m",
+      end: new Date("2026-05-15T12:17:33.000Z"),
+    });
+
+    expect(window.start.toISOString()).toBe("2026-05-13T12:15:00.000Z");
+    expect(window.end.toISOString()).toBe("2026-05-15T12:15:00.000Z");
+    expect(window.mode).toBe("recent");
+    if (window.mode !== "recent") {
+      throw new Error("expected recent window");
+    }
+    expect(window.bars).toBe(576);
+  });
+
+  it("defaults 15m charts to the most recent 4 days", () => {
+    const window = marketChartCandleWindow({
+      timeframe: "15m",
       end: new Date("2026-05-15T12:17:33.000Z"),
     });
 
@@ -35,22 +50,7 @@ describe("market chart helpers", () => {
     if (window.mode !== "recent") {
       throw new Error("expected recent window");
     }
-    expect(window.bars).toBe(1152);
-  });
-
-  it("defaults 15m charts to the most recent 10 days", () => {
-    const window = marketChartCandleWindow({
-      timeframe: "15m",
-      end: new Date("2026-05-15T12:17:33.000Z"),
-    });
-
-    expect(window.start.toISOString()).toBe("2026-05-05T12:15:00.000Z");
-    expect(window.end.toISOString()).toBe("2026-05-15T12:15:00.000Z");
-    expect(window.mode).toBe("recent");
-    if (window.mode !== "recent") {
-      throw new Error("expected recent window");
-    }
-    expect(window.bars).toBe(960);
+    expect(window.bars).toBe(384);
   });
 
   it("aligns an explicit chart time range", () => {

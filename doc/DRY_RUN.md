@@ -34,8 +34,8 @@ For each configured asset/period market in the default set or override
 grid:
 
 1. **Hydrate** — load enough closed Pyth bars for the chart window:
-   1,152 bars for `5m` charts (4 days) and 960 bars for `15m` charts
-   (10 days).
+   576 bars for `5m` charts (2 days) and 384 bars for `15m` charts
+   (4 days).
    Pyth is the canonical price/settlement-proxy series and the only
    chart source used by the OpenAI decision path.
 2. **Refresh** — before each configured period boundary, fetch recent
