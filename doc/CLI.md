@@ -27,6 +27,8 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run`, `backtest:run`, or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
   `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
+- `predict:*`
+  `predict:chart` — sends a rendered chart image to OpenAI's Responses API for a Zod-validated next-candle green/red prediction. Requires `OPENAI_API_KEY`.
 - `training:*`
   `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against aligned Pyth/Coinbase spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `backtest:*`
@@ -111,6 +113,18 @@ pane is empty; pass `--source coinbase` when you want Coinbase trade
 volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
 change the market, and `--browser-path` or `ALEA_CHART_BROWSER_PATH` if
 Chrome is installed outside the standard macOS/Linux paths.
+
+Use `predict:chart` to predict the next candle from an already-rendered
+chart image. The command sends the image through the OpenAI Responses API,
+requires the model to return `{ direction, confidence, reasoning }`, and
+validates that response with Zod before printing it. It defaults to
+`OPENAI_CHART_MODEL` or `gpt-5.4`.
+
+```sh
+bun alea predict:chart tmp/charts/btc-pyth-5m.png
+```
+
+Set `OPENAI_API_KEY` in the environment before running it.
 
 ## Adding A Command
 

@@ -54,6 +54,12 @@ export const env = {
   get playwrightChromiumExecutablePath(): string | undefined {
     return optionalEnv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH");
   },
+  get openaiApiKey(): string | undefined {
+    return optionalEnv("OPENAI_API_KEY");
+  },
+  get openaiChartModel(): string | undefined {
+    return optionalEnv("OPENAI_CHART_MODEL");
+  },
 };
 
 function optionalEnv(name: string): string | undefined {

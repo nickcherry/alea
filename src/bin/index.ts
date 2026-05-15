@@ -16,6 +16,7 @@ import { latencyChartCommand } from "@alea/bin/latency/chart";
 import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
 import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
+import { predictChartCommand } from "@alea/bin/predict/chart";
 import { regimesBackfillCommand } from "@alea/bin/regimes/backfill";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
@@ -62,6 +63,7 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
+    predictChartCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,
