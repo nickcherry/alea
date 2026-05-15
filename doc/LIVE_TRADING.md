@@ -12,9 +12,9 @@ Run it:
 bun alea trading:run
 ```
 
-By default it trades the curated market set `15m/btc`, `5m/eth`,
-`15m/eth`, and `15m/sol`. Use `--assets` and/or `--periods` to override
-the grid:
+By default it trades the full BTC/ETH/SOL `5m` + `15m` market set:
+`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`. Use
+`--assets` and/or `--periods` to override the grid:
 
 ```sh
 bun alea trading:run --periods 15m

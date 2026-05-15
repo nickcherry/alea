@@ -15,9 +15,9 @@ Run it:
 bun alea dry:run
 ```
 
-By default the runner uses the curated market set `15m/btc`, `5m/eth`,
-`15m/eth`, and `15m/sol`. Override either axis with comma-separated
-lists:
+By default the runner uses the full BTC/ETH/SOL `5m` + `15m` market set:
+`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`.
+Override either axis with comma-separated lists:
 
 ```sh
 bun alea dry:run --periods 15m

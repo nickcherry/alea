@@ -24,10 +24,10 @@ setting should usually not depend on one timeframe carrying the whole
 result.
 
 `backtest:run` replays the operational default market set from
-`TRADE_DECISION_DEFAULT_MARKETS`. The current no-flag set is `15m/btc`,
-`5m/eth`, `15m/eth`, and `15m/sol`, chosen from the latest holdout
-breakdown to keep the strong `15m` slices plus the profitable ETH `5m`
-slice while avoiding marginal `5m` BTC/SOL by default.
+`TRADE_DECISION_DEFAULT_MARKETS`. The current no-flag set is `5m/btc`,
+`15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, and `15m/sol`, paired with the
+top-12 committee selection cap to keep the full BTC/ETH/SOL surface while
+trimming weaker lower-ranked voters.
 
 ## Window
 
