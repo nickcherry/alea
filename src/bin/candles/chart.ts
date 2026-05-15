@@ -25,7 +25,7 @@ export const candlesChartCommand = defineCommand({
   name: "candles:chart",
   summary: "Render a market candle chart PNG",
   description:
-    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Coinbase BTC-USD 5m spot chart; pass --start/--end for an explicit range.",
+    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range.",
   options: [
     defineValueOption({
       key: "asset",
@@ -52,7 +52,7 @@ export const candlesChartCommand = defineCommand({
       valueName: "SOURCE",
       choices: candleSourceValues,
       schema: candleSourceSchema
-        .default("coinbase")
+        .default("pyth")
         .describe("Candle source to fetch from."),
     }),
     defineValueOption({

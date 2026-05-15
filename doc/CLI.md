@@ -26,7 +26,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run`, `backtest:run`, or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
-  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Coinbase spot BTC `5m`; use `--start`/`--end` for an explicit time range.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
 - `training:*`
   `training:run` — refreshes filter training artifacts. It runs every registered filter × default config × (period × asset) against aligned Pyth/Coinbase spot candles inside the configured training window and upserts results into `filter_runs` + per-engagement rows into `filter_engagements`.
 - `backtest:*`
@@ -68,7 +68,7 @@ Update this section whenever a new family or command is registered in `src/bin/i
 
 ## Candle Chart Images
 
-Use `candles:chart` when you want a Coinbase-style market chart as a
+Use `candles:chart` when you want a TradingView-style market chart as a
 PNG without depending on local candle sync state. The command fetches
 directly from the requested source/product/asset/timeframe and renders
 the image with TradingView Lightweight Charts through local Chrome.
@@ -76,7 +76,7 @@ the image with TradingView Lightweight Charts through local Chrome.
 Recent-window mode uses `--bars`:
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m --source coinbase --bars 288
+bun alea candles:chart --asset btc --timeframe 5m --bars 288
 ```
 
 Explicit range mode uses `--start` and optional `--end`. Both values are
@@ -87,10 +87,10 @@ that opened at `13:25:00Z`, not the candle that opens at `13:30:00Z`. If
 Ranges are capped at 2,000 bars.
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m --source coinbase \
+bun alea candles:chart --asset btc --timeframe 5m \
   --start 2026-05-15T09:30:00Z \
   --end 2026-05-15T13:30:00Z \
-  --out tmp/charts/btc-coinbase-5m.png
+  --out tmp/charts/btc-pyth-5m.png
 ```
 
 For visual replay/backtesting, use `--no-price-line` to hide the latest
@@ -98,17 +98,19 @@ price horizontal line and right-edge last-value label, and use
 `--no-top-info` to hide the OHLC/change/range block at the top:
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m --source coinbase \
+bun alea candles:chart --asset btc --timeframe 5m \
   --start 2026-05-15T09:30:00Z \
   --end 2026-05-15T13:30:00Z \
   --no-price-line \
   --no-top-info
 ```
 
-The default chart is Coinbase spot BTC `5m`. Use `--source`, `--product`,
-`--asset`, and `--timeframe` to change the market, and `--browser-path`
-or `ALEA_CHART_BROWSER_PATH` if Chrome is installed outside the standard
-macOS/Linux paths.
+The default chart is Pyth spot BTC `5m`, matching Alea's canonical
+price/outcome source. Pyth does not publish venue volume, so its volume
+pane is empty; pass `--source coinbase` when you want Coinbase trade
+volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
+change the market, and `--browser-path` or `ALEA_CHART_BROWSER_PATH` if
+Chrome is installed outside the standard macOS/Linux paths.
 
 ## Adding A Command
 
