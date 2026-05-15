@@ -1,4 +1,5 @@
 import { env } from "@alea/constants/env";
+import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   formatTradeDecisionMarkets,
   resolveTradeDecisionMarkets,
@@ -40,9 +41,9 @@ const commaSeparatedAssetsSchema = z
 
 export const tradingRunCommand = defineCommand({
   name: "trading:run",
-  summary: "Run live committee trading with real Polymarket orders",
+  summary: "Run live OpenAI chart trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, makes committee decisions before each market opens (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after each actionable pre-open decision. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after each actionable prediction above the confidence threshold. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
   options: [
     defineValueOption({
       key: "periods",
@@ -60,23 +61,44 @@ export const tradingRunCommand = defineCommand({
         `Comma-separated assets. With --periods only, defaults to ${TRADE_DECISION_DEFAULT_ASSETS.join(",")}.`,
       ),
     }),
+    defineValueOption({
+      key: "openAiMinConfidence",
+      long: "--openai-min-confidence",
+      valueName: "N",
+      schema: z.coerce
+        .number()
+        .min(0)
+        .max(1)
+        .optional()
+        .describe(
+          `Minimum OpenAI chart confidence required to place a live trade. Defaults to OPENAI_TRADE_DECISION_MIN_CONFIDENCE or ${OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE}.`,
+        ),
+    }),
   ],
   examples: [
     "bun alea trading:run",
     "bun alea trading:run --periods 15m",
+    "bun alea trading:run --openai-min-confidence 0.7",
     "bun alea trading:run --assets eth --periods 5m,15m",
   ],
   output:
     "Streams market subscription, decision, and live-order placement events to stdout. Live order/fill state remains in Polymarket, not the local DB.",
   sideEffects:
-    "Places real Polymarket post-only maker orders. Reads committee/candle data from the DB and uses authenticated Polymarket CLOB APIs. Runs until killed.",
+    "Places real Polymarket post-only maker orders. Reads candle data from the DB, renders chart images, calls the OpenAI Responses API, and uses authenticated Polymarket CLOB APIs. Runs until killed.",
   async run({ io, options }) {
     const markets = resolveTradeDecisionMarkets({
       assets: options.assets,
       periods: options.periods,
     });
+    const openAiMinConfidence =
+      options.openAiMinConfidence ??
+      env.openaiTradeDecisionMinConfidence ??
+      OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE;
+    if (env.openaiApiKey === undefined) {
+      throw new Error("OPENAI_API_KEY is required for live trading decisions.");
+    }
     io.writeStdout(
-      `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
+      `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })} openaiMinConfidence=${openAiMinConfidence}`)}\n\n`,
     );
     const runId = createTelemetryRunId();
     const telemetry = createAxiomTelemetrySink({
@@ -116,6 +138,7 @@ export const tradingRunCommand = defineCommand({
       handle = await runLiveTrading({
         db,
         markets,
+        openAiMinConfidence,
         log: (event) => {
           try {
             telemetry.emit(liveTradingLogEventToTelemetry(event));
@@ -132,23 +155,11 @@ export const tradingRunCommand = defineCommand({
             case "ready":
               io.writeStdout(`${pc.dim(ts)} ${pc.green("ready")}\n`);
               break;
-            case "roster": {
-              const selectedAt =
-                event.selectedAtMs === null
-                  ? "unknown"
-                  : new Date(event.selectedAtMs)
-                      .toISOString()
-                      .slice(0, 16)
-                      .replace("T", " ");
-              const tag =
-                event.totalCandidates === 0
-                  ? pc.red("EMPTY")
-                  : pc.green("loaded");
+            case "predictor":
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} committee roster: ${event.bucketCount} buckets, ${event.totalCandidates} candidates ${pc.dim(`(selected_at=${selectedAt})`)}\n`,
+                `${pc.dim(ts)} ${pc.green("predictor")} ${event.source} ${pc.dim(`minConfidence=${event.minConfidence}`)}\n`,
               );
               break;
-            }
             case "decision": {
               const tag =
                 event.prediction === null
@@ -156,17 +167,18 @@ export const tradingRunCommand = defineCommand({
                   : event.prediction === "u"
                     ? pc.green("UP    ")
                     : pc.red("DOWN  ");
-              const regime = event.marketRegime ?? "-";
               const confidence =
                 event.confidence === null
                   ? "-"
-                  : `${(event.confidence * 100).toFixed(1)}c`;
+                  : formatConfidence(event.confidence);
               const priceAge =
                 event.priceAgeMs === null
                   ? ""
                   : ` priceAge=${event.priceAgeMs}ms`;
+              const reason =
+                event.reasoning === null ? "" : ` reason=${event.reasoning}`;
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("regime=" + regime + " roster=" + event.rosterSize + " u=" + event.up + " d=" + event.down + " a=" + event.abstain + " conf=" + confidence + priceAge)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("source=openai conf=" + confidence + " min=" + formatConfidence(event.minConfidence) + " model=" + (event.model ?? "-") + priceAge + reason)}\n`,
               );
               break;
             }
@@ -206,7 +218,7 @@ export const tradingRunCommand = defineCommand({
                 parts.push(`limit=${formatCents(event.limitPrice)}`);
               }
               if (event.confidence !== null) {
-                parts.push(`conf=${formatCents(event.confidence)}`);
+                parts.push(`conf=${formatConfidence(event.confidence)}`);
               }
               if (event.orderId !== null) {
                 parts.push(`order=${event.orderId.slice(0, 10)}...`);
@@ -240,4 +252,8 @@ export const tradingRunCommand = defineCommand({
 
 function formatCents(value: number): string {
   return `${(value * 100).toFixed(1)}c`;
+}
+
+function formatConfidence(value: number): string {
+  return value.toFixed(2);
 }

@@ -1,10 +1,10 @@
 # Live Trading
 
-`bun alea trading:run` is the real-money version of the committee
-runner. It uses the same source-aware candle refresh, regime
-classification, committee roster, one-vote-per-filter aggregation,
-and order-placement policy as dry-run. The difference is execution:
-actionable decisions place real Polymarket orders.
+`bun alea trading:run` is the real-money version of the OpenAI chart
+decision runner. It uses the same Pyth chart rendering, OpenAI
+prediction, confidence threshold, and order-placement policy as
+dry-run. The difference is execution: actionable decisions place real
+Polymarket orders.
 
 Run it:
 
@@ -23,6 +23,8 @@ bun alea trading:run --assets eth --periods 5m,15m
 
 Required environment:
 
+- `OPENAI_API_KEY`
+- `OPENAI_TRADE_DECISION_MIN_CONFIDENCE` optional, defaults to `0.7`
 - `POLYMARKET_PRIVATE_KEY`
 - `POLYMARKET_FUNDER_ADDRESS`
 - `DATABASE_URL` if not using the local default
@@ -48,8 +50,8 @@ spool under `tmp/telemetry/live/`. Telemetry is best-effort and never
 blocks order placement; if Axiom is unavailable, the local spool is
 the fallback artifact.
 
-The live event stream captures runner hydration, roster load, each
-committee decision, market stream state, order scheduling, every live
+The live event stream captures runner hydration, predictor config, each
+OpenAI chart decision, market stream state, order scheduling, every live
 post attempt, and final order placement/rejection/skips. Order-attempt
 events include BBO, spread, quote age, token/market refs, post latency,
 failure kind/status, and summarized book depth around the posted
@@ -68,10 +70,9 @@ bun alea telemetry:query --apl "['alea-live'] | limit 10"
 
 For each configured asset/period market:
 
-1. The runner hydrates recent Pyth and Coinbase spot bars into
-   parallel in-memory buffers. Pyth is the canonical timeline;
-   Coinbase supplies volume for filters that declare
-   `barSource: "coinbase"`.
+1. The runner hydrates recent Pyth bars into an in-memory buffer.
+   Pyth is the canonical timeline and chart source for the OpenAI
+   decision path.
 2. Starting `LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 15m` before the
    next market opens, it resolves the next Polymarket slug and
    subscribes to both UP and DOWN token books. Polymarket currently
@@ -79,14 +80,12 @@ For each configured asset/period market:
    settled and leaves room to move decision timing earlier without a
    market-discovery race.
 3. At the configured period lead (`5m` at T-2m, `15m` at T-3m), it
-   refreshes recent Pyth and Coinbase spot candles for every due asset/period
-   concurrently, fetches the latest Pyth price,
-   synthesizes the active Pyth candle, aligns Coinbase bars to the
-   Pyth timestamps, and asks the committee for a decision. Coinbase
-   failures are soft; Pyth failures or stale latest Pyth prices skip
-   the decision. The shared decision policy also skips any regime not
-   listed in `TRADE_DECISION_ALLOWED_MARKET_REGIMES`; the current
-   default is low-vol only.
+   refreshes recent Pyth candles for every due asset/period, fetches
+   the latest Pyth price, synthesizes the active Pyth candle, renders
+   the chart with the price line and top OHLC block hidden, and asks
+   OpenAI for a Zod-validated `{ direction, confidence, reasoning }`
+   response. Pyth failures or stale latest Pyth prices skip the
+   decision. Confidence below the configured threshold abstains.
 4. If the decision is actionable, live placement starts immediately.
    Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
    `15m` crypto up/down markets were already `active`, `accepting`,
@@ -110,7 +109,8 @@ Live trading only places predicted-side maker buys:
 - Notional: `STAKE_USD`.
 - Price band: `50c +/- LIVE_TRADING_ORDER_PRICE_WINDOW_CENTS`, today
   `+/- 3c`.
-- Confidence: logged for analysis, not used as an order-placement gate.
+- Confidence: OpenAI chart confidence; must clear
+  `OPENAI_TRADE_DECISION_MIN_CONFIDENCE` before any order is scheduled.
 
 If placement is rejected or the book moves, the runner recomputes from
 the latest known book and retries up to
@@ -134,7 +134,7 @@ different EV and fee decision than the current near-50c maker strategy.
 Live trading does not write local trade/fill rows. Once Polymarket
 confirms order creation, Alea is done with that order. Polymarket is
 the source of truth for open orders, fills, positions, and PnL. The
-local DB is used for candle history and committee selection only.
+local DB is used for candle history only.
 
 SIGINT/SIGTERM stops the scheduler, clears not-yet-started scheduled
 orders, closes the market-data WebSocket, and flushes telemetry. The
@@ -146,7 +146,7 @@ complete at the venue during shutdown.
 
 - [`src/bin/trading/run.ts`](../src/bin/trading/run.ts) — CLI glue.
 - [`src/lib/trading/runLiveTrading.ts`](../src/lib/trading/runLiveTrading.ts) —
-  live scheduler and shared committee decision path.
+  live scheduler and shared OpenAI chart decision path.
 - [`src/lib/trading/liveOrderExecution.ts`](../src/lib/trading/liveOrderExecution.ts) —
   market pre-subscription, pre-open order posting, and retry handling.
 - [`src/lib/trading/marketPriceState.ts`](../src/lib/trading/marketPriceState.ts) —

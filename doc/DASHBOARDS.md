@@ -256,15 +256,15 @@ arranges them under one host and one shared top nav.
 The dashboard sequence is a research-to-production funnel, not a set
 of interchangeable reports:
 
-| Phase                 | Page               | Decision it supports                                                                                            |
-| --------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                  |
-| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                             |
-| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                    |
-| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                      |
+| Phase                 | Page               | Decision it supports                                                                                                                    |
+| --------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy     | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                                                          |
+| Market microstructure | Price paths        | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                                                     |
+| Candidate research    | Filter exploration | Which filter/config candidates look predictive, redundant, or worth pruning.                                                            |
+| Roster construction   | Trade committee    | Which candidates were selected per regime and whether selection thresholds are calibrated.                                              |
 | Backtest              | Backtest           | Latest committee holdout replay: decisions, scored trades, notional size, WR, PnL proxy, PnL curve, and period/asset/regime breakdowns. |
-| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.              |
-| Production            | Live trading PnL   | Track realized results from actual order placement.                                                             |
+| Live-like rehearsal   | Dry run            | Validate the live decision path plus quote observation and fill simulation without placing orders.                                      |
+| Production            | Live trading PnL   | Track realized results from actual order placement.                                                                                     |
 
 | Route           | Page               | Source                                                                                              |
 | --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
@@ -274,7 +274,7 @@ of interchangeable reports:
 | `/exploration/` | Filter exploration | [`renderExplorationHtml.ts`](../src/lib/exploration/renderExplorationHtml.ts)                       |
 | `/committee/`   | Trade committee    | [`renderTradeCommitteeHtml.ts`](../src/lib/committee/dashboard/renderTradeCommitteeHtml.ts)         |
 | `/backtest/`    | Backtest           | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
-| `/dryrun/`      | Dry-run committee  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
+| `/dryrun/`      | Dry-run decisions  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -320,7 +320,7 @@ tmp/web/
     index.assets/
     data.json
   dryrun/
-    index.html             ← dry-run committee (served at /dryrun/)
+    index.html             ← dry-run decisions (served at /dryrun/)
     index.assets/
     data.json
 ```

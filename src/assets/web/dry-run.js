@@ -287,7 +287,7 @@
       bits.push("fill " + formatCents(row.orderFillPrice));
     }
     if (row.orderConfidence !== null && row.orderConfidence !== undefined) {
-      bits.push("conf " + formatCents(row.orderConfidence));
+      bits.push("conf " + Number(row.orderConfidence).toFixed(2));
     }
     return bits.length === 0
       ? ""

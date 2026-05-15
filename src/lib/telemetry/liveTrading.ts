@@ -14,17 +14,12 @@ export function liveTradingLogEventToTelemetry(
       };
     case "ready":
       return { event: "runner_ready", mode: "live" };
-    case "roster":
+    case "predictor":
       return {
-        event: "roster_loaded",
+        event: "predictor_loaded",
         mode: "live",
-        bucketCount: event.bucketCount,
-        totalCandidates: event.totalCandidates,
-        selectedAtMs: event.selectedAtMs,
-        selectedAt:
-          event.selectedAtMs === null
-            ? null
-            : new Date(event.selectedAtMs).toISOString(),
+        source: event.source,
+        minConfidence: event.minConfidence,
       };
     case "decision":
       return {
@@ -39,11 +34,14 @@ export function liveTradingLogEventToTelemetry(
         synthClose: event.synthClose,
         priceAgeMs: event.priceAgeMs,
         marketRegime: event.marketRegime,
-        rosterSize: event.rosterSize,
+        decisionSourceCount: event.sourceCount,
         upVotes: event.up,
         downVotes: event.down,
         abstainVotes: event.abstain,
         confidence: event.confidence,
+        minConfidence: event.minConfidence,
+        model: event.model,
+        reasoning: event.reasoning,
       };
     case "live-market":
       return {

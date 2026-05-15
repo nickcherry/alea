@@ -3,8 +3,9 @@
 Filter-committee research toolkit for Polymarket crypto up/down
 markets. Alea trains deterministic filters over aligned Pyth and
 Coinbase spot candles, selects an asset/regime-aware trade committee,
-replays that committee over a holdout window, and runs the same voting
-path in dry-run/live trading.
+and replays that committee over a holdout window. Dry-run/live trading
+currently use OpenAI chart decisions with a configurable confidence
+threshold.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
@@ -39,7 +40,8 @@ committee decisions without order-book or fill modeling.
    `(asset, market_regime, period)` and writes `committee_selections`.
 4. **Backtest** replays the selected committee over the holdout window
    without Polymarket order-book or fill modeling.
-5. **Dry run / live** use the same committee voting logic; only order
+5. **Dry run / live** render the visible Pyth chart and use OpenAI to
+   decide whether confidence is high enough to trade; only order
    placement differs.
 6. **Dashboards** expose proxy calibration, price paths, exploration,
    committee roster, backtest, dry run, and live performance.
@@ -95,7 +97,7 @@ bun alea committee:select        # rebuild the asset/regime-scoped voter roster
 bun alea backtest:run            # replay latest selected committee
 bun alea backtest:sweep-committee # explore committee thresholds without mutating roster
 bun alea dashboards:build --deploy
-# restart any running `bun alea dry:run` to pick up the new roster
+# restart any running `bun alea dry:run` after changing runtime config
 ```
 
 Each step is idempotent and skips work that's already current.

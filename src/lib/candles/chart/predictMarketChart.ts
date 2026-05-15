@@ -38,7 +38,7 @@ export const sampleChartPredictionResponse: ChartPrediction = {
     "The last visible candles are holding above a recent support shelf with modest upward closes, so continuation is slightly favored.",
 };
 
-type PredictMarketChartParams = {
+export type PredictMarketChartParams = {
   readonly imagePath: string;
   readonly model?: string;
   readonly detail: "low" | "high" | "auto";

@@ -1,6 +1,5 @@
-import "@alea/lib/filters/all";
-
 import { DRY_RUN_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/dryRun";
+import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
@@ -9,28 +8,23 @@ import {
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
-import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
-import {
-  candidateRosterKey,
-  type CommitteeRoster,
-  loadCommitteeRoster,
-} from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
 import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
-import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import type { FilterBar } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { MarketRegime } from "@alea/lib/regime/types";
 import {
+  type FetchCandles,
   hydrateTradeDecisionCandleState,
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
-import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDecision";
 import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
+import { evaluateOpenAiChartTradeDecision } from "@alea/lib/tradeDecision/openAiChartDecision";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
@@ -43,6 +37,7 @@ export type DryRunOptions = {
   readonly assets?: readonly Asset[];
   readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
+  readonly openAiMinConfidence?: number;
   readonly log: (event: DryRunLogEvent) => void;
 };
 
@@ -55,10 +50,9 @@ export type DryRunLogEvent =
     }
   | { readonly kind: "ready" }
   | {
-      readonly kind: "roster";
-      readonly bucketCount: number;
-      readonly totalCandidates: number;
-      readonly selectedAtMs: number | null;
+      readonly kind: "predictor";
+      readonly source: "openai_chart";
+      readonly minConfidence: number;
     }
   | {
       readonly kind: "decision";
@@ -68,10 +62,14 @@ export type DryRunLogEvent =
       readonly prediction: "u" | "d" | null;
       readonly synthClose: number;
       readonly marketRegime: MarketRegime | null;
-      readonly rosterSize: number;
+      readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
+      readonly confidence: number | null;
+      readonly minConfidence: number;
+      readonly model: string | null;
+      readonly reasoning: string | null;
     }
   | {
       readonly kind: "outcome";
@@ -96,8 +94,8 @@ export type DryRunLogEvent =
  *   2. Shortly before each configured boundary, refresh recent Pyth
  *      candles into the in-memory buffer and synthesize the active
  *      candle from the latest one-shot Pyth price.
- *   3. Run the committee against that refreshed/synthetic bar set and
- *      persist the decision if it's not an abstain.
+ *   3. Render the refreshed/synthetic bar set as a chart, ask OpenAI for the
+ *      next-candle direction, and persist it only above the confidence floor.
  *   4. For non-abstain decisions, simulate the configured pre-open
  *      Polymarket order and track whether it fills before expiry.
  *
@@ -110,6 +108,7 @@ export async function runDryRun({
   assets,
   markets,
   periods,
+  openAiMinConfidence = OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
   log,
 }: DryRunOptions): Promise<DryRunHandle> {
   const selectedMarkets = resolveTradeDecisionMarkets({
@@ -140,37 +139,17 @@ export async function runDryRun({
       period,
       limit: TRADE_DECISION_HYDRATE_BARS,
       fetchCandles,
+      fetchCoinbaseBarsForHydrate: fetchNoCandles,
     });
     states.set(dryRunStateKey({ asset, period }), state);
     statesByPeriod.get(period)?.push(state);
     log({ kind: "hydrated", asset, period, barCount: state.bars.length });
   }
-  const candidates = listCommitteeCandidates();
-  const roster = await loadCommitteeRoster({ db });
-  {
-    let total = 0;
-    for (const bucket of roster.byBucket.values()) {
-      total += bucket.length;
-    }
-    log({
-      kind: "roster",
-      bucketCount: roster.byBucket.size,
-      totalCandidates: total,
-      selectedAtMs: roster.selectedAtMs,
-    });
-  }
-  // Index candidates by roster key for O(1) lookup at decision time.
-  const candidatesByKey = new Map<string, Candidate>();
-  for (const cand of candidates) {
-    candidatesByKey.set(
-      candidateRosterKey({
-        filterId: cand.filterId,
-        filterVersion: cand.version,
-        configCanon: cand.configCanon,
-      }),
-      cand,
-    );
-  }
+  log({
+    kind: "predictor",
+    source: "openai_chart",
+    minConfidence: openAiMinConfidence,
+  });
 
   let running = true;
   // Track decision rows pending scoring by asset/period state, then target bar open.
@@ -221,6 +200,7 @@ export async function runDryRun({
                   nowMs: now,
                   limit: TRADE_DECISION_HYDRATE_BARS,
                   fetchCandles,
+                  fetchCoinbaseBarsForRefresh: fetchNoCandles,
                 });
               } catch (e) {
                 log({
@@ -256,8 +236,7 @@ export async function runDryRun({
                 targetTsMs: nextBoundary,
                 series: refreshed.seriesForDecision,
                 synthBar: refreshed.syntheticBar,
-                roster,
-                candidatesByKey,
+                openAiMinConfidence,
                 pendingByState,
                 orderSimulator,
                 log,
@@ -289,8 +268,7 @@ async function makePrediction({
   targetTsMs,
   series,
   synthBar,
-  roster,
-  candidatesByKey,
+  openAiMinConfidence,
   pendingByState,
   orderSimulator,
   log,
@@ -300,19 +278,17 @@ async function makePrediction({
   readonly targetTsMs: number;
   readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
-  readonly roster: CommitteeRoster;
-  readonly candidatesByKey: ReadonlyMap<string, Candidate>;
+  readonly openAiMinConfidence: number;
   readonly pendingByState: Map<string, Map<number, string>>;
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   const decisionStartedAtMs = Date.now();
-  const evaluated = evaluateTradeDecision({
+  const evaluated = await evaluateOpenAiChartTradeDecision({
     asset: state.asset,
     period: state.period,
     series,
-    roster,
-    candidatesByKey,
+    minConfidence: openAiMinConfidence,
   });
   const decisionCompletedAtMs = Date.now();
   const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
@@ -323,11 +299,15 @@ async function makePrediction({
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
     synthClose: synthBar.close,
-    marketRegime: evaluated.marketRegime,
-    rosterSize: evaluated.rosterSize,
+    marketRegime: null,
+    sourceCount: 1,
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
+    confidence: evaluated.confidence,
+    minConfidence: evaluated.minConfidence,
+    model: evaluated.model,
+    reasoning: evaluated.reasoning,
   });
   if (evaluated.prediction === null) {
     await recordDecisionAttempt({
@@ -338,11 +318,16 @@ async function makePrediction({
       decisionCompletedAtMs,
       decisionDurationMs,
       prediction: null,
-      marketRegime: evaluated.marketRegime,
-      rosterSize: evaluated.rosterSize,
+      marketRegime: null,
+      rosterSize: 1,
       up: evaluated.up,
       down: evaluated.down,
       abstain: evaluated.abstain,
+      openAiModel: evaluated.model,
+      openAiDirection: evaluated.direction,
+      openAiConfidence: evaluated.confidence,
+      openAiMinConfidence: evaluated.minConfidence,
+      openAiReasoning: evaluated.reasoning,
       decisionId: null,
     });
     return;
@@ -355,10 +340,9 @@ async function makePrediction({
   // the prior bar AND the open we're betting the next bar moves away
   // from.
   //
-  // `regime_votes` keeps its legacy column name but stores the
-  // filter-collapsed decision tally — `{up, down, abstain}`. Old
-  // rows from before this change still hold the array-shaped
-  // per-family breakdown; the dashboard loader handles both formats.
+  // `regime_votes` keeps its legacy column name but now stores the
+  // OpenAI chart audit object. Old rows may still hold committee vote
+  // tallies; the dashboard loader handles both shapes.
   const inserted = await db
     .insertInto("dry_run_decisions")
     .values({
@@ -369,12 +353,17 @@ async function makePrediction({
       prediction,
       synth_open: synthBar.close,
       regime_votes: JSON.stringify({
+        source: "openai_chart",
+        model: evaluated.model,
+        direction: evaluated.direction,
+        confidence: evaluated.confidence,
+        minConfidence: evaluated.minConfidence,
+        reasoning: evaluated.reasoning,
         up: evaluated.up,
         down: evaluated.down,
         abstain: evaluated.abstain,
-        avgWinningVoteConfidence: evaluated.orderConfidence,
       }),
-      market_regime: evaluated.marketRegime,
+      market_regime: null,
       decision_started_at_ms: decisionStartedAtMs,
       decision_completed_at_ms: decisionCompletedAtMs,
       decision_duration_ms: decisionDurationMs,
@@ -389,11 +378,16 @@ async function makePrediction({
     decisionCompletedAtMs,
     decisionDurationMs,
     prediction,
-    marketRegime: evaluated.marketRegime,
-    rosterSize: evaluated.rosterSize,
+    marketRegime: null,
+    rosterSize: 1,
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
+    openAiModel: evaluated.model,
+    openAiDirection: evaluated.direction,
+    openAiConfidence: evaluated.confidence,
+    openAiMinConfidence: evaluated.minConfidence,
+    openAiReasoning: evaluated.reasoning,
     decisionId: String(inserted.id),
   });
   const pending = pendingByState.get(
@@ -408,7 +402,7 @@ async function makePrediction({
     period: state.period,
     prediction,
     targetTsMs,
-    confidence: evaluated.orderConfidence,
+    confidence: evaluated.confidence,
   });
 }
 
@@ -425,6 +419,11 @@ async function recordDecisionAttempt({
   up,
   down,
   abstain,
+  openAiModel,
+  openAiDirection,
+  openAiConfidence,
+  openAiMinConfidence,
+  openAiReasoning,
   decisionId,
 }: {
   readonly db: DatabaseClient;
@@ -439,6 +438,11 @@ async function recordDecisionAttempt({
   readonly up: number;
   readonly down: number;
   readonly abstain: number;
+  readonly openAiModel: string | null;
+  readonly openAiDirection: string | null;
+  readonly openAiConfidence: number | null;
+  readonly openAiMinConfidence: number | null;
+  readonly openAiReasoning: string | null;
   readonly decisionId: string | null;
 }): Promise<void> {
   await db
@@ -456,6 +460,11 @@ async function recordDecisionAttempt({
       up_votes: up,
       down_votes: down,
       abstain_votes: abstain,
+      openai_model: openAiModel,
+      openai_direction: openAiDirection,
+      openai_confidence: openAiConfidence,
+      openai_min_confidence: openAiMinConfidence,
+      openai_reasoning: openAiReasoning,
       dry_run_decision_id: decisionId,
     })
     .execute();
@@ -554,3 +563,5 @@ function dryRunStateKey({
 }): string {
   return `${period}:${asset}`;
 }
+
+const fetchNoCandles: FetchCandles = async () => [];

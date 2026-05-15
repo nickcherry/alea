@@ -11,16 +11,14 @@ export type DryRunDashboardSummary = {
   readonly firstDecisionAtMs: number | null;
   readonly lastDecisionAtMs: number | null;
   /**
-   * Static count of every (filter, config) candidate registered in
-   * the committee at the time the dashboard was built. Reflects the
-   * pool the committee draws from — abstaining candidates are still
-   * counted.
+   * Static count of active decision sources. OpenAI chart decisions
+   * use one source; older committee rows still render through the
+   * same aggregate field.
    */
   readonly candidateCount: number;
   /**
-   * Average number of filter-collapsed votes (up or down — abstains
-   * excluded) per non-abstaining decision. Lower = the committee is
-   * acting on slim engagement; higher = broad consensus.
+   * Average number of non-abstaining decision-source votes per
+   * persisted decision. For OpenAI chart decisions this should be 1.
    */
   readonly avgEngagement: number | null;
 };
@@ -34,12 +32,9 @@ export type DryRunDecisionConfig = {
    */
   readonly supportedPeriods: readonly string[];
   readonly leadTimeByPeriodMs: { readonly [period: string]: number };
-  readonly allowedMarketRegimes: readonly string[];
+  readonly decisionSource: string;
+  readonly openAiMinConfidence: number;
   readonly hydratedBars: number;
-  readonly maxVotesPerFilter: number;
-  readonly minVotesToTrade: number;
-  readonly minConsensusFraction: number;
-  readonly filterTieBreak: string;
   readonly orderPlacementDelayMs: number;
   readonly orderLimitPricePolicy: string;
   readonly orderPriceWindowCents: number;
@@ -53,9 +48,9 @@ export type DryRunDashboardAssetRow = {
   readonly pending: number;
   readonly wins: number;
   readonly winRate: number | null;
-  /** Settled decisions where the committee called UP. */
+  /** Settled decisions where the predictor called UP. */
   readonly upSettled: number;
-  /** Settled decisions where the committee called DOWN. */
+  /** Settled decisions where the predictor called DOWN. */
   readonly downSettled: number;
 };
 
@@ -87,9 +82,9 @@ export type DryRunDashboardRegimeAggregate = {
   readonly calls: number;
   readonly wins: number;
   readonly winRate: number | null;
-  /** Settled decisions where the committee called UP in this regime. */
+  /** Settled decisions where the predictor called UP in this bucket. */
   readonly upSettled: number;
-  /** Settled decisions where the committee called DOWN in this regime. */
+  /** Settled decisions where the predictor called DOWN in this bucket. */
   readonly downSettled: number;
 };
 

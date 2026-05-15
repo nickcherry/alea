@@ -1,5 +1,4 @@
-import "@alea/lib/filters/all";
-
+import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
   resolveTradeDecisionMarkets,
   TRADE_DECISION_HYDRATE_BARS,
@@ -9,15 +8,9 @@ import {
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
-import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
-import {
-  candidateRosterKey,
-  type CommitteeRoster,
-  loadCommitteeRoster,
-} from "@alea/lib/committee/selection/loadCommitteeRoster";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { AlignedBarSeries } from "@alea/lib/filters/barSeries";
-import type { Candidate, FilterBar } from "@alea/lib/filters/types";
+import type { FilterBar } from "@alea/lib/filters/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import { getPolymarketClobClient } from "@alea/lib/polymarket/getPolymarketClobClient";
 import type { MarketRegime } from "@alea/lib/regime/types";
@@ -27,8 +20,8 @@ import {
   refreshTradeDecisionCandleState,
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
-import { evaluateTradeDecision } from "@alea/lib/tradeDecision/evaluateTradeDecision";
 import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
+import { evaluateOpenAiChartTradeDecision } from "@alea/lib/tradeDecision/openAiChartDecision";
 import {
   createLiveOrderExecutor,
   type LiveTradingMarketLogEvent,
@@ -46,6 +39,7 @@ export type LiveTradingOptions = {
   readonly assets?: readonly Asset[];
   readonly markets?: readonly TradeDecisionMarket[];
   readonly periods?: readonly TradeDecisionPeriod[];
+  readonly openAiMinConfidence?: number;
   readonly log: (event: LiveTradingLogEvent) => void;
 };
 
@@ -58,10 +52,9 @@ export type LiveTradingLogEvent =
     }
   | { readonly kind: "ready" }
   | {
-      readonly kind: "roster";
-      readonly bucketCount: number;
-      readonly totalCandidates: number;
-      readonly selectedAtMs: number | null;
+      readonly kind: "predictor";
+      readonly source: "openai_chart";
+      readonly minConfidence: number;
     }
   | {
       readonly kind: "decision";
@@ -72,11 +65,14 @@ export type LiveTradingLogEvent =
       readonly synthClose: number;
       readonly priceAgeMs: number | null;
       readonly marketRegime: MarketRegime | null;
-      readonly rosterSize: number;
+      readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
       readonly confidence: number | null;
+      readonly minConfidence: number;
+      readonly model: string | null;
+      readonly reasoning: string | null;
     }
   | LiveTradingOrderLogEvent
   | LiveTradingMarketLogEvent
@@ -87,6 +83,7 @@ export async function runLiveTrading({
   assets,
   markets,
   periods,
+  openAiMinConfidence = OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
   log,
 }: LiveTradingOptions): Promise<LiveTradingHandle> {
   const selectedMarkets = resolveTradeDecisionMarkets({
@@ -111,25 +108,17 @@ export async function runLiveTrading({
       period,
       limit: TRADE_DECISION_HYDRATE_BARS,
       fetchCandles,
+      fetchCoinbaseBarsForHydrate: fetchNoCandles,
     });
     statesByPeriod.get(period)?.push(state);
     log({ kind: "hydrated", asset, period, barCount: state.bars.length });
   }
 
-  const candidates = listCommitteeCandidates();
-  const roster = await loadCommitteeRoster({ db });
-  logRoster({ roster, log });
-  const candidatesByKey = new Map<string, Candidate>();
-  for (const cand of candidates) {
-    candidatesByKey.set(
-      candidateRosterKey({
-        filterId: cand.filterId,
-        filterVersion: cand.version,
-        configCanon: cand.configCanon,
-      }),
-      cand,
-    );
-  }
+  log({
+    kind: "predictor",
+    source: "openai_chart",
+    minConfidence: openAiMinConfidence,
+  });
 
   const client = await getPolymarketClobClient();
   const marketDiscovery = createPolymarketMarketDiscoveryCache({
@@ -172,8 +161,7 @@ export async function runLiveTrading({
                 now,
                 fetchCandles,
                 targetTsMs: nextBoundary,
-                roster,
-                candidatesByKey,
+                openAiMinConfidence,
                 orderExecutor,
                 log,
               }),
@@ -204,8 +192,7 @@ async function processDueLiveDecision({
   now,
   fetchCandles,
   targetTsMs,
-  roster,
-  candidatesByKey,
+  openAiMinConfidence,
   orderExecutor,
   log,
 }: {
@@ -213,8 +200,7 @@ async function processDueLiveDecision({
   readonly now: number;
   readonly fetchCandles: FetchCandles;
   readonly targetTsMs: number;
-  readonly roster: CommitteeRoster;
-  readonly candidatesByKey: ReadonlyMap<string, Candidate>;
+  readonly openAiMinConfidence: number;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
@@ -234,8 +220,7 @@ async function processDueLiveDecision({
       series: refreshed.seriesForDecision,
       synthBar: refreshed.syntheticBar,
       priceAgeMs: refreshed.priceAgeMs,
-      roster,
-      candidatesByKey,
+      openAiMinConfidence,
       orderExecutor,
       log,
     });
@@ -268,6 +253,7 @@ async function refreshStateForDecision({
       nowMs: now,
       limit: TRADE_DECISION_HYDRATE_BARS,
       fetchCandles,
+      fetchCoinbaseBarsForRefresh: fetchNoCandles,
     });
     if (
       refreshed.syntheticBar === null ||
@@ -303,8 +289,7 @@ async function makeLiveDecision({
   series,
   synthBar,
   priceAgeMs,
-  roster,
-  candidatesByKey,
+  openAiMinConfidence,
   orderExecutor,
   log,
 }: {
@@ -313,19 +298,17 @@ async function makeLiveDecision({
   readonly series: AlignedBarSeries;
   readonly synthBar: FilterBar;
   readonly priceAgeMs: number | null;
-  readonly roster: CommitteeRoster;
-  readonly candidatesByKey: ReadonlyMap<string, Candidate>;
+  readonly openAiMinConfidence: number;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
-  const evaluated = evaluateTradeDecision({
+  state.lastPredictedBoundary = targetTsMs;
+  const evaluated = await evaluateOpenAiChartTradeDecision({
     asset: state.asset,
     period: state.period,
     series,
-    roster,
-    candidatesByKey,
+    minConfidence: openAiMinConfidence,
   });
-  state.lastPredictedBoundary = targetTsMs;
   log({
     kind: "decision",
     asset: state.asset,
@@ -334,12 +317,15 @@ async function makeLiveDecision({
     prediction: evaluated.prediction,
     synthClose: synthBar.close,
     priceAgeMs,
-    marketRegime: evaluated.marketRegime,
-    rosterSize: evaluated.rosterSize,
+    marketRegime: null,
+    sourceCount: 1,
     up: evaluated.up,
     down: evaluated.down,
     abstain: evaluated.abstain,
-    confidence: evaluated.orderConfidence,
+    confidence: evaluated.confidence,
+    minConfidence: evaluated.minConfidence,
+    model: evaluated.model,
+    reasoning: evaluated.reasoning,
   });
   if (evaluated.prediction === null) {
     return;
@@ -349,25 +335,8 @@ async function makeLiveDecision({
     period: state.period,
     prediction: evaluated.prediction,
     targetTsMs,
-    confidence: evaluated.orderConfidence,
+    confidence: evaluated.confidence,
   });
 }
 
-function logRoster({
-  roster,
-  log,
-}: {
-  readonly roster: CommitteeRoster;
-  readonly log: (event: LiveTradingLogEvent) => void;
-}): void {
-  let total = 0;
-  for (const bucket of roster.byBucket.values()) {
-    total += bucket.length;
-  }
-  log({
-    kind: "roster",
-    bucketCount: roster.byBucket.size,
-    totalCandidates: total,
-    selectedAtMs: roster.selectedAtMs,
-  });
-}
+const fetchNoCandles: FetchCandles = async () => [];

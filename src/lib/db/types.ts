@@ -205,6 +205,11 @@ export interface DryRunDecisionAttemptTable {
   readonly up_votes: number;
   readonly down_votes: number;
   readonly abstain_votes: number;
+  readonly openai_model: string | null;
+  readonly openai_direction: string | null;
+  readonly openai_confidence: number | null;
+  readonly openai_min_confidence: number | null;
+  readonly openai_reasoning: string | null;
   readonly dry_run_decision_id: ColumnType<
     string | null,
     string | number | bigint | null,

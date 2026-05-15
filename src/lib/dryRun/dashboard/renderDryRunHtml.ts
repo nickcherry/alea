@@ -47,22 +47,19 @@ const DRY_RUN_TIPS = {
     "Market regime (asset + period) the decisions belong to. Each row aggregates calls within one regime.",
   asset: "Crypto symbol (BTC / ETH / SOL / XRP).",
   calls:
-    "Number of dry-run decisions in this bucket — every moment the committee chose to vote rather than stand aside.",
+    "Number of dry-run decisions in this bucket — every moment the predictor cleared the confidence threshold.",
   winRate:
     "Share of scored calls that closed in the predicted direction. Ambiguous (exactly-flat) calls are excluded from the denominator.",
-  upDown:
-    "Up-calls vs down-calls split. Helps spot whether a filter is one-sided.",
-  time: "Decision timestamp (UTC) — when the committee voted on the bar close.",
+  upDown: "Up-calls vs down-calls split.",
+  time: "Decision timestamp (UTC) — when the predictor evaluated the next bar.",
   prediction:
-    "Direction the committee voted: up or down. Drives which side of the Polymarket pair would be bought.",
+    "Direction predicted by OpenAI: up or down. Drives which side of the Polymarket pair would be bought.",
   marketRegime:
-    "Asset × period regime label for the moment — the gating regime that filters were matched against.",
-  synthOpen:
-    "Synthetic open price the committee saw at the decision moment (the live mid feeding our paper book).",
+    "Legacy asset × period regime label. OpenAI chart decisions store this as empty.",
+  synthOpen: "Synthetic open price visible at the decision moment.",
   actualClose:
     "Polymarket-resolved close price for the window — the ground truth we score against.",
-  move:
-    "Synthetic open → actual close move, in basis points. Sign matches the close direction.",
+  move: "Synthetic open → actual close move, in basis points. Sign matches the close direction.",
   order:
     "Direction the synthetic order would have taken (mirror of the prediction).",
   outcome:
@@ -137,46 +134,29 @@ export function renderDryRunHtml({
                       payload.decisionConfig.leadTimeByPeriodMs,
                     periods: payload.decisionConfig.supportedPeriods,
                   }),
-                  tip: "How long before the target candle's open the committee runs.",
+                  tip: "How long before the target candle's open the predictor runs.",
                 },
                 {
                   label: "Hydrated Bars",
                   value: payload.decisionConfig.hydratedBars.toLocaleString(),
-                  tip: "Per-asset history loaded at startup so filters can compute on bar one.",
+                  tip: "Per-asset history loaded at startup for chart rendering.",
                 },
               ],
             })}
             ${renderConfigGroup({
-              title: "Voting",
+              title: "Predictor",
               items: [
                 {
-                  label: "Max Votes / Filter",
-                  value: `<= ${payload.decisionConfig.maxVotesPerFilter.toLocaleString()}`,
-                  tip: "Cap on votes any single filter family can contribute. The highest-WR engaged config wins.",
-                },
-                {
-                  label: "Min Votes",
-                  value: `>= ${payload.decisionConfig.minVotesToTrade.toLocaleString()}`,
-                  tip: "Minimum votes (after filter-level collapse) required before a decision is taken.",
-                },
-                {
-                  label: "Consensus",
-                  value: `>= ${formatPercent({ value: payload.decisionConfig.minConsensusFraction })}`,
-                  tip: "Fraction of votes that must agree on a side. Ties still abstain.",
-                },
-                {
-                  label: "Allowed Regimes",
-                  value: formatRegimeList({
-                    values: payload.decisionConfig.allowedMarketRegimes,
+                  label: "Source",
+                  value: formatDecisionSource({
+                    value: payload.decisionConfig.decisionSource,
                   }),
-                  tip: "Classified regimes that may produce an actionable decision.",
+                  tip: "Runtime decision source used before order simulation.",
                 },
                 {
-                  label: "Filter Tie Break",
-                  value: formatFilterTieBreak({
-                    value: payload.decisionConfig.filterTieBreak,
-                  }),
-                  tip: "Order used to pick a winner when multiple configs in the same filter engage.",
+                  label: "Min Confidence",
+                  value: `>= ${payload.decisionConfig.openAiMinConfidence.toFixed(2)}`,
+                  tip: "OpenAI chart confidence required before the runner simulates an order.",
                 },
               ],
             })}
@@ -186,7 +166,7 @@ export function renderDryRunHtml({
                 {
                   label: "Placement Delay",
                   value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
-                  tip: "Wait after the committee decision before placing the simulated order.",
+                  tip: "Wait after the OpenAI decision before placing the simulated order.",
                 },
                 {
                   label: "Limit Price",
@@ -484,7 +464,7 @@ function renderOrderPriceBits({
     bits.push(`fill ${formatCents({ value: fillPrice })}`);
   }
   if (confidence !== null) {
-    bits.push(`conf ${formatCents({ value: confidence })}`);
+    bits.push(`conf ${confidence.toFixed(2)}`);
   }
   if (decisionDurationMs !== null) {
     bits.push(`dec ${formatMs({ value: decisionDurationMs })}`);
@@ -615,17 +595,9 @@ function renderConfigItem(item: ConfigItem): string {
     </div>`;
 }
 
-function formatFilterTieBreak({ value }: { readonly value: string }): string {
-  if (value === "highest_win_rate_then_engagements_then_rank") {
-    return "win rate > engagements > rank";
+function formatDecisionSource({ value }: { readonly value: string }): string {
+  if (value === "openai_chart") {
+    return "OpenAI chart";
   }
-  return value;
-}
-
-function formatRegimeList({
-  values,
-}: {
-  readonly values: readonly string[];
-}): string {
-  return values.map((value) => value.replaceAll("_", " ")).join(", ");
+  return value.replaceAll("_", " ");
 }

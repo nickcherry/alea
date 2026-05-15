@@ -1,5 +1,3 @@
-import "@alea/lib/filters/all";
-
 import {
   DRY_RUN_MARKET_DISCOVERY_LEAD_MS,
   DRY_RUN_ORDER_LIMIT_PRICE_POLICY,
@@ -7,18 +5,14 @@ import {
   DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
 } from "@alea/constants/dryRun";
+import { env } from "@alea/constants/env";
+import { OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE } from "@alea/constants/openAiTradeDecision";
 import {
-  MAX_COMMITTEE_VOTES_PER_FILTER,
-  MIN_COMMITTEE_CONSENSUS_FRACTION,
-  MIN_COMMITTEE_VOTES_TO_TRADE,
-  TRADE_DECISION_ALLOWED_MARKET_REGIMES,
-  TRADE_DECISION_FILTER_TIE_BREAK,
   TRADE_DECISION_HYDRATE_BARS,
   TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
   tradeDecisionLeadTimeMs,
 } from "@alea/constants/tradeDecision";
-import { listCommitteeCandidates } from "@alea/lib/committee/runCommittee";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type {
   DryRunDashboardAssetRow,
@@ -38,7 +32,8 @@ const RECENT_LIMIT = 200;
  *   - Pre-rewrite (array): `[{regime, winner, up, down, abstain}, …]`
  *     — per-filter-family breakdown. We sum the up/down/abstain
  *     across families to recover the total tally.
- *   - Current object: `{up, down, abstain}` — filter-collapsed tally.
+ *   - Current object: `{up, down, abstain}` — OpenAI chart-decision
+ *     tally or historical filter-collapsed tally.
  *
  * The dashboard only needs total engagement (up + down) for the
  * "avg engagement" metric, so collapsing both shapes to totals is
@@ -107,7 +102,7 @@ export async function loadDryRunPayload({
   readonly now?: () => number;
 }): Promise<DryRunDashboardPayload> {
   // One pull of every decision, then bucket in TS. Volume is bounded by
-  // overnight committee throughput; splitting by period in TS keeps
+  // overnight dry-run throughput; splitting by period in TS keeps
   // the SQL simple and gives us per-period slices + a globally-sorted
   // recent feed from a single scan.
   const allRowsRaw = await db
@@ -159,7 +154,7 @@ export async function loadDryRunPayload({
       orderFillLatencyMs: r.order_fill_latency_ms,
     }));
 
-  const candidateCount = listCommitteeCandidates().length;
+  const candidateCount = 1;
   const byPeriod: { [period: string]: DryRunDashboardPeriodSlice } = {};
   for (const period of TRADE_DECISION_SUPPORTED_PERIODS) {
     byPeriod[period] = buildPeriodSlice({
@@ -179,12 +174,11 @@ export async function loadDryRunPayload({
           tradeDecisionLeadTimeMs({ period }),
         ]),
       ),
-      allowedMarketRegimes: TRADE_DECISION_ALLOWED_MARKET_REGIMES,
+      decisionSource: "openai_chart",
+      openAiMinConfidence:
+        env.openaiTradeDecisionMinConfidence ??
+        OPENAI_TRADE_DECISION_DEFAULT_MIN_CONFIDENCE,
       hydratedBars: TRADE_DECISION_HYDRATE_BARS,
-      maxVotesPerFilter: MAX_COMMITTEE_VOTES_PER_FILTER,
-      minVotesToTrade: MIN_COMMITTEE_VOTES_TO_TRADE,
-      minConsensusFraction: MIN_COMMITTEE_CONSENSUS_FRACTION,
-      filterTieBreak: TRADE_DECISION_FILTER_TIE_BREAK,
       orderPlacementDelayMs: DRY_RUN_ORDER_PLACEMENT_DELAY_MS,
       orderLimitPricePolicy: DRY_RUN_ORDER_LIMIT_PRICE_POLICY,
       orderPriceWindowCents: DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
