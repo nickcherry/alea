@@ -3,6 +3,7 @@ import {
   resolveTradeDecisionMarkets,
   TRADE_DECISION_DEFAULT_MARKETS,
   TRADE_DECISION_HYDRATE_BARS,
+  TRADE_DECISION_INVERT_OPENAI_DIRECTION,
   tradeDecisionHydrateBars,
 } from "@alea/constants/tradeDecision";
 import { describe, expect, it } from "bun:test";
@@ -46,5 +47,9 @@ describe("trade decision market defaults", () => {
     expect(tradeDecisionHydrateBars({ period: "5m" })).toBe(576);
     expect(tradeDecisionHydrateBars({ period: "15m" })).toBe(384);
     expect(TRADE_DECISION_HYDRATE_BARS).toBe(576);
+  });
+
+  it("uses inverse OpenAI chart calls as the active trade policy", () => {
+    expect(TRADE_DECISION_INVERT_OPENAI_DIRECTION).toBe(true);
   });
 });

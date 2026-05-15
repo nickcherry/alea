@@ -4,8 +4,8 @@ The dry-run loop is the rehearsal path for live trading: a long-running
 process that keeps recent Pyth candles in memory, refreshes them just
 before each market boundary, synthesizes the active Pyth candle from
 the latest Pyth price, renders the visible chart, asks OpenAI to
-predict the next candle, and persists every returned green/red
-decision to `dry_run_decisions`. No real orders are placed. The loop
+predict the next candle, and persists the opposite UP/DOWN side in
+`dry_run_decisions`. No real orders are placed. The loop
 also simulates whether a configured pre-open Polymarket order would
 have been eligible, placed, filled, or left unfilled.
 
@@ -47,8 +47,8 @@ grid:
    synthetic active candle for the about-to-finalize bar. Render the
    visible Pyth chart with the price line and top OHLC block hidden
    while keeping the default indicator bundle visible. Send that image
-   to OpenAI, and map `green` to UP and `red` to DOWN. Persist every
-   returned green/red decision.
+   to OpenAI, then trade the opposite side: `green` becomes DOWN and
+   `red` becomes UP. Persist every resulting UP/DOWN decision.
 4. **Simulate order** — immediately after an OpenAI decision, read the live UP/DOWN book/BBO
    market data for the predicted side. The runner pre-discovers
    current and next markets before entry so the market subscription is
@@ -104,8 +104,9 @@ for each configured asset/period market:
 2. Render the chart with [`renderMarketChartImage`](../src/lib/candles/chart/renderMarketChartImage.ts).
 3. Ask OpenAI through [`predictMarketChart`](../src/lib/candles/chart/predictMarketChart.ts).
 4. Validate the response with Zod as `{ direction, reasoning }`.
-5. Map `direction=green` to `prediction='u'` and `direction=red` to
-   `prediction='d'`.
+5. Map the response to the inverse prediction: `direction=green`
+   becomes `prediction='d'`, and `direction=red` becomes
+   `prediction='u'`.
 6. Persist the decision and simulate an order.
 
 Each OpenAI chart attempt appends one JSONL row to
@@ -173,7 +174,7 @@ plus later dry-run/order migrations.
 | `prediction`            | `'u'` or `'d'`                                                                                |
 | `synth_open`            | Pyth price snapshotted at decision lead — used as the bar's synthetic open                    |
 | `actual_open`           | Filled with the resolved target-bar open once scored; null for pending or legacy rows         |
-| `decision_audit`        | JSON OpenAI audit object including `{source, model, direction, reasoning, up, down, abstain}` |
+| `decision_audit`        | JSON OpenAI audit object including raw `direction`, raw `openAiPrediction`, `invertedOpenAiDirection`, reasoning, and final vote counts |
 | `actual_close`          | Filled in once the target bar settles                                                         |
 | `won`                   | 0/1, null until scored                                                                        |
 | `decision_duration_ms`  | Chart render + OpenAI decision time before persistence                                        |

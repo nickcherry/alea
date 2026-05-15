@@ -4,8 +4,8 @@ import {
 } from "@alea/constants/dryRun";
 import {
   resolveTradeDecisionMarkets,
-  tradeDecisionLeadTimeMs,
   tradeDecisionHydrateBars,
+  tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
@@ -59,6 +59,9 @@ export type DryRunLogEvent =
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d";
+      readonly openAiDirection: "green" | "red";
+      readonly openAiPrediction: "u" | "d";
+      readonly invertedOpenAiDirection: boolean;
       readonly synthClose: number;
       readonly sourceCount: number;
       readonly up: number;
@@ -94,7 +97,7 @@ export type DryRunLogEvent =
  *      candles into the in-memory buffer and synthesize the active
  *      candle from the latest one-shot Pyth price.
  *   3. Render the refreshed/synthetic bar set as a chart, ask OpenAI for the
- *      next-candle direction, and persist the returned direction.
+ *      next-candle direction, and persist the configured actionable side.
  *   4. Simulate the configured pre-open Polymarket order and track whether it
  *      fills before expiry.
  *
@@ -297,6 +300,9 @@ async function makePrediction({
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
+    openAiDirection: evaluated.direction,
+    openAiPrediction: evaluated.openAiPrediction,
+    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
     synthClose: synthBar.close,
     sourceCount: 1,
     up: evaluated.up,
@@ -326,6 +332,8 @@ async function makePrediction({
         source: "openai_chart",
         model: evaluated.model,
         direction: evaluated.direction,
+        openAiPrediction: evaluated.openAiPrediction,
+        invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
         reasoning: evaluated.reasoning,
         up: evaluated.up,
         down: evaluated.down,

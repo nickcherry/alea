@@ -84,7 +84,8 @@ The canonical URL set lives in
   cleanly with zero open orders left. Live trading therefore signs and posts
   `createAndPostOrder(..., OrderType.GTD, postOnly=true)` immediately after the
   period-specific pre-open OpenAI chart decision (`5m` at T-2m, `15m` at T-3m)
-  instead of waiting for the boundary. It buys the
+  instead of waiting for the boundary. The actionable side is the inverse of
+  OpenAI's chart color, so green buys DOWN and red buys UP. It buys that
   predicted-side token one tick below the best ask, or one tick below 50c if no
   predicted-side ask has arrived, expiring at that market's close.
 - Pre-market books are not empty placeholders. In the same 2026-05-13 snapshot,

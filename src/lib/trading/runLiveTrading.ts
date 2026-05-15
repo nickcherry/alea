@@ -59,6 +59,9 @@ export type LiveTradingLogEvent =
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
       readonly prediction: "u" | "d";
+      readonly openAiDirection: "green" | "red";
+      readonly openAiPrediction: "u" | "d";
+      readonly invertedOpenAiDirection: boolean;
       readonly synthClose: number;
       readonly priceAgeMs: number | null;
       readonly sourceCount: number;
@@ -324,6 +327,9 @@ async function makeLiveDecision({
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
+    openAiDirection: evaluated.direction,
+    openAiPrediction: evaluated.openAiPrediction,
+    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
     synthClose: synthBar.close,
     priceAgeMs,
     sourceCount: 1,
@@ -338,6 +344,8 @@ async function makeLiveDecision({
     period: state.period,
     targetTsMs,
     prediction: evaluated.prediction,
+    openAiPrediction: evaluated.openAiPrediction,
+    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
     imagePath: evaluated.imagePath,
     reasoning: evaluated.reasoning,
   });

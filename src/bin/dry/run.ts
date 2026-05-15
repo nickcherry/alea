@@ -37,7 +37,7 @@ const commaSeparatedAssetsSchema = z
  * the `candles` table, refreshes recent Pyth candles before each
  * configured period boundary, synthesizes the active candle from the
  * latest Pyth price, and asks OpenAI to predict from the rendered
- * chart. OpenAI green/red decisions land in `dry_run_decisions`; the
+ * chart. Inverse OpenAI green/red decisions land in `dry_run_decisions`; the
  * configured pre-open Polymarket order is simulated; outcomes are scored once
  * the target bar finalizes.
  *
@@ -48,7 +48,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run OpenAI chart decisions in dry-run mode",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, renders a chart, and uses OpenAI to predict the next bar's direction. Every returned green/red prediction lands in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, renders a chart, and uses OpenAI to predict the next bar's direction. The inverse of every returned green/red prediction lands in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",

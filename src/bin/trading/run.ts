@@ -42,7 +42,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live OpenAI chart trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after each returned green/red prediction. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement on the inverse side immediately after each returned green/red prediction. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
   options: [
     defineValueOption({
       key: "periods",

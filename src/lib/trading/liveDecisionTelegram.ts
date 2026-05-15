@@ -10,6 +10,8 @@ type PendingLiveDecisionNotification = {
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
   readonly prediction: "u" | "d";
+  readonly openAiPrediction?: "u" | "d";
+  readonly invertedOpenAiDirection?: boolean;
   readonly imagePath: string;
   readonly reasoning: string | null;
 };
@@ -87,14 +89,20 @@ export function formatLiveDecisionTelegramCaption({
   period,
   targetTsMs,
   prediction,
+  openAiPrediction,
+  invertedOpenAiDirection,
   reasoning,
 }: PendingLiveDecisionNotification): string {
   const header = `<b>${escapeHtml(asset.toUpperCase())} ${escapeHtml(
     formatTimeWindowEt({ period, targetTsMs }),
   )}</b>`;
   const direction = prediction === "u" ? "UP" : "DOWN";
+  const policy =
+    invertedOpenAiDirection === true && openAiPrediction !== undefined
+      ? `\nOpenAI: ${openAiPrediction === "u" ? "UP" : "DOWN"}; trading inverse.`
+      : "";
   const reason = escapeHtml(reasoning?.trim() ?? "No reasoning returned.");
-  const fixed = `${header}\n\n<b>${direction}</b>\n`;
+  const fixed = `${header}\n\n<b>${direction}</b>${policy}\n`;
   const maxCaptionLength = 1_024;
   const maxReasonLength = maxCaptionLength - fixed.length;
   return `${fixed}${truncate({ text: reason, maxLength: maxReasonLength })}`;

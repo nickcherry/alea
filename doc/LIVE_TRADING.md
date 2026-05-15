@@ -3,7 +3,7 @@
 `bun alea trading:run` is the real-money version of the OpenAI chart
 decision runner. It uses the same Pyth chart rendering, OpenAI
 prediction, and order-placement policy as dry-run. The difference is
-execution: returned green/red decisions place real Polymarket orders.
+execution: the opposite UP/DOWN side places real Polymarket orders.
 
 Run it:
 
@@ -55,6 +55,8 @@ post attempt, and final order placement/rejection/skips. Order-attempt
 events include BBO, spread, quote age, token/market refs, post latency,
 failure kind/status, and summarized book depth around the posted
 limit.
+Decision telemetry records both OpenAI's raw side and the final inverted
+`prediction` that drove order placement.
 
 Terminal query helpers:
 
@@ -85,7 +87,8 @@ For each configured asset/period market:
    the chart with the price line and top OHLC block hidden, and asks
    OpenAI for a Zod-validated `{ direction, reasoning }` response.
    Pyth failures or stale latest Pyth prices skip the decision.
-4. Live placement starts immediately after the returned direction.
+4. Live placement starts immediately after the returned direction is inverted
+   into the actionable side.
    Public Polymarket checks on 2026-05-13 showed next BTC `5m` and
    `15m` crypto up/down markets were already `active`, `accepting`,
    and serving books before their window opened. The live path treats
@@ -97,10 +100,11 @@ For each configured asset/period market:
 
 ## Order Policy
 
-Live trading only places predicted-side maker buys:
+Live trading only places predicted-side maker buys. The predicted side is the
+opposite of OpenAI's chart color:
 
-- UP decision: buy the UP token.
-- DOWN decision: buy the DOWN token.
+- OpenAI green: buy the DOWN token.
+- OpenAI red: buy the UP token.
 - Limit price: one tick below the predicted-side best ask.
 - No predicted-side ask yet: one tick below 50c.
 - Order type: `GTD` post-only.

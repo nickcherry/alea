@@ -1,6 +1,6 @@
 import {
-  MAX_MARKET_CHART_RECENT_BARS,
   marketChartRecentBarsForTimeframe,
+  MAX_MARKET_CHART_RECENT_BARS,
 } from "@alea/constants/marketChart";
 import type { Asset } from "@alea/types/assets";
 
@@ -9,6 +9,14 @@ import type { Asset } from "@alea/types/assets";
  * must read these same constants so both modes evaluate the same markets with
  * the same timing and candle context.
  */
+
+/**
+ * Live policy for turning OpenAI's chart color into an actionable side.
+ * When true, the OpenAI output is treated as a fade signal:
+ * green -> DOWN and red -> UP. The raw OpenAI direction is still persisted
+ * in audit fields; `prediction` is the side Alea actually simulates/trades.
+ */
+export const TRADE_DECISION_INVERT_OPENAI_DIRECTION = true;
 
 /**
  * Every candle period the dry-run table is allowed to hold a decision

@@ -3,8 +3,8 @@
 Alea is a Polymarket crypto up/down trading system built around
 OpenAI chart decisions. It keeps recent Pyth candles available, renders
 TradingView-style charts with technical indicators, asks OpenAI for the
-next-candle direction, and uses that direction for dry-run simulation or
-live Polymarket maker orders.
+next-candle direction, and now uses the opposite side for dry-run simulation
+or live Polymarket maker orders.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
@@ -25,7 +25,8 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 3. **OpenAI prediction** reads the rendered chart and returns a
    validated green/red next-candle direction.
 4. **Dry run / live** share the chart-decision path; dry run simulates
-   orders, live trading places real Polymarket maker orders.
+   orders, live trading places real Polymarket maker orders on the inverse
+   of OpenAI's returned side.
 5. **Dashboards** expose proxy calibration, Polymarket price paths,
    dry-run performance, and live trading PnL.
 

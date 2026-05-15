@@ -9,7 +9,7 @@ import {
 import { describe, expect, it } from "bun:test";
 
 describe("chartPredictionToTradeDecision", () => {
-  it("turns a green chart prediction into UP", () => {
+  it("turns a green chart prediction into an inverse DOWN trade", () => {
     expect(
       chartPredictionToTradeDecision({
         chartPrediction: {
@@ -19,17 +19,19 @@ describe("chartPredictionToTradeDecision", () => {
         model: "gpt-5.4",
       }),
     ).toEqual({
-      prediction: "u",
+      prediction: "d",
+      openAiPrediction: "u",
+      invertedOpenAiDirection: true,
       direction: "green",
       reasoning: "Continuation is favored.",
       model: "gpt-5.4",
-      up: 1,
-      down: 0,
+      up: 0,
+      down: 1,
       abstain: 0,
     });
   });
 
-  it("turns a red chart prediction into DOWN", () => {
+  it("turns a red chart prediction into an inverse UP trade", () => {
     expect(
       chartPredictionToTradeDecision({
         chartPrediction: {
@@ -38,7 +40,7 @@ describe("chartPredictionToTradeDecision", () => {
         },
         model: "gpt-5.4",
       }).prediction,
-    ).toBe("d");
+    ).toBe("u");
   });
 
   it("renders the visible Pyth chart before asking OpenAI", async () => {
@@ -84,7 +86,9 @@ describe("chartPredictionToTradeDecision", () => {
       },
     });
 
-    expect(decision.prediction).toBe("d");
+    expect(decision.prediction).toBe("u");
+    expect(decision.openAiPrediction).toBe("d");
+    expect(decision.invertedOpenAiDirection).toBe(true);
     const renderedChart = requireRenderedChart(rendered);
     expect(renderedChart.source).toBe("pyth");
     expect(renderedChart.product).toBe("spot");

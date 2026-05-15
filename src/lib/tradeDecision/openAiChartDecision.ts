@@ -8,7 +8,10 @@ import {
   OPENAI_TRADE_DECISION_CHART_WIDTH,
   OPENAI_TRADE_DECISION_IMAGE_DETAIL,
 } from "@alea/constants/openAiTradeDecision";
-import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
+import {
+  TRADE_DECISION_INVERT_OPENAI_DIRECTION,
+  type TradeDecisionPeriod,
+} from "@alea/constants/tradeDecision";
 import {
   type ChartPrediction,
   predictMarketChart,
@@ -22,6 +25,8 @@ import type { Candle } from "@alea/types/candles";
 
 export type ChartTradeDecision = {
   readonly prediction: "u" | "d";
+  readonly openAiPrediction: "u" | "d";
+  readonly invertedOpenAiDirection: boolean;
   readonly direction: ChartPrediction["direction"];
   readonly reasoning: string;
   readonly model: string;
@@ -99,10 +104,15 @@ export function chartPredictionToTradeDecision({
   readonly chartPrediction: ChartPrediction;
   readonly model: string;
 }): ChartTradeDecision {
-  const prediction =
+  const openAiPrediction =
     chartPrediction.direction === "green" ? ("u" as const) : ("d" as const);
+  const prediction = TRADE_DECISION_INVERT_OPENAI_DIRECTION
+    ? invertPrediction({ prediction: openAiPrediction })
+    : openAiPrediction;
   return {
     prediction,
+    openAiPrediction,
+    invertedOpenAiDirection: TRADE_DECISION_INVERT_OPENAI_DIRECTION,
     direction: chartPrediction.direction,
     reasoning: chartPrediction.reasoning,
     model,
@@ -110,6 +120,14 @@ export function chartPredictionToTradeDecision({
     down: prediction === "d" ? 1 : 0,
     abstain: 0,
   };
+}
+
+function invertPrediction({
+  prediction,
+}: {
+  readonly prediction: "u" | "d";
+}): "u" | "d" {
+  return prediction === "u" ? "d" : "u";
 }
 
 function pythBarsToCandles({

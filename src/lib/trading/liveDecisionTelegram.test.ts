@@ -114,6 +114,23 @@ describe("live decision Telegram notifications", () => {
       "<b>ETH 2:15-2:30 PM ET</b>\n\n<b>DOWN</b>\nHigh sweep &lt; prior range.",
     );
   });
+
+  it("formats inverted OpenAI policy when present", () => {
+    expect(
+      formatLiveDecisionTelegramCaption({
+        asset: "eth",
+        period: "15m",
+        targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
+        prediction: "d",
+        openAiPrediction: "u",
+        invertedOpenAiDirection: true,
+        imagePath: "/tmp/eth-15m.png",
+        reasoning: "Continuation.",
+      }),
+    ).toBe(
+      "<b>ETH 2:15-2:30 PM ET</b>\n\n<b>DOWN</b>\nOpenAI: UP; trading inverse.\nContinuation.",
+    );
+  });
 });
 
 function orderEvent(
