@@ -9,8 +9,6 @@ import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { runWranglerDeploy } from "@alea/lib/dashboards/runWranglerDeploy";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
-import { loadDryRunPayload } from "@alea/lib/dryRun/dashboard/loadDryRunPayload";
-import { writeDryRunArtifacts } from "@alea/lib/dryRun/dashboard/writeDryRunArtifacts";
 import { loadPricePathsPayload } from "@alea/lib/polymarket/dashboard/loadPricePathsPayload";
 import { loadProxyAccuracyPayload } from "@alea/lib/polymarket/dashboard/loadProxyAccuracyPayload";
 import { writePricePathsArtifacts } from "@alea/lib/polymarket/dashboard/writePricePathsArtifacts";
@@ -28,7 +26,6 @@ import { z } from "zod";
 const repoRoot = resolvePath(import.meta.dir, "../../..");
 const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
-const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
 const cacheDir = resolvePath(tmpDir, ".cache");
@@ -53,7 +50,6 @@ type DashboardPageBuild = {
  *   tmp/web/price-paths/index.assets/
  *   tmp/web/price-paths/data.json
  *   tmp/web/proxy/index.html         ← proxy accuracy ("/proxy/")
- *   tmp/web/dryrun/index.html        ← dry run ("/dryrun/")
  *
  * Trading page needs Polymarket auth (POLYMARKET_PRIVATE_KEY +
  * POLYMARKET_FUNDER_ADDRESS); when those aren't set we skip it with
@@ -63,7 +59,7 @@ export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), proxy accuracy page (/proxy/), and dry-run page (/dryrun/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), and proxy accuracy page (/proxy/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -103,24 +99,23 @@ export const dashboardsBuildCommand = defineCommand({
               ),
         )
         .describe(
-          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, dryrun, proxy.",
+          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, proxy.",
         ),
     }),
   ],
   examples: [
     "bun alea dashboards:build",
     "bun alea dashboards:build --deploy",
-    "bun alea dashboards:build --only dryrun --deploy",
+    "bun alea dashboards:build --only proxy --deploy",
   ],
   output:
     "Prints a per-dashboard build status line and, with --deploy, the deployed URL.",
   sideEffects:
-    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples`, `polymarket_resolutions`, and `dry_run_decisions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
+    "Reads the Polymarket CLOB plus dashboard tables including `polymarket_price_samples` and `polymarket_resolutions`. Writes HTML + JSON + asset folders under tmp/web/. With --deploy, shells out to `bunx wrangler deploy`.",
   async run({ io, options }) {
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
     await mkdir(webDir, { recursive: true });
-    await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
     await mkdir(cacheDir, { recursive: true });
@@ -142,17 +137,13 @@ export const dashboardsBuildCommand = defineCommand({
           buildPricePathsDashboard({ io: pageIo }),
       },
       {
-        name: "dryrun",
-        run: (pageIo: DashboardBuildIo) => buildDryRunDashboard({ io: pageIo }),
-      },
-      {
         name: "proxy",
         run: (pageIo: DashboardBuildIo) =>
           buildProxyAccuracyDashboard({ io: pageIo }),
       },
     ].filter((page) => shouldBuild(page.name));
 
-    await runPageBuilds({ io, pageBuilds });
+    const pageError = await runPageBuilds({ io, pageBuilds });
 
     if (options.deploy) {
       io.writeStdout(`\n${pc.bold("deploying")} ${pc.dim("to alea worker")}\n`);
@@ -168,6 +159,20 @@ export const dashboardsBuildCommand = defineCommand({
         );
       }
     }
+
+    // Surface page failures last so a broken page doesn't block the deploy
+    // of the other pages that did build. The cron wrapper relies on this:
+    // proxy might be temporarily wedged on a migration, but trading and
+    // price-paths should still roll out every minute.
+    if (pageError !== null) {
+      const message =
+        pageError.error instanceof Error
+          ? pageError.error.message
+          : String(pageError.error);
+      throw new Error(
+        `dashboard page ${pageError.pageName} failed: ${message}`,
+      );
+    }
   },
 });
 
@@ -177,7 +182,7 @@ async function runPageBuilds({
 }: {
   readonly io: { writeStdout: (line: string) => void };
   readonly pageBuilds: readonly DashboardPageBuild[];
-}): Promise<void> {
+}): Promise<{ readonly pageName: string; readonly error: unknown } | null> {
   const results = new Map<
     string,
     { readonly output: string; readonly error?: unknown }
@@ -227,13 +232,7 @@ async function runPageBuilds({
     }
   }
 
-  if (firstError !== null) {
-    const message =
-      firstError.error instanceof Error
-        ? firstError.error.message
-        : String(firstError.error);
-    throw new Error(`dashboard page ${firstError.pageName} failed: ${message}`);
-  }
+  return firstError;
 }
 
 async function buildTradingDashboard({
@@ -329,40 +328,6 @@ async function buildPricePathsDashboard({
         `  ${pc.dim("windows=")}${payload.windowCount.toLocaleString()}` +
         `  ${pc.dim("lookback=")}${payload.lookbackDays}d` +
         `  ${pc.dim("first=")}${firstWindow}\n` +
-        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
-    );
-  } finally {
-    await destroyDatabase(db);
-  }
-}
-
-async function buildDryRunDashboard({
-  io,
-}: {
-  readonly io: { writeStdout: (line: string) => void };
-}): Promise<void> {
-  io.writeStdout(`${pc.bold("dry run")} ${pc.dim("(/dryrun/)")}\n`);
-
-  const db = createDatabase();
-  try {
-    const payload = await loadDryRunPayload({ db });
-    const htmlPath = resolvePath(dryRunDir, "index.html");
-    const jsonPath = resolvePath(dryRunDir, "data.json");
-    await writeDryRunArtifacts({ payload, htmlPath, jsonPath });
-    const s = payload.byPeriod[payload.decisionConfig.period]?.summary;
-    const wr =
-      s === undefined || s.winRate === null
-        ? "—"
-        : `${(s.winRate * 100).toFixed(1)}%`;
-    const totalDecisions = s?.totalDecisions ?? 0;
-    const settled = s?.settledDecisions ?? 0;
-    const pending = s?.pendingDecisions ?? 0;
-    io.writeStdout(
-      `  ${pc.green("decisions =")} ${totalDecisions.toLocaleString()}` +
-        `  ${pc.dim("settled=")}${settled.toLocaleString()}` +
-        `  ${pc.dim("pending=")}${pending.toLocaleString()}` +
-        `  ${pc.dim("wr=")}${wr}` +
-        `  ${pc.dim("period=")}${payload.decisionConfig.period}\n` +
         `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
     );
   } finally {
