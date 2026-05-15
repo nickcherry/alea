@@ -19,10 +19,21 @@ export function createMarketEventPythCandleFetcher({
   readonly db: DatabaseClient;
 }): FetchCandles {
   return async ({ asset, timeframe, start, end }) => {
+    const storedRows = await db
+      .selectFrom("candles")
+      .select(["timestamp", "open", "high", "low", "close", "volume"])
+      .where("source", "=", "pyth")
+      .where("product", "=", "spot")
+      .where("asset", "=", asset)
+      .where("timeframe", "=", timeframe)
+      .where("timestamp", ">=", start)
+      .where("timestamp", "<", end)
+      .orderBy("timestamp", "asc")
+      .execute();
     const periodMs = resolutionTimeframeStepMs({ timeframe });
     const startMs = start.getTime();
     const endMs = end.getTime();
-    const result = await sql<MarketEventCandleRow>`
+    const eventResult = await sql<MarketEventCandleRow>`
       with ticks as (
         select
           (floor(ts_ms::numeric / ${periodMs}) * ${periodMs})::bigint as open_ms,
@@ -47,20 +58,53 @@ export function createMarketEventPythCandleFetcher({
       order by open_ms asc
     `.execute(db);
 
-    return result.rows.map((row): Candle => {
-      const timestamp = new Date(Number(row.open_ms));
-      return {
+    return mergeStoredAndEventCandles({
+      stored: storedRows.map((row) => ({
         source: "pyth",
-        asset: asset as Asset,
+        asset,
         product: "spot",
         timeframe,
-        timestamp,
+        timestamp: row.timestamp,
         open: Number(row.open),
         high: Number(row.high),
         low: Number(row.low),
         close: Number(row.close),
-        volume: 0,
-      };
+        volume: Number(row.volume),
+      })),
+      events: eventResult.rows.map((row): Candle => {
+        const timestamp = new Date(Number(row.open_ms));
+        return {
+          source: "pyth",
+          asset: asset as Asset,
+          product: "spot",
+          timeframe,
+          timestamp,
+          open: Number(row.open),
+          high: Number(row.high),
+          low: Number(row.low),
+          close: Number(row.close),
+          volume: 0,
+        };
+      }),
     });
   };
+}
+
+export function mergeStoredAndEventCandles({
+  stored,
+  events,
+}: {
+  readonly stored: readonly Candle[];
+  readonly events: readonly Candle[];
+}): readonly Candle[] {
+  const byTimestamp = new Map<number, Candle>();
+  for (const candle of stored) {
+    byTimestamp.set(candle.timestamp.getTime(), candle);
+  }
+  for (const candle of events) {
+    byTimestamp.set(candle.timestamp.getTime(), candle);
+  }
+  return [...byTimestamp.values()].sort(
+    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+  );
 }
