@@ -71,6 +71,7 @@ export const tradingRunCommand = defineCommand({
   sideEffects:
     "Places real Polymarket post-only maker orders. Reads candle data from the DB, renders chart images, calls the OpenAI Responses API, and uses authenticated Polymarket CLOB APIs. Runs until killed.",
   async run({ io, options }) {
+    suppressVerboseClobClientRequestLogs();
     const markets = resolveTradeDecisionMarkets({
       assets: options.assets,
       periods: options.periods,
@@ -230,4 +231,26 @@ function formatCents(value: number): string {
 
 function formatConfidence(value: number): string {
   return value.toFixed(2);
+}
+
+let clobClientRequestLogSuppressed = false;
+
+function suppressVerboseClobClientRequestLogs(): void {
+  if (clobClientRequestLogSuppressed) {
+    return;
+  }
+  clobClientRequestLogSuppressed = true;
+  // The SDK dumps signed request headers on post failures; our own order log
+  // already records the sanitized failure path.
+  const originalError = console.error.bind(console);
+  console.error = (...args: unknown[]) => {
+    const first = args[0];
+    if (
+      typeof first === "string" &&
+      first.startsWith("[CLOB Client] request error")
+    ) {
+      return;
+    }
+    originalError(...args);
+  };
 }

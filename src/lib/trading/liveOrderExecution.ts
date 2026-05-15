@@ -912,7 +912,12 @@ function classifyPostOrderFailureKind({
   ) {
     return "auth";
   }
-  if (lower.includes("banned") || lower.includes("closed only")) {
+  if (
+    lower.includes("banned") ||
+    lower.includes("closed only") ||
+    lower.includes("cancel-only") ||
+    lower.includes("new orders are not accepted")
+  ) {
     return "closed_or_banned";
   }
   if (

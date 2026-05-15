@@ -248,6 +248,61 @@ describe("createLiveOrderExecutor", () => {
     await waitFor(() => calls.length === 2);
     expect(sleeps[0]).toBe(500);
   });
+
+  it("does not spam retries while Polymarket is cancel-only", async () => {
+    const calls: PostedOrder[] = [];
+    const events: Array<{
+      readonly status: string;
+      readonly failureKind: string | null;
+      readonly message: string | null;
+    }> = [];
+    const executor = createLiveOrderExecutor({
+      client: fakeClient({
+        calls,
+        responses: [
+          {
+            success: false,
+            error:
+              "Trading is currently cancel-only. New orders are not accepted, but cancels are allowed.",
+            status: 503,
+          },
+          { success: true, orderID: "should-not-post" },
+        ],
+      }),
+      marketDiscovery: fakeMarketDiscovery({
+        market: market({ tickSize: 0.01, negRisk: false }),
+      }),
+      log: (event) => {
+        if (event.kind === "live-order") {
+          events.push({
+            status: event.status,
+            failureKind: event.failureKind,
+            message: event.message,
+          });
+        }
+      },
+      now: () => 1_795_000,
+      sleep: async () => {},
+      streamMarketData: fakeStreamMarketData(),
+    });
+
+    await executor.scheduleOrder({
+      asset: "btc",
+      period: "5m",
+      prediction: "u",
+      targetTsMs: 1_800_000,
+      confidence: null,
+    });
+
+    await waitFor(() => events.some((event) => event.status === "rejected"));
+    expect(calls).toHaveLength(1);
+    expect(events).toContainEqual({
+      status: "rejected",
+      failureKind: "closed_or_banned",
+      message:
+        "Trading is currently cancel-only. New orders are not accepted, but cancels are allowed.",
+    });
+  });
 });
 
 function market({
