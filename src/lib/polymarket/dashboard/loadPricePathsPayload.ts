@@ -1,3 +1,6 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve as resolvePath } from "node:path";
+
 import { assetValues } from "@alea/constants/assets";
 import { LEAD_TIME_DRIFT_THRESHOLD_BPS } from "@alea/constants/leadTimeDrift";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -20,6 +23,7 @@ import { decodePriceSamples } from "@alea/lib/polymarket/priceSampleCodec";
 import { PRE_MARKET_SAMPLE_LEAD_MS } from "@alea/lib/polymarket/priceSampler";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 import { resolutionTimeframeValues } from "@alea/types/resolutions";
+import { sql } from "kysely";
 
 const millisecondsPerSecond = 1000;
 const millisecondsPerDay = 24 * 60 * 60 * millisecondsPerSecond;
@@ -69,13 +73,35 @@ export async function loadPricePathsPayload({
   db,
   now = () => Date.now(),
   lookbackDays = defaultLookbackDays,
+  cacheDir,
 }: {
   readonly db: DatabaseClient;
   readonly now?: () => number;
   readonly lookbackDays?: number;
+  /**
+   * If set, the aggregated payload is cached in this directory keyed
+   * by a fingerprint of the underlying `polymarket_price_samples` rows
+   * (count + max(finalized_at_ms)) plus `lookbackDays`. Cold builds
+   * persist the payload here; warm builds skip the 1M-tick decode and
+   * just read the cached JSON. To force a recompute, delete the file.
+   */
+  readonly cacheDir?: string;
 }): Promise<PricePathsPayload> {
   const generatedAtMs = now();
   const cutoffMs = generatedAtMs - lookbackDays * millisecondsPerDay;
+
+  const fingerprint =
+    cacheDir === undefined
+      ? null
+      : await computeCacheFingerprint({ db, cutoffMs, lookbackDays });
+
+  if (cacheDir !== undefined && fingerprint !== null) {
+    const cached = await readCachedPayload({ cacheDir, fingerprint });
+    if (cached !== null) {
+      return refreshTimestamps({ payload: cached, generatedAtMs });
+    }
+  }
+
   const rows = (await db
     .selectFrom("polymarket_price_samples")
     .select([
@@ -96,13 +122,146 @@ export async function loadPricePathsPayload({
     now: () => generatedAtMs,
   });
 
-  return buildPricePathsPayloadFromRows({
+  const payload = buildPricePathsPayloadFromRows({
     rows,
     generatedAtMs,
     lookbackDays,
     cutoffMs,
     leadTimeDrift,
   });
+
+  if (cacheDir !== undefined && fingerprint !== null) {
+    await writeCachedPayload({ cacheDir, fingerprint, payload });
+  }
+
+  return payload;
+}
+
+type CacheFingerprint = {
+  readonly version: number;
+  readonly lookbackDays: number;
+  readonly pmsCount: number;
+  readonly pmsMaxFinalizedAtMs: number;
+};
+
+/**
+ * Bump when the shape of the cached payload changes — forces every
+ * deploy to rebuild from source instead of serving a stale shape.
+ */
+const CACHE_VERSION = 1;
+const CACHE_FILE_NAME = "price-paths-payload.json";
+
+async function computeCacheFingerprint({
+  db,
+  cutoffMs,
+  lookbackDays,
+}: {
+  readonly db: DatabaseClient;
+  readonly cutoffMs: number;
+  readonly lookbackDays: number;
+}): Promise<CacheFingerprint | null> {
+  try {
+    const result = (await sql<{
+      readonly pms_count: number | string;
+      readonly pms_max_finalized_at_ms: number | string | null;
+    }>`
+      select
+        count(*)::bigint as pms_count,
+        coalesce(max(finalized_at_ms), 0)::bigint as pms_max_finalized_at_ms
+      from polymarket_price_samples
+      where window_start_ts_ms >= ${String(cutoffMs)}
+    `.execute(db)) as {
+      readonly rows: readonly {
+        readonly pms_count: number | string;
+        readonly pms_max_finalized_at_ms: number | string | null;
+      }[];
+    };
+    const row = result.rows[0];
+    if (row === undefined) {
+      return null;
+    }
+    return {
+      version: CACHE_VERSION,
+      lookbackDays,
+      pmsCount: Number(row.pms_count),
+      pmsMaxFinalizedAtMs: Number(row.pms_max_finalized_at_ms ?? 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function readCachedPayload({
+  cacheDir,
+  fingerprint,
+}: {
+  readonly cacheDir: string;
+  readonly fingerprint: CacheFingerprint;
+}): Promise<PricePathsPayload | null> {
+  const path = resolvePath(cacheDir, CACHE_FILE_NAME);
+  let raw: string;
+  try {
+    raw = await readFile(path, "utf-8");
+  } catch {
+    return null;
+  }
+  let parsed: { fingerprint?: CacheFingerprint; payload?: PricePathsPayload };
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (
+    parsed.fingerprint === undefined ||
+    parsed.payload === undefined ||
+    !fingerprintsMatch({ a: parsed.fingerprint, b: fingerprint })
+  ) {
+    return null;
+  }
+  return parsed.payload;
+}
+
+async function writeCachedPayload({
+  cacheDir,
+  fingerprint,
+  payload,
+}: {
+  readonly cacheDir: string;
+  readonly fingerprint: CacheFingerprint;
+  readonly payload: PricePathsPayload;
+}): Promise<void> {
+  await mkdir(cacheDir, { recursive: true });
+  const path = resolvePath(cacheDir, CACHE_FILE_NAME);
+  await writeFile(path, JSON.stringify({ fingerprint, payload }));
+}
+
+function fingerprintsMatch({
+  a,
+  b,
+}: {
+  readonly a: CacheFingerprint;
+  readonly b: CacheFingerprint;
+}): boolean {
+  return (
+    a.version === b.version &&
+    a.lookbackDays === b.lookbackDays &&
+    a.pmsCount === b.pmsCount &&
+    a.pmsMaxFinalizedAtMs === b.pmsMaxFinalizedAtMs
+  );
+}
+
+function refreshTimestamps({
+  payload,
+  generatedAtMs,
+}: {
+  readonly payload: PricePathsPayload;
+  readonly generatedAtMs: number;
+}): PricePathsPayload {
+  return {
+    ...payload,
+    generatedAtMs,
+    leadTimeDrift: { ...payload.leadTimeDrift, generatedAtMs },
+  };
 }
 
 export function buildPricePathsPayloadFromRows({

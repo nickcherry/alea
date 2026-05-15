@@ -351,7 +351,7 @@ async function buildPricePathsDashboard({
 
   const db = createDatabase();
   try {
-    const payload = await loadPricePathsPayload({ db });
+    const payload = await loadPricePathsPayload({ db, cacheDir });
     const htmlPath = resolvePath(pricePathsDir, "index.html");
     const jsonPath = resolvePath(pricePathsDir, "data.json");
     await writePricePathsArtifacts({ payload, htmlPath, jsonPath });
