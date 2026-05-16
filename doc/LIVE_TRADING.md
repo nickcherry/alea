@@ -11,10 +11,10 @@ Run it:
 bun alea trading:run
 ```
 
-By default it trades the full BTC/ETH/SOL/XRP/DOGE `5m` + `15m` market set:
-`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, `15m/sol`, `5m/xrp`,
-`15m/xrp`, `5m/doge`, and `15m/doge`. Use
-`--assets` and/or `--periods` to override the grid:
+By default it trades the BTC/ETH/SOL/DOGE `5m` + `15m` market set:
+`5m/btc`, `15m/btc`, `5m/eth`, `15m/eth`, `5m/sol`, `15m/sol`,
+`5m/doge`, and `15m/doge`. Use `--assets` and/or `--periods` to
+override the grid within the currently enabled trading assets:
 
 ```sh
 bun alea trading:run --periods 15m

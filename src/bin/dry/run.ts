@@ -5,6 +5,7 @@ import {
   TRADE_DECISION_DEFAULT_ASSETS,
   TRADE_DECISION_DEFAULT_MARKETS,
   TRADE_DECISION_SUPPORTED_PERIODS,
+  TRADE_DECISION_TRADABLE_ASSETS,
 } from "@alea/constants/tradeDecision";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -12,11 +13,11 @@ import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
 import { type DryRunLogEvent, runDryRun } from "@alea/lib/dryRun/runDryRun";
 import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
-import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
 
 const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
+const tradeDecisionAssetSchema = z.enum(TRADE_DECISION_TRADABLE_ASSETS);
 const commaSeparatedPeriodsSchema = z
   .string()
   .optional()
@@ -30,7 +31,7 @@ const commaSeparatedAssetsSchema = z
   .transform((v) =>
     v === undefined ? undefined : v.split(",").map((s) => s.trim()),
   )
-  .pipe(z.array(assetSchema).min(1).optional());
+  .pipe(z.array(tradeDecisionAssetSchema).min(1).optional());
 
 /**
  * Boots the dry-run trader loop. Hydrates per-asset bar history from

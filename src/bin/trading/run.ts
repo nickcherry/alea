@@ -5,6 +5,7 @@ import {
   TRADE_DECISION_DEFAULT_ASSETS,
   TRADE_DECISION_DEFAULT_MARKETS,
   TRADE_DECISION_SUPPORTED_PERIODS,
+  TRADE_DECISION_TRADABLE_ASSETS,
 } from "@alea/constants/tradeDecision";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -18,11 +19,11 @@ import {
 } from "@alea/lib/telemetry/axiom";
 import { liveTradingLogEventToTelemetry } from "@alea/lib/telemetry/liveTrading";
 import { runLiveTrading } from "@alea/lib/trading/runLiveTrading";
-import { assetSchema } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
 
 const tradeDecisionPeriodSchema = z.enum(TRADE_DECISION_SUPPORTED_PERIODS);
+const tradeDecisionAssetSchema = z.enum(TRADE_DECISION_TRADABLE_ASSETS);
 const commaSeparatedPeriodsSchema = z
   .string()
   .optional()
@@ -36,7 +37,7 @@ const commaSeparatedAssetsSchema = z
   .transform((v) =>
     v === undefined ? undefined : v.split(",").map((s) => s.trim()),
   )
-  .pipe(z.array(assetSchema).min(1).optional());
+  .pipe(z.array(tradeDecisionAssetSchema).min(1).optional());
 
 export const tradingRunCommand = defineCommand({
   name: "trading:run",

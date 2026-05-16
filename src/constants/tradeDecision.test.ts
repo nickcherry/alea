@@ -17,15 +17,13 @@ describe("trade decision market defaults", () => {
       { asset: "eth", period: "15m" },
       { asset: "sol", period: "5m" },
       { asset: "sol", period: "15m" },
-      { asset: "xrp", period: "5m" },
-      { asset: "xrp", period: "15m" },
       { asset: "doge", period: "5m" },
       { asset: "doge", period: "15m" },
     ]);
     expect(
       formatTradeDecisionMarkets({ markets: TRADE_DECISION_DEFAULT_MARKETS }),
     ).toBe(
-      "5m/btc,15m/btc,5m/eth,15m/eth,5m/sol,15m/sol,5m/xrp,15m/xrp,5m/doge,15m/doge",
+      "5m/btc,15m/btc,5m/eth,15m/eth,5m/sol,15m/sol,5m/doge,15m/doge",
     );
   });
 
@@ -38,7 +36,6 @@ describe("trade decision market defaults", () => {
       { asset: "btc", period: "15m" },
       { asset: "eth", period: "15m" },
       { asset: "sol", period: "15m" },
-      { asset: "xrp", period: "15m" },
       { asset: "doge", period: "15m" },
     ]);
   });
