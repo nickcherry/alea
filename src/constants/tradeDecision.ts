@@ -129,6 +129,13 @@ export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
  */
 export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
 
+/**
+ * End-to-end watchdog for a single live chart decision. This must be longer
+ * than the chart-render timeout plus the OpenAI request timeout, but short
+ * enough that one stuck asset cannot block every later market boundary.
+ */
+export const TRADE_DECISION_MAX_DECISION_DURATION_MS = 45 * 1000;
+
 export function resolveTradeDecisionMarkets({
   markets,
   assets,

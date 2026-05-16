@@ -1,12 +1,16 @@
 import {
   resolveTradeDecisionMarkets,
+  TRADE_DECISION_MAX_DECISION_DURATION_MS,
   tradeDecisionHydrateBars,
   tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
-import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
+import {
+  LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
+  LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS,
+} from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
@@ -74,6 +78,13 @@ export type LiveTradingLogEvent =
   | LiveTradingOrderLogEvent
   | LiveTradingMarketLogEvent
   | { readonly kind: "error"; readonly message: string };
+
+type DueLiveDecision = {
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly targetTsMs: number;
+  readonly promise: Promise<void>;
+};
 
 export async function runLiveTrading({
   db,
@@ -150,7 +161,7 @@ export async function runLiveTrading({
           discoveryLeadMs: LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
         });
         let nextFireTime = now + 1000;
-        const dueDecisions: Promise<void>[] = [];
+        const dueDecisions: DueLiveDecision[] = [];
         for (const period of selectedPeriods) {
           const periodMs = resolutionTimeframeStepMs({ timeframe: period });
           const nextBoundary = Math.ceil(now / periodMs) * periodMs;
@@ -163,8 +174,11 @@ export async function runLiveTrading({
             if (state.lastPredictedBoundary >= nextBoundary) {
               continue;
             }
-            dueDecisions.push(
-              processDueLiveDecision({
+            dueDecisions.push({
+              asset: state.asset,
+              period: state.period,
+              targetTsMs: nextBoundary,
+              promise: processDueLiveDecision({
                 state,
                 now,
                 fetchCandles,
@@ -173,10 +187,14 @@ export async function runLiveTrading({
                 telegramNotifier,
                 log,
               }),
-            );
+            });
           }
         }
-        await Promise.all(dueDecisions);
+        await waitForDueLiveDecisions({
+          decisions: dueDecisions,
+          timeoutMs: TRADE_DECISION_MAX_DECISION_DURATION_MS,
+          log,
+        });
         const sleepMs = Math.max(100, Math.min(nextFireTime - now + 1, 1000));
         await new Promise((resolve) => setTimeout(resolve, sleepMs));
       } catch (e) {
@@ -193,6 +211,93 @@ export async function runLiveTrading({
       await orderExecutor.stop();
     },
   };
+}
+
+export async function waitForDueLiveDecisions({
+  decisions,
+  timeoutMs,
+  log,
+}: {
+  readonly decisions: readonly DueLiveDecision[];
+  readonly timeoutMs: number;
+  readonly log: (event: LiveTradingLogEvent) => void;
+}): Promise<void> {
+  await Promise.all(
+    decisions.map((decision) =>
+      waitForDueLiveDecision({
+        decision,
+        timeoutMs,
+        log,
+      }),
+    ),
+  );
+}
+
+function waitForDueLiveDecision({
+  decision,
+  timeoutMs,
+  log,
+}: {
+  readonly decision: DueLiveDecision;
+  readonly timeoutMs: number;
+  readonly log: (event: LiveTradingLogEvent) => void;
+}): Promise<void> {
+  if (timeoutMs <= 0) {
+    logDecisionTimeout({ decision, timeoutMs, log });
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      logDecisionTimeout({ decision, timeoutMs, log });
+      resolve();
+    }, timeoutMs);
+
+    decision.promise.then(
+      () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve();
+      },
+      (error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        log({
+          kind: "error",
+          message: `decision failed ${decision.period}/${decision.asset}: ${String(error)}`,
+        });
+        resolve();
+      },
+    );
+  });
+}
+
+function logDecisionTimeout({
+  decision,
+  timeoutMs,
+  log,
+}: {
+  readonly decision: DueLiveDecision;
+  readonly timeoutMs: number;
+  readonly log: (event: LiveTradingLogEvent) => void;
+}): void {
+  log({
+    kind: "error",
+    message:
+      `decision timed out ${decision.period}/${decision.asset}` +
+      ` target=${new Date(decision.targetTsMs).toISOString()}` +
+      ` after ${timeoutMs}ms; scheduler continuing`,
+  });
 }
 
 async function processDueLiveDecision({
@@ -349,6 +454,20 @@ async function makeLiveDecision({
     imagePath: evaluated.imagePath,
     reasoning: evaluated.reasoning,
   });
+  if (
+    isLiveDecisionTooLateForOrder({
+      targetTsMs,
+      nowMs: Date.now(),
+    })
+  ) {
+    log({
+      kind: "error",
+      message:
+        `skip stale order ${state.period}/${state.asset}` +
+        ` target=${new Date(targetTsMs).toISOString()}`,
+    });
+    return;
+  }
   await orderExecutor.scheduleOrder({
     asset: state.asset,
     period: state.period,
@@ -356,6 +475,16 @@ async function makeLiveDecision({
     targetTsMs,
     confidence: null,
   });
+}
+
+export function isLiveDecisionTooLateForOrder({
+  targetTsMs,
+  nowMs,
+}: {
+  readonly targetTsMs: number;
+  readonly nowMs: number;
+}): boolean {
+  return nowMs > targetTsMs + LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS;
 }
 
 const fetchNoCandles: FetchCandles = async () => [];
