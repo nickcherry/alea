@@ -2,7 +2,7 @@ import type { Database } from "@alea/lib/db/types";
 import { type Kysely, sql } from "kysely";
 
 /**
- * Append-only log of every OpenAI chart decision the dry-run runner
+ * Append-only log of every actionable filter decision the dry-run runner
  * makes. One row per (asset, ts_ms) where the predictor returned an
  * actionable up/down call.
  *
@@ -13,8 +13,7 @@ import { type Kysely, sql } from "kysely";
  * - `synth_open`: the price used as the synthetic prior-bar close
  *   (and the assumed open of the target bar). Stored so the
  *   dashboard can show "we predicted UP from $63,841.20".
- * - `decision_audit`: jsonb dump of the OpenAI chart response and
- *   audit counters.
+ * - `decision_audit`: jsonb dump of the filter vote and audit counters.
  * - `actual_close`: filled in later (`null` until the target bar
  *   actually closes) — the canonical close from `candles` once
  *   the bar settles. Used to determine `won`.

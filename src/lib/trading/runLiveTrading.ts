@@ -1,5 +1,6 @@
 import {
   resolveTradeDecisionMarkets,
+  TRADE_DECISION_DECISION_SOURCE,
   TRADE_DECISION_MAX_DECISION_DURATION_MS,
   tradeDecisionHydrateBars,
   tradeDecisionLeadTimeMs,
@@ -12,6 +13,7 @@ import {
   LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS,
 } from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
 import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
@@ -23,7 +25,6 @@ import {
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
 import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
-import { evaluateOpenAiChartTradeDecision } from "@alea/lib/tradeDecision/openAiChartDecision";
 import { createLiveDecisionTelegramNotifier } from "@alea/lib/trading/liveDecisionTelegram";
 import {
   createLiveOrderExecutor,
@@ -55,24 +56,21 @@ export type LiveTradingLogEvent =
   | { readonly kind: "ready" }
   | {
       readonly kind: "predictor";
-      readonly source: "openai_chart";
+      readonly source: typeof TRADE_DECISION_DECISION_SOURCE;
     }
   | {
       readonly kind: "decision";
       readonly asset: Asset;
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
-      readonly prediction: "u" | "d";
-      readonly openAiDirection: "green" | "red";
-      readonly openAiPrediction: "u" | "d";
-      readonly invertedOpenAiDirection: boolean;
+      readonly prediction: "u" | "d" | null;
+      readonly decision: "up" | "down" | "neutral";
       readonly synthClose: number;
       readonly priceAgeMs: number | null;
       readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
-      readonly model: string | null;
       readonly reasoning: string | null;
     }
   | LiveTradingOrderLogEvent
@@ -124,7 +122,7 @@ export async function runLiveTrading({
 
   log({
     kind: "predictor",
-    source: "openai_chart",
+    source: TRADE_DECISION_DECISION_SOURCE,
   });
 
   const client = await getPolymarketClobClient();
@@ -420,11 +418,13 @@ async function makeLiveDecision({
   readonly log: (event: LiveTradingLogEvent) => void;
 }): Promise<void> {
   state.lastPredictedBoundary = targetTsMs;
-  const evaluated = await evaluateOpenAiChartTradeDecision({
-    asset: state.asset,
-    period: state.period,
-    targetTsMs,
-    series,
+  const evaluated = evaluateCandidateTradeDecision({
+    context: {
+      asset: state.asset,
+      period: state.period,
+      targetTsMs,
+      series,
+    },
   });
   log({
     kind: "decision",
@@ -432,27 +432,24 @@ async function makeLiveDecision({
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
-    openAiDirection: evaluated.direction,
-    openAiPrediction: evaluated.openAiPrediction,
-    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
+    decision: evaluated.decision,
     synthClose: synthBar.close,
     priceAgeMs,
-    sourceCount: 1,
+    sourceCount: evaluated.votes.length,
     up: evaluated.up,
     down: evaluated.down,
-    abstain: evaluated.abstain,
-    model: evaluated.model,
-    reasoning: evaluated.reasoning,
+    abstain: evaluated.neutral,
+    reasoning: evaluated.summary,
   });
+  if (evaluated.prediction === null) {
+    return;
+  }
   telegramNotifier.trackDecision({
     asset: state.asset,
     period: state.period,
     targetTsMs,
     prediction: evaluated.prediction,
-    openAiPrediction: evaluated.openAiPrediction,
-    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
-    imagePath: evaluated.imagePath,
-    reasoning: evaluated.reasoning,
+    reasoning: evaluated.summary,
   });
   if (
     isLiveDecisionTooLateForOrder({

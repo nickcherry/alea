@@ -253,19 +253,21 @@ arranges them under one host and one shared top nav.
 
 The dashboard sequence moves from data calibration to runtime results:
 
-| Phase                 | Page             | Decision it supports                                                                               |
-| --------------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
-| Proxy calibration     | Proxy accuracy   | Whether Pyth is good enough as the historical proxy for Polymarket settlement.                     |
-| Market microstructure | Price paths      | How quickly Polymarket prices leave the 50c area, informing realistic order timing.                |
-| Live-like rehearsal   | Dry run          | Validate OpenAI chart decisions plus quote observation and fill simulation without placing orders. |
-| Production            | Live trading PnL | Track realized results from actual order placement.                                                |
+| Phase                 | Page             | Decision it supports                                                                         |
+| --------------------- | ---------------- | -------------------------------------------------------------------------------------------- |
+| Proxy calibration     | Proxy accuracy   | Whether Pyth is good enough as the historical proxy for Polymarket settlement.               |
+| Market microstructure | Price paths      | How quickly Polymarket prices leave the 50c area, informing realistic order timing.          |
+| Candidate research    | Backtest         | Compare filter candidates by quarter before admitting them to runtime use.                   |
+| Live-like rehearsal   | Dry run          | Validate filter decisions plus quote observation and fill simulation without placing orders. |
+| Production            | Live trading PnL | Track realized results from actual order placement.                                          |
 
-| Route           | Page               | Source                                                                                              |
-| --------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
-| `/`             | Live trading PnL   | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
-| `/proxy/`       | Proxy accuracy     | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
-| `/price-paths/` | Price paths        | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
-| `/dryrun/`      | Dry-run decisions  | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
+| Route           | Page              | Source                                                                                              |
+| --------------- | ----------------- | --------------------------------------------------------------------------------------------------- |
+| `/`             | Live trading PnL  | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/proxy/`       | Proxy accuracy    | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
+| `/price-paths/` | Price paths       | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
+| `/backtest/`    | Backtest          | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
+| `/dryrun/`      | Dry-run decisions | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -290,6 +292,10 @@ tmp/web/
   index.html               ← live trading PnL (served at /)
   index.assets/            ← its frozen CSS+JS
   data.json                ← raw payload for the trading page
+  backtest/
+    index.html             ← candidate backtests (served at /backtest/)
+    index.assets/
+    data.json
   proxy/
     index.html             ← proxy accuracy (served at /proxy/)
     index.assets/
@@ -310,9 +316,10 @@ needs Polymarket auth (`POLYMARKET_PRIVATE_KEY` +
 `POLYMARKET_FUNDER_ADDRESS`); when those aren't set the build skips
 it with a warning so the rest of the site can still rebuild. The
 price-path page builds from `polymarket_price_samples`, the proxy page builds
-from `polymarket_resolutions` + Pyth candles, and the dry-run page builds
-from `dry_run_decisions` plus the shared trade-decision constants shown on
-the page. Those pages work without trading creds.
+from `polymarket_resolutions` + Pyth candles, the backtest page builds from
+`candidate_backtest_quarter_results`, and the dry-run page builds from
+`dry_run_decisions` plus the shared trade-decision constants shown on the page.
+Those pages work without trading creds.
 
 The actual `wrangler deploy` shellout lives in
 [`runWranglerDeploy.ts`](../src/lib/dashboards/runWranglerDeploy.ts);

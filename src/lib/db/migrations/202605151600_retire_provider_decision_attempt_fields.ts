@@ -2,9 +2,9 @@ import type { Database } from "@alea/lib/db/types";
 import type { Kysely } from "kysely";
 
 /**
- * Retired migration slot. The old research run tables were removed in
- * favor of the current decision path; this file remains only to preserve Kysely
- * migration history for existing databases.
+ * Retired migration slot kept so existing Kysely migration history remains
+ * valid. The current filter decision path does not add provider-specific
+ * metadata columns to dry-run attempts.
  */
 export async function up(_db: Kysely<Database>): Promise<void> {
   return;

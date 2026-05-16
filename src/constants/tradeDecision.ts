@@ -5,18 +5,12 @@ import {
 import type { Asset } from "@alea/types/assets";
 
 /**
- * Source-of-truth knobs for OpenAI chart decisions. Dry-run and live trading
- * must read these same constants so both modes evaluate the same markets with
- * the same timing and candle context.
+ * Source-of-truth knobs for candidate-filter trade decisions. Dry-run and
+ * live trading must read these same constants so both modes evaluate the same
+ * markets with the same timing and candle context.
  */
 
-/**
- * Live policy for turning OpenAI's chart color into an actionable side.
- * When true, the OpenAI output is treated as a fade signal:
- * green -> DOWN and red -> UP. The raw OpenAI direction is still persisted
- * in audit fields; `prediction` is the side Alea actually simulates/trades.
- */
-export const TRADE_DECISION_INVERT_OPENAI_DIRECTION = true;
+export const TRADE_DECISION_DECISION_SOURCE = "candidate_filters";
 
 /**
  * Every candle period the dry-run table is allowed to hold a decision
@@ -79,8 +73,8 @@ export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "15m";
 
 /**
  * How long before each target candle opens the loop snapshots the live price
- * and makes its decision. The order path enters immediately after an
- * actionable decision.
+ * and evaluates filters. The order path enters immediately after an
+ * actionable filter majority.
  */
 export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
   Record<TradeDecisionPeriod, number>
@@ -134,11 +128,11 @@ export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
 export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
 
 /**
- * End-to-end watchdog for a single live chart decision. This must be longer
- * than the chart-render timeout plus the OpenAI request timeout, but short
- * enough that one stuck asset cannot block every later market boundary.
+ * End-to-end watchdog for a single live filter decision. This must be long
+ * enough for candle refresh and filter evaluation, but short enough that one
+ * stuck asset cannot block every later market boundary.
  */
-export const TRADE_DECISION_MAX_DECISION_DURATION_MS = 45 * 1000;
+export const TRADE_DECISION_MAX_DECISION_DURATION_MS = 15 * 1000;
 
 export function resolveTradeDecisionMarkets({
   markets,

@@ -37,8 +37,8 @@ const commaSeparatedAssetsSchema = z
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
  * the `candles` table, refreshes recent Pyth candles before each
  * configured period boundary, synthesizes the active candle from the
- * latest Pyth price, and asks OpenAI to predict from the rendered
- * chart. Inverse OpenAI green/red decisions land in `dry_run_decisions`; the
+ * latest Pyth price, and evaluates the registered filter candidates.
+ * Actionable filter-majority decisions land in `dry_run_decisions`; the
  * configured pre-open Polymarket order is simulated; outcomes are scored once
  * the target bar finalizes.
  *
@@ -47,9 +47,9 @@ const commaSeparatedAssetsSchema = z
  */
 export const dryRunCommand = defineCommand({
   name: "dry:run",
-  summary: "Run OpenAI chart decisions in dry-run mode",
+  summary: "Run filter decisions in dry-run mode",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, renders a chart, and uses OpenAI to predict the next bar's direction. The inverse of every returned green/red prediction lands in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, and evaluates the registered filter candidates. Actionable filter-majority decisions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",
@@ -76,15 +76,12 @@ export const dryRunCommand = defineCommand({
   output:
     "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",
   sideEffects:
-    "Fetches Pyth candles/latest prices, renders chart images, calls the OpenAI Responses API, and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
+    "Fetches Pyth candles/latest prices and opens Polymarket market-data connections for order simulation. Reads from `candles`, writes to `dry_run_decisions`. Runs until killed.",
   async run({ io, options }) {
     const markets = resolveTradeDecisionMarkets({
       assets: options.assets,
       periods: options.periods,
     });
-    if (env.openaiApiKey === undefined) {
-      throw new Error("OPENAI_API_KEY is required for dry-run decisions.");
-    }
     io.writeStdout(
       `${pc.bold("dry:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
     );
@@ -126,13 +123,13 @@ export const dryRunCommand = defineCommand({
               break;
             case "decision": {
               const tag =
-                event.prediction === "u"
-                  ? pc.green("UP    ")
-                  : pc.red("DOWN  ");
-              const reason =
-                event.reasoning === null ? "" : ` reason=${event.reasoning}`;
+                event.prediction === null
+                  ? pc.yellow("NEUTR ")
+                  : event.prediction === "u"
+                    ? pc.green("UP    ")
+                    : pc.red("DOWN  ");
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("source=openai model=" + (event.model ?? "-") + reason)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim(`source=filters up=${event.up} down=${event.down} neutral=${event.abstain}`)}\n`,
               );
               break;
             }

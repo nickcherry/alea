@@ -4,6 +4,7 @@ import {
 } from "@alea/constants/dryRun";
 import {
   resolveTradeDecisionMarkets,
+  TRADE_DECISION_DECISION_SOURCE,
   tradeDecisionHydrateBars,
   tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
@@ -15,6 +16,7 @@ import {
   createDryRunOrderSimulator,
   type DryRunOrderLogEvent,
 } from "@alea/lib/dryRun/orderSimulation";
+import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
 import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
@@ -25,7 +27,6 @@ import {
   type TradeDecisionCandleState,
 } from "@alea/lib/tradeDecision/candleState";
 import { createMarketEventPythCandleFetcher } from "@alea/lib/tradeDecision/marketEventCandles";
-import { evaluateOpenAiChartTradeDecision } from "@alea/lib/tradeDecision/openAiChartDecision";
 import { createPolymarketMarketDiscoveryCache } from "@alea/lib/trading/vendor/polymarket/marketDiscoveryCache";
 import type { Asset } from "@alea/types/assets";
 
@@ -51,23 +52,20 @@ export type DryRunLogEvent =
   | { readonly kind: "ready" }
   | {
       readonly kind: "predictor";
-      readonly source: "openai_chart";
+      readonly source: typeof TRADE_DECISION_DECISION_SOURCE;
     }
   | {
       readonly kind: "decision";
       readonly asset: Asset;
       readonly period: TradeDecisionPeriod;
       readonly tsMs: number;
-      readonly prediction: "u" | "d";
-      readonly openAiDirection: "green" | "red";
-      readonly openAiPrediction: "u" | "d";
-      readonly invertedOpenAiDirection: boolean;
+      readonly prediction: "u" | "d" | null;
+      readonly decision: "up" | "down" | "neutral";
       readonly synthClose: number;
       readonly sourceCount: number;
       readonly up: number;
       readonly down: number;
       readonly abstain: number;
-      readonly model: string | null;
       readonly reasoning: string | null;
     }
   | {
@@ -94,10 +92,10 @@ export type DryRunLogEvent =
  *   1. Hydrate per-asset/per-period bar buffers from fresh Pyth candles
  *      (most recent trade-decision history bars).
  *   2. Shortly before each configured boundary, refresh recent Pyth
- *      candles into the in-memory buffer and synthesize the active
- *      candle from the latest one-shot Pyth price.
- *   3. Render the refreshed/synthetic bar set as a chart, ask OpenAI for the
- *      next-candle direction, and persist the configured actionable side.
+ *      candles into the in-memory buffer and synthesize the active candle
+ *      from the latest one-shot Pyth price.
+ *   3. Evaluate the registered filter candidates on that same decision
+ *      series and persist only actionable up/down majorities.
  *   4. Simulate the configured pre-open Polymarket order and track whether it
  *      fills before expiry.
  *
@@ -149,7 +147,7 @@ export async function runDryRun({
   }
   log({
     kind: "predictor",
-    source: "openai_chart",
+    source: TRADE_DECISION_DECISION_SOURCE,
   });
 
   let running = true;
@@ -286,11 +284,13 @@ async function makePrediction({
   readonly log: (event: DryRunLogEvent) => void;
 }): Promise<void> {
   const decisionStartedAtMs = Date.now();
-  const evaluated = await evaluateOpenAiChartTradeDecision({
-    asset: state.asset,
-    period: state.period,
-    targetTsMs,
-    series,
+  const evaluated = evaluateCandidateTradeDecision({
+    context: {
+      asset: state.asset,
+      period: state.period,
+      targetTsMs,
+      series,
+    },
   });
   const decisionCompletedAtMs = Date.now();
   const decisionDurationMs = decisionCompletedAtMs - decisionStartedAtMs;
@@ -300,18 +300,32 @@ async function makePrediction({
     period: state.period,
     tsMs: targetTsMs,
     prediction: evaluated.prediction,
-    openAiDirection: evaluated.direction,
-    openAiPrediction: evaluated.openAiPrediction,
-    invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
+    decision: evaluated.decision,
     synthClose: synthBar.close,
-    sourceCount: 1,
+    sourceCount: evaluated.votes.length,
     up: evaluated.up,
     down: evaluated.down,
-    abstain: evaluated.abstain,
-    model: evaluated.model,
-    reasoning: evaluated.reasoning,
+    abstain: evaluated.neutral,
+    reasoning: evaluated.summary,
   });
   const prediction = evaluated.prediction;
+  if (prediction === null) {
+    await recordDecisionAttempt({
+      db,
+      state,
+      targetTsMs,
+      decisionStartedAtMs,
+      decisionCompletedAtMs,
+      decisionDurationMs,
+      prediction,
+      sourceCount: evaluated.votes.length,
+      up: evaluated.up,
+      down: evaluated.down,
+      abstain: evaluated.neutral,
+      decisionId: null,
+    });
+    return;
+  }
   // Persist. The target bar's open = targetTsMs (i.e. the upcoming
   // period boundary). Its open price is approximately the current
   // Pyth price (close of the bar we just synthesised). We persist
@@ -329,15 +343,13 @@ async function makePrediction({
       prediction,
       synth_open: synthBar.close,
       decision_audit: JSON.stringify({
-        source: "openai_chart",
-        model: evaluated.model,
-        direction: evaluated.direction,
-        openAiPrediction: evaluated.openAiPrediction,
-        invertedOpenAiDirection: evaluated.invertedOpenAiDirection,
-        reasoning: evaluated.reasoning,
+        source: TRADE_DECISION_DECISION_SOURCE,
+        decision: evaluated.decision,
+        reasoning: evaluated.summary,
         up: evaluated.up,
         down: evaluated.down,
-        abstain: evaluated.abstain,
+        abstain: evaluated.neutral,
+        votes: evaluated.votes,
       }),
       decision_started_at_ms: decisionStartedAtMs,
       decision_completed_at_ms: decisionCompletedAtMs,
@@ -353,13 +365,10 @@ async function makePrediction({
     decisionCompletedAtMs,
     decisionDurationMs,
     prediction,
-    sourceCount: 1,
+    sourceCount: evaluated.votes.length,
     up: evaluated.up,
     down: evaluated.down,
-    abstain: evaluated.abstain,
-    openAiModel: evaluated.model,
-    openAiDirection: evaluated.direction,
-    openAiReasoning: evaluated.reasoning,
+    abstain: evaluated.neutral,
     decisionId: String(inserted.id),
   });
   const pending = pendingByState.get(
@@ -390,9 +399,6 @@ async function recordDecisionAttempt({
   up,
   down,
   abstain,
-  openAiModel,
-  openAiDirection,
-  openAiReasoning,
   decisionId,
 }: {
   readonly db: DatabaseClient;
@@ -406,9 +412,6 @@ async function recordDecisionAttempt({
   readonly up: number;
   readonly down: number;
   readonly abstain: number;
-  readonly openAiModel: string | null;
-  readonly openAiDirection: string | null;
-  readonly openAiReasoning: string | null;
   readonly decisionId: string | null;
 }): Promise<void> {
   await db
@@ -425,11 +428,6 @@ async function recordDecisionAttempt({
       up_votes: up,
       down_votes: down,
       abstain_votes: abstain,
-      openai_model: openAiModel,
-      openai_direction: openAiDirection,
-      openai_confidence: null,
-      openai_min_confidence: null,
-      openai_reasoning: openAiReasoning,
       dry_run_decision_id: decisionId,
     })
     .execute();

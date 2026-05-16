@@ -8,14 +8,14 @@ import {
 import { fetchCoinbaseCandles } from "@alea/lib/candles/sources/coinbase/fetchCoinbaseCandles";
 import { fetchPythCandles } from "@alea/lib/candles/sources/pyth/fetchPythCandles";
 import {
-  alignMarketSeries,
-  type AlignedMarketSeries,
-} from "@alea/lib/marketSeries/align";
-import type { MarketBar } from "@alea/lib/marketSeries/types";
-import {
   fetchLatestPythPrices,
   type LatestPythPrice,
 } from "@alea/lib/livePrices/pyth/fetchLatestPythPrices";
+import {
+  type AlignedMarketSeries,
+  alignMarketSeries,
+} from "@alea/lib/marketSeries/align";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { Asset } from "@alea/types/assets";
 import type { Candle } from "@alea/types/candles";

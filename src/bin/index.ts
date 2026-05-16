@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { backtestRunCommand } from "@alea/bin/backtest/run";
 import { candlesChartCommand } from "@alea/bin/candles/chart";
 import { candlesFillGapsCommand } from "@alea/bin/candles/fillGaps";
 import { candlesSyncCommand } from "@alea/bin/candles/sync";
@@ -12,7 +13,6 @@ import { latencyChartCommand } from "@alea/bin/latency/chart";
 import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
 import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
-import { predictChartCommand } from "@alea/bin/predict/chart";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { sayTextCommand } from "@alea/bin/say/text";
@@ -30,8 +30,9 @@ import { createCli } from "@alea/lib/cli/createCli";
 
 const cli = createCli({
   name: "alea",
-  summary: "Polymarket crypto up/down OpenAI chart trader",
+  summary: "Polymarket crypto up/down filter trader",
   commands: [
+    backtestRunCommand,
     dbMigrateCommand,
     candlesSyncCommand,
     candlesFillGapsCommand,
@@ -53,7 +54,6 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
-    predictChartCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,

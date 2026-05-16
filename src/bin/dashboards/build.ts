@@ -3,12 +3,16 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { env } from "@alea/constants/env";
+import { loadBacktestPayload } from "@alea/lib/backtest/dashboard/loadBacktestPayload";
+import { writeBacktestArtifacts } from "@alea/lib/backtest/dashboard/writeBacktestArtifacts";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { runWranglerDeploy } from "@alea/lib/dashboards/runWranglerDeploy";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
+import { loadDryRunPayload } from "@alea/lib/dryRun/dashboard/loadDryRunPayload";
+import { writeDryRunArtifacts } from "@alea/lib/dryRun/dashboard/writeDryRunArtifacts";
 import { loadPricePathsPayload } from "@alea/lib/polymarket/dashboard/loadPricePathsPayload";
 import { loadProxyAccuracyPayload } from "@alea/lib/polymarket/dashboard/loadProxyAccuracyPayload";
 import { writePricePathsArtifacts } from "@alea/lib/polymarket/dashboard/writePricePathsArtifacts";
@@ -26,6 +30,8 @@ import { z } from "zod";
 const repoRoot = resolvePath(import.meta.dir, "../../..");
 const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
+const backtestDir = resolvePath(webDir, "backtest");
+const dryRunDir = resolvePath(webDir, "dryrun");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
 const cacheDir = resolvePath(tmpDir, ".cache");
@@ -46,6 +52,8 @@ type DashboardPageBuild = {
  *   tmp/web/index.html               ← live trading PnL ("/")
  *   tmp/web/index.assets/            ← its frozen CSS+JS
  *   tmp/web/data.json                ← raw payload for the trading page
+ *   tmp/web/backtest/index.html      ← candidate backtests ("/backtest/")
+ *   tmp/web/dryrun/index.html       ← dry-run decisions ("/dryrun/")
  *   tmp/web/price-paths/index.html   ← price-path calibration ("/price-paths/")
  *   tmp/web/price-paths/index.assets/
  *   tmp/web/price-paths/data.json
@@ -59,7 +67,7 @@ export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), price-path calibration page (/price-paths/), and proxy accuracy page (/proxy/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the live trading PnL dashboard (/), candidate backtest page (/backtest/), dry-run page (/dryrun/), price-path calibration page (/price-paths/), and proxy accuracy page (/proxy/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -99,7 +107,7 @@ export const dashboardsBuildCommand = defineCommand({
               ),
         )
         .describe(
-          "Comma-separated subset of pages to build (skip the rest). Names: trading, price-paths, proxy.",
+          "Comma-separated subset of pages to build (skip the rest). Names: trading, backtest, dryrun, price-paths, proxy.",
         ),
     }),
   ],
@@ -116,6 +124,8 @@ export const dashboardsBuildCommand = defineCommand({
     io.writeStdout(`${pc.bold("dashboards:build")}\n\n`);
 
     await mkdir(webDir, { recursive: true });
+    await mkdir(backtestDir, { recursive: true });
+    await mkdir(dryRunDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
     await mkdir(cacheDir, { recursive: true });
@@ -135,6 +145,15 @@ export const dashboardsBuildCommand = defineCommand({
         name: "price-paths",
         run: (pageIo: DashboardBuildIo) =>
           buildPricePathsDashboard({ io: pageIo }),
+      },
+      {
+        name: "backtest",
+        run: (pageIo: DashboardBuildIo) =>
+          buildBacktestDashboard({ io: pageIo }),
+      },
+      {
+        name: "dryrun",
+        run: (pageIo: DashboardBuildIo) => buildDryRunDashboard({ io: pageIo }),
       },
       {
         name: "proxy",
@@ -304,6 +323,58 @@ async function buildTradingDashboard({
       `  ${pc.dim("current=")}${formatUsd({ value: payload.summary.currentValueUsd })}\n` +
       `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
   );
+}
+
+async function buildDryRunDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("dry run")} ${pc.dim("(/dryrun/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadDryRunPayload({ db });
+    const htmlPath = resolvePath(dryRunDir, "index.html");
+    const jsonPath = resolvePath(dryRunDir, "data.json");
+    await writeDryRunArtifacts({ payload, htmlPath, jsonPath });
+    const decisionCount = Object.values(payload.byPeriod).reduce(
+      (sum, slice) => sum + slice.summary.totalDecisions,
+      0,
+    );
+    io.writeStdout(
+      `  ${pc.green("decisions =")} ${decisionCount.toLocaleString()}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
+}
+
+async function buildBacktestDashboard({
+  io,
+}: {
+  readonly io: { writeStdout: (line: string) => void };
+}): Promise<void> {
+  io.writeStdout(`${pc.bold("backtest")} ${pc.dim("(/backtest/)")}\n`);
+
+  const db = createDatabase();
+  try {
+    const payload = await loadBacktestPayload({ db });
+    const htmlPath = resolvePath(backtestDir, "index.html");
+    const jsonPath = resolvePath(backtestDir, "data.json");
+    await writeBacktestArtifacts({ payload, htmlPath, jsonPath });
+    const rowCount = Object.values(payload.byPeriod).reduce(
+      (sum, slice) => sum + slice.rows.length,
+      0,
+    );
+    io.writeStdout(
+      `  ${pc.green("candidates =")} ${rowCount.toLocaleString()}\n` +
+        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+    );
+  } finally {
+    await destroyDatabase(db);
+  }
 }
 
 async function buildPricePathsDashboard({

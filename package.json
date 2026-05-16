@@ -1,6 +1,6 @@
 {
   "name": "alea",
-  "description": "OpenAI chart-decision trader for Polymarket crypto up/down markets, fed by Pyth candles and live Polymarket books.",
+  "description": "Filter-driven trader for Polymarket crypto up/down markets, fed by Pyth candles and live Polymarket books.",
   "type": "module",
   "private": true,
   "bin": {
@@ -32,7 +32,6 @@
     "ethers": "5",
     "kysely": "^0.28.15",
     "lightweight-charts": "^5.2.0",
-    "openai": "^6.37.0",
     "pg": "^8.20.0",
     "pg-cursor": "^2.19.0",
     "picocolors": "^1.1.1",

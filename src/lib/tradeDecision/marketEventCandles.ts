@@ -1,7 +1,6 @@
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { FetchCandles } from "@alea/lib/tradeDecision/candleState";
-import type { Asset } from "@alea/types/assets";
 import type { Candle } from "@alea/types/candles";
 import { sql } from "kysely";
 
@@ -75,7 +74,7 @@ export function createMarketEventPythCandleFetcher({
         const timestamp = new Date(Number(row.open_ms));
         return {
           source: "pyth",
-          asset: asset as Asset,
+          asset: asset,
           product: "spot",
           timeframe,
           timestamp,

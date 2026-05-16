@@ -41,9 +41,9 @@ const commaSeparatedAssetsSchema = z
 
 export const tradingRunCommand = defineCommand({
   name: "trading:run",
-  summary: "Run live OpenAI chart trading with real Polymarket orders",
+  summary: "Run live filter trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, renders charts, asks OpenAI for pre-open next-candle predictions (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement on the inverse side immediately after each returned green/red prediction. Reads POLYMARKET_PRIVATE_KEY, POLYMARKET_FUNDER_ADDRESS, and OPENAI_API_KEY from the environment.",
+    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, evaluates registered filters before each target candle opens (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after an actionable filter majority. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
   options: [
     defineValueOption({
       key: "periods",
@@ -70,16 +70,13 @@ export const tradingRunCommand = defineCommand({
   output:
     "Streams market subscription, decision, and live-order placement events to stdout. Live order/fill state remains in Polymarket, not the local DB.",
   sideEffects:
-    "Places real Polymarket post-only maker orders. Reads candle data from the DB, renders chart images, calls the OpenAI Responses API, and uses authenticated Polymarket CLOB APIs. Runs until killed.",
+    "Places real Polymarket post-only maker orders. Reads candle data from the DB and uses authenticated Polymarket CLOB APIs. Runs until killed.",
   async run({ io, options }) {
     suppressVerboseClobClientRequestLogs();
     const markets = resolveTradeDecisionMarkets({
       assets: options.assets,
       periods: options.periods,
     });
-    if (env.openaiApiKey === undefined) {
-      throw new Error("OPENAI_API_KEY is required for live trading decisions.");
-    }
     io.writeStdout(
       `${pc.bold("trading:run")} ${pc.dim(`markets=${formatTradeDecisionMarkets({ markets })}`)}\n\n`,
     );
@@ -144,17 +141,17 @@ export const tradingRunCommand = defineCommand({
               break;
             case "decision": {
               const tag =
-                event.prediction === "u"
-                  ? pc.green("UP    ")
-                  : pc.red("DOWN  ");
+                event.prediction === null
+                  ? pc.yellow("NEUTR ")
+                  : event.prediction === "u"
+                    ? pc.green("UP    ")
+                    : pc.red("DOWN  ");
               const priceAge =
                 event.priceAgeMs === null
                   ? ""
                   : ` priceAge=${event.priceAgeMs}ms`;
-              const reason =
-                event.reasoning === null ? "" : ` reason=${event.reasoning}`;
               io.writeStdout(
-                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim("source=openai model=" + (event.model ?? "-") + priceAge + reason)}\n`,
+                `${pc.dim(ts)} ${tag} ${event.period}/${event.asset.padEnd(5)} target=${new Date(event.tsMs).toISOString().slice(11, 16)} synth=${event.synthClose.toFixed(2)} ${pc.dim(`source=filters up=${event.up} down=${event.down} neutral=${event.abstain}${priceAge}`)}\n`,
               );
               break;
             }

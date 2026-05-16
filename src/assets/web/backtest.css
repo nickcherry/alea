@@ -1,0 +1,67 @@
+.backtest-chart-frame {
+  position: relative;
+  border-radius: 10px;
+  background:
+    radial-gradient(
+      circle at 92% 10%,
+      rgba(215, 170, 69, 0.05),
+      transparent 36%
+    ),
+    linear-gradient(180deg, rgba(15, 27, 18, 0.6), rgba(7, 9, 10, 0.4));
+  border: 1px solid var(--alea-border-muted);
+  padding: 12px 8px 6px;
+}
+
+.backtest-chart-host {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  min-height: 260px;
+}
+
+.backtest-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--alea-text-subtle);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+}
+
+.backtest-meta {
+  margin: -4px 0 12px;
+  color: var(--alea-text-subtle);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+}
+
+.backtest-table .num-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.backtest-table .quarter-col {
+  min-width: 92px;
+}
+
+.backtest-candidate-name {
+  color: var(--alea-text);
+  font-weight: 650;
+}
+
+.backtest-candidate-config {
+  margin-top: 3px;
+  max-width: 520px;
+  color: var(--alea-text-muted);
+  font-family: var(--alea-font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.backtest-cell-count {
+  display: block;
+  color: var(--alea-text-subtle);
+  font-size: 10.5px;
+  line-height: 1.2;
+}

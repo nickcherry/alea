@@ -1,7 +1,7 @@
 import { env } from "@alea/constants/env";
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
-import { sendTelegramPhoto } from "@alea/lib/telegram/sendTelegramPhoto";
+import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
 import type { LiveTradingOrderLogEvent } from "@alea/lib/trading/liveOrderExecution";
 import type { Asset } from "@alea/types/assets";
 
@@ -10,9 +10,6 @@ type PendingLiveDecisionNotification = {
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
   readonly prediction: "u" | "d";
-  readonly openAiPrediction?: "u" | "d";
-  readonly invertedOpenAiDirection?: boolean;
-  readonly imagePath: string;
   readonly reasoning: string | null;
 };
 
@@ -21,18 +18,18 @@ type TelegramConfig = {
   readonly chatId: string;
 };
 
-type SendPhoto = typeof sendTelegramPhoto;
+type SendMessage = typeof sendTelegramMessage;
 
 export function createLiveDecisionTelegramNotifier({
   log,
-  sendPhoto = sendTelegramPhoto,
+  sendMessage = sendTelegramMessage,
   getConfig = telegramConfigFromEnv,
 }: {
   readonly log: (event: {
     readonly kind: "error";
     readonly message: string;
   }) => void;
-  readonly sendPhoto?: SendPhoto;
+  readonly sendMessage?: SendMessage;
   readonly getConfig?: () => TelegramConfig | null;
 }): {
   readonly trackDecision: (decision: PendingLiveDecisionNotification) => void;
@@ -67,12 +64,10 @@ export function createLiveDecisionTelegramNotifier({
         return;
       }
       try {
-        await sendPhoto({
+        await sendMessage({
           botToken: config.botToken,
           chatId: config.chatId,
-          photoPath: decision.imagePath,
-          caption: formatLiveDecisionTelegramCaption(decision),
-          format: "html",
+          text: formatLiveDecisionTelegramCaption(decision),
         });
       } catch (error) {
         log({
@@ -89,21 +84,13 @@ export function formatLiveDecisionTelegramCaption({
   period,
   targetTsMs,
   prediction,
-  openAiPrediction,
-  invertedOpenAiDirection,
   reasoning,
 }: PendingLiveDecisionNotification): string {
-  const header = `<b>${escapeHtml(asset.toUpperCase())} ${escapeHtml(
-    formatTimeWindowEt({ period, targetTsMs }),
-  )}</b>`;
+  const header = `${asset.toUpperCase()} ${formatTimeWindowEt({ period, targetTsMs })}`;
   const direction = prediction === "u" ? "UP" : "DOWN";
-  const policy =
-    invertedOpenAiDirection === true && openAiPrediction !== undefined
-      ? `\nOpenAI: ${openAiPrediction === "u" ? "UP" : "DOWN"}; trading inverse.`
-      : "";
-  const reason = escapeHtml(reasoning?.trim() ?? "No reasoning returned.");
-  const fixed = `${header}\n\n<b>${direction}</b>${policy}\n`;
-  const maxCaptionLength = 1_024;
+  const reason = reasoning?.trim() ?? "No filter summary returned.";
+  const fixed = `${header}\n\n${direction}\n`;
+  const maxCaptionLength = 2_000;
   const maxReasonLength = maxCaptionLength - fixed.length;
   return `${fixed}${truncate({ text: reason, maxLength: maxReasonLength })}`;
 }
@@ -204,13 +191,4 @@ function truncate({
     return ".".repeat(maxLength);
   }
   return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }

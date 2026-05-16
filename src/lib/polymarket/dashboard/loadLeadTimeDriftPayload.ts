@@ -1,9 +1,9 @@
+import { PRICE_PATH_ANALYSIS_END_EXCLUSIVE_MS } from "@alea/constants/analysisWindows";
 import { assetValues } from "@alea/constants/assets";
 import {
   LEAD_MINUTES_BY_PERIOD,
   LEAD_TIME_DRIFT_THRESHOLD_BPS,
 } from "@alea/constants/leadTimeDrift";
-import { PRICE_PATH_ANALYSIS_END_EXCLUSIVE_MS } from "@alea/constants/analysisWindows";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { Asset } from "@alea/types/assets";
@@ -365,7 +365,7 @@ function aggregateAcrossAssets({
   const rows: LeadTimeDriftAggregateRow[] = [];
   for (const [leadMinutes, acc] of byLead.entries()) {
     rows.push({
-      asset: "btc" as Asset,
+      asset: "btc",
       timeframe,
       leadMinutes,
       sampleCount: acc.sample,

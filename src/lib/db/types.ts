@@ -50,7 +50,7 @@ export interface MarketEventTable {
 }
 
 /**
- * One row per OpenAI chart decision made by the dry-run runner. See
+ * One row per filter decision made by the dry-run runner. See
  * migration `202605120100_create_dry_run_decisions.ts` for the
  * column-by-column rationale. `actual_close` / `won` start null
  * and get filled in once the target bar settles.
@@ -137,15 +137,52 @@ export interface DryRunDecisionAttemptTable {
   readonly up_votes: number;
   readonly down_votes: number;
   readonly abstain_votes: number;
-  readonly openai_model: string | null;
-  readonly openai_direction: string | null;
-  readonly openai_confidence: number | null;
-  readonly openai_min_confidence: number | null;
-  readonly openai_reasoning: string | null;
   readonly dry_run_decision_id: ColumnType<
     string | null,
     string | number | bigint | null,
     string | number | bigint | null
+  >;
+}
+
+export interface CandidateBacktestQuarterResultTable {
+  readonly id: Generated<string>;
+  readonly candidate_id: string;
+  readonly filter_id: string;
+  readonly filter_name: string;
+  readonly filter_version: number;
+  readonly config_canon: string;
+  readonly config_hash: string;
+  readonly config_json: unknown;
+  readonly asset: string;
+  readonly timeframe: "5m" | "15m";
+  readonly source: "pyth";
+  readonly quarter_start_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly quarter_label: string;
+  readonly window_start_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly window_end_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
+  >;
+  readonly evaluated_count: number;
+  readonly decision_count: number;
+  readonly win_count: number;
+  readonly loss_count: number;
+  readonly neutral_count: number;
+  readonly decision_schema_version: number;
+  readonly decisions: unknown;
+  readonly generated_at_ms: ColumnType<
+    string,
+    string | number | bigint,
+    string | number | bigint
   >;
 }
 
@@ -248,6 +285,7 @@ export interface Database {
   readonly proxy_accuracy_payload_cache: ProxyAccuracyPayloadCacheTable;
   readonly polymarket_resolutions: PolymarketResolutionTable;
   readonly polymarket_price_samples: PolymarketPriceSampleTable;
+  readonly candidate_backtest_quarter_results: CandidateBacktestQuarterResultTable;
 }
 
 export type DatabaseClient = Kysely<Database>;

@@ -2,8 +2,8 @@ import type { Database } from "@alea/lib/db/types";
 import { type Kysely, sql } from "kysely";
 
 /**
- * Removes the retired deterministic-filter research schema and normalizes the
- * remaining dry-run audit columns around OpenAI chart decisions.
+ * Removes the retired research schema and normalizes the remaining dry-run
+ * audit columns around filter decisions.
  */
 export async function up(db: Kysely<Database>): Promise<void> {
   await sql`

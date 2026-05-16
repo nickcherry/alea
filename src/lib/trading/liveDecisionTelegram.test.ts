@@ -6,20 +6,16 @@ import type { LiveTradingOrderLogEvent } from "@alea/lib/trading/liveOrderExecut
 import { describe, expect, it } from "bun:test";
 
 describe("live decision Telegram notifications", () => {
-  it("sends the chart only after the live order is placed", async () => {
+  it("sends the decision summary only after the live order is placed", async () => {
     const sent: {
-      readonly photoPath: string;
-      readonly caption: string | undefined;
-      readonly format: string | undefined;
+      readonly text: string;
     }[] = [];
     const notifier = createLiveDecisionTelegramNotifier({
       log: () => undefined,
       getConfig: () => ({ botToken: "token", chatId: "chat" }),
-      sendPhoto: async (params) => {
+      sendMessage: async (params) => {
         sent.push({
-          photoPath: params.photoPath,
-          caption: params.caption,
-          format: params.format,
+          text: params.text,
         });
         return { messageId: 123 };
       },
@@ -30,7 +26,6 @@ describe("live decision Telegram notifications", () => {
       period: "5m",
       targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
       prediction: "u",
-      imagePath: "/tmp/btc-5m.png",
       reasoning: "Clean close above support & no rejection.",
     });
 
@@ -41,10 +36,7 @@ describe("live decision Telegram notifications", () => {
 
     expect(sent).toEqual([
       {
-        photoPath: "/tmp/btc-5m.png",
-        format: "html",
-        caption:
-          "<b>BTC 2:15-2:20 PM ET</b>\n\n<b>UP</b>\nClean close above support &amp; no rejection.",
+        text: "BTC 2:15-2:20 PM ET\n\nUP\nClean close above support & no rejection.",
       },
     ]);
   });
@@ -54,7 +46,7 @@ describe("live decision Telegram notifications", () => {
     const notifier = createLiveDecisionTelegramNotifier({
       log: () => undefined,
       getConfig: () => ({ botToken: "token", chatId: "chat" }),
-      sendPhoto: async () => {
+      sendMessage: async () => {
         sent += 1;
         return { messageId: 123 };
       },
@@ -65,7 +57,6 @@ describe("live decision Telegram notifications", () => {
       period: "5m",
       targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
       prediction: "d",
-      imagePath: "/tmp/btc-5m.png",
       reasoning: "Rejected above range.",
     });
 
@@ -89,7 +80,6 @@ describe("live decision Telegram notifications", () => {
       period: "5m",
       targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
       prediction: "u",
-      imagePath: "/tmp/btc-5m.png",
       reasoning: "Continuation.",
     });
 
@@ -100,36 +90,16 @@ describe("live decision Telegram notifications", () => {
     ]);
   });
 
-  it("formats a compact escaped caption", () => {
+  it("formats a compact message", () => {
     expect(
       formatLiveDecisionTelegramCaption({
         asset: "eth",
         period: "15m",
         targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
         prediction: "d",
-        imagePath: "/tmp/eth-15m.png",
         reasoning: "High sweep < prior range.",
       }),
-    ).toBe(
-      "<b>ETH 2:15-2:30 PM ET</b>\n\n<b>DOWN</b>\nHigh sweep &lt; prior range.",
-    );
-  });
-
-  it("formats inverted OpenAI policy when present", () => {
-    expect(
-      formatLiveDecisionTelegramCaption({
-        asset: "eth",
-        period: "15m",
-        targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
-        prediction: "d",
-        openAiPrediction: "u",
-        invertedOpenAiDirection: true,
-        imagePath: "/tmp/eth-15m.png",
-        reasoning: "Continuation.",
-      }),
-    ).toBe(
-      "<b>ETH 2:15-2:30 PM ET</b>\n\n<b>DOWN</b>\nOpenAI: UP; trading inverse.\nContinuation.",
-    );
+    ).toBe("ETH 2:15-2:30 PM ET\n\nDOWN\nHigh sweep < prior range.");
   });
 });
 

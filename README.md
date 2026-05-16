@@ -1,10 +1,10 @@
 # Alea
 
 Alea is a Polymarket crypto up/down trading system built around
-OpenAI chart decisions. It keeps recent Pyth candles available, renders
-TradingView-style charts with technical indicators, asks OpenAI for the
-next-candle direction, and now uses the opposite side for dry-run simulation
-or live Polymarket maker orders.
+versioned filter candidates. It keeps recent Pyth candles available,
+evaluates deterministic filters against the same candle state in dry-run,
+live, and backtest modes, and places or simulates Polymarket maker orders
+when those candidates produce an actionable up/down majority.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
@@ -20,15 +20,14 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 ## How the pieces fit
 
 1. **Candles** sync and store Pyth/Coinbase OHLCV history.
-2. **Chart rendering** produces Lightweight Charts PNGs with SMA 20/50,
-   RSI-divergence annotations, and sparse sweep-rejection markers.
-3. **OpenAI prediction** reads the rendered chart and returns a
-   validated green/red next-candle direction.
-4. **Dry run / live** share the chart-decision path; dry run simulates
-   orders, live trading places real Polymarket maker orders on the inverse
-   of OpenAI's returned side.
+2. **Filters** define typed, versioned decision logic plus exact config and
+   source requirements.
+3. **Candidates** are filter+config pairs; dry run, live trading, and
+   backtests all evaluate the same candidate registry.
+4. **Dry run / live** share the filter-decision path; dry run simulates
+   orders, live trading places real Polymarket maker orders.
 5. **Dashboards** expose proxy calibration, Polymarket price paths,
-   dry-run performance, and live trading PnL.
+   candidate backtests, dry-run performance, and live trading PnL.
 
 ## Docs
 
@@ -36,6 +35,8 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 - [Coding Conventions](./doc/CODING_CONVENTIONS.md) — TypeScript and repo style.
 - [Dashboards](./doc/DASHBOARDS.md) — static dashboard build/deploy.
 - [Documentation](./doc/DOCUMENTATION.md) — doc maintenance rules.
+- [Filters](./doc/FILTERS.md) — filter and candidate interface.
+- [Backtests](./doc/BACKTESTS.md) — historical candidate evaluation.
 - [Dry Run](./doc/DRY_RUN.md) — live decision path without real orders.
 - [Latency Experiment](./doc/LATENCY_EXPERIMENT.md) — feed-latency research.
 - [Live Trading](./doc/LIVE_TRADING.md) — real Polymarket order placement.
@@ -51,7 +52,7 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 bun alea db:migrate
 bun alea candles:sync
 bun alea candles:chart --asset btc --timeframe 5m
-bun alea predict:chart tmp/charts/btc-pyth-5m.png
+bun alea backtest:run
 bun alea dry:run
 bun alea dashboards:build --deploy
 # restart any running `bun alea trading:run` after changing runtime config

@@ -27,12 +27,12 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run` or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
   `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG with SMA 20/50 overlays, RSI-divergence markers, and sparse sweep-rejection markers. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
-- `predict:*`
-  `predict:chart` — sends a rendered chart image to OpenAI's Responses API for a Zod-validated next-candle green/red prediction. Requires `OPENAI_API_KEY`.
+- `backtest:*`
+  `backtest:run` — evaluates every registered filter candidate against stored Pyth candles, using 1m bars to synthesize the pre-open active candle and persisting quarterly results to `candidate_backtest_quarter_results`. See [BACKTESTS.md](./BACKTESTS.md).
 - `dry:*`
-  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, renders a chart with the price line/top info hidden, asks OpenAI for a next-candle prediction, persists the inverse of every returned green/red prediction to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
+  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, evaluates the registered filter candidates, persists actionable up/down majorities to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `dashboards:*`
-  `dashboards:build` — generates the static `/`, `/proxy/`, `/price-paths/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
+  `dashboards:build` — generates the static `/`, `/backtest/`, `/proxy/`, `/price-paths/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`
@@ -51,7 +51,7 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `polymarket:price-sample` — long-running sampler that records compact live 5m/15m Polymarket UP price paths into `polymarket_price_samples`, feeding the `/price-paths/` dashboard's 50c calibration views.
   `polymarket:resolutions-sync` — backfills settled Polymarket up/down crypto market outcomes into `polymarket_resolutions`. Pair with Pyth candles to drive the proxy-accuracy dashboard. See [PROXY.md](./PROXY.md).
 - `trading:*`
-  `trading:run` — long-running live trader. Uses the same inverse OpenAI chart-decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders on the opposite side of every returned green/red prediction. Defaults to the BTC/ETH/SOL/DOGE `5m` + `15m` market set; use `--assets` / `--periods` to override within the currently enabled trading assets. See [LIVE_TRADING.md](./LIVE_TRADING.md).
+  `trading:run` — long-running live trader. Uses the same filter-decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders after actionable up/down majorities. Defaults to the BTC/ETH/SOL/DOGE `5m` + `15m` market set; use `--assets` / `--periods` to override within the currently enabled trading assets. See [LIVE_TRADING.md](./LIVE_TRADING.md).
   `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
   `trading:performance` — print the latest lifetime PnL summary scanned from Polymarket data-api.
 - `help`
@@ -66,9 +66,10 @@ PNG without depending on local candle sync state. The command fetches
 directly from the requested source/product/asset/timeframe and renders
 the image with TradingView Lightweight Charts through local Chrome.
 
-Recent-window mode is the default. Trading timeframes use the same
-history window sent to OpenAI: `5m` charts render the most recent 2 days
-of completed candles, and `15m` charts render the most recent 4 days.
+Recent-window mode is the default. Trading timeframes use the same visual
+history window used by operator chart review: `5m` charts render the most
+recent 2 days of completed candles, and `15m` charts render the most recent
+4 days. Use `--bars` only when you need to override that default:
 Use `--bars` only when you need to override that default:
 
 ```sh
@@ -91,11 +92,11 @@ bun alea candles:chart --asset btc --timeframe 5m \
   --out tmp/charts/btc-pyth-5m.png
 ```
 
-By default, chart images include the indicator bundle used by OpenAI:
-`SMA 20`, `SMA 50`, RSI-divergence markers (`Bull div`, `H bull`,
-`Bear div`, `H bear`), and sparse sweep-rejection markers (`High sweep`,
-`Low sweep`). Use `--no-indicators` for a plain candlestick + volume
-chart.
+By default, chart images include the same indicator families available to
+filters and operator review: `SMA 20`, `SMA 50`, RSI-divergence markers
+(`Bull div`, `H bull`, `Bear div`, `H bear`), and sparse sweep-rejection
+markers (`High sweep`, `Low sweep`). Use `--no-indicators` for a plain
+candlestick + volume chart.
 
 For visual replay, use `--no-price-line` to hide the latest
 price horizontal line and right-edge last-value label, and use
@@ -115,21 +116,6 @@ pane is omitted; pass `--source coinbase` when you want Coinbase trade
 volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
 change the market, and `--browser-path` or `ALEA_CHART_BROWSER_PATH` if
 Chrome is installed outside the standard macOS/Linux paths.
-
-Use `predict:chart` to predict the next candle from an already-rendered
-chart image. The command sends the image through the OpenAI Responses API,
-requires the model to return `{ direction, reasoning }`, and validates
-that response with Zod before printing it. It defaults to
-`OPENAI_CHART_MODEL` or `gpt-5.4`.
-Each request appends a JSONL audit row to
-`OPENAI_CHART_PROMPT_LOG_PATH`, defaulting to
-`tmp/openai-chart-prompts.jsonl`.
-
-```sh
-bun alea predict:chart tmp/charts/btc-pyth-5m.png
-```
-
-Set `OPENAI_API_KEY` in the environment before running it.
 
 ## Adding A Command
 

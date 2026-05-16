@@ -2,10 +2,10 @@
  * Dry-run execution simulation knobs. These are deliberately separate
  * from the shared trade-decision constants: dry/live must agree on
  * when a signal is actionable, while dry-run has extra assumptions
- * about the simulated order sent after an OpenAI chart decision.
+ * about the simulated order sent after a filter decision.
  */
 
-/** Delay after the chart decision before simulating order placement. */
+/** Delay after the filter decision before simulating order placement. */
 export const DRY_RUN_ORDER_PLACEMENT_DELAY_MS = 0;
 
 /** Maximum distance from 50c, in cents, where the simulated order is allowed. */

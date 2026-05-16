@@ -30,16 +30,13 @@ export function liveTradingLogEventToTelemetry(
         targetTsMs: event.tsMs,
         targetAt: new Date(event.tsMs).toISOString(),
         prediction: event.prediction,
-        openAiDirection: event.openAiDirection,
-        openAiPrediction: event.openAiPrediction,
-        invertedOpenAiDirection: event.invertedOpenAiDirection,
+        decision: event.decision,
         synthClose: event.synthClose,
         priceAgeMs: event.priceAgeMs,
         decisionSourceCount: event.sourceCount,
         upVotes: event.up,
         downVotes: event.down,
         abstainVotes: event.abstain,
-        model: event.model,
         reasoning: event.reasoning,
       };
     case "live-market":

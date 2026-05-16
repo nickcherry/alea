@@ -52,13 +52,13 @@ const RECENT_TABLE_LIMIT = 50;
 const DRY_RUN_TIPS = {
   asset: "Crypto symbol (BTC / ETH / SOL / XRP / DOGE).",
   calls:
-    "Number of dry-run decisions in this bucket — every returned OpenAI green/red call.",
+    "Number of dry-run decisions in this bucket — every actionable filter-majority call.",
   winRate:
     "Share of scored calls that closed in the predicted direction. Ambiguous (exactly-flat) calls are excluded from the denominator.",
   upDown: "Up-calls vs down-calls split.",
   time: "Decision timestamp (UTC) — when the predictor evaluated the next bar.",
   prediction:
-    "Direction predicted by OpenAI: up or down. Drives which side of the Polymarket pair would be bought.",
+    "Direction selected by the filter candidates: up or down. Drives which side of the Polymarket pair would be bought.",
   actualOpen:
     "Resolved target-bar open from Pyth. Pending or legacy rows fall back to the decision-time synthetic open.",
   actualClose:
@@ -143,8 +143,7 @@ export function renderDryRunHtml({
                 {
                   label: "Hydrated Bars",
                   value: formatPeriodCounts({
-                    countsByPeriod:
-                      payload.decisionConfig.hydratedBarsByPeriod,
+                    countsByPeriod: payload.decisionConfig.hydratedBarsByPeriod,
                     periods: payload.decisionConfig.supportedPeriods,
                   }),
                   tip: "Per-asset history loaded at startup for chart rendering.",
@@ -169,7 +168,7 @@ export function renderDryRunHtml({
                 {
                   label: "Placement Delay",
                   value: `${(payload.decisionConfig.orderPlacementDelayMs / 1000).toLocaleString()}s`,
-                  tip: "Wait after the OpenAI decision before placing the simulated order.",
+                  tip: "Wait after the filter decision before placing the simulated order.",
                 },
                 {
                   label: "Limit Price",
@@ -549,8 +548,8 @@ function renderConfigItem(item: ConfigItem): string {
 }
 
 function formatDecisionSource({ value }: { readonly value: string }): string {
-  if (value === "openai_chart") {
-    return "OpenAI chart";
+  if (value === "candidate_filters") {
+    return "Candidate filters";
   }
   return value.replaceAll("_", " ");
 }

@@ -6,10 +6,11 @@ import {
   DRY_RUN_ORDER_PRICE_WINDOW_CENTS,
 } from "@alea/constants/dryRun";
 import {
+  TRADE_DECISION_DECISION_SOURCE,
   TRADE_DECISION_PRIMARY_PERIOD,
   TRADE_DECISION_SUPPORTED_PERIODS,
-  tradeDecisionLeadTimeMs,
   tradeDecisionHydrateBars,
+  tradeDecisionLeadTimeMs,
 } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import type {
@@ -120,7 +121,7 @@ export async function loadDryRunPayload({
           tradeDecisionLeadTimeMs({ period }),
         ]),
       ),
-      decisionSource: "openai_chart",
+      decisionSource: TRADE_DECISION_DECISION_SOURCE,
       hydratedBarsByPeriod: Object.fromEntries(
         TRADE_DECISION_SUPPORTED_PERIODS.map((period) => [
           period,

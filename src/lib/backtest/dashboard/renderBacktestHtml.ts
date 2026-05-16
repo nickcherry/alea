@@ -1,0 +1,176 @@
+import type {
+  BacktestDashboardCandidateRow,
+  BacktestDashboardPayload,
+} from "@alea/lib/backtest/dashboard/types";
+import {
+  aleaBrandMark,
+  aleaChartTokens,
+  aleaDesignSystemHead,
+} from "@alea/lib/ui/aleaDesignSystem";
+import {
+  escapeHtml,
+  escapeJsonForHtml,
+  formatDateTime,
+  formatPercent,
+  infoTip,
+  winRateToneClass,
+} from "@alea/lib/ui/aleaFormat";
+import { renderTopNav } from "@alea/lib/ui/topNav";
+
+const TABLE_LIMIT = 80;
+
+export function renderBacktestHtml({
+  payload,
+  assets,
+}: {
+  readonly payload: BacktestDashboardPayload;
+  readonly assets: {
+    readonly stylesheets: readonly string[];
+    readonly scripts: readonly string[];
+  };
+}): string {
+  const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
+  const chartTokensJson = escapeJsonForHtml({
+    value: JSON.stringify(aleaChartTokens),
+  });
+  const initialPeriod = payload.defaultPeriod;
+  const initialSlice =
+    payload.byPeriod[initialPeriod] ??
+    payload.byPeriod[payload.supportedPeriods[0] ?? "5m"]!;
+  return `<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alea &middot; Backtest</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js" charset="utf-8"></script>
+  ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
+</head>
+<body>
+  <div class="alea-shell">
+    <header class="alea-header">
+      <div class="alea-brand-row">${aleaBrandMark()}</div>
+      <h1 class="alea-title">Backtest</h1>
+      <p class="alea-subtitle">generated ${formatDateTime({ ms: payload.generatedAtMs })}</p>
+    </header>
+    ${renderTopNav({ activeId: "backtest" })}
+    <main class="alea-main">
+      <div class="alea-page-controls">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          ${payload.supportedPeriods
+            .map(
+              (period) =>
+                `<button class="alea-pill-tab is-prominent backtest-period-tab" role="tab" data-period="${escapeHtml({ value: period })}" aria-selected="${period === initialPeriod ? "true" : "false"}">${escapeHtml({ value: period })}</button>`,
+            )
+            .join("\n          ")}
+        </div>
+      </div>
+
+      <section class="backtest-section">
+        <div class="alea-section-rule"><h2>Quarterly Win Rate</h2></div>
+        <div class="backtest-chart-frame">
+          <div id="backtest-chart" class="backtest-chart-host"></div>
+          <div id="backtest-chart-empty" class="backtest-empty"${initialSlice.rows.length === 0 ? "" : ' style="display:none"'}>
+            No backtest rows yet. Run <span class="alea-mono">bun alea backtest:run</span>.
+          </div>
+          <div id="backtest-tooltip" class="alea-tooltip"></div>
+        </div>
+      </section>
+
+      <section class="backtest-section">
+        <div class="alea-section-rule"><h2>Candidates</h2></div>
+        <p class="backtest-meta" id="backtest-meta">${candidateMeta({ shown: Math.min(TABLE_LIMIT, initialSlice.rows.length), total: initialSlice.rows.length })}</p>
+        <div class="alea-table-wrap">
+          <table class="alea-table backtest-table">
+            <thead id="backtest-head">
+              ${renderTableHead({ quarters: initialSlice.quarters })}
+            </thead>
+            <tbody id="backtest-body">
+              ${renderRows({ rows: initialSlice.rows, quarters: initialSlice.quarters })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script id="backtest-payload" type="application/json">${payloadJson}</script>
+  <script id="backtest-tokens" type="application/json">${chartTokensJson}</script>
+  ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
+</body>
+</html>`;
+}
+
+function renderTableHead({
+  quarters,
+}: {
+  readonly quarters: readonly string[];
+}): string {
+  return `<tr>
+    <th>Candidate${infoTip({ text: "Filter plus exact config. Rows are sorted by overall win rate for the active period." })}</th>
+    <th class="num-col">WR${infoTip({ text: "Overall wins divided by non-neutral decisions across all traded assets." })}</th>
+    <th class="num-col">Decisions${infoTip({ text: "Non-neutral historical decisions stored in the quarterly blobs." })}</th>
+    <th class="num-col">Assets</th>
+    ${quarters.map((quarter) => `<th class="num-col quarter-col">${escapeHtml({ value: quarter })}</th>`).join("")}
+  </tr>`;
+}
+
+function renderRows({
+  rows,
+  quarters,
+}: {
+  readonly rows: readonly BacktestDashboardCandidateRow[];
+  readonly quarters: readonly string[];
+}): string {
+  const shown = rows.slice(0, TABLE_LIMIT);
+  if (shown.length === 0) {
+    return `<tr><td colspan="${4 + quarters.length}"><span class="alea-muted">No backtest rows yet.</span></td></tr>`;
+  }
+  return shown
+    .map((row) => {
+      const wr =
+        row.winRate === null
+          ? '<span class="alea-muted">—</span>'
+          : formatPercent({ value: row.winRate });
+      const quarterByLabel = new Map(row.quarters.map((q) => [q.label, q]));
+      return `<tr>
+        <td>
+          <div class="backtest-candidate-name">${escapeHtml({ value: row.filterName })} <span class="alea-muted">v${row.filterVersion}</span></div>
+          <div class="backtest-candidate-config">${escapeHtml({ value: formatConfig(row.config) })}</div>
+        </td>
+        <td class="num-col alea-mono${winRateToneClass({ value: row.winRate })}">${wr}</td>
+        <td class="num-col alea-mono">${row.decisionCount.toLocaleString()}</td>
+        <td class="num-col alea-mono">${row.assetCount.toLocaleString()}</td>
+        ${quarters
+          .map((quarter) => renderQuarterCell(quarterByLabel.get(quarter)))
+          .join("")}
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderQuarterCell(
+  cell: BacktestDashboardCandidateRow["quarters"][number] | undefined,
+): string {
+  if (cell === undefined || cell.winRate === null) {
+    return '<td class="num-col alea-muted">—</td>';
+  }
+  return `<td class="num-col alea-mono${winRateToneClass({ value: cell.winRate })}">${formatPercent({ value: cell.winRate })}<span class="backtest-cell-count">${cell.decisionCount.toLocaleString()}</span></td>`;
+}
+
+function formatConfig(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
+function candidateMeta({
+  shown,
+  total,
+}: {
+  readonly shown: number;
+  readonly total: number;
+}): string {
+  return `showing ${shown.toLocaleString()} of ${total.toLocaleString()}`;
+}
