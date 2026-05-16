@@ -29,6 +29,20 @@
     });
   }
 
+  function formatTradeTime(ms) {
+    if (!(ms > 0)) {
+      return "Open position";
+    }
+    return new Date(ms).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  }
+
   function buildSeries() {
     const points = payload.chart;
     if (points.length === 0) {
@@ -111,9 +125,7 @@
                 tooltip.classList.remove("visible");
                 return;
               }
-              const head = point.orderedAtMs > 0
-                ? new Date(point.orderedAtMs).toLocaleDateString()
-                : 'Open position';
+              const head = formatTradeTime(point.orderedAtMs);
               tooltip.innerHTML =
                 '<div class="alea-tooltip-head">' + head + '</div>' +
                 '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + ' · ' + point.title + '</span></div>' +

@@ -25,7 +25,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
     expect(request.userOrder).toEqual({
       tokenID: "DOWN",
       price: 0.497,
-      size: 40.2414,
+      size: 100.6036,
       side: Side.BUY,
       expiration: 2100,
     });
@@ -42,7 +42,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
     });
 
     expect(request.userOrder.tokenID).toBe("UP");
-    expect(request.userOrder.size).toBe(40);
+    expect(request.userOrder.size).toBe(100);
     expect(request.userOrder.expiration).toBe(2700);
     expect(request.options).toEqual({ tickSize: "0.01", negRisk: false });
   });

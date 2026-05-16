@@ -13,7 +13,7 @@ export const WINNING_YES_PAYOUT_USD = 1;
 export const MAKER_FEE_RATE = 0;
 
 /** Per-trade stake in USD. */
-export const STAKE_USD = 20;
+export const STAKE_USD = 50;
 
 /** How early live trading starts resolving and subscribing next markets. */
 export const LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS = 15 * 60 * 1000;
