@@ -22,9 +22,9 @@
 .chart-host {
   position: relative;
   width: 100%;
-  height: clamp(450px, 52vh, 560px);
-  min-height: 450px;
-  max-height: 560px;
+  height: clamp(560px, 65vh, 720px);
+  min-height: 560px;
+  max-height: 720px;
 }
 .chart-empty {
   position: absolute;
@@ -142,5 +142,5 @@
 
 @media (max-width: 680px) {
   .alea-metric-value { font-size: 25px; }
-  .chart-host { height: 360px; min-height: 360px; max-height: 360px; }
+  .chart-host { height: 430px; min-height: 430px; max-height: 430px; }
 }
