@@ -17,7 +17,6 @@
 
   var head = document.getElementById("backtest-head");
   var body = document.getElementById("backtest-body");
-  var meta = document.getElementById("backtest-meta");
   var host = document.getElementById("backtest-chart");
   var empty = document.getElementById("backtest-chart-empty");
   var tooltip = document.getElementById("backtest-tooltip");
@@ -57,22 +56,15 @@
     var rows = slice.rows || [];
     head.innerHTML = renderHead(quarters);
     body.innerHTML = renderRows(rows, quarters);
-    if (meta) {
-      meta.textContent =
-        "showing " +
-        Math.min(TABLE_LIMIT, rows.length).toLocaleString() +
-        " of " +
-        rows.length.toLocaleString();
-    }
   }
 
   function renderHead(quarters) {
     return (
       "<tr>" +
-      "<th>Candidate</th>" +
+      "<th>Filter</th>" +
+      "<th>Config</th>" +
       '<th class="num-col">WR</th>' +
       '<th class="num-col">Decisions</th>' +
-      '<th class="num-col">Assets</th>' +
       quarters
         .map(function (q) {
           return '<th class="num-col quarter-col">' + escapeHtml(q) + "</th>";
@@ -104,12 +96,14 @@
         return (
           "<tr>" +
           "<td>" +
-          '<div class="backtest-candidate-name">' +
+          '<div class="backtest-filter-name">' +
           escapeHtml(row.filterName) +
           ' <span class="alea-muted">v' +
           Number(row.filterVersion).toLocaleString() +
           "</span></div>" +
-          '<div class="backtest-candidate-config">' +
+          "</td>" +
+          '<td class="backtest-config-cell">' +
+          '<div class="backtest-config">' +
           escapeHtml(JSON.stringify(row.config || {})) +
           "</div>" +
           "</td>" +
@@ -120,9 +114,6 @@
           "</td>" +
           '<td class="num-col alea-mono">' +
           Number(row.decisionCount).toLocaleString() +
-          "</td>" +
-          '<td class="num-col alea-mono">' +
-          Number(row.assetCount).toLocaleString() +
           "</td>" +
           quarters
             .map(function (q) {
@@ -202,9 +193,14 @@
           {
             stroke: tokens.muted,
             grid: { stroke: tokens.grid },
+            splits: function () {
+              return xs;
+            },
             values: function (_u, vals) {
               return vals.map(function (v) {
-                return quarters[Math.max(0, Math.round(v) - 1)] || "";
+                var idx = Math.round(v) - 1;
+                if (idx < 0 || idx >= quarters.length) return "";
+                return quarters[idx] || "";
               });
             },
           },

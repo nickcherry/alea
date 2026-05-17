@@ -27,11 +27,9 @@
   letter-spacing: 0.04em;
 }
 
-.backtest-meta {
-  margin: -4px 0 12px;
-  color: var(--alea-text-subtle);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
+.backtest-table thead th,
+.backtest-table tbody td {
+  vertical-align: top;
 }
 
 .backtest-table .num-col {
@@ -43,14 +41,17 @@
   min-width: 92px;
 }
 
-.backtest-candidate-name {
+.backtest-filter-name {
   color: var(--alea-text);
   font-weight: 650;
+  white-space: nowrap;
 }
 
-.backtest-candidate-config {
-  margin-top: 3px;
-  max-width: 520px;
+.backtest-config-cell {
+  max-width: 420px;
+}
+
+.backtest-config {
   color: var(--alea-text-muted);
   font-family: var(--alea-font-mono);
   font-size: 11px;
@@ -61,6 +62,7 @@
 
 .backtest-cell-count {
   display: block;
+  margin-top: 2px;
   color: var(--alea-text-subtle);
   font-size: 10.5px;
   line-height: 1.2;

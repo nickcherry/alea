@@ -80,7 +80,6 @@ export function renderBacktestHtml({
 
       <section class="backtest-section">
         <div class="alea-section-rule"><h2>Candidates</h2></div>
-        <p class="backtest-meta" id="backtest-meta">${candidateMeta({ shown: Math.min(TABLE_LIMIT, initialSlice.rows.length), total: initialSlice.rows.length })}</p>
         <div class="alea-table-wrap">
           <table class="alea-table backtest-table">
             <thead id="backtest-head">
@@ -107,10 +106,10 @@ function renderTableHead({
   readonly quarters: readonly string[];
 }): string {
   return `<tr>
-    <th>Candidate${infoTip({ text: "Filter plus exact config. Rows are sorted by overall win rate for the active period." })}</th>
+    <th>Filter${infoTip({ text: "Filter name and version. Rows are sorted by overall win rate for the active period." })}</th>
+    <th>Config${infoTip({ text: "Exact configuration values evaluated for this candidate." })}</th>
     <th class="num-col">WR${infoTip({ text: "Overall wins divided by non-neutral decisions across all traded assets." })}</th>
     <th class="num-col">Decisions${infoTip({ text: "Non-neutral historical decisions stored in the quarterly blobs." })}</th>
-    <th class="num-col">Assets</th>
     ${quarters.map((quarter) => `<th class="num-col quarter-col">${escapeHtml({ value: quarter })}</th>`).join("")}
   </tr>`;
 }
@@ -135,12 +134,13 @@ function renderRows({
       const quarterByLabel = new Map(row.quarters.map((q) => [q.label, q]));
       return `<tr>
         <td>
-          <div class="backtest-candidate-name">${escapeHtml({ value: row.filterName })} <span class="alea-muted">v${row.filterVersion}</span></div>
-          <div class="backtest-candidate-config">${escapeHtml({ value: formatConfig(row.config) })}</div>
+          <div class="backtest-filter-name">${escapeHtml({ value: row.filterName })} <span class="alea-muted">v${row.filterVersion}</span></div>
+        </td>
+        <td class="backtest-config-cell">
+          <div class="backtest-config">${escapeHtml({ value: formatConfig(row.config) })}</div>
         </td>
         <td class="num-col alea-mono${winRateToneClass({ value: row.winRate })}">${wr}</td>
         <td class="num-col alea-mono">${row.decisionCount.toLocaleString()}</td>
-        <td class="num-col alea-mono">${row.assetCount.toLocaleString()}</td>
         ${quarters
           .map((quarter) => renderQuarterCell(quarterByLabel.get(quarter)))
           .join("")}
@@ -163,14 +163,4 @@ function formatConfig(value: unknown): string {
     return String(value);
   }
   return JSON.stringify(value);
-}
-
-function candidateMeta({
-  shown,
-  total,
-}: {
-  readonly shown: number;
-  readonly total: number;
-}): string {
-  return `showing ${shown.toLocaleString()} of ${total.toLocaleString()}`;
 }
