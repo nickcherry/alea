@@ -32,6 +32,11 @@
   vertical-align: top;
 }
 
+.backtest-table tbody td:first-child,
+.backtest-table tbody td.backtest-config-cell {
+  text-align: left;
+}
+
 .backtest-table .num-col {
   text-align: right;
   white-space: nowrap;
