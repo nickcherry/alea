@@ -1,0 +1,6984 @@
+{
+  "generatedAt": "2026-05-17T19:07:55.267Z",
+  "market": "15m/sol",
+  "base": {
+    "lookback": 24,
+    "minBreakBps": 5,
+    "closeLocation": 0.65,
+    "maxPrior24Bps": 100,
+    "minRangeAtrFraction": 0.9
+  },
+  "runtimeMs": 1764,
+  "baseEvents": {
+    "key": "base",
+    "decisions": 1016,
+    "wins": 595,
+    "losses": 421,
+    "winRate": 58.56,
+    "quarterCount": 6,
+    "positiveQuarters": 6,
+    "minQuarterWinRate": 54.27,
+    "quarters": [
+      {
+        "quarter": "2025 Q1",
+        "decisions": 143,
+        "wins": 84,
+        "losses": 59,
+        "winRate": 58.74
+      },
+      {
+        "quarter": "2025 Q2",
+        "decisions": 168,
+        "wins": 98,
+        "losses": 70,
+        "winRate": 58.33
+      },
+      {
+        "quarter": "2025 Q3",
+        "decisions": 197,
+        "wins": 110,
+        "losses": 87,
+        "winRate": 55.84
+      },
+      {
+        "quarter": "2025 Q4",
+        "decisions": 199,
+        "wins": 108,
+        "losses": 91,
+        "winRate": 54.27
+      },
+      {
+        "quarter": "2026 Q1",
+        "decisions": 190,
+        "wins": 125,
+        "losses": 65,
+        "winRate": 65.79
+      },
+      {
+        "quarter": "2026 Q2",
+        "decisions": 119,
+        "wins": 70,
+        "losses": 49,
+        "winRate": 58.82
+      }
+    ]
+  },
+  "top500": [
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 560,
+      "wins": 339,
+      "losses": 221,
+      "winRate": 60.54,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 78,
+          "wins": 52,
+          "losses": 26,
+          "winRate": 66.67
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 92,
+          "wins": 58,
+          "losses": 34,
+          "winRate": 63.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 77,
+          "losses": 51,
+          "winRate": 60.16
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 98,
+          "wins": 61,
+          "losses": 37,
+          "winRate": 62.24
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 38,
+          "losses": 22,
+          "winRate": 63.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 560,
+      "wins": 339,
+      "losses": 221,
+      "winRate": 60.54,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 78,
+          "wins": 52,
+          "losses": 26,
+          "winRate": 66.67
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 92,
+          "wins": 58,
+          "losses": 34,
+          "winRate": 63.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 77,
+          "losses": 51,
+          "winRate": 60.16
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 98,
+          "wins": 61,
+          "losses": 37,
+          "winRate": 62.24
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 38,
+          "losses": 22,
+          "winRate": 63.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 560,
+      "wins": 339,
+      "losses": 221,
+      "winRate": 60.54,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 78,
+          "wins": 52,
+          "losses": 26,
+          "winRate": 66.67
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 92,
+          "wins": 58,
+          "losses": 34,
+          "winRate": 63.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 77,
+          "losses": 51,
+          "winRate": 60.16
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 98,
+          "wins": 61,
+          "losses": 37,
+          "winRate": 62.24
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 38,
+          "losses": 22,
+          "winRate": 63.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 560,
+      "wins": 339,
+      "losses": 221,
+      "winRate": 60.54,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 78,
+          "wins": 52,
+          "losses": 26,
+          "winRate": 66.67
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 92,
+          "wins": 58,
+          "losses": 34,
+          "winRate": 63.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 77,
+          "losses": 51,
+          "winRate": 60.16
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 98,
+          "wins": 61,
+          "losses": 37,
+          "winRate": 62.24
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 38,
+          "losses": 22,
+          "winRate": 63.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 544,
+      "wins": 329,
+      "losses": 215,
+      "winRate": 60.48,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.51,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 76,
+          "wins": 50,
+          "losses": 26,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 123,
+          "wins": 75,
+          "losses": 48,
+          "winRate": 60.98
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 99,
+          "wins": 50,
+          "losses": 49,
+          "winRate": 50.51
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 97,
+          "wins": 61,
+          "losses": 36,
+          "winRate": 62.89
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 58,
+          "wins": 36,
+          "losses": 22,
+          "winRate": 62.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 544,
+      "wins": 329,
+      "losses": 215,
+      "winRate": 60.48,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.51,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 76,
+          "wins": 50,
+          "losses": 26,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 123,
+          "wins": 75,
+          "losses": 48,
+          "winRate": 60.98
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 99,
+          "wins": 50,
+          "losses": 49,
+          "winRate": 50.51
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 97,
+          "wins": 61,
+          "losses": 36,
+          "winRate": 62.89
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 58,
+          "wins": 36,
+          "losses": 22,
+          "winRate": 62.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 523,
+      "wins": 316,
+      "losses": 207,
+      "winRate": 60.42,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.52,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 75,
+          "wins": 49,
+          "losses": 26,
+          "winRate": 65.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 90,
+          "wins": 57,
+          "losses": 33,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 119,
+          "wins": 72,
+          "losses": 47,
+          "winRate": 60.5
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 97,
+          "wins": 49,
+          "losses": 48,
+          "winRate": 50.52
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 89,
+          "wins": 56,
+          "losses": 33,
+          "winRate": 62.92
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 53,
+          "wins": 33,
+          "losses": 20,
+          "winRate": 62.26
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 523,
+      "wins": 316,
+      "losses": 207,
+      "winRate": 60.42,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.52,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 75,
+          "wins": 49,
+          "losses": 26,
+          "winRate": 65.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 90,
+          "wins": 57,
+          "losses": 33,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 119,
+          "wins": 72,
+          "losses": 47,
+          "winRate": 60.5
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 97,
+          "wins": 49,
+          "losses": 48,
+          "winRate": 50.52
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 89,
+          "wins": 56,
+          "losses": 33,
+          "winRate": 62.92
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 53,
+          "wins": 33,
+          "losses": 20,
+          "winRate": 62.26
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 538,
+      "wins": 325,
+      "losses": 213,
+      "winRate": 60.41,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.98,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 77,
+          "wins": 51,
+          "losses": 26,
+          "winRate": 66.23
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 124,
+          "wins": 74,
+          "losses": 50,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 102,
+          "wins": 52,
+          "losses": 50,
+          "winRate": 50.98
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 54,
+          "wins": 34,
+          "losses": 20,
+          "winRate": 62.96
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 538,
+      "wins": 325,
+      "losses": 213,
+      "winRate": 60.41,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.98,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 77,
+          "wins": 51,
+          "losses": 26,
+          "winRate": 66.23
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 124,
+          "wins": 74,
+          "losses": 50,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 102,
+          "wins": 52,
+          "losses": 50,
+          "winRate": 50.98
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 54,
+          "wins": 34,
+          "losses": 20,
+          "winRate": 62.96
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=1",
+      "decisions": 538,
+      "wins": 325,
+      "losses": 213,
+      "winRate": 60.41,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.98,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 77,
+          "wins": 51,
+          "losses": 26,
+          "winRate": 66.23
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 124,
+          "wins": 74,
+          "losses": 50,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 102,
+          "wins": 52,
+          "losses": 50,
+          "winRate": 50.98
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 54,
+          "wins": 34,
+          "losses": 20,
+          "winRate": 62.96
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=1",
+      "decisions": 538,
+      "wins": 325,
+      "losses": 213,
+      "winRate": 60.41,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.98,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 77,
+          "wins": 51,
+          "losses": 26,
+          "winRate": 66.23
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 124,
+          "wins": 74,
+          "losses": 50,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 102,
+          "wins": 52,
+          "losses": 50,
+          "winRate": 50.98
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 54,
+          "wins": 34,
+          "losses": 20,
+          "winRate": 62.96
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=1",
+      "decisions": 519,
+      "wins": 311,
+      "losses": 208,
+      "winRate": 59.92,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 66,
+          "wins": 42,
+          "losses": 24,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 45,
+          "losses": 28,
+          "winRate": 61.64
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 65,
+          "losses": 46,
+          "winRate": 58.56
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 107,
+          "wins": 70,
+          "losses": 37,
+          "winRate": 65.42
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 58,
+          "wins": 36,
+          "losses": 22,
+          "winRate": 62.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=1",
+      "decisions": 519,
+      "wins": 311,
+      "losses": 208,
+      "winRate": 59.92,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 66,
+          "wins": 42,
+          "losses": 24,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 45,
+          "losses": 28,
+          "winRate": 61.64
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 65,
+          "losses": 46,
+          "winRate": 58.56
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 53,
+          "losses": 51,
+          "winRate": 50.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 107,
+          "wins": 70,
+          "losses": 37,
+          "winRate": 65.42
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 58,
+          "wins": 36,
+          "losses": 22,
+          "winRate": 62.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 563,
+      "wins": 337,
+      "losses": 226,
+      "winRate": 59.86,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.76,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 83,
+          "wins": 51,
+          "losses": 32,
+          "winRate": 61.45
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 93,
+          "wins": 53,
+          "losses": 40,
+          "winRate": 56.99
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 119,
+          "wins": 69,
+          "losses": 50,
+          "winRate": 57.98
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 86,
+          "wins": 55,
+          "losses": 31,
+          "winRate": 63.95
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 71,
+          "wins": 46,
+          "losses": 25,
+          "winRate": 64.79
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 563,
+      "wins": 337,
+      "losses": 226,
+      "winRate": 59.86,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.76,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 83,
+          "wins": 51,
+          "losses": 32,
+          "winRate": 61.45
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 93,
+          "wins": 53,
+          "losses": 40,
+          "winRate": 56.99
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 119,
+          "wins": 69,
+          "losses": 50,
+          "winRate": 57.98
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 86,
+          "wins": 55,
+          "losses": 31,
+          "winRate": 63.95
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 71,
+          "wins": 46,
+          "losses": 25,
+          "winRate": 64.79
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 580,
+      "wins": 347,
+      "losses": 233,
+      "winRate": 59.83,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.38,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 84,
+          "wins": 52,
+          "losses": 32,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 94,
+          "wins": 53,
+          "losses": 41,
+          "winRate": 56.38
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 122,
+          "wins": 72,
+          "losses": 50,
+          "winRate": 59.02
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 113,
+          "wins": 64,
+          "losses": 49,
+          "winRate": 56.64
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 94,
+          "wins": 60,
+          "losses": 34,
+          "winRate": 63.83
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 73,
+          "wins": 46,
+          "losses": 27,
+          "winRate": 63.01
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 580,
+      "wins": 347,
+      "losses": 233,
+      "winRate": 59.83,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.38,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 84,
+          "wins": 52,
+          "losses": 32,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 94,
+          "wins": 53,
+          "losses": 41,
+          "winRate": 56.38
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 122,
+          "wins": 72,
+          "losses": 50,
+          "winRate": 59.02
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 113,
+          "wins": 64,
+          "losses": 49,
+          "winRate": 56.64
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 94,
+          "wins": 60,
+          "losses": 34,
+          "winRate": 63.83
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 73,
+          "wins": 46,
+          "losses": 27,
+          "winRate": 63.01
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 706,
+      "wins": 422,
+      "losses": 284,
+      "winRate": 59.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.88,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 152,
+          "wins": 89,
+          "losses": 63,
+          "winRate": 58.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 136,
+          "wins": 76,
+          "losses": 60,
+          "winRate": 55.88
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 119,
+          "wins": 77,
+          "losses": 42,
+          "winRate": 64.71
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 88,
+          "wins": 54,
+          "losses": 34,
+          "winRate": 61.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 706,
+      "wins": 422,
+      "losses": 284,
+      "winRate": 59.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.88,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 152,
+          "wins": 89,
+          "losses": 63,
+          "winRate": 58.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 136,
+          "wins": 76,
+          "losses": 60,
+          "winRate": 55.88
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 119,
+          "wins": 77,
+          "losses": 42,
+          "winRate": 64.71
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 88,
+          "wins": 54,
+          "losses": 34,
+          "winRate": 61.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 706,
+      "wins": 422,
+      "losses": 284,
+      "winRate": 59.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.88,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 152,
+          "wins": 89,
+          "losses": 63,
+          "winRate": 58.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 136,
+          "wins": 76,
+          "losses": 60,
+          "winRate": 55.88
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 119,
+          "wins": 77,
+          "losses": 42,
+          "winRate": 64.71
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 88,
+          "wins": 54,
+          "losses": 34,
+          "winRate": 61.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 706,
+      "wins": 422,
+      "losses": 284,
+      "winRate": 59.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.88,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 152,
+          "wins": 89,
+          "losses": 63,
+          "winRate": 58.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 136,
+          "wins": 76,
+          "losses": 60,
+          "winRate": 55.88
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 119,
+          "wins": 77,
+          "losses": 42,
+          "winRate": 64.71
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 88,
+          "wins": 54,
+          "losses": 34,
+          "winRate": 61.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 539,
+      "wins": 322,
+      "losses": 217,
+      "winRate": 59.74,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 64,
+          "wins": 38,
+          "losses": 26,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 75,
+          "wins": 42,
+          "losses": 33,
+          "winRate": 56
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 67,
+          "losses": 44,
+          "winRate": 60.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 101,
+          "wins": 65,
+          "losses": 36,
+          "winRate": 64.36
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 77,
+          "wins": 47,
+          "losses": 30,
+          "winRate": 61.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 539,
+      "wins": 322,
+      "losses": 217,
+      "winRate": 59.74,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 64,
+          "wins": 38,
+          "losses": 26,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 75,
+          "wins": 42,
+          "losses": 33,
+          "winRate": 56
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 67,
+          "losses": 44,
+          "winRate": 60.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 101,
+          "wins": 65,
+          "losses": 36,
+          "winRate": 64.36
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 77,
+          "wins": 47,
+          "losses": 30,
+          "winRate": 61.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 539,
+      "wins": 322,
+      "losses": 217,
+      "winRate": 59.74,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 64,
+          "wins": 38,
+          "losses": 26,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 75,
+          "wins": 42,
+          "losses": 33,
+          "winRate": 56
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 67,
+          "losses": 44,
+          "winRate": 60.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 101,
+          "wins": 65,
+          "losses": 36,
+          "winRate": 64.36
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 77,
+          "wins": 47,
+          "losses": 30,
+          "winRate": 61.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 539,
+      "wins": 322,
+      "losses": 217,
+      "winRate": 59.74,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 64,
+          "wins": 38,
+          "losses": 26,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 75,
+          "wins": 42,
+          "losses": 33,
+          "winRate": 56
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 67,
+          "losses": 44,
+          "winRate": 60.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 111,
+          "wins": 63,
+          "losses": 48,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 101,
+          "wins": 65,
+          "losses": 36,
+          "winRate": 64.36
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 77,
+          "wins": 47,
+          "losses": 30,
+          "winRate": 61.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 685,
+      "wins": 409,
+      "losses": 276,
+      "winRate": 59.71,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.73,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 55,
+          "losses": 36,
+          "winRate": 60.44
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 68,
+          "losses": 47,
+          "winRate": 59.13
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 147,
+          "wins": 87,
+          "losses": 60,
+          "winRate": 59.18
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 131,
+          "wins": 73,
+          "losses": 58,
+          "winRate": 55.73
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 116,
+          "wins": 75,
+          "losses": 41,
+          "winRate": 64.66
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 85,
+          "wins": 51,
+          "losses": 34,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 685,
+      "wins": 409,
+      "losses": 276,
+      "winRate": 59.71,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.73,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 55,
+          "losses": 36,
+          "winRate": 60.44
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 68,
+          "losses": 47,
+          "winRate": 59.13
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 147,
+          "wins": 87,
+          "losses": 60,
+          "winRate": 59.18
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 131,
+          "wins": 73,
+          "losses": 58,
+          "winRate": 55.73
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 116,
+          "wins": 75,
+          "losses": 41,
+          "winRate": 64.66
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 85,
+          "wins": 51,
+          "losses": 34,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 664,
+      "wins": 396,
+      "losses": 268,
+      "winRate": 59.64,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.6,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 106,
+          "wins": 60,
+          "losses": 46,
+          "winRate": 56.6
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 136,
+          "wins": 79,
+          "losses": 57,
+          "winRate": 58.09
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 129,
+          "wins": 74,
+          "losses": 55,
+          "winRate": 57.36
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 113,
+          "wins": 72,
+          "losses": 41,
+          "winRate": 63.72
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 89,
+          "wins": 54,
+          "losses": 35,
+          "winRate": 60.67
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 664,
+      "wins": 396,
+      "losses": 268,
+      "winRate": 59.64,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.6,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 106,
+          "wins": 60,
+          "losses": 46,
+          "winRate": 56.6
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 136,
+          "wins": 79,
+          "losses": 57,
+          "winRate": 58.09
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 129,
+          "wins": 74,
+          "losses": 55,
+          "winRate": 57.36
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 113,
+          "wins": 72,
+          "losses": 41,
+          "winRate": 63.72
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 89,
+          "wins": 54,
+          "losses": 35,
+          "winRate": 60.67
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 555,
+      "wins": 331,
+      "losses": 224,
+      "winRate": 59.64,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.14,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 73,
+          "wins": 47,
+          "losses": 26,
+          "winRate": 64.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 117,
+          "wins": 66,
+          "losses": 51,
+          "winRate": 56.41
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 114,
+          "wins": 64,
+          "losses": 50,
+          "winRate": 56.14
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 76,
+          "wins": 46,
+          "losses": 30,
+          "winRate": 60.53
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 555,
+      "wins": 331,
+      "losses": 224,
+      "winRate": 59.64,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.14,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 73,
+          "wins": 47,
+          "losses": 26,
+          "winRate": 64.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 117,
+          "wins": 66,
+          "losses": 51,
+          "winRate": 56.41
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 114,
+          "wins": 64,
+          "losses": 50,
+          "winRate": 56.14
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 76,
+          "wins": 46,
+          "losses": 30,
+          "winRate": 60.53
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 526,
+      "wins": 313,
+      "losses": 213,
+      "winRate": 59.51,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.48,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 62,
+          "wins": 37,
+          "losses": 25,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 74,
+          "wins": 42,
+          "losses": 32,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 109,
+          "wins": 66,
+          "losses": 43,
+          "winRate": 60.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 108,
+          "wins": 61,
+          "losses": 47,
+          "winRate": 56.48
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 99,
+          "wins": 63,
+          "losses": 36,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 74,
+          "wins": 44,
+          "losses": 30,
+          "winRate": 59.46
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 526,
+      "wins": 313,
+      "losses": 213,
+      "winRate": 59.51,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.48,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 62,
+          "wins": 37,
+          "losses": 25,
+          "winRate": 59.68
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 74,
+          "wins": 42,
+          "losses": 32,
+          "winRate": 56.76
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 109,
+          "wins": 66,
+          "losses": 43,
+          "winRate": 60.55
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 108,
+          "wins": 61,
+          "losses": 47,
+          "winRate": 56.48
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 99,
+          "wins": 63,
+          "losses": 36,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 74,
+          "wins": 44,
+          "losses": 30,
+          "winRate": 59.46
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=1",
+      "decisions": 548,
+      "wins": 326,
+      "losses": 222,
+      "winRate": 59.49,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.47,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 74,
+          "wins": 46,
+          "losses": 28,
+          "winRate": 62.16
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 50,
+          "losses": 31,
+          "winRate": 61.73
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 65,
+          "losses": 46,
+          "winRate": 58.56
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 54,
+          "losses": 53,
+          "winRate": 50.47
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 115,
+          "wins": 74,
+          "losses": 41,
+          "winRate": 64.35
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 37,
+          "losses": 23,
+          "winRate": 61.67
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=1",
+      "decisions": 548,
+      "wins": 326,
+      "losses": 222,
+      "winRate": 59.49,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 50.47,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 74,
+          "wins": 46,
+          "losses": 28,
+          "winRate": 62.16
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 50,
+          "losses": 31,
+          "winRate": 61.73
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 65,
+          "losses": 46,
+          "winRate": 58.56
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 54,
+          "losses": 53,
+          "winRate": 50.47
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 115,
+          "wins": 74,
+          "losses": 41,
+          "winRate": 64.35
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 60,
+          "wins": 37,
+          "losses": 23,
+          "winRate": 61.67
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 639,
+      "wins": 380,
+      "losses": 259,
+      "winRate": 59.47,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 57.14,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 105,
+          "wins": 60,
+          "losses": 45,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 133,
+          "wins": 76,
+          "losses": 57,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 125,
+          "wins": 72,
+          "losses": 53,
+          "winRate": 57.6
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 103,
+          "wins": 65,
+          "losses": 38,
+          "winRate": 63.11
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 83,
+          "wins": 51,
+          "losses": 32,
+          "winRate": 61.45
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 639,
+      "wins": 380,
+      "losses": 259,
+      "winRate": 59.47,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 57.14,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 56,
+          "losses": 34,
+          "winRate": 62.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 105,
+          "wins": 60,
+          "losses": 45,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 133,
+          "wins": 76,
+          "losses": 57,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 125,
+          "wins": 72,
+          "losses": 53,
+          "winRate": 57.6
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 103,
+          "wins": 65,
+          "losses": 38,
+          "winRate": 63.11
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 83,
+          "wins": 51,
+          "losses": 32,
+          "winRate": 61.45
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 660,
+      "wins": 392,
+      "losses": 268,
+      "winRate": 59.39,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.12,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 54,
+          "losses": 36,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 114,
+          "wins": 68,
+          "losses": 46,
+          "winRate": 59.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 127,
+          "wins": 70,
+          "losses": 57,
+          "winRate": 55.12
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 107,
+          "wins": 69,
+          "losses": 38,
+          "winRate": 64.49
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 47,
+          "losses": 32,
+          "winRate": 59.49
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 660,
+      "wins": 392,
+      "losses": 268,
+      "winRate": 59.39,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.12,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 54,
+          "losses": 36,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 114,
+          "wins": 68,
+          "losses": 46,
+          "winRate": 59.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 127,
+          "wins": 70,
+          "losses": 57,
+          "winRate": 55.12
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 107,
+          "wins": 69,
+          "losses": 38,
+          "winRate": 64.49
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 47,
+          "losses": 32,
+          "winRate": 59.49
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 677,
+      "wins": 402,
+      "losses": 275,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.3,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 93,
+          "wins": 56,
+          "losses": 37,
+          "winRate": 60.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 69,
+          "losses": 46,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 148,
+          "wins": 86,
+          "losses": 62,
+          "winRate": 58.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 132,
+          "wins": 73,
+          "losses": 59,
+          "winRate": 55.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 109,
+          "wins": 70,
+          "losses": 39,
+          "winRate": 64.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 80,
+          "wins": 48,
+          "losses": 32,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 677,
+      "wins": 402,
+      "losses": 275,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.3,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 93,
+          "wins": 56,
+          "losses": 37,
+          "winRate": 60.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 69,
+          "losses": 46,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 148,
+          "wins": 86,
+          "losses": 62,
+          "winRate": 58.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 132,
+          "wins": 73,
+          "losses": 59,
+          "winRate": 55.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 109,
+          "wins": 70,
+          "losses": 39,
+          "winRate": 64.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 80,
+          "wins": 48,
+          "losses": 32,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 677,
+      "wins": 402,
+      "losses": 275,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.3,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 93,
+          "wins": 56,
+          "losses": 37,
+          "winRate": 60.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 69,
+          "losses": 46,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 148,
+          "wins": 86,
+          "losses": 62,
+          "winRate": 58.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 132,
+          "wins": 73,
+          "losses": 59,
+          "winRate": 55.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 109,
+          "wins": 70,
+          "losses": 39,
+          "winRate": 64.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 80,
+          "wins": 48,
+          "losses": 32,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 677,
+      "wins": 402,
+      "losses": 275,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.3,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 93,
+          "wins": 56,
+          "losses": 37,
+          "winRate": 60.22
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 115,
+          "wins": 69,
+          "losses": 46,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 148,
+          "wins": 86,
+          "losses": 62,
+          "winRate": 58.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 132,
+          "wins": 73,
+          "losses": 59,
+          "winRate": 55.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 109,
+          "wins": 70,
+          "losses": 39,
+          "winRate": 64.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 80,
+          "wins": 48,
+          "losses": 32,
+          "winRate": 60
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=60|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 519,
+      "wins": 308,
+      "losses": 211,
+      "winRate": 59.34,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 65,
+          "wins": 39,
+          "losses": 26,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 46,
+          "losses": 35,
+          "winRate": 56.79
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 59,
+          "losses": 52,
+          "winRate": 53.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 101,
+          "wins": 60,
+          "losses": 41,
+          "winRate": 59.41
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 82,
+          "wins": 54,
+          "losses": 28,
+          "winRate": 65.85
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 50,
+          "losses": 29,
+          "winRate": 63.29
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=60|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 519,
+      "wins": 308,
+      "losses": 211,
+      "winRate": 59.34,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 65,
+          "wins": 39,
+          "losses": 26,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 46,
+          "losses": 35,
+          "winRate": 56.79
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 59,
+          "losses": 52,
+          "winRate": 53.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 101,
+          "wins": 60,
+          "losses": 41,
+          "winRate": 59.41
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 82,
+          "wins": 54,
+          "losses": 28,
+          "winRate": 65.85
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 50,
+          "losses": 29,
+          "winRate": 63.29
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=2.25|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 509,
+      "wins": 302,
+      "losses": 207,
+      "winRate": 59.33,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.47,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 81,
+          "wins": 49,
+          "losses": 32,
+          "winRate": 60.49
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 85,
+          "wins": 48,
+          "losses": 37,
+          "winRate": 56.47
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 112,
+          "wins": 65,
+          "losses": 47,
+          "winRate": 58.04
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 105,
+          "wins": 60,
+          "losses": 45,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 67,
+          "wins": 42,
+          "losses": 25,
+          "winRate": 62.69
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 59,
+          "wins": 38,
+          "losses": 21,
+          "winRate": 64.41
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=2.25|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 509,
+      "wins": 302,
+      "losses": 207,
+      "winRate": 59.33,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.47,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 81,
+          "wins": 49,
+          "losses": 32,
+          "winRate": 60.49
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 85,
+          "wins": 48,
+          "losses": 37,
+          "winRate": 56.47
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 112,
+          "wins": 65,
+          "losses": 47,
+          "winRate": 58.04
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 105,
+          "wins": 60,
+          "losses": 45,
+          "winRate": 57.14
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 67,
+          "wins": 42,
+          "losses": 25,
+          "winRate": 62.69
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 59,
+          "wins": 38,
+          "losses": 21,
+          "winRate": 64.41
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 511,
+      "wins": 303,
+      "losses": 208,
+      "winRate": 59.3,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.07,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 63,
+          "wins": 37,
+          "losses": 26,
+          "winRate": 58.73
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 107,
+          "wins": 64,
+          "losses": 43,
+          "winRate": 59.81
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 41,
+          "losses": 28,
+          "winRate": 59.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 511,
+      "wins": 303,
+      "losses": 208,
+      "winRate": 59.3,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.07,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 63,
+          "wins": 37,
+          "losses": 26,
+          "winRate": 58.73
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 107,
+          "wins": 64,
+          "losses": 43,
+          "winRate": 59.81
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 41,
+          "losses": 28,
+          "winRate": 59.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 511,
+      "wins": 303,
+      "losses": 208,
+      "winRate": 59.3,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.07,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 63,
+          "wins": 37,
+          "losses": 26,
+          "winRate": 58.73
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 107,
+          "wins": 64,
+          "losses": 43,
+          "winRate": 59.81
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 41,
+          "losses": 28,
+          "winRate": 59.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 511,
+      "wins": 303,
+      "losses": 208,
+      "winRate": 59.3,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.07,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 63,
+          "wins": 37,
+          "losses": 26,
+          "winRate": 58.73
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 107,
+          "wins": 64,
+          "losses": 43,
+          "winRate": 59.81
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 92,
+          "wins": 59,
+          "losses": 33,
+          "winRate": 64.13
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 41,
+          "losses": 28,
+          "winRate": 59.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 609,
+      "wins": 361,
+      "losses": 248,
+      "winRate": 59.28,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.93,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 52,
+          "losses": 38,
+          "winRate": 57.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 104,
+          "wins": 60,
+          "losses": 44,
+          "winRate": 57.69
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 130,
+          "wins": 73,
+          "losses": 57,
+          "winRate": 56.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 118,
+          "wins": 66,
+          "losses": 52,
+          "winRate": 55.93
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 95,
+          "wins": 63,
+          "losses": 32,
+          "winRate": 66.32
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 72,
+          "wins": 47,
+          "losses": 25,
+          "winRate": 65.28
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 609,
+      "wins": 361,
+      "losses": 248,
+      "winRate": 59.28,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.93,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 52,
+          "losses": 38,
+          "winRate": 57.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 104,
+          "wins": 60,
+          "losses": 44,
+          "winRate": 57.69
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 130,
+          "wins": 73,
+          "losses": 57,
+          "winRate": 56.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 118,
+          "wins": 66,
+          "losses": 52,
+          "winRate": 55.93
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 95,
+          "wins": 63,
+          "losses": 32,
+          "winRate": 66.32
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 72,
+          "wins": 47,
+          "losses": 25,
+          "winRate": 65.28
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 631,
+      "wins": 374,
+      "losses": 257,
+      "winRate": 59.27,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.45,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 57,
+          "losses": 33,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 102,
+          "wins": 58,
+          "losses": 44,
+          "winRate": 56.86
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 131,
+          "wins": 76,
+          "losses": 55,
+          "winRate": 58.02
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 124,
+          "wins": 70,
+          "losses": 54,
+          "winRate": 56.45
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 102,
+          "wins": 63,
+          "losses": 39,
+          "winRate": 61.76
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 82,
+          "wins": 50,
+          "losses": 32,
+          "winRate": 60.98
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 631,
+      "wins": 374,
+      "losses": 257,
+      "winRate": 59.27,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.45,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 90,
+          "wins": 57,
+          "losses": 33,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 102,
+          "wins": 58,
+          "losses": 44,
+          "winRate": 56.86
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 131,
+          "wins": 76,
+          "losses": 55,
+          "winRate": 58.02
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 124,
+          "wins": 70,
+          "losses": 54,
+          "winRate": 56.45
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 102,
+          "wins": 63,
+          "losses": 39,
+          "winRate": 61.76
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 82,
+          "wins": 50,
+          "losses": 32,
+          "winRate": 60.98
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 680,
+      "wins": 403,
+      "losses": 277,
+      "winRate": 59.26,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.6,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 106,
+          "wins": 60,
+          "losses": 46,
+          "winRate": 56.6
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 137,
+          "wins": 79,
+          "losses": 58,
+          "winRate": 57.66
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 134,
+          "wins": 77,
+          "losses": 57,
+          "winRate": 57.46
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 74,
+          "losses": 46,
+          "winRate": 61.67
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 92,
+          "wins": 56,
+          "losses": 36,
+          "winRate": 60.87
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 680,
+      "wins": 403,
+      "losses": 277,
+      "winRate": 59.26,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.6,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 91,
+          "wins": 57,
+          "losses": 34,
+          "winRate": 62.64
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 106,
+          "wins": 60,
+          "losses": 46,
+          "winRate": 56.6
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 137,
+          "wins": 79,
+          "losses": 58,
+          "winRate": 57.66
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 134,
+          "wins": 77,
+          "losses": 57,
+          "winRate": 57.46
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 74,
+          "losses": 46,
+          "winRate": 61.67
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 92,
+          "wins": 56,
+          "losses": 36,
+          "winRate": 60.87
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 540,
+      "wins": 320,
+      "losses": 220,
+      "winRate": 59.26,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 72,
+          "wins": 46,
+          "losses": 26,
+          "winRate": 63.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 115,
+          "wins": 64,
+          "losses": 51,
+          "winRate": 55.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 112,
+          "wins": 63,
+          "losses": 49,
+          "winRate": 56.25
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 87,
+          "wins": 55,
+          "losses": 32,
+          "winRate": 63.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 540,
+      "wins": 320,
+      "losses": 220,
+      "winRate": 59.26,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 72,
+          "wins": 46,
+          "losses": 26,
+          "winRate": 63.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 115,
+          "wins": 64,
+          "losses": 51,
+          "winRate": 55.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 112,
+          "wins": 63,
+          "losses": 49,
+          "winRate": 56.25
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 87,
+          "wins": 55,
+          "losses": 32,
+          "winRate": 63.22
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 778,
+      "wins": 461,
+      "losses": 317,
+      "winRate": 59.25,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.46,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 99,
+          "wins": 60,
+          "losses": 39,
+          "winRate": 60.61
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 129,
+          "wins": 76,
+          "losses": 53,
+          "winRate": 58.91
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 164,
+          "wins": 96,
+          "losses": 68,
+          "winRate": 58.54
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 147,
+          "wins": 83,
+          "losses": 64,
+          "winRate": 56.46
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 136,
+          "wins": 87,
+          "losses": 49,
+          "winRate": 63.97
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 103,
+          "wins": 59,
+          "losses": 44,
+          "winRate": 57.28
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 778,
+      "wins": 461,
+      "losses": 317,
+      "winRate": 59.25,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.46,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 99,
+          "wins": 60,
+          "losses": 39,
+          "winRate": 60.61
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 129,
+          "wins": 76,
+          "losses": 53,
+          "winRate": 58.91
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 164,
+          "wins": 96,
+          "losses": 68,
+          "winRate": 58.54
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 147,
+          "wins": 83,
+          "losses": 64,
+          "winRate": 56.46
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 136,
+          "wins": 87,
+          "losses": 49,
+          "winRate": 63.97
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 103,
+          "wins": 59,
+          "losses": 44,
+          "winRate": 57.28
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 525,
+      "wins": 311,
+      "losses": 214,
+      "winRate": 59.24,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.05,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 72,
+          "wins": 47,
+          "losses": 25,
+          "winRate": 65.28
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 79,
+          "wins": 47,
+          "losses": 32,
+          "winRate": 59.49
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 113,
+          "wins": 63,
+          "losses": 50,
+          "winRate": 55.75
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 109,
+          "wins": 60,
+          "losses": 49,
+          "winRate": 55.05
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 83,
+          "wins": 52,
+          "losses": 31,
+          "winRate": 62.65
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 42,
+          "losses": 27,
+          "winRate": 60.87
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 525,
+      "wins": 311,
+      "losses": 214,
+      "winRate": 59.24,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.05,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 72,
+          "wins": 47,
+          "losses": 25,
+          "winRate": 65.28
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 79,
+          "wins": 47,
+          "losses": 32,
+          "winRate": 59.49
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 113,
+          "wins": 63,
+          "losses": 50,
+          "winRate": 55.75
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 109,
+          "wins": 60,
+          "losses": 49,
+          "winRate": 55.05
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 83,
+          "wins": 52,
+          "losses": 31,
+          "winRate": 62.65
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 69,
+          "wins": 42,
+          "losses": 27,
+          "winRate": 60.87
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 571,
+      "wins": 338,
+      "losses": 233,
+      "winRate": 59.19,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.93,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 73,
+          "wins": 47,
+          "losses": 26,
+          "winRate": 64.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 118,
+          "wins": 66,
+          "losses": 52,
+          "winRate": 55.93
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 119,
+          "wins": 67,
+          "losses": 52,
+          "winRate": 56.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 99,
+          "wins": 61,
+          "losses": 38,
+          "winRate": 61.62
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 48,
+          "losses": 31,
+          "winRate": 60.76
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=30|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 571,
+      "wins": 338,
+      "losses": 233,
+      "winRate": 59.19,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.93,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 73,
+          "wins": 47,
+          "losses": 26,
+          "winRate": 64.38
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 83,
+          "wins": 49,
+          "losses": 34,
+          "winRate": 59.04
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 118,
+          "wins": 66,
+          "losses": 52,
+          "winRate": 55.93
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 119,
+          "wins": 67,
+          "losses": 52,
+          "winRate": 56.3
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 99,
+          "wins": 61,
+          "losses": 38,
+          "winRate": 61.62
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 79,
+          "wins": 48,
+          "losses": 31,
+          "winRate": 60.76
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=5",
+      "decisions": 627,
+      "wins": 371,
+      "losses": 256,
+      "winRate": 59.17,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 86,
+          "wins": 47,
+          "losses": 39,
+          "winRate": 54.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 76,
+          "losses": 52,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 126,
+          "wins": 73,
+          "losses": 53,
+          "winRate": 57.94
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 76,
+          "losses": 44,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 56,
+          "losses": 40,
+          "winRate": 58.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=5",
+      "decisions": 627,
+      "wins": 371,
+      "losses": 256,
+      "winRate": 59.17,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 86,
+          "wins": 47,
+          "losses": 39,
+          "winRate": 54.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 76,
+          "losses": 52,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 126,
+          "wins": 73,
+          "losses": 53,
+          "winRate": 57.94
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 76,
+          "losses": 44,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 56,
+          "losses": 40,
+          "winRate": 58.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=5",
+      "decisions": 627,
+      "wins": 371,
+      "losses": 256,
+      "winRate": 59.17,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 86,
+          "wins": 47,
+          "losses": 39,
+          "winRate": 54.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 76,
+          "losses": 52,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 126,
+          "wins": 73,
+          "losses": 53,
+          "winRate": 57.94
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 76,
+          "losses": 44,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 56,
+          "losses": 40,
+          "winRate": 58.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=5",
+      "decisions": 627,
+      "wins": 371,
+      "losses": 256,
+      "winRate": 59.17,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.65,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 71,
+          "wins": 43,
+          "losses": 28,
+          "winRate": 60.56
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 86,
+          "wins": 47,
+          "losses": 39,
+          "winRate": 54.65
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 128,
+          "wins": 76,
+          "losses": 52,
+          "winRate": 59.38
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 126,
+          "wins": 73,
+          "losses": 53,
+          "winRate": 57.94
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 120,
+          "wins": 76,
+          "losses": 44,
+          "winRate": 63.33
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 56,
+          "losses": 40,
+          "winRate": 58.33
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 502,
+      "wins": 297,
+      "losses": 205,
+      "winRate": 59.16,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.77,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 61,
+          "wins": 36,
+          "losses": 25,
+          "winRate": 59.02
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 105,
+          "wins": 63,
+          "losses": 42,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 58,
+          "losses": 46,
+          "winRate": 55.77
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 68,
+          "wins": 40,
+          "losses": 28,
+          "winRate": 58.82
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=90|max_range_atr=3|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 502,
+      "wins": 297,
+      "losses": 205,
+      "winRate": 59.16,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.77,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 61,
+          "wins": 36,
+          "losses": 25,
+          "winRate": 59.02
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 73,
+          "wins": 42,
+          "losses": 31,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 105,
+          "wins": 63,
+          "losses": 42,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 104,
+          "wins": 58,
+          "losses": 46,
+          "winRate": 55.77
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 91,
+          "wins": 58,
+          "losses": 33,
+          "winRate": 63.74
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 68,
+          "wins": 40,
+          "losses": 28,
+          "winRate": 58.82
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=60|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 509,
+      "wins": 301,
+      "losses": 208,
+      "winRate": 59.14,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 65,
+          "wins": 39,
+          "losses": 26,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 46,
+          "losses": 35,
+          "winRate": 56.79
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 59,
+          "losses": 52,
+          "winRate": 53.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 99,
+          "wins": 59,
+          "losses": 40,
+          "winRate": 59.6
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 79,
+          "wins": 51,
+          "losses": 28,
+          "winRate": 64.56
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 74,
+          "wins": 47,
+          "losses": 27,
+          "winRate": 63.51
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=40|max_active=60|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 509,
+      "wins": 301,
+      "losses": 208,
+      "winRate": 59.14,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 65,
+          "wins": 39,
+          "losses": 26,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 81,
+          "wins": 46,
+          "losses": 35,
+          "winRate": 56.79
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 111,
+          "wins": 59,
+          "losses": 52,
+          "winRate": 53.15
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 99,
+          "wins": 59,
+          "losses": 40,
+          "winRate": 59.6
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 79,
+          "wins": 51,
+          "losses": 28,
+          "winRate": 64.56
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 74,
+          "wins": 47,
+          "losses": 27,
+          "winRate": 63.51
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=100|max_compression12=2",
+      "decisions": 646,
+      "wins": 382,
+      "losses": 264,
+      "winRate": 59.13,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.84,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 80,
+          "wins": 46,
+          "losses": 34,
+          "winRate": 57.5
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 93,
+          "wins": 51,
+          "losses": 42,
+          "winRate": 54.84
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 129,
+          "wins": 74,
+          "losses": 55,
+          "winRate": 57.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 133,
+          "wins": 74,
+          "losses": 59,
+          "winRate": 55.64
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 128,
+          "wins": 87,
+          "losses": 41,
+          "winRate": 67.97
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 83,
+          "wins": 50,
+          "losses": 33,
+          "winRate": 60.24
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=100|max_side_prior24=none|max_compression12=2",
+      "decisions": 646,
+      "wins": 382,
+      "losses": 264,
+      "winRate": 59.13,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.84,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 80,
+          "wins": 46,
+          "losses": 34,
+          "winRate": 57.5
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 93,
+          "wins": 51,
+          "losses": 42,
+          "winRate": 54.84
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 129,
+          "wins": 74,
+          "losses": 55,
+          "winRate": 57.36
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 133,
+          "wins": 74,
+          "losses": 59,
+          "winRate": 55.64
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 128,
+          "wins": 87,
+          "losses": 41,
+          "winRate": 67.97
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 83,
+          "wins": 50,
+          "losses": 33,
+          "winRate": 60.24
+        }
+      ]
+    }
+  ],
+  "top800": [
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 800,
+      "wins": 475,
+      "losses": 325,
+      "winRate": 59.38,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.58,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 169,
+          "wins": 98,
+          "losses": 71,
+          "winRate": 57.99
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 152,
+          "wins": 86,
+          "losses": 66,
+          "winRate": 56.58
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 139,
+          "wins": 89,
+          "losses": 50,
+          "winRate": 64.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 818,
+      "wins": 483,
+      "losses": 335,
+      "winRate": 59.05,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 170,
+          "wins": 98,
+          "losses": 72,
+          "winRate": 57.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 158,
+          "wins": 90,
+          "losses": 68,
+          "winRate": 56.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 91,
+          "losses": 56,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 65,
+          "losses": 45,
+          "winRate": 59.09
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 818,
+      "wins": 483,
+      "losses": 335,
+      "winRate": 59.05,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 170,
+          "wins": 98,
+          "losses": 72,
+          "winRate": 57.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 158,
+          "wins": 90,
+          "losses": 68,
+          "winRate": 56.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 91,
+          "losses": 56,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 65,
+          "losses": 45,
+          "winRate": 59.09
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 818,
+      "wins": 483,
+      "losses": 335,
+      "winRate": 59.05,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 170,
+          "wins": 98,
+          "losses": 72,
+          "winRate": 57.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 158,
+          "wins": 90,
+          "losses": 68,
+          "winRate": 56.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 91,
+          "losses": 56,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 65,
+          "losses": 45,
+          "winRate": 59.09
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=90|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 818,
+      "wins": 483,
+      "losses": 335,
+      "winRate": 59.05,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 56.96,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 102,
+          "wins": 62,
+          "losses": 40,
+          "winRate": 60.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 170,
+          "wins": 98,
+          "losses": 72,
+          "winRate": 57.65
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 158,
+          "wins": 90,
+          "losses": 68,
+          "winRate": 56.96
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 91,
+          "losses": 56,
+          "winRate": 61.9
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 65,
+          "losses": 45,
+          "winRate": 59.09
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 901,
+      "wins": 531,
+      "losses": 370,
+      "winRate": 58.93,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.11,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 135,
+          "wins": 79,
+          "losses": 56,
+          "winRate": 58.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 152,
+          "wins": 88,
+          "losses": 64,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 179,
+          "wins": 101,
+          "losses": 78,
+          "winRate": 56.42
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 177,
+          "wins": 94,
+          "losses": 83,
+          "winRate": 53.11
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 162,
+          "wins": 111,
+          "losses": 51,
+          "winRate": 68.52
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 58,
+          "losses": 38,
+          "winRate": 60.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 901,
+      "wins": 531,
+      "losses": 370,
+      "winRate": 58.93,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.11,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 135,
+          "wins": 79,
+          "losses": 56,
+          "winRate": 58.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 152,
+          "wins": 88,
+          "losses": 64,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 179,
+          "wins": 101,
+          "losses": 78,
+          "winRate": 56.42
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 177,
+          "wins": 94,
+          "losses": 83,
+          "winRate": 53.11
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 162,
+          "wins": 111,
+          "losses": 51,
+          "winRate": 68.52
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 58,
+          "losses": 38,
+          "winRate": 60.42
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 998,
+      "wins": 587,
+      "losses": 411,
+      "winRate": 58.82,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.89,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 196,
+          "wins": 110,
+          "losses": 86,
+          "winRate": 56.12
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 193,
+          "wins": 104,
+          "losses": 89,
+          "winRate": 53.89
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 182,
+          "wins": 123,
+          "losses": 59,
+          "winRate": 67.58
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 116,
+          "wins": 68,
+          "losses": 48,
+          "winRate": 58.62
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 998,
+      "wins": 587,
+      "losses": 411,
+      "winRate": 58.82,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.89,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 196,
+          "wins": 110,
+          "losses": 86,
+          "winRate": 56.12
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 193,
+          "wins": 104,
+          "losses": 89,
+          "winRate": 53.89
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 182,
+          "wins": 123,
+          "losses": 59,
+          "winRate": 67.58
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 116,
+          "wins": 68,
+          "losses": 48,
+          "winRate": 58.62
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=2",
+      "decisions": 844,
+      "wins": 496,
+      "losses": 348,
+      "winRate": 58.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.01,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 82,
+          "losses": 60,
+          "winRate": 57.75
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 176,
+          "wins": 99,
+          "losses": 77,
+          "winRate": 56.25
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 166,
+          "wins": 88,
+          "losses": 78,
+          "winRate": 53.01
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 100,
+          "losses": 47,
+          "winRate": 68.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=2",
+      "decisions": 844,
+      "wins": 496,
+      "losses": 348,
+      "winRate": 58.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.01,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 82,
+          "losses": 60,
+          "winRate": 57.75
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 176,
+          "wins": 99,
+          "losses": 77,
+          "winRate": 56.25
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 166,
+          "wins": 88,
+          "losses": 78,
+          "winRate": 53.01
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 147,
+          "wins": 100,
+          "losses": 47,
+          "winRate": 68.03
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 94,
+          "wins": 57,
+          "losses": 37,
+          "winRate": 60.64
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 940,
+      "wins": 551,
+      "losses": 389,
+      "winRate": 58.62,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.85,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 127,
+          "wins": 75,
+          "losses": 52,
+          "winRate": 59.06
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 157,
+          "wins": 91,
+          "losses": 66,
+          "winRate": 57.96
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 193,
+          "wins": 108,
+          "losses": 85,
+          "winRate": 55.96
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 182,
+          "wins": 98,
+          "losses": 84,
+          "winRate": 53.85
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 167,
+          "wins": 112,
+          "losses": 55,
+          "winRate": 67.07
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 114,
+          "wins": 67,
+          "losses": 47,
+          "winRate": 58.77
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 940,
+      "wins": 551,
+      "losses": 389,
+      "winRate": 58.62,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.85,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 127,
+          "wins": 75,
+          "losses": 52,
+          "winRate": 59.06
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 157,
+          "wins": 91,
+          "losses": 66,
+          "winRate": 57.96
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 193,
+          "wins": 108,
+          "losses": 85,
+          "winRate": 55.96
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 182,
+          "wins": 98,
+          "losses": 84,
+          "winRate": 53.85
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 167,
+          "wins": 112,
+          "losses": 55,
+          "winRate": 67.07
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 114,
+          "wins": 67,
+          "losses": 47,
+          "winRate": 58.77
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 963,
+      "wins": 564,
+      "losses": 399,
+      "winRate": 58.57,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.19,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 164,
+          "wins": 96,
+          "losses": 68,
+          "winRate": 58.54
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 190,
+          "wins": 106,
+          "losses": 84,
+          "winRate": 55.79
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 188,
+          "wins": 100,
+          "losses": 88,
+          "winRate": 53.19
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 170,
+          "wins": 114,
+          "losses": 56,
+          "winRate": 67.06
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 109,
+          "wins": 64,
+          "losses": 45,
+          "winRate": 58.72
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 963,
+      "wins": 564,
+      "losses": 399,
+      "winRate": 58.57,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.19,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 164,
+          "wins": 96,
+          "losses": 68,
+          "winRate": 58.54
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 190,
+          "wins": 106,
+          "losses": 84,
+          "winRate": 55.79
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 188,
+          "wins": 100,
+          "losses": 88,
+          "winRate": 53.19
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 170,
+          "wins": 114,
+          "losses": 56,
+          "winRate": 67.06
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 109,
+          "wins": 64,
+          "losses": 45,
+          "winRate": 58.72
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 1016,
+      "wins": 595,
+      "losses": 421,
+      "winRate": 58.56,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.27,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 197,
+          "wins": 110,
+          "losses": 87,
+          "winRate": 55.84
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 199,
+          "wins": 108,
+          "losses": 91,
+          "winRate": 54.27
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 190,
+          "wins": 125,
+          "losses": 65,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 1016,
+      "wins": 595,
+      "losses": 421,
+      "winRate": 58.56,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.27,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 197,
+          "wins": 110,
+          "losses": 87,
+          "winRate": 55.84
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 199,
+          "wins": 108,
+          "losses": 91,
+          "winRate": 54.27
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 190,
+          "wins": 125,
+          "losses": 65,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 958,
+      "wins": 559,
+      "losses": 399,
+      "winRate": 58.35,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.26,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 127,
+          "wins": 75,
+          "losses": 52,
+          "winRate": 59.06
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 157,
+          "wins": 91,
+          "losses": 66,
+          "winRate": 57.96
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 194,
+          "wins": 108,
+          "losses": 86,
+          "winRate": 55.67
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 188,
+          "wins": 102,
+          "losses": 86,
+          "winRate": 54.26
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 175,
+          "wins": 114,
+          "losses": 61,
+          "winRate": 65.14
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 958,
+      "wins": 559,
+      "losses": 399,
+      "winRate": 58.35,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.26,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 127,
+          "wins": 75,
+          "losses": 52,
+          "winRate": 59.06
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 157,
+          "wins": 91,
+          "losses": 66,
+          "winRate": 57.96
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 194,
+          "wins": 108,
+          "losses": 86,
+          "winRate": 55.67
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 188,
+          "wins": 102,
+          "losses": 86,
+          "winRate": 54.26
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 175,
+          "wins": 114,
+          "losses": 61,
+          "winRate": 65.14
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 117,
+          "wins": 69,
+          "losses": 48,
+          "winRate": 58.97
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 905,
+      "wins": 528,
+      "losses": 377,
+      "winRate": 58.34,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.11,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 126,
+          "wins": 75,
+          "losses": 51,
+          "winRate": 59.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 153,
+          "wins": 89,
+          "losses": 64,
+          "winRate": 58.17
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 187,
+          "wins": 104,
+          "losses": 83,
+          "winRate": 55.61
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 177,
+          "wins": 94,
+          "losses": 83,
+          "winRate": 53.11
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 155,
+          "wins": 103,
+          "losses": 52,
+          "winRate": 66.45
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 905,
+      "wins": 528,
+      "losses": 377,
+      "winRate": 58.34,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.11,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 126,
+          "wins": 75,
+          "losses": 51,
+          "winRate": 59.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 153,
+          "wins": 89,
+          "losses": 64,
+          "winRate": 58.17
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 187,
+          "wins": 104,
+          "losses": 83,
+          "winRate": 55.61
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 177,
+          "wins": 94,
+          "losses": 83,
+          "winRate": 53.11
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 155,
+          "wins": 103,
+          "losses": 52,
+          "winRate": 66.45
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 63,
+          "losses": 44,
+          "winRate": 58.88
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 871,
+      "wins": 508,
+      "losses": 363,
+      "winRate": 58.32,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 114,
+          "wins": 66,
+          "losses": 48,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 84,
+          "losses": 62,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 179,
+          "wins": 101,
+          "losses": 78,
+          "winRate": 56.42
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 165,
+          "wins": 91,
+          "losses": 74,
+          "winRate": 55.15
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 160,
+          "wins": 106,
+          "losses": 54,
+          "winRate": 66.25
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 871,
+      "wins": 508,
+      "losses": 363,
+      "winRate": 58.32,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.15,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 114,
+          "wins": 66,
+          "losses": 48,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 84,
+          "losses": 62,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 179,
+          "wins": 101,
+          "losses": 78,
+          "winRate": 56.42
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 165,
+          "wins": 91,
+          "losses": 74,
+          "winRate": 55.15
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 160,
+          "wins": 106,
+          "losses": 54,
+          "winRate": 66.25
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 107,
+          "wins": 60,
+          "losses": 47,
+          "winRate": 56.07
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 879,
+      "wins": 511,
+      "losses": 368,
+      "winRate": 58.13,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.89,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 132,
+          "wins": 77,
+          "losses": 55,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 155,
+          "wins": 93,
+          "losses": 62,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 183,
+          "wins": 101,
+          "losses": 82,
+          "winRate": 55.19
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 167,
+          "wins": 90,
+          "losses": 77,
+          "winRate": 53.89
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 146,
+          "wins": 96,
+          "losses": 50,
+          "winRate": 65.75
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 54,
+          "losses": 42,
+          "winRate": 56.25
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 879,
+      "wins": 511,
+      "losses": 368,
+      "winRate": 58.13,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.89,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 132,
+          "wins": 77,
+          "losses": 55,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 155,
+          "wins": 93,
+          "losses": 62,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 183,
+          "wins": 101,
+          "losses": 82,
+          "winRate": 55.19
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 167,
+          "wins": 90,
+          "losses": 77,
+          "winRate": 53.89
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 146,
+          "wins": 96,
+          "losses": 50,
+          "winRate": 65.75
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 54,
+          "losses": 42,
+          "winRate": 56.25
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 813,
+      "wins": 472,
+      "losses": 341,
+      "winRate": 58.06,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.9,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 65,
+          "losses": 48,
+          "winRate": 57.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 173,
+          "wins": 97,
+          "losses": 76,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 153,
+          "wins": 84,
+          "losses": 69,
+          "winRate": 54.9
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 137,
+          "wins": 89,
+          "losses": 48,
+          "winRate": 64.96
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 95,
+          "wins": 53,
+          "losses": 42,
+          "winRate": 55.79
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 813,
+      "wins": 472,
+      "losses": 341,
+      "winRate": 58.06,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.9,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 65,
+          "losses": 48,
+          "winRate": 57.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 173,
+          "wins": 97,
+          "losses": 76,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 153,
+          "wins": 84,
+          "losses": 69,
+          "winRate": 54.9
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 137,
+          "wins": 89,
+          "losses": 48,
+          "winRate": 64.96
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 95,
+          "wins": 53,
+          "losses": 42,
+          "winRate": 55.79
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 889,
+      "wins": 516,
+      "losses": 373,
+      "winRate": 58.04,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 114,
+          "wins": 66,
+          "losses": 48,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 84,
+          "losses": 62,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 180,
+          "wins": 101,
+          "losses": 79,
+          "winRate": 56.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 171,
+          "wins": 95,
+          "losses": 76,
+          "winRate": 55.56
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 168,
+          "wins": 108,
+          "losses": 60,
+          "winRate": 64.29
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 62,
+          "losses": 48,
+          "winRate": 56.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 889,
+      "wins": 516,
+      "losses": 373,
+      "winRate": 58.04,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 55.56,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 114,
+          "wins": 66,
+          "losses": 48,
+          "winRate": 57.89
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 84,
+          "losses": 62,
+          "winRate": 57.53
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 180,
+          "wins": 101,
+          "losses": 79,
+          "winRate": 56.11
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 171,
+          "wins": 95,
+          "losses": 76,
+          "winRate": 55.56
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 168,
+          "wins": 108,
+          "losses": 60,
+          "winRate": 64.29
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 110,
+          "wins": 62,
+          "losses": 48,
+          "winRate": 56.36
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 836,
+      "wins": 485,
+      "losses": 351,
+      "winRate": 58.01,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.37,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 66,
+          "losses": 47,
+          "winRate": 58.41
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 82,
+          "losses": 60,
+          "winRate": 57.75
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 173,
+          "wins": 97,
+          "losses": 76,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 160,
+          "wins": 87,
+          "losses": 73,
+          "winRate": 54.37
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 148,
+          "wins": 97,
+          "losses": 51,
+          "winRate": 65.54
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 100,
+          "wins": 56,
+          "losses": 44,
+          "winRate": 56
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 836,
+      "wins": 485,
+      "losses": 351,
+      "winRate": 58.01,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.37,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 66,
+          "losses": 47,
+          "winRate": 58.41
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 82,
+          "losses": 60,
+          "winRate": 57.75
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 173,
+          "wins": 97,
+          "losses": 76,
+          "winRate": 56.07
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 160,
+          "wins": 87,
+          "losses": 73,
+          "winRate": 54.37
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 148,
+          "wins": 97,
+          "losses": 51,
+          "winRate": 65.54
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 100,
+          "wins": 56,
+          "losses": 44,
+          "winRate": 56
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=5",
+      "decisions": 857,
+      "wins": 496,
+      "losses": 361,
+      "winRate": 57.88,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.66,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 123,
+          "wins": 71,
+          "losses": 52,
+          "winRate": 57.72
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 150,
+          "wins": 90,
+          "losses": 60,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 183,
+          "wins": 101,
+          "losses": 82,
+          "winRate": 55.19
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 164,
+          "wins": 88,
+          "losses": 76,
+          "winRate": 53.66
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 141,
+          "wins": 92,
+          "losses": 49,
+          "winRate": 65.25
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 54,
+          "losses": 42,
+          "winRate": 56.25
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=5",
+      "decisions": 857,
+      "wins": 496,
+      "losses": 361,
+      "winRate": 57.88,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.66,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 123,
+          "wins": 71,
+          "losses": 52,
+          "winRate": 57.72
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 150,
+          "wins": 90,
+          "losses": 60,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 183,
+          "wins": 101,
+          "losses": 82,
+          "winRate": 55.19
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 164,
+          "wins": 88,
+          "losses": 76,
+          "winRate": 53.66
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 141,
+          "wins": 92,
+          "losses": 49,
+          "winRate": 65.25
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 96,
+          "wins": 54,
+          "losses": 42,
+          "winRate": 56.25
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 848,
+      "wins": 490,
+      "losses": 358,
+      "winRate": 57.78,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.37,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 151,
+          "wins": 91,
+          "losses": 60,
+          "winRate": 60.26
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 177,
+          "wins": 97,
+          "losses": 80,
+          "winRate": 54.8
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 163,
+          "wins": 87,
+          "losses": 76,
+          "winRate": 53.37
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 135,
+          "wins": 87,
+          "losses": 48,
+          "winRate": 64.44
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 91,
+          "wins": 51,
+          "losses": 40,
+          "winRate": 56.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 848,
+      "wins": 490,
+      "losses": 358,
+      "winRate": 57.78,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.37,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 131,
+          "wins": 77,
+          "losses": 54,
+          "winRate": 58.78
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 151,
+          "wins": 91,
+          "losses": 60,
+          "winRate": 60.26
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 177,
+          "wins": 97,
+          "losses": 80,
+          "winRate": 54.8
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 163,
+          "wins": 87,
+          "losses": 76,
+          "winRate": 53.37
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 135,
+          "wins": 87,
+          "losses": 48,
+          "winRate": 64.44
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 91,
+          "wins": 51,
+          "losses": 40,
+          "winRate": 56.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 895,
+      "wins": 517,
+      "losses": 378,
+      "winRate": 57.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.8,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 132,
+          "wins": 77,
+          "losses": 55,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 155,
+          "wins": 93,
+          "losses": 62,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 184,
+          "wins": 101,
+          "losses": 83,
+          "winRate": 54.89
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 171,
+          "wins": 92,
+          "losses": 79,
+          "winRate": 53.8
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 154,
+          "wins": 98,
+          "losses": 56,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 99,
+          "wins": 56,
+          "losses": 43,
+          "winRate": 56.57
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 895,
+      "wins": 517,
+      "losses": 378,
+      "winRate": 57.77,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.8,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 132,
+          "wins": 77,
+          "losses": 55,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 155,
+          "wins": 93,
+          "losses": 62,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 184,
+          "wins": 101,
+          "losses": 83,
+          "winRate": 54.89
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 171,
+          "wins": 92,
+          "losses": 79,
+          "winRate": 53.8
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 154,
+          "wins": 98,
+          "losses": 56,
+          "winRate": 63.64
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 99,
+          "wins": 56,
+          "losses": 43,
+          "winRate": 56.57
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 829,
+      "wins": 478,
+      "losses": 351,
+      "winRate": 57.66,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.78,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 65,
+          "losses": 48,
+          "winRate": 57.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 174,
+          "wins": 97,
+          "losses": 77,
+          "winRate": 55.75
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 157,
+          "wins": 86,
+          "losses": 71,
+          "winRate": 54.78
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 145,
+          "wins": 91,
+          "losses": 54,
+          "winRate": 62.76
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 98,
+          "wins": 55,
+          "losses": 43,
+          "winRate": 56.12
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=60|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 829,
+      "wins": 478,
+      "losses": 351,
+      "winRate": 57.66,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.78,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 113,
+          "wins": 65,
+          "losses": 48,
+          "winRate": 57.52
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 142,
+          "wins": 84,
+          "losses": 58,
+          "winRate": 59.15
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 174,
+          "wins": 97,
+          "losses": 77,
+          "winRate": 55.75
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 157,
+          "wins": 86,
+          "losses": 71,
+          "winRate": 54.78
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 145,
+          "wins": 91,
+          "losses": 54,
+          "winRate": 62.76
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 98,
+          "wins": 55,
+          "losses": 43,
+          "winRate": 56.12
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=3",
+      "decisions": 826,
+      "wins": 475,
+      "losses": 351,
+      "winRate": 57.51,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.13,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 122,
+          "wins": 71,
+          "losses": 51,
+          "winRate": 58.2
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 88,
+          "losses": 58,
+          "winRate": 60.27
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 177,
+          "wins": 97,
+          "losses": 80,
+          "winRate": 54.8
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 160,
+          "wins": 85,
+          "losses": 75,
+          "winRate": 53.13
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 130,
+          "wins": 83,
+          "losses": 47,
+          "winRate": 63.85
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 91,
+          "wins": 51,
+          "losses": 40,
+          "winRate": 56.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=3",
+      "decisions": 826,
+      "wins": 475,
+      "losses": 351,
+      "winRate": 57.51,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.13,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 122,
+          "wins": 71,
+          "losses": 51,
+          "winRate": 58.2
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 146,
+          "wins": 88,
+          "losses": 58,
+          "winRate": 60.27
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 177,
+          "wins": 97,
+          "losses": 80,
+          "winRate": 54.8
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 160,
+          "wins": 85,
+          "losses": 75,
+          "winRate": 53.13
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 130,
+          "wins": 83,
+          "losses": 47,
+          "winRate": 63.85
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 91,
+          "wins": 51,
+          "losses": 40,
+          "winRate": 56.04
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 873,
+      "wins": 502,
+      "losses": 371,
+      "winRate": 57.5,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.57,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 123,
+          "wins": 71,
+          "losses": 52,
+          "winRate": 57.72
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 150,
+          "wins": 90,
+          "losses": 60,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 184,
+          "wins": 101,
+          "losses": 83,
+          "winRate": 54.89
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 168,
+          "wins": 90,
+          "losses": 78,
+          "winRate": 53.57
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 149,
+          "wins": 94,
+          "losses": 55,
+          "winRate": 63.09
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 99,
+          "wins": 56,
+          "losses": 43,
+          "winRate": 56.57
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=90|max_active=none|max_range_atr=3|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 873,
+      "wins": 502,
+      "losses": 371,
+      "winRate": 57.5,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 53.57,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 123,
+          "wins": 71,
+          "losses": 52,
+          "winRate": 57.72
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 150,
+          "wins": 90,
+          "losses": 60,
+          "winRate": 60
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 184,
+          "wins": 101,
+          "losses": 83,
+          "winRate": 54.89
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 168,
+          "wins": 90,
+          "losses": 78,
+          "winRate": 53.57
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 149,
+          "wins": 94,
+          "losses": 55,
+          "winRate": 63.09
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 99,
+          "wins": 56,
+          "losses": 43,
+          "winRate": 56.57
+        }
+      ]
+    }
+  ],
+  "top1000": [
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=100|max_compression12=none",
+      "decisions": 1016,
+      "wins": 595,
+      "losses": 421,
+      "winRate": 58.56,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.27,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 197,
+          "wins": 110,
+          "losses": 87,
+          "winRate": 55.84
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 199,
+          "wins": 108,
+          "losses": 91,
+          "winRate": 54.27
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 190,
+          "wins": 125,
+          "losses": 65,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        }
+      ]
+    },
+    {
+      "key": "breakout_fade_guard|max_break=none|max_active=none|max_range_atr=none|max_side_prior12=none|max_side_prior24=none|max_compression12=none",
+      "decisions": 1016,
+      "wins": 595,
+      "losses": 421,
+      "winRate": 58.56,
+      "quarterCount": 6,
+      "positiveQuarters": 6,
+      "minQuarterWinRate": 54.27,
+      "quarters": [
+        {
+          "quarter": "2025 Q1",
+          "decisions": 143,
+          "wins": 84,
+          "losses": 59,
+          "winRate": 58.74
+        },
+        {
+          "quarter": "2025 Q2",
+          "decisions": 168,
+          "wins": 98,
+          "losses": 70,
+          "winRate": 58.33
+        },
+        {
+          "quarter": "2025 Q3",
+          "decisions": 197,
+          "wins": 110,
+          "losses": 87,
+          "winRate": 55.84
+        },
+        {
+          "quarter": "2025 Q4",
+          "decisions": 199,
+          "wins": 108,
+          "losses": 91,
+          "winRate": 54.27
+        },
+        {
+          "quarter": "2026 Q1",
+          "decisions": 190,
+          "wins": 125,
+          "losses": 65,
+          "winRate": 65.79
+        },
+        {
+          "quarter": "2026 Q2",
+          "decisions": 119,
+          "wins": 70,
+          "losses": 49,
+          "winRate": 58.82
+        }
+      ]
+    }
+  ]
+}

@@ -558,8 +558,8 @@ Heartbeat 2026-05-17 10:47 UTC:
     quarters.
   - SOL: `72` decisions, `19` wins / `53` losses, `26.39%`, `0/9` positive
     quarters.
-  The RSI-exhaustion signal remains directionally meaningful even when context
-  looks adverse; the context is for abstention, not reversal.
+    The RSI-exhaustion signal remains directionally meaningful even when context
+    looks adverse; the context is for abstention, not reversal.
 - BTC reject gates gave a modest improvement but not a breakthrough:
   best robust row was recent adverse run over six bars with `200` bps move,
   leaving `125` decisions, `82` wins / `43` losses, `65.60%`, `8/9` positive
@@ -573,16 +573,16 @@ Heartbeat 2026-05-17 10:47 UTC:
   - Adverse breakout gate (`lookback=48`, `break=15`, close-location `0.55`)
     leaves `121` decisions, `82` wins / `39` losses, `67.77%`, `9/9` positive
     quarters, weakest quarter `60.00%`.
-  This is a real quality/floor improvement over the current ETH union
-  (`175` decisions, `66.29%`) but still below the `70%` dream and gives up a
-  third of the fires.
+    This is a real quality/floor improvement over the current ETH union
+    (`175` decisions, `66.29%`) but still below the `70%` dream and gives up a
+    third of the fires.
 - SOL already had prior-trend caps promoted. Additional anti-impulse gates are
   mostly lateral:
   - Best recent-adverse-run reject leaves `121` decisions, `93` wins / `28`
     losses, `76.86%`, `9/9` positive quarters, weakest quarter `59.09%`.
   - Current promoted SOL union remains `143` decisions, `109` wins / `34`
     losses, `76.22%`, `9/9` positive quarters, weakest quarter `61.90%`.
-  The extra gate is not worth the lost count.
+    The extra gate is not worth the lost count.
 - Decision: do not promote a new failed-signal continuation family. Consider an
   ETH-only adverse-breakout abstention gate later if the next pass cannot find
   a higher-count improvement, but it is not enough to justify code bloat right
@@ -791,3 +791,149 @@ For any promoted candidate:
 - Finding: this first trend-break definition is much too broad. It creates a
   clean, auditable baseline and a high decision count, but it does not produce
   edge as currently configured.
+
+## 2026-05-17 18:54 UTC - High-Frequency Price-Action Search
+
+- After committing the local state at `43b3856`, restarted the search with
+  high-frequency, explainable filters rather than rare RSI events.
+- Ran `tmp/high_frequency_signal_search.ts`.
+- Artifact:
+  `doc/results-artifacts/2026-05-17T18-54-17.237Z-high-frequency-signal-search.json`.
+- Runtime was `99367 ms`, scoring `602722` simulated decision records from the
+  same no-future-leakage synthetic-candle timing used by backtests.
+- Families tested:
+  - active synthetic candle follow/fade
+  - cross-asset basket follow/fade
+  - BTC lead/fade
+  - relative lag catch-up / outperformance fade
+  - cross-asset consensus follow/fade
+  - prior run continuation/exhaustion
+  - active range breakout follow/fade
+- Best broad result was active breakout fade: when the synthetic active candle
+  closes beyond a recent range, fade the next candle. The best all-market row
+  was `10136` decisions, `5695` wins / `4441` losses, `56.19%`, all `6/6`
+  quarters positive, and all `8/8` markets positive.
+- Higher-count families are real but weaker: prior-run-plus-active exhaustion
+  reached `66064` decisions at `53.89%`, all quarters positive. This is useful
+  evidence of broad mean reversion, but not strong enough to trade directly.
+
+## 2026-05-17 19:00 UTC - Breakout Fade Refinement
+
+- Ran `tmp/breakout_fade_refinement_search.ts`.
+- Artifact:
+  `doc/results-artifacts/2026-05-17T19-00-39.342Z-breakout-fade-refinement-search.json`.
+- Runtime was `255907 ms`.
+- Refined active breakout fade across range lookbacks, minimum break distance,
+  close location, prior-trend caps, active move size, and active range vs ATR.
+- Best broad all-market row:
+  - `close_break_fade|lookback=48|break=10|loc=0.55|max_prior24=100|min_active=20|min_range_atr=0.9`
+  - `5260` decisions, `3030` wins / `2230` losses, `57.60%`
+  - all `6/6` quarters positive, all `8/8` markets positive, weakest market
+    `53.89%`
+- Best high-count asset/period hit:
+  - ETH `15m`, `lookback=24`, `break=5`, `loc=0.65`, `max_prior24=100`,
+    `min_range_atr=0.9`
+  - `1089` decisions, `679` wins / `410` losses, `62.35%`
+  - all `6/6` quarters positive, weakest quarter `57.73%`
+- Exact evaluator:
+  `tmp/evaluate_breakout_fade_candidate.ts` confirmed the ETH `15m` split:
+  `2025 Q1 61.58%`, `2025 Q2 65.26%`, `2025 Q3 62.67%`, `2025 Q4 57.73%`,
+  `2026 Q1 63.30%`, `2026 Q2 64.23%`.
+- Broad version of the same ETH-led config across all markets scored `14642`
+  decisions at `56.34%`, with every quarter positive and weakest quarter
+  `55.41%`.
+- Rendered chart examples:
+  - `tmp/charts/breakout-fade-eth-15m-2026-05-17T19-05-52Z/01-win-up-1735720200000.png`
+  - `tmp/charts/breakout-fade-eth-15m-2026-05-17T19-05-52Z/03-loss-down-1735777800000.png`
+- Visual read:
+  - Wins look like a range edge is poked shortly before the next market opens
+    and then snaps back.
+  - Losses look more like real acceptance: price grinds into the level,
+    breaks it cleanly, then continues. This suggested testing compression and
+    oversize-break guards.
+
+## 2026-05-17 19:07 UTC - Breakout Fade Failure Gates
+
+- Ran `tmp/breakout_fade_failure_gate_search.ts` across BTC/ETH/SOL/DOGE
+  and `5m`/`15m`.
+- Artifacts are named:
+  `doc/results-artifacts/*breakout-fade-failure-gate-*.json`.
+- Gate idea: keep the simple breakout-fade rule, but optionally avoid cases
+  that look more like accepted breakouts:
+  - cap extreme break distance
+  - cap active candle size
+  - cap active range vs ATR
+  - cap same-direction prior trend
+  - cap how many recent closes compressed against the breakout level
+- Best current candidates from this family:
+  - ETH `15m`: `1024` decisions, `643` wins / `381` losses, `62.79%`, all
+    `6/6` quarters positive, weakest quarter `58.10%`. Config adds
+    `max_break=90` to the base rule.
+  - BTC `5m`: `815` decisions, `492` wins / `323` losses, `60.37%`, all
+    `6/6` quarters positive, weakest quarter `57.02%`. Config uses
+    `max_break=30`, `max_active=25`, `max_side_prior12=100`,
+    `max_side_prior24=50`, `max_compression12=5`.
+  - ETH `5m`: `581` decisions, `352` wins / `229` losses, `60.59%`, all
+    `6/6` quarters positive. Count is lower than ideal but meaningful.
+  - BTC `15m`: `505` decisions, `305` wins / `200` losses, `60.40%`, all
+    `6/6` quarters positive.
+  - SOL `15m`: `560` decisions, `339` wins / `221` losses, `60.54%`, all
+    `6/6` quarters positive.
+  - SOL `5m` did not reach `60%` at the tested count thresholds; DOGE has too
+    little local `5m` history and only `448` base `15m` fires.
+- Interpretation: breakout fade is currently the strongest high-frequency,
+  easy-to-explain family found in this search. ETH `15m` is the cleanest
+  direct candidate because it clears `1000` fires and stays above `58%` in
+  every quarter. Several lower-count siblings around BTC/ETH/SOL also clear
+  `60%`, which is encouraging because the behavior is not isolated to one
+  exact config.
+
+## 2026-05-17 19:11 UTC - Cross-Asset Gate Check
+
+- Ran `tmp/breakout_fade_cross_gate_search.ts` for ETH `15m`.
+- Artifact:
+  `doc/results-artifacts/2026-05-17T19-11-41.576Z-breakout-fade-cross-gate-15m-eth.json`.
+- Tested whether ETH breakout fades work better when BTC/SOL/DOGE are not
+  moving in the breakout direction at the same synthetic decision time.
+- Result: cross-asset gates did not add useful lift. The top `>=1000` row is
+  still the same simple `max_break=90` rule at `1024` decisions and `62.79%`.
+  The higher headline rows are driven by compression/break caps, not by basket
+  or BTC gates.
+- Interpretation: this candidate should stay simple. The useful guard is
+  local price structure, not market-wide confirmation.
+
+## 2026-05-17 19:16 UTC - Promoted Range Breakout Fade Locally
+
+- Added first-class `range_breakout_fade` filter code:
+  `src/lib/filters/rangeBreakoutFade.ts`.
+- Added focused tests:
+  `src/lib/filters/rangeBreakoutFade.test.ts`.
+- Updated the active local registry to remove RSI divergence candidates and
+  register only the strongest Range Breakout Fade candidates:
+  - BTC `5m`
+  - ETH `5m`
+  - BTC `15m`
+  - ETH `15m`
+  - SOL `15m`
+- Ran `/usr/bin/time -p bun alea backtest:run`.
+  - Runtime: `9.96s`.
+  - Persisted `30` quarter rows.
+  - Total decisions: `3485`.
+  - Aggregate: `2131` wins / `1354` losses, `61.15%`.
+- Persisted candidate results:
+  - ETH `15m`: `1024` decisions, `643` wins / `381` losses, `62.79%`,
+    weakest quarter `58.10%`.
+  - ETH `5m`: `581` decisions, `352` wins / `229` losses, `60.59%`,
+    weakest quarter `53.57%`.
+  - SOL `15m`: `560` decisions, `339` wins / `221` losses, `60.54%`,
+    weakest quarter `50.96%`.
+  - BTC `15m`: `505` decisions, `305` wins / `200` losses, `60.40%`,
+    weakest quarter `54.55%`.
+  - BTC `5m`: `815` decisions, `492` wins / `323` losses, `60.37%`,
+    weakest quarter `57.02%`.
+- Removed `588` stale non-breakout rows from local
+  `candidate_backtest_quarter_results`, leaving only the `30` active
+  Range Breakout Fade quarter rows.
+- Rebuilt the local backtest dashboard with
+  `/usr/bin/time -p bun alea dashboards:build --only backtest`; it now shows
+  `5` candidates at `/` and `/backtest/`.

@@ -1,9 +1,9 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import { defineCandidate } from "@alea/lib/filters/config";
 import {
-  type RsiDivergenceConfig,
-  rsiDivergenceFilter,
-} from "@alea/lib/filters/rsiDivergence";
+  type RangeBreakoutFadeConfig,
+  rangeBreakoutFadeFilter,
+} from "@alea/lib/filters/rangeBreakoutFade";
 import type { FilterCandidate } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 
@@ -25,44 +25,90 @@ const registryAssets = [
   "doge",
 ] as const satisfies readonly Asset[];
 
-const rsiDivergenceMinAgreementScores = [0, -1, -2, -3] as const;
-const rsiDivergenceMaxConsecutiveDisagreements = [1, 2, 3] as const;
+const baseRangeBreakoutFadeConfig = {
+  lookbackBars: 24,
+  minBreakBps: 5,
+  closeLocationThreshold: 0.65,
+  atrBars: 20,
+  minActiveRangeAtrFraction: 0.9,
+  priorTrendBars: 24,
+  maxPriorTrendBps: 100,
+} as const satisfies RangeBreakoutFadeConfig;
 
-const rsiDivergenceCandidates = rsiDivergenceMinAgreementScores.flatMap(
-  (minAgreementScore) =>
-    rsiDivergenceMaxConsecutiveDisagreements.map(
-      (maxConsecutiveDisagreements) =>
-        defineCandidate({
-          filter: rsiDivergenceFilter,
-          config: {
-            rsiLength: 14,
-            includeHidden: true,
-            leftBars: 5,
-            rightBars: 5,
-            rangeLower: 5,
-            rangeUpper: 60,
-            maxSignalAgeBars: 20,
-            minAgreementScore,
-            maxConsecutiveDisagreements,
-          } satisfies RsiDivergenceConfig,
-        }),
-    ),
-);
-
-const activeCandidates = rsiDivergenceCandidates;
+const rangeBreakoutFadeCandidates = {
+  btc5m: defineCandidate({
+    filter: rangeBreakoutFadeFilter,
+    config: {
+      ...baseRangeBreakoutFadeConfig,
+      maxBreakBps: 30,
+      maxActiveMoveBps: 25,
+      sidePriorTrendCaps: [
+        { bars: 12, maxBps: 100 },
+        { bars: 24, maxBps: 50 },
+      ],
+      compressionBars: 12,
+      compressionDistanceBps: 20,
+      maxCompressionCount: 5,
+    } satisfies RangeBreakoutFadeConfig,
+  }),
+  eth5m: defineCandidate({
+    filter: rangeBreakoutFadeFilter,
+    config: {
+      ...baseRangeBreakoutFadeConfig,
+      maxBreakBps: 30,
+      maxActiveMoveBps: 40,
+      maxActiveRangeAtrFraction: 3,
+      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
+      compressionBars: 12,
+      compressionDistanceBps: 20,
+      maxCompressionCount: 1,
+    } satisfies RangeBreakoutFadeConfig,
+  }),
+  btc15m: defineCandidate({
+    filter: rangeBreakoutFadeFilter,
+    config: {
+      ...baseRangeBreakoutFadeConfig,
+      maxBreakBps: 60,
+      maxActiveMoveBps: 90,
+      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
+      compressionBars: 12,
+      compressionDistanceBps: 20,
+      maxCompressionCount: 1,
+    } satisfies RangeBreakoutFadeConfig,
+  }),
+  eth15m: defineCandidate({
+    filter: rangeBreakoutFadeFilter,
+    config: {
+      ...baseRangeBreakoutFadeConfig,
+      maxBreakBps: 90,
+    } satisfies RangeBreakoutFadeConfig,
+  }),
+  sol15m: defineCandidate({
+    filter: rangeBreakoutFadeFilter,
+    config: {
+      ...baseRangeBreakoutFadeConfig,
+      maxBreakBps: 90,
+      maxActiveMoveBps: 90,
+      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
+      compressionBars: 12,
+      compressionDistanceBps: 20,
+      maxCompressionCount: 1,
+    } satisfies RangeBreakoutFadeConfig,
+  }),
+} as const;
 
 export const registeredCandidatesByMarket = {
   "5m": candidatesByAsset({
-    btc: activeCandidates,
-    eth: activeCandidates,
-    sol: activeCandidates,
-    doge: activeCandidates,
+    btc: [rangeBreakoutFadeCandidates.btc5m],
+    eth: [rangeBreakoutFadeCandidates.eth5m],
+    sol: [],
+    doge: [],
   }),
   "15m": candidatesByAsset({
-    btc: activeCandidates,
-    eth: activeCandidates,
-    sol: activeCandidates,
-    doge: activeCandidates,
+    btc: [rangeBreakoutFadeCandidates.btc15m],
+    eth: [rangeBreakoutFadeCandidates.eth15m],
+    sol: [rangeBreakoutFadeCandidates.sol15m],
+    doge: [],
   }),
 } as const satisfies CandidateRegistryByMarket;
 

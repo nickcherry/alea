@@ -20,15 +20,29 @@ with `registeredCandidatesForMarket({ asset, period })`. Asset routing belongs
 in the registry rather than inside a filter config, so cache hashes continue to
 represent filter behavior instead of market selection.
 
-The current local registry intentionally contains RSI Divergence candidates
-for every enabled asset and period. All use hidden divergences,
-`maxSignalAgeBars: 20`, and agreement-tally invalidation; they sweep
-`minAgreementScore` across `0`, `-1`, `-2`, `-3` and
-`maxConsecutiveDisagreements` across `1`, `2`, `3`. Dry-run and live trading
-use the same market registry through
-`tradeCandidatesForMarket({ asset, period })`. This is not a committee: if the
+The current local registry intentionally contains a small set of
+Range Breakout Fade candidates for selected asset+period markets. Dry-run and
+live trading use the same market registry through
+`tradeCandidatesForMarket({ asset, period })`. This is not a committee: if a
 candidate returns `up` or `down`, the runtime can act on that signal; if it
-returns `neutral`, there is no opinion.
+returns `neutral`, there is no opinion. If a market has no registered
+candidates, it simply has no local filter opinion.
+
+The Range Breakout Fade filter looks at the in-progress candle that exists at
+decision time. If that synthetic candle closes just beyond a recent high or
+low, and the move is not already part of an overextended trend, the filter
+fades the break: upside range breaks vote `down`, and downside range breaks
+vote `up`. The intuition is that a pre-open poke through a range edge often
+snaps back on the next candle unless price has clearly accepted the breakout.
+The config controls the range lookback, minimum break size, close location,
+ATR-normalized active range, prior-trend caps, and optional guards for
+oversized breaks or repeated compression against the level.
+
+The Range Breakout Fade implementation lives in
+`src/lib/filters/rangeBreakoutFade.ts`. The active local registry currently
+admits BTC `5m`, ETH `5m`, BTC `15m`, ETH `15m`, and SOL `15m` candidates
+from this family. DOGE and SOL `5m` are intentionally empty until a candidate
+clears the same quality bar.
 
 The RSI divergence filter matches TradingView's RSI Divergence Indicator logic:
 RSI length `14`, close as the RSI source, pivot lookback left/right `5`, and
@@ -50,7 +64,10 @@ considered dead and the candidate returns `neutral`.
 The shared RSI matching logic lives in
 `src/lib/filters/rsiDivergenceCore.ts`. The agreement-tally invalidation lives
 in `src/lib/filters/rsiDivergenceInvalidation.ts`, so the stale-signal rule can
-change without duplicating the TradingView-style divergence calculation.
+change without duplicating the TradingView-style divergence calculation. RSI
+Divergence is currently kept as available filter code, but it is not registered
+in the active local candidate set because the broad 2025+ reset backtest did
+not show edge.
 
 Pyth spot candles are the canonical input for now. Coinbase spot candles can
 be added later as a volume-context source without changing the candidate

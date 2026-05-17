@@ -1,4 +1,5 @@
 import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
+import type { RangeBreakoutFadeConfig } from "@alea/lib/filters/rangeBreakoutFade";
 import {
   type CandidateRegistryByMarket,
   registeredCandidates,
@@ -7,7 +8,6 @@ import {
   registeredCandidatesForPeriod,
   tradeCandidatesForMarket,
 } from "@alea/lib/filters/registry";
-import type { RsiDivergenceConfig } from "@alea/lib/filters/rsiDivergence";
 import type { FilterCandidate, FilterDecision } from "@alea/lib/filters/types";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { describe, expect, it } from "bun:test";
@@ -23,45 +23,38 @@ describe("registeredCandidates", () => {
     ).toBe(true);
   });
 
-  it("registers RSI divergence threshold permutations for every market", () => {
-    const periods = ["5m", "15m"] as const;
-    const assets = ["btc", "eth", "sol", "doge"] as const;
+  it("registers curated range breakout fade candidates by market", () => {
+    const expectedCounts = {
+      "5m/btc": 1,
+      "5m/eth": 1,
+      "5m/sol": 0,
+      "5m/doge": 0,
+      "15m/btc": 1,
+      "15m/eth": 1,
+      "15m/sol": 1,
+      "15m/doge": 0,
+    } as const;
 
-    for (const period of periods) {
-      for (const asset of assets) {
-        const candidates = registeredCandidatesForMarket({ asset, period });
-        const configs = candidates.map(
-          (candidate) => candidate.config as RsiDivergenceConfig,
-        );
-
-        expect(candidates).toHaveLength(12);
-        expect(
-          candidates.every(
-            (candidate) =>
-              candidate.filterId === "rsi_divergence" &&
-              candidate.filterVersion === 6,
-          ),
-        ).toBe(true);
-        expect(configs.every((config) => config.includeHidden)).toBe(true);
-        expect(
-          configs.every((config) => config.maxSignalAgeBars === 20),
-        ).toBe(true);
-        expect(
-          new Set(configs.map((config) => config.minAgreementScore)),
-        ).toEqual(new Set([0, -1, -2, -3]));
-        expect(
-          new Set(
-            configs.map((config) => config.maxConsecutiveDisagreements),
-          ),
-        ).toEqual(new Set([1, 2, 3]));
-        expect(
-          new Set(
-            configs.map(
-              (config) =>
-                `${config.minAgreementScore}:${config.maxConsecutiveDisagreements}`,
-            ),
-          ).size,
-        ).toBe(12);
+    for (const [market, expectedCount] of Object.entries(expectedCounts)) {
+      const [period, asset] = market.split("/") as [
+        "5m" | "15m",
+        "btc" | "eth" | "sol" | "doge",
+      ];
+      const candidates = registeredCandidatesForMarket({ asset, period });
+      expect(candidates).toHaveLength(expectedCount);
+      expect(
+        candidates.every(
+          (candidate) =>
+            candidate.filterId === "range_breakout_fade" &&
+            candidate.filterVersion === 1,
+        ),
+      ).toBe(true);
+      for (const candidate of candidates) {
+        const config = candidate.config as RangeBreakoutFadeConfig;
+        expect(config.lookbackBars).toBe(24);
+        expect(config.minBreakBps).toBe(5);
+        expect(config.closeLocationThreshold).toBe(0.65);
+        expect(config.minActiveRangeAtrFraction).toBe(0.9);
       }
     }
   });
