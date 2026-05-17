@@ -37,7 +37,7 @@ const commaSeparatedAssetsSchema = z
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
  * the `candles` table, refreshes recent Pyth candles before each
  * configured period boundary, synthesizes the active candle from the
- * latest Pyth price, and evaluates the registered filter candidates.
+ * latest Pyth price, and evaluates the candidates registered for the period.
  * Actionable filter-majority decisions land in `dry_run_decisions`; the
  * configured pre-open Polymarket order is simulated; outcomes are scored once
  * the target bar finalizes.
@@ -49,7 +49,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run filter decisions in dry-run mode",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, and evaluates the registered filter candidates. Actionable filter-majority decisions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, and evaluates the candidates registered for the period. Actionable filter-majority decisions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",

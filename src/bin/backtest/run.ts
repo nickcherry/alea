@@ -14,7 +14,7 @@ import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
 import { createDatabase } from "@alea/lib/db/createDatabase";
 import { destroyDatabase } from "@alea/lib/db/destroyDatabase";
-import { registeredCandidates } from "@alea/lib/filters/registry";
+import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
 import type { Asset } from "@alea/types/assets";
 import pc from "picocolors";
 import { z } from "zod";
@@ -42,7 +42,7 @@ export const backtestRunCommand = defineCommand({
   name: "backtest:run",
   summary: "Backtest registered filter candidates",
   description:
-    "Evaluates every registered filter candidate against stored Pyth candles for each selected asset and timeframe. The simulator makes each decision at the same pre-open lead time as dry-run/live trading and builds the active candle only from stored 1m bars available by that decision timestamp.",
+    "Evaluates the filter candidates registered for each selected timeframe against stored Pyth candles. The simulator makes each decision at the same pre-open lead time as dry-run/live trading and builds the active candle only from stored 1m bars available by that decision timestamp.",
   options: [
     defineValueOption({
       key: "periods",
@@ -92,12 +92,12 @@ export const backtestRunCommand = defineCommand({
   examples: [
     "bun alea backtest:run",
     "bun alea backtest:run --periods 5m --assets btc,eth",
-    "bun alea backtest:run --start 2024-01-01 --end 2026-05-01",
+    "bun alea backtest:run --start 2024-04-01 --end 2026-05-01",
   ],
   output:
-    "Prints per-market row counts and a final decision total. Results are persisted by candidate, asset, timeframe, and quarter.",
+    "Prints per-market generated/skipped row counts and a final decision total. Results are persisted by candidate, asset, timeframe, and quarter.",
   sideEffects:
-    "Reads stored Pyth 1m/5m/15m candles and upserts rows into `candidate_backtest_quarter_results`.",
+    "Reads stored Pyth 1m/5m/15m candles and upserts missing or stale rows into `candidate_backtest_quarter_results`.",
   async run({ io, options }) {
     const assets = (options.assets ??
       CANDIDATE_BACKTEST_ASSETS) as readonly Asset[];
@@ -110,7 +110,7 @@ export const backtestRunCommand = defineCommand({
       `${pc.bold("backtest:run")} ${pc.dim(`${new Date(options.start).toISOString()} -> ${new Date(options.end).toISOString()}`)}\n`,
     );
     io.writeStdout(
-      `${pc.dim("assets=")}${assets.join(",")} ${pc.dim("periods=")}${periods.join(",")} ${pc.dim("candidates=")}${registeredCandidates.length}\n\n`,
+      `${pc.dim("assets=")}${assets.join(",")} ${pc.dim("periods=")}${periods.join(",")} ${pc.dim("candidates=")}${candidateSummary({ assets, periods })}\n\n`,
     );
     const db = createDatabase();
     try {
@@ -128,18 +128,35 @@ export const backtestRunCommand = defineCommand({
             return;
           }
           io.writeStdout(
-            `${pc.green("done")} ${event.period}/${event.asset} ${pc.dim(`targets=${event.targetCount.toLocaleString()} rows=${event.rowCount.toLocaleString()}`)}\n`,
+            `${pc.green("done")} ${event.period}/${event.asset} ${pc.dim(`targets=${event.targetCount.toLocaleString()} generated=${event.rowCount.toLocaleString()} cached=${event.skippedRowCount.toLocaleString()}`)}\n`,
           );
         },
       });
       io.writeStdout(
-        `\n${pc.green("persisted")} ${result.rowsWritten.toLocaleString()} rows ${pc.dim(`markets=${result.markets} decisions=${result.decisions.toLocaleString()}`)}\n`,
+        `\n${pc.green("persisted")} ${result.rowsWritten.toLocaleString()} rows ${pc.dim(`cached=${result.rowsSkipped.toLocaleString()} markets=${result.markets} decisions=${result.decisions.toLocaleString()}`)}\n`,
       );
     } finally {
       await destroyDatabase(db);
     }
   },
 });
+
+function candidateSummary({
+  assets,
+  periods,
+}: {
+  readonly assets: readonly Asset[];
+  readonly periods: readonly TradeDecisionPeriod[];
+}): string {
+  return periods
+    .flatMap((period) =>
+      assets.map(
+        (asset) =>
+          `${period}/${asset}:${registeredCandidatesForMarket({ asset, period }).length}`,
+      ),
+    )
+    .join(",");
+}
 
 function parseDateMs(value: string): number {
   const ms = Date.parse(`${value}T00:00:00.000Z`);

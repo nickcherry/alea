@@ -24,17 +24,37 @@
 }
 
 .backtest-config-cell {
-  min-width: 320px;
-  max-width: 360px;
+  min-width: 300px;
+  max-width: 420px;
 }
 
 .backtest-config {
   color: var(--alea-text-muted);
-  font-family: var(--alea-font-mono);
-  font-size: 10px;
-  white-space: normal;
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.backtest-config-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.62fr) minmax(90px, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+
+.backtest-config-row dt {
+  color: var(--alea-text);
+  font-weight: 680;
   overflow-wrap: anywhere;
-  line-height: 1.4;
+}
+
+.backtest-config-row dd {
+  margin: 0;
+  color: var(--alea-text-muted);
+  font-family: var(--alea-font-mono);
+  overflow-wrap: anywhere;
 }
 
 .backtest-cell-count {
@@ -43,4 +63,12 @@
   color: var(--alea-text-subtle);
   font-size: 10.5px;
   line-height: 1.2;
+}
+
+.backtest-filler-row td {
+  height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  color: transparent;
+  pointer-events: none;
 }

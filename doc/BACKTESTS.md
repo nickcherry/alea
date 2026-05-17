@@ -1,9 +1,21 @@
 # Backtests
 
-`bun alea backtest:run` evaluates every registered candidate over stored Pyth
-candles for the traded assets and the `5m` / `15m` periods. Results persist to
+`bun alea backtest:run` evaluates the candidates registered for each
+asset+period market over stored Pyth candles for the traded assets and the `5m`
+/ `15m` periods. Candidate sets can differ by period and by asset. Results persist to
 `candidate_backtest_quarter_results`, one row per candidate, asset, timeframe,
 and quarter.
+
+The default backtest window starts at January 1, 2025. Operators can still
+override the window with `--start` / `--end`.
+
+Each row has a `cache_hash` derived from the candidate identity, canonical
+config, filter version, asset, period, Pyth source, quarter window, decision
+schema version, backtest engine version, lead time, hydration depth, and the
+Pyth candle inputs used for that quarter. When `backtest:run` sees an existing
+row with the same hash, it treats that candidate/asset/period/quarter as cached
+and does not regenerate it. If any of those inputs change, the hash changes and
+that quarter is regenerated.
 
 Backtests intentionally mirror dry-run/live timing. For each target candle,
 the simulator evaluates filters before the target opens using
@@ -20,5 +32,7 @@ The quarterly row stores compact decision tuples in JSON:
 
 Neutral evaluations are counted but not written into the decision tuple array.
 The backtest dashboard at `/backtest/` aggregates those rows by candidate and
-quarter, supports the same `5m` / `15m` toggle as the trading surfaces, and
-sorts candidates by overall win rate.
+quarter, supports the same `5m` / `15m` toggle as the trading surfaces, adds an
+asset toggle so each asset has its own table, filters to the currently active
+registry for each asset+period market, and sorts candidates by overall win
+rate within that table.

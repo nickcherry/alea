@@ -1,9 +1,9 @@
 # Live Trading
 
 `bun alea trading:run` is the real-money version of the filter decision
-runner. It uses the same Pyth candle state, candidate registry, pre-open timing,
-and order-placement policy as dry-run. The difference is that it places real
-Polymarket maker orders.
+runner. It uses the same Pyth candle state, period-specific candidate registry,
+pre-open timing, and order-placement policy as dry-run. The difference is that
+it places real Polymarket maker orders.
 
 ## Required Environment
 
@@ -18,7 +18,7 @@ Polymarket maker orders.
 1. Hydrate recent Pyth spot candles for the selected `5m` / `15m` markets.
 2. Pre-discover and pre-subscribe upcoming Polymarket markets.
 3. At the configured lead time, refresh candles, synthesize the active Pyth
-   candle, and evaluate the registered filter candidates.
+   candle, and evaluate the candidates registered for that candle period.
 4. If up votes beat down votes, schedule an UP maker order. If down votes beat
    up votes, schedule a DOWN maker order. Ties or all-neutral votes do not
    trade.

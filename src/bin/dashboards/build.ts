@@ -32,6 +32,7 @@ const tmpDir = resolvePath(repoRoot, "tmp");
 const webDir = resolvePath(tmpDir, "web");
 const backtestDir = resolvePath(webDir, "backtest");
 const dryRunDir = resolvePath(webDir, "dryrun");
+const liveDir = resolvePath(webDir, "live");
 const proxyDir = resolvePath(webDir, "proxy");
 const pricePathsDir = resolvePath(webDir, "price-paths");
 const cacheDir = resolvePath(tmpDir, ".cache");
@@ -49,11 +50,12 @@ type DashboardPageBuild = {
  * and lays them out under `tmp/web/` in the routing shape Wrangler
  * expects.
  *
- *   tmp/web/index.html               ← live trading PnL ("/")
+ *   tmp/web/index.html               ← candidate backtests ("/")
  *   tmp/web/index.assets/            ← its frozen CSS+JS
- *   tmp/web/data.json                ← raw payload for the trading page
- *   tmp/web/backtest/index.html      ← candidate backtests ("/backtest/")
+ *   tmp/web/data.json                ← raw payload for the backtest page
+ *   tmp/web/backtest/index.html      ← candidate backtests alias ("/backtest/")
  *   tmp/web/dryrun/index.html       ← dry-run decisions ("/dryrun/")
+ *   tmp/web/live/index.html         ← live trading PnL ("/live/")
  *   tmp/web/price-paths/index.html   ← price-path calibration ("/price-paths/")
  *   tmp/web/price-paths/index.assets/
  *   tmp/web/price-paths/data.json
@@ -67,7 +69,7 @@ export const dashboardsBuildCommand = defineCommand({
   name: "dashboards:build",
   summary: "Build every dashboard into tmp/web and optionally deploy",
   description:
-    "Generates the live trading PnL dashboard (/), candidate backtest page (/backtest/), dry-run page (/dryrun/), price-path calibration page (/price-paths/), and proxy accuracy page (/proxy/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the trading page when Polymarket auth env vars are missing.",
+    "Generates the candidate backtest dashboard (/ and /backtest/), live trading PnL page (/live/), dry-run page (/dryrun/), price-path calibration page (/price-paths/), and proxy accuracy page (/proxy/) under tmp/web in the routing layout the alea Cloudflare worker serves. With --deploy, runs `bunx wrangler deploy` after the build. Skips the live trading page when Polymarket auth env vars are missing.",
   options: [
     defineFlagOption({
       key: "deploy",
@@ -126,6 +128,7 @@ export const dashboardsBuildCommand = defineCommand({
     await mkdir(webDir, { recursive: true });
     await mkdir(backtestDir, { recursive: true });
     await mkdir(dryRunDir, { recursive: true });
+    await mkdir(liveDir, { recursive: true });
     await mkdir(proxyDir, { recursive: true });
     await mkdir(pricePathsDir, { recursive: true });
     await mkdir(cacheDir, { recursive: true });
@@ -137,6 +140,11 @@ export const dashboardsBuildCommand = defineCommand({
 
     const pageBuilds: DashboardPageBuild[] = [
       {
+        name: "backtest",
+        run: (pageIo: DashboardBuildIo) =>
+          buildBacktestDashboard({ io: pageIo }),
+      },
+      {
         name: "trading",
         run: (pageIo: DashboardBuildIo) =>
           buildTradingDashboard({ io: pageIo, useCache }),
@@ -145,11 +153,6 @@ export const dashboardsBuildCommand = defineCommand({
         name: "price-paths",
         run: (pageIo: DashboardBuildIo) =>
           buildPricePathsDashboard({ io: pageIo }),
-      },
-      {
-        name: "backtest",
-        run: (pageIo: DashboardBuildIo) =>
-          buildBacktestDashboard({ io: pageIo }),
       },
       {
         name: "dryrun",
@@ -261,7 +264,7 @@ async function buildTradingDashboard({
   readonly io: { writeStdout: (line: string) => void };
   readonly useCache: boolean;
 }): Promise<void> {
-  io.writeStdout(`${pc.bold("trading")} ${pc.dim("(/)")}\n`);
+  io.writeStdout(`${pc.bold("trading")} ${pc.dim("(/live/)")}\n`);
 
   if (
     env.polymarketPrivateKey === undefined ||
@@ -313,8 +316,8 @@ async function buildTradingDashboard({
     );
   }
 
-  const htmlPath = resolvePath(webDir, "index.html");
-  const jsonPath = resolvePath(webDir, "data.json");
+  const htmlPath = resolvePath(liveDir, "index.html");
+  const jsonPath = resolvePath(liveDir, "data.json");
   await writeTradingPerformanceArtifacts({ payload, htmlPath, jsonPath });
 
   io.writeStdout(
@@ -356,21 +359,35 @@ async function buildBacktestDashboard({
 }: {
   readonly io: { writeStdout: (line: string) => void };
 }): Promise<void> {
-  io.writeStdout(`${pc.bold("backtest")} ${pc.dim("(/backtest/)")}\n`);
+  io.writeStdout(`${pc.bold("backtest")} ${pc.dim("(/, /backtest/)")}\n`);
 
   const db = createDatabase();
   try {
     const payload = await loadBacktestPayload({ db });
+    const rootHtmlPath = resolvePath(webDir, "index.html");
+    const rootJsonPath = resolvePath(webDir, "data.json");
     const htmlPath = resolvePath(backtestDir, "index.html");
     const jsonPath = resolvePath(backtestDir, "data.json");
-    await writeBacktestArtifacts({ payload, htmlPath, jsonPath });
+    await Promise.all([
+      writeBacktestArtifacts({
+        payload,
+        htmlPath: rootHtmlPath,
+        jsonPath: rootJsonPath,
+      }),
+      writeBacktestArtifacts({ payload, htmlPath, jsonPath }),
+    ]);
     const rowCount = Object.values(payload.byPeriod).reduce(
-      (sum, slice) => sum + slice.rows.length,
+      (sum, slice) =>
+        sum +
+        Object.values(slice.byAsset).reduce(
+          (assetSum, assetSlice) => assetSum + assetSlice.rows.length,
+          0,
+        ),
       0,
     );
     io.writeStdout(
       `  ${pc.green("candidates =")} ${rowCount.toLocaleString()}\n` +
-        `  ${pc.green("wrote")} ${pc.dim(htmlPath)}\n`,
+        `  ${pc.green("wrote")} ${pc.dim(rootHtmlPath)} ${pc.dim(`and ${htmlPath}`)}\n`,
     );
   } finally {
     await destroyDatabase(db);

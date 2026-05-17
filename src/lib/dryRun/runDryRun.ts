@@ -94,7 +94,7 @@ export type DryRunLogEvent =
  *   2. Shortly before each configured boundary, refresh recent Pyth
  *      candles into the in-memory buffer and synthesize the active candle
  *      from the latest one-shot Pyth price.
- *   3. Evaluate the registered filter candidates on that same decision
+ *   3. Evaluate the period's registered filter candidates on that same decision
  *      series and persist only actionable up/down majorities.
  *   4. Simulate the configured pre-open Polymarket order and track whether it
  *      fills before expiry.

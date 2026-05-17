@@ -4,9 +4,8 @@
  * `activeId`, so the navigation feels persistent across pages even
  * though each page is a standalone HTML asset served by Wrangler.
  *
- * Hrefs target the layout produced by `dashboards:build`: trading
- * performance is the worker's index (`/`); proxy and price-path
- * dashboards live under their own route folders.
+ * Hrefs target the layout produced by `dashboards:build`: backtest is the
+ * worker's index (`/`); the other dashboards live under route folders.
  */
 
 type TopNavPage = {
@@ -18,9 +17,9 @@ type TopNavPage = {
 const TOP_NAV_PAGES: readonly TopNavPage[] = [
   { id: "proxy", label: "Proxy accuracy", href: "/proxy/" },
   { id: "price-paths", label: "Price paths", href: "/price-paths/" },
-  { id: "backtest", label: "Backtest", href: "/backtest/" },
+  { id: "backtest", label: "Backtest", href: "/" },
   { id: "dryrun", label: "Dry run", href: "/dryrun/" },
-  { id: "live", label: "Live trading", href: "/" },
+  { id: "live", label: "Live trading", href: "/live/" },
 ];
 
 export function renderTopNav({

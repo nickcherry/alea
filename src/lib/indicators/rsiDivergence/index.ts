@@ -28,8 +28,8 @@ export type ComputeRsiDivergenceParams = {
   readonly rsi: readonly (number | null)[];
   readonly leftBars?: number;
   readonly rightBars?: number;
-  readonly minPivotDistance?: number;
-  readonly maxPivotDistance?: number;
+  readonly rangeLower?: number;
+  readonly rangeUpper?: number;
 };
 
 export function computeRsiDivergenceSignals({
@@ -37,15 +37,15 @@ export function computeRsiDivergenceSignals({
   rsi,
   leftBars = 5,
   rightBars = 5,
-  minPivotDistance = 5,
-  maxPivotDistance = 60,
+  rangeLower = 5,
+  rangeUpper = 60,
 }: ComputeRsiDivergenceParams): readonly RsiDivergenceSignal[] {
   requirePositiveInteger({ name: "leftBars", value: leftBars });
   requirePositiveInteger({ name: "rightBars", value: rightBars });
-  requirePositiveInteger({ name: "minPivotDistance", value: minPivotDistance });
-  requirePositiveInteger({ name: "maxPivotDistance", value: maxPivotDistance });
-  if (minPivotDistance > maxPivotDistance) {
-    throw new Error("minPivotDistance must be <= maxPivotDistance");
+  requireNonNegativeInteger({ name: "rangeLower", value: rangeLower });
+  requireNonNegativeInteger({ name: "rangeUpper", value: rangeUpper });
+  if (rangeLower > rangeUpper) {
+    throw new Error("rangeLower must be <= rangeUpper");
   }
 
   const length = Math.min(bars.length, rsi.length);
@@ -56,8 +56,8 @@ export function computeRsiDivergenceSignals({
     rsi: boundedRsi,
     pivots: findPivotLows({ values: boundedRsi, leftBars, rightBars }),
     rightBars,
-    minPivotDistance,
-    maxPivotDistance,
+    rangeLower,
+    rangeUpper,
     priceAt: (bar) => bar.low,
     regularKind: "regular_bullish",
     hiddenKind: "hidden_bullish",
@@ -71,8 +71,8 @@ export function computeRsiDivergenceSignals({
     rsi: boundedRsi,
     pivots: findPivotHighs({ values: boundedRsi, leftBars, rightBars }),
     rightBars,
-    minPivotDistance,
-    maxPivotDistance,
+    rangeLower,
+    rangeUpper,
     priceAt: (bar) => bar.high,
     regularKind: "regular_bearish",
     hiddenKind: "hidden_bearish",
@@ -92,8 +92,8 @@ function divergenceFromPivots({
   rsi,
   pivots,
   rightBars,
-  minPivotDistance,
-  maxPivotDistance,
+  rangeLower,
+  rangeUpper,
   priceAt,
   regularKind,
   hiddenKind,
@@ -104,8 +104,8 @@ function divergenceFromPivots({
   readonly rsi: readonly (number | null)[];
   readonly pivots: readonly PivotPoint[];
   readonly rightBars: number;
-  readonly minPivotDistance: number;
-  readonly maxPivotDistance: number;
+  readonly rangeLower: number;
+  readonly rangeUpper: number;
   readonly priceAt: (bar: MarketBar) => number;
   readonly regularKind: RsiDivergenceKind;
   readonly hiddenKind: RsiDivergenceKind;
@@ -115,11 +115,11 @@ function divergenceFromPivots({
   const signals: RsiDivergenceSignal[] = [];
   for (let i = 1; i < pivots.length; i += 1) {
     const pivot = pivots[i]!;
-    const previous = nearestPreviousPivotInRange({
+    const previous = previousPivotInPineRange({
       pivots,
       pivotIndex: i,
-      minPivotDistance,
-      maxPivotDistance,
+      rangeLower,
+      rangeUpper,
     });
     if (previous === null) {
       continue;
@@ -163,33 +163,27 @@ function divergenceFromPivots({
   return signals;
 }
 
-function nearestPreviousPivotInRange({
+function previousPivotInPineRange({
   pivots,
   pivotIndex,
-  minPivotDistance,
-  maxPivotDistance,
+  rangeLower,
+  rangeUpper,
 }: {
   readonly pivots: readonly PivotPoint[];
   readonly pivotIndex: number;
-  readonly minPivotDistance: number;
-  readonly maxPivotDistance: number;
+  readonly rangeLower: number;
+  readonly rangeUpper: number;
 }): PivotPoint | null {
   const pivot = pivots[pivotIndex];
-  if (pivot === undefined) {
+  const previous = pivots[pivotIndex - 1];
+  if (pivot === undefined || previous === undefined) {
     return null;
   }
-  for (let i = pivotIndex - 1; i >= 0; i -= 1) {
-    const previous = pivots[i]!;
-    const distance = pivot.index - previous.index;
-    if (distance < minPivotDistance) {
-      continue;
-    }
-    if (distance > maxPivotDistance) {
-      break;
-    }
-    return previous;
-  }
-  return null;
+  const barsSincePreviousFound = pivot.index - previous.index - 1;
+  return rangeLower <= barsSincePreviousFound &&
+    barsSincePreviousFound <= rangeUpper
+    ? previous
+    : null;
 }
 
 type DivergenceValues = {
@@ -199,3 +193,14 @@ type DivergenceValues = {
   readonly previousRsi: number;
 };
 
+function requireNonNegativeInteger({
+  name,
+  value,
+}: {
+  readonly name: string;
+  readonly value: number;
+}): void {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative integer`);
+  }
+}

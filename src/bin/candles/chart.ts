@@ -28,7 +28,7 @@ export const candlesChartCommand = defineCommand({
   name: "candles:chart",
   summary: "Render a market candle chart PNG",
   description:
-    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG with the default indicator bundle. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range.",
+    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range, and pass --show-indicators when you want the default indicator bundle.",
   options: [
     defineValueOption({
       key: "asset",
@@ -160,12 +160,12 @@ export const candlesChartCommand = defineCommand({
         .describe("Hide the top OHLC/change/range information block."),
     }),
     defineFlagOption({
-      key: "noIndicators",
-      long: "--no-indicators",
+      key: "showIndicators",
+      long: "--show-indicators",
       schema: z
         .boolean()
         .default(false)
-        .describe("Hide SMA overlays, divergence, and rejection markers."),
+        .describe("Show SMA overlays, divergence, and rejection markers."),
     }),
     defineFlagOption({
       key: "noOpen",
@@ -182,7 +182,7 @@ export const candlesChartCommand = defineCommand({
     "bun alea candles:chart --asset eth --timeframe 15m --source coinbase",
     "bun alea candles:chart --asset btc --timeframe 5m --start 2026-05-15T09:30:00Z --end 2026-05-15T13:30:00Z",
     "bun alea candles:chart --asset btc --timeframe 5m --no-price-line --no-top-info",
-    "bun alea candles:chart --asset btc --timeframe 5m --no-indicators",
+    "bun alea candles:chart --asset btc --timeframe 5m --show-indicators",
     "bun alea candles:chart --source pyth --asset sol --out tmp/charts/sol-pyth.png --no-open",
   ],
   output: "Prints the rendered PNG path and candle window.",
@@ -223,7 +223,7 @@ export const candlesChartCommand = defineCommand({
       browserPath: options.browserPath,
       showPriceLine: !options.noPriceLine,
       showTopInfo: !options.noTopInfo,
-      showIndicators: !options.noIndicators,
+      showIndicators: options.showIndicators,
     });
 
     io.writeStdout(

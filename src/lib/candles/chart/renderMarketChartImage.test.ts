@@ -122,10 +122,8 @@ describe("market chart helpers", () => {
     ]);
     expect(payload.volume.map((bar) => bar.value)).toEqual([10, 12]);
     expect(payload.hasVolume).toBe(true);
-    expect(payload.indicators).not.toBeNull();
-    expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["SMA 20", "SMA 50"]),
-    );
+    expect(payload.indicators).toBeNull();
+    expect(payload.indicatorLegend).toEqual([]);
     expect(payload.indicatorLegend.map((item) => item.label)).not.toContain(
       "EMA 9",
     );
@@ -134,7 +132,45 @@ describe("market chart helpers", () => {
     expect(payload.latestLabel).toContain("-0.98%");
   });
 
-  it("omits zero-volume panes and adds sparse sweep-rejection context", () => {
+  it("adds default indicators when requested", () => {
+    const payload = marketChartPayload({
+      candles: [
+        candle({
+          timestamp: "2026-05-15T12:00:00.000Z",
+          open: 100,
+          high: 103,
+          low: 99,
+          close: 102,
+          volume: 10,
+        }),
+        candle({
+          timestamp: "2026-05-15T12:05:00.000Z",
+          open: 102,
+          high: 104,
+          low: 101,
+          close: 101,
+          volume: 12,
+        }),
+      ],
+      asset: "btc",
+      source: "coinbase",
+      product: "spot",
+      timeframe: "5m",
+      width: 1600,
+      height: 900,
+      showIndicators: true,
+    });
+
+    expect(payload.indicators).not.toBeNull();
+    expect(payload.indicatorLegend.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["SMA 20", "SMA 50"]),
+    );
+    expect(payload.indicatorLegend.map((item) => item.label)).not.toContain(
+      "EMA 9",
+    );
+  });
+
+  it("omits zero-volume panes and adds sparse sweep-rejection context when indicators are requested", () => {
     const payload = marketChartPayload({
       candles: [
         ...Array.from({ length: 24 }, (_, i) =>
@@ -162,6 +198,7 @@ describe("market chart helpers", () => {
       timeframe: "5m",
       width: 1600,
       height: 900,
+      showIndicators: true,
     });
 
     expect(payload.hasVolume).toBe(false);
@@ -196,6 +233,57 @@ describe("market chart helpers", () => {
     expect(payload.showPriceLine).toBe(false);
     expect(payload.showTopInfo).toBe(false);
     expect(payload.indicators).toBeNull();
+  });
+
+  it("can use explicit filter visualization markers", () => {
+    const payload = marketChartPayload({
+      candles: [
+        candle({
+          timestamp: "2026-05-15T12:00:00.000Z",
+          open: 100,
+          high: 103,
+          low: 99,
+          close: 102,
+          volume: 0,
+        }),
+      ],
+      asset: "btc",
+      source: "pyth",
+      product: "spot",
+      timeframe: "5m",
+      width: 1600,
+      height: 900,
+      indicators: {
+        priceLines: [],
+        rsiDivergenceMarkers: [
+          {
+            time: 1778846400,
+            kind: "regular_bullish",
+            text: "Bull div",
+            color: "#20c997",
+            position: "belowBar",
+            shape: "arrowUp",
+          },
+        ],
+        priceActionMarkers: [
+          {
+            time: 1778846400,
+            kind: "filter_decision",
+            text: "decide up",
+            color: "#ffd43b",
+            position: "belowBar",
+            shape: "circle",
+          },
+        ],
+        legendItems: [{ label: "Decision", color: "#ffd43b" }],
+      },
+    });
+
+    expect(payload.indicatorLegend).toEqual([
+      { label: "Decision", color: "#ffd43b" },
+    ]);
+    expect(payload.indicators?.rsiDivergenceMarkers).toHaveLength(1);
+    expect(payload.indicators?.priceActionMarkers[0]?.text).toBe("decide up");
   });
 });
 

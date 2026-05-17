@@ -1,11 +1,18 @@
-import { CANDIDATE_BACKTEST_PERIODS } from "@alea/constants/backtest";
+import {
+  CANDIDATE_BACKTEST_ASSETS,
+  CANDIDATE_BACKTEST_PERIODS,
+} from "@alea/constants/backtest";
+import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import type {
+  BacktestDashboardAssetSlice,
   BacktestDashboardCandidateRow,
   BacktestDashboardPayload,
   BacktestDashboardPeriodSlice,
   BacktestDashboardQuarterCell,
 } from "@alea/lib/backtest/dashboard/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
+import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
+import type { Asset } from "@alea/types/assets";
 
 type BacktestRow = {
   readonly candidate_id: string;
@@ -57,16 +64,45 @@ export async function loadBacktestPayload({
   for (const period of CANDIDATE_BACKTEST_PERIODS) {
     byPeriod[period] = buildPeriodSlice({
       period,
-      rows: rows.filter((row) => row.timeframe === period),
+      rows,
     });
   }
 
   return {
     generatedAtMs: now(),
     defaultPeriod: defaultPeriodFor({ byPeriod }),
+    defaultAsset: defaultAssetFor({ byPeriod }),
     supportedPeriods: CANDIDATE_BACKTEST_PERIODS,
+    supportedAssets: CANDIDATE_BACKTEST_ASSETS,
     byPeriod,
   };
+}
+
+function defaultAssetFor({
+  byPeriod,
+}: {
+  readonly byPeriod: Record<string, BacktestDashboardPeriodSlice>;
+}): string {
+  for (const period of ["15m", "5m"]) {
+    const slice = byPeriod[period];
+    if (slice === undefined) {
+      continue;
+    }
+    for (const asset of CANDIDATE_BACKTEST_ASSETS) {
+      if ((slice.byAsset[asset]?.rows.length ?? 0) > 0) {
+        return asset;
+      }
+    }
+  }
+  return CANDIDATE_BACKTEST_ASSETS[0] ?? "btc";
+}
+
+function periodHasRows(
+  slice: BacktestDashboardPeriodSlice | undefined,
+): boolean {
+  return Object.values(slice?.byAsset ?? {}).some(
+    (assetSlice) => assetSlice.rows.length > 0,
+  );
 }
 
 function defaultPeriodFor({
@@ -74,10 +110,10 @@ function defaultPeriodFor({
 }: {
   readonly byPeriod: Record<string, BacktestDashboardPeriodSlice>;
 }): string {
-  if ((byPeriod["15m"]?.rows.length ?? 0) > 0) {
+  if (periodHasRows(byPeriod["15m"])) {
     return "15m";
   }
-  if ((byPeriod["5m"]?.rows.length ?? 0) > 0) {
+  if (periodHasRows(byPeriod["5m"])) {
     return "5m";
   }
   return "15m";
@@ -87,18 +123,63 @@ function buildPeriodSlice({
   period,
   rows,
 }: {
-  readonly period: string;
+  readonly period: TradeDecisionPeriod;
   readonly rows: readonly BacktestRow[];
 }): BacktestDashboardPeriodSlice {
-  const quarters = [
-    ...new Map(
-      rows
-        .map(
-          (row) => [Number(row.quarter_start_ms), row.quarter_label] as const,
-        )
-        .sort((a, b) => a[0] - b[0]),
-    ).values(),
-  ];
+  const byAsset: Record<string, BacktestDashboardAssetSlice> = {};
+  const periodRows = rows.filter((row) => row.timeframe === period);
+  const quarters = quarterLabelsFor({ rows: periodRows });
+  for (const asset of CANDIDATE_BACKTEST_ASSETS) {
+    const activeCandidateIds = new Set(
+      registeredCandidatesForMarket({ period, asset }).map(
+        (candidate) => candidate.id,
+      ),
+    );
+    byAsset[asset] = buildAssetSlice({
+      period,
+      asset,
+      quarters,
+      rows: rows.filter(
+        (row) =>
+          row.asset === asset &&
+          row.timeframe === period &&
+          activeCandidateIds.has(row.candidate_id),
+      ),
+    });
+  }
+  return {
+    period,
+    defaultAsset: defaultAssetForPeriod({ byAsset }),
+    supportedAssets: CANDIDATE_BACKTEST_ASSETS,
+    byAsset,
+  };
+}
+
+function defaultAssetForPeriod({
+  byAsset,
+}: {
+  readonly byAsset: Record<string, BacktestDashboardAssetSlice>;
+}): string {
+  return (
+    CANDIDATE_BACKTEST_ASSETS.find(
+      (asset) => (byAsset[asset]?.rows.length ?? 0) > 0,
+    ) ??
+    CANDIDATE_BACKTEST_ASSETS[0] ??
+    "btc"
+  );
+}
+
+function buildAssetSlice({
+  period,
+  asset,
+  quarters,
+  rows,
+}: {
+  readonly period: TradeDecisionPeriod;
+  readonly asset: Asset;
+  readonly quarters: readonly string[];
+  readonly rows: readonly BacktestRow[];
+}): BacktestDashboardAssetSlice {
   const candidates = new Map<string, CandidateAccumulator>();
   for (const row of rows) {
     const acc = candidates.get(row.candidate_id) ?? {
@@ -108,7 +189,6 @@ function buildPeriodSlice({
       filterVersion: row.filter_version,
       configHash: row.config_hash,
       config: row.config_json,
-      assets: new Set<string>(),
       evaluatedCount: 0,
       decisionCount: 0,
       winCount: 0,
@@ -122,7 +202,6 @@ function buildPeriodSlice({
         }
       >(),
     };
-    acc.assets.add(row.asset);
     acc.evaluatedCount += row.evaluated_count;
     acc.decisionCount += row.decision_count;
     acc.winCount += row.win_count;
@@ -166,7 +245,6 @@ function buildPeriodSlice({
         filterVersion: acc.filterVersion,
         configHash: acc.configHash,
         config: acc.config,
-        assetCount: acc.assets.size,
         evaluatedCount: acc.evaluatedCount,
         decisionCount: acc.decisionCount,
         winCount: acc.winCount,
@@ -187,7 +265,23 @@ function buildPeriodSlice({
       );
     });
 
-  return { period, quarters, rows: candidateRows };
+  return { period, asset, quarters, rows: candidateRows };
+}
+
+function quarterLabelsFor({
+  rows,
+}: {
+  readonly rows: readonly BacktestRow[];
+}): readonly string[] {
+  return [
+    ...new Map(
+      rows
+        .map(
+          (row) => [Number(row.quarter_start_ms), row.quarter_label] as const,
+        )
+        .sort((a, b) => a[0] - b[0]),
+    ).values(),
+  ];
 }
 
 type CandidateAccumulator = {
@@ -197,7 +291,6 @@ type CandidateAccumulator = {
   readonly filterVersion: number;
   readonly configHash: string;
   readonly config: unknown;
-  readonly assets: Set<string>;
   evaluatedCount: number;
   decisionCount: number;
   winCount: number;

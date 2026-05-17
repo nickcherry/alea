@@ -8,6 +8,7 @@ import { dataCaptureCommand } from "@alea/bin/data/capture";
 import { dataIngestPendingCommand } from "@alea/bin/data/ingestPending";
 import { dbMigrateCommand } from "@alea/bin/db/migrate";
 import { dryRunCommand } from "@alea/bin/dry/run";
+import { filtersVisualizeCommand } from "@alea/bin/filters/visualize";
 import { latencyCaptureCommand } from "@alea/bin/latency/capture";
 import { latencyChartCommand } from "@alea/bin/latency/chart";
 import { polymarketAuthCheckCommand } from "@alea/bin/polymarket/authCheck";
@@ -38,6 +39,7 @@ const cli = createCli({
     candlesFillGapsCommand,
     candlesChartCommand,
     dryRunCommand,
+    filtersVisualizeCommand,
     dashboardsBuildCommand,
     dataCaptureCommand,
     dataIngestPendingCommand,

@@ -263,11 +263,12 @@ The dashboard sequence moves from data calibration to runtime results:
 
 | Route           | Page              | Source                                                                                              |
 | --------------- | ----------------- | --------------------------------------------------------------------------------------------------- |
-| `/`             | Live trading PnL  | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
+| `/`             | Backtest          | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
+| `/backtest/`    | Backtest alias    | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
 | `/proxy/`       | Proxy accuracy    | [`renderProxyAccuracyHtml.ts`](../src/lib/polymarket/dashboard/renderProxyAccuracyHtml.ts)          |
 | `/price-paths/` | Price paths       | [`renderPricePathsHtml.ts`](../src/lib/polymarket/dashboard/renderPricePathsHtml.ts)                |
-| `/backtest/`    | Backtest          | [`renderBacktestHtml.ts`](../src/lib/backtest/dashboard/renderBacktestHtml.ts)                      |
 | `/dryrun/`      | Dry-run decisions | [`renderDryRunHtml.ts`](../src/lib/dryRun/dashboard/renderDryRunHtml.ts)                            |
+| `/live/`        | Live trading PnL  | [`renderTradingPerformanceHtml.ts`](../src/lib/trading/performance/renderTradingPerformanceHtml.ts) |
 
 The shared top nav lives in
 [`src/lib/ui/topNav.ts`](../src/lib/ui/topNav.ts) and is rendered by
@@ -289,11 +290,15 @@ expects:
 
 ```
 tmp/web/
-  index.html               ← live trading PnL (served at /)
+  index.html               ← candidate backtests (served at /)
   index.assets/            ← its frozen CSS+JS
-  data.json                ← raw payload for the trading page
+  data.json                ← raw payload for the backtest page
   backtest/
-    index.html             ← candidate backtests (served at /backtest/)
+    index.html             ← candidate backtests alias (served at /backtest/)
+    index.assets/
+    data.json
+  live/
+    index.html             ← live trading PnL (served at /live/)
     index.assets/
     data.json
   proxy/

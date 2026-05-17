@@ -12,8 +12,8 @@ describe("computeRsiDivergenceSignals", () => {
       rsi: [50, 45, 25, 45, 50, 44, 35, 46, 52],
       leftBars: 1,
       rightBars: 1,
-      minPivotDistance: 1,
-      maxPivotDistance: 10,
+      rangeLower: 1,
+      rangeUpper: 10,
     });
 
     expect(kinds(signals)).toContain("regular_bullish");
@@ -30,8 +30,8 @@ describe("computeRsiDivergenceSignals", () => {
       rsi: [50, 45, 35, 45, 50, 44, 25, 46, 52],
       leftBars: 1,
       rightBars: 1,
-      minPivotDistance: 1,
-      maxPivotDistance: 10,
+      rangeLower: 1,
+      rangeUpper: 10,
     });
 
     expect(kinds(signals)).toContain("hidden_bullish");
@@ -43,8 +43,8 @@ describe("computeRsiDivergenceSignals", () => {
       rsi: [50, 55, 75, 55, 50, 56, 65, 54, 48],
       leftBars: 1,
       rightBars: 1,
-      minPivotDistance: 1,
-      maxPivotDistance: 10,
+      rangeLower: 1,
+      rangeUpper: 10,
     });
 
     expect(kinds(signals)).toContain("regular_bearish");
@@ -56,11 +56,51 @@ describe("computeRsiDivergenceSignals", () => {
       rsi: [50, 55, 65, 55, 50, 56, 75, 54, 48],
       leftBars: 1,
       rightBars: 1,
-      minPivotDistance: 1,
-      maxPivotDistance: 10,
+      rangeLower: 1,
+      rangeUpper: 10,
     });
 
     expect(kinds(signals)).toContain("hidden_bearish");
+  });
+
+  it("matches Pine inRange by counting bars since the previous pivot alert", () => {
+    const params = {
+      bars: barsFromLows([100, 99, 95, 99, 100, 98, 96, 90, 98, 101]),
+      rsi: [50, 45, 25, 45, 50, 49, 46, 35, 46, 52],
+      leftBars: 1,
+      rightBars: 1,
+      rangeUpper: 10,
+    };
+
+    expect(
+      kinds(
+        computeRsiDivergenceSignals({
+          ...params,
+          rangeLower: 4,
+        }),
+      ),
+    ).toContain("regular_bullish");
+    expect(
+      kinds(
+        computeRsiDivergenceSignals({
+          ...params,
+          rangeLower: 5,
+        }),
+      ),
+    ).not.toContain("regular_bullish");
+  });
+
+  it("matches Pine valuewhen by comparing only the immediately previous pivot", () => {
+    const signals = computeRsiDivergenceSignals({
+      bars: barsFromLows([100, 99, 95, 99, 120, 99, 98, 90, 98, 101]),
+      rsi: [50, 45, 30, 45, 25, 45, 44, 35, 46, 52],
+      leftBars: 1,
+      rightBars: 1,
+      rangeLower: 4,
+      rangeUpper: 10,
+    });
+
+    expect(kinds(signals)).not.toContain("regular_bullish");
   });
 });
 
@@ -103,4 +143,3 @@ function bar(i: number, overrides: Partial<MarketBar>): MarketBar {
     ...overrides,
   };
 }
-

@@ -150,6 +150,7 @@ export interface CandidateBacktestQuarterResultTable {
   readonly filter_id: string;
   readonly filter_name: string;
   readonly filter_version: number;
+  readonly cache_hash: string;
   readonly config_canon: string;
   readonly config_hash: string;
   readonly config_json: unknown;

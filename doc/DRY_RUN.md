@@ -17,7 +17,8 @@ The process stays up until SIGINT / SIGTERM.
 1. Hydrate recent Pyth spot candles for each configured asset/period.
 2. Before each target candle opens, refresh recent Pyth candles and synthesize
    the active candle from the latest Pyth price.
-3. Evaluate every registered candidate from `src/lib/filters/registry.ts`.
+3. Evaluate the candidates registered for that candle period in
+   `src/lib/filters/registry.ts`.
 4. Persist only actionable up/down majorities to `dry_run_decisions`.
 5. Simulate the pre-open Polymarket order and score the outcome once the target
    Pyth candle is closed.

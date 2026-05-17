@@ -5,7 +5,7 @@ import {
 } from "@alea/constants/tradeDecision";
 import type { Asset } from "@alea/types/assets";
 
-export const CANDIDATE_BACKTEST_START_MS = Date.UTC(2024, 0, 1);
+export const CANDIDATE_BACKTEST_START_MS = Date.UTC(2025, 0, 1);
 export const CANDIDATE_BACKTEST_END_EXCLUSIVE_MS: number | null = null;
 
 export const CANDIDATE_BACKTEST_ASSETS =
@@ -15,3 +15,4 @@ export const CANDIDATE_BACKTEST_PERIODS =
   TRADE_DECISION_SUPPORTED_PERIODS satisfies readonly TradeDecisionPeriod[];
 
 export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 1;
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 1;

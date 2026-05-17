@@ -12,7 +12,6 @@ export type BacktestDashboardCandidateRow = {
   readonly filterVersion: number;
   readonly configHash: string;
   readonly config: unknown;
-  readonly assetCount: number;
   readonly evaluatedCount: number;
   readonly decisionCount: number;
   readonly winCount: number;
@@ -22,16 +21,28 @@ export type BacktestDashboardCandidateRow = {
   readonly quarters: readonly BacktestDashboardQuarterCell[];
 };
 
-export type BacktestDashboardPeriodSlice = {
+export type BacktestDashboardAssetSlice = {
   readonly period: string;
+  readonly asset: string;
   readonly quarters: readonly string[];
   readonly rows: readonly BacktestDashboardCandidateRow[];
+};
+
+export type BacktestDashboardPeriodSlice = {
+  readonly period: string;
+  readonly defaultAsset: string;
+  readonly supportedAssets: readonly string[];
+  readonly byAsset: {
+    readonly [asset: string]: BacktestDashboardAssetSlice;
+  };
 };
 
 export type BacktestDashboardPayload = {
   readonly generatedAtMs: number;
   readonly defaultPeriod: string;
+  readonly defaultAsset: string;
   readonly supportedPeriods: readonly string[];
+  readonly supportedAssets: readonly string[];
   readonly byPeriod: {
     readonly [period: string]: BacktestDashboardPeriodSlice;
   };

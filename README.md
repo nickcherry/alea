@@ -4,7 +4,7 @@ Alea is a Polymarket crypto up/down trading system built around
 versioned filter candidates. It keeps recent Pyth candles available,
 evaluates deterministic filters against the same candle state in dry-run,
 live, and backtest modes, and places or simulates Polymarket maker orders
-when those candidates produce an actionable up/down majority.
+when those candidates produce actionable up/down signals.
 
 The strategy is directional prediction before the next `5m` or `15m`
 candle closes, paired with Polymarket maker orders near 50c. With zero
@@ -23,7 +23,7 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 2. **Filters** define typed, versioned decision logic plus exact config and
    source requirements.
 3. **Candidates** are filter+config pairs; dry run, live trading, and
-   backtests all evaluate the same candidate registry.
+   backtests all evaluate the asset+period-specific candidate registry.
 4. **Dry run / live** share the filter-decision path; dry run simulates
    orders, live trading places real Polymarket maker orders.
 5. **Dashboards** expose proxy calibration, Polymarket price paths,

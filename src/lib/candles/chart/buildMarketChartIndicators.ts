@@ -11,7 +11,6 @@ import {
 import { computeSmaSeries } from "@alea/lib/indicators/sma";
 import {
   computeWickRejectionSignals,
-  type WickRejectionKind,
 } from "@alea/lib/indicators/wickRejection";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Candle } from "@alea/types/candles";
@@ -30,31 +29,39 @@ export type MarketChartIndicatorLine = {
 
 export type MarketChartRsiDivergenceMarker = {
   readonly time: number;
-  readonly kind: RsiDivergenceKind;
+  readonly kind: string;
   readonly text: string;
   readonly color: string;
   readonly position: "aboveBar" | "belowBar";
-  readonly shape: "arrowUp" | "arrowDown";
+  readonly shape: "arrowUp" | "arrowDown" | "circle" | "square";
 };
 
 export type MarketChartPriceActionMarker = {
   readonly time: number;
-  readonly kind: WickRejectionKind;
+  readonly kind: string;
   readonly text: string;
   readonly color: string;
   readonly position: "aboveBar" | "belowBar";
-  readonly shape: "arrowUp" | "arrowDown";
+  readonly shape: "arrowUp" | "arrowDown" | "circle" | "square";
+};
+
+export type MarketChartLegendItem = {
+  readonly label: string;
+  readonly color: string;
 };
 
 export type MarketChartIndicators = {
   readonly priceLines: readonly MarketChartIndicatorLine[];
   readonly rsiDivergenceMarkers: readonly MarketChartRsiDivergenceMarker[];
   readonly priceActionMarkers: readonly MarketChartPriceActionMarker[];
+  readonly legendItems?: readonly MarketChartLegendItem[];
 };
 
 const defaultSmaLines = [
   { id: "sma20", label: "SMA 20", period: 20, color: "#f2c94c" },
   { id: "sma50", label: "SMA 50", period: 50, color: "#2d9cdb" },
+  { id: "sma100", label: "SMA 100", period: 100, color: "#9b51e0" },
+  { id: "sma200", label: "SMA 200", period: 200, color: "#27ae60" },
 ] as const;
 
 const rsiPeriod = 14;
@@ -93,8 +100,8 @@ export function buildDefaultMarketChartIndicators({
         rsi: rsiValues,
         leftBars: 5,
         rightBars: 5,
-        minPivotDistance: 12,
-        maxPivotDistance: 96,
+        rangeLower: 5,
+        rangeUpper: 60,
       }).map((signal) => divergenceMarker({ bars, signal })),
       maxItems: maxRsiDivergenceMarkers,
     }),

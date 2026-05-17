@@ -26,13 +26,15 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `candles:*`
   `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run` or Polymarket resolution sync trade hourly markets.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
-  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG with SMA 20/50 overlays, RSI-divergence markers, and sparse sweep-rejection markers. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range and `--show-indicators` for SMA, RSI-divergence, and sweep-rejection overlays.
 - `backtest:*`
-  `backtest:run` — evaluates every registered filter candidate against stored Pyth candles, using 1m bars to synthesize the pre-open active candle and persisting quarterly results to `candidate_backtest_quarter_results`. See [BACKTESTS.md](./BACKTESTS.md).
+  `backtest:run` — evaluates the candidates registered for each selected period against stored Pyth candles, using 1m bars to synthesize the pre-open active candle and persisting missing or stale quarterly results to `candidate_backtest_quarter_results`. See [BACKTESTS.md](./BACKTESTS.md).
 - `dry:*`
-  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, evaluates the registered filter candidates, persists actionable up/down majorities to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
+  `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, evaluates the candidates registered for the market period, persists actionable up/down majorities to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
+- `filters:*`
+  `filters:visualize` — samples filter decision examples from local candidate backtest data or recomputes invalidated RSI-divergence cases, then renders PNG candlestick charts with filter-specific markers. The first supported filter is `rsi_divergence`.
 - `dashboards:*`
-  `dashboards:build` — generates the static `/`, `/backtest/`, `/proxy/`, `/price-paths/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
+  `dashboards:build` — generates the static backtest dashboard at `/` and `/backtest/`, plus `/live/`, `/proxy/`, `/price-paths/`, and `/dryrun/` pages under `tmp/web/`; with `--deploy`, ships them to the alea Cloudflare Worker.
 - `data:*`
   `data:capture`
   `data:ingest-pending`
@@ -92,11 +94,10 @@ bun alea candles:chart --asset btc --timeframe 5m \
   --out tmp/charts/btc-pyth-5m.png
 ```
 
-By default, chart images include the same indicator families available to
-filters and operator review: `SMA 20`, `SMA 50`, RSI-divergence markers
-(`Bull div`, `H bull`, `Bear div`, `H bear`), and sparse sweep-rejection
-markers (`High sweep`, `Low sweep`). Use `--no-indicators` for a plain
-candlestick + volume chart.
+By default, chart images are plain candlestick + volume charts. Use
+`--show-indicators` when you want the default indicator context: `SMA 20`,
+`SMA 50`, RSI-divergence markers (`Bull div`, `H bull`, `Bear div`,
+`H bear`), and sparse sweep-rejection markers (`High sweep`, `Low sweep`).
 
 For visual replay, use `--no-price-line` to hide the latest
 price horizontal line and right-edge last-value label, and use
@@ -116,6 +117,45 @@ pane is omitted; pass `--source coinbase` when you want Coinbase trade
 volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
 change the market, and `--browser-path` or `ALEA_CHART_BROWSER_PATH` if
 Chrome is installed outside the standard macOS/Linux paths.
+
+## Filter Visualization
+
+Use `filters:visualize` when you want concrete chart examples around filter
+fires or invalidations. It reads local Pyth candles and writes PNG artifacts
+under `tmp/charts/filter-visualizations/`.
+
+For RSI divergence, the default command samples 20 fired divergence
+occurrences from the current candidate backtest data, capped at 5 examples
+per asset/timeframe market:
+
+```sh
+bun alea filters:visualize
+```
+
+Each chart marks:
+
+- the RSI divergence pivot
+- the pivot-confirmation candle, which is when enough right-side candles
+  exist to know the pivot was real
+- each trade caused by that divergence occurrence, labeled with direction
+  and win/loss
+- the stale-signal invalidation candle when rendering invalidated cases
+
+To inspect stale-signal cases directly, ask for invalidated samples:
+
+```sh
+bun alea filters:visualize --sample-kind invalidated --assets btc,eth --periods 15m
+```
+
+Useful review knobs:
+
+```sh
+bun alea filters:visualize --samples 20 --per-market 5
+bun alea filters:visualize --candidate-id rsi_divergence@v6:...
+bun alea filters:visualize --before-bars 120 --after-bars 40
+bun alea filters:visualize --show-indicators
+bun alea filters:visualize --out-dir tmp/charts/rsi-review
+```
 
 ## Adding A Command
 

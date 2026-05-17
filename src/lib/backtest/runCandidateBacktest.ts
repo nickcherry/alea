@@ -2,6 +2,7 @@ import {
   CANDIDATE_BACKTEST_ASSETS,
   CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
   CANDIDATE_BACKTEST_END_EXCLUSIVE_MS,
+  CANDIDATE_BACKTEST_ENGINE_VERSION,
   CANDIDATE_BACKTEST_PERIODS,
   CANDIDATE_BACKTEST_START_MS,
 } from "@alea/constants/backtest";
@@ -10,9 +11,16 @@ import {
   tradeDecisionLeadTimeMs,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
+import {
+  candidateBacktestCacheHash,
+  candidateBacktestInputDataHash,
+  quarterLabelFor,
+  quarterStartFor,
+  quarterWindowFor,
+} from "@alea/lib/backtest/cache";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import { registeredCandidates } from "@alea/lib/filters/registry";
+import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
 import type { FilterCandidate, FilterDecision } from "@alea/lib/filters/types";
 import { alignMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
@@ -30,6 +38,7 @@ export type CandidateBacktestLogEvent =
       readonly candidateCount: number;
       readonly targetCount: number;
       readonly rowCount: number;
+      readonly skippedRowCount: number;
     }
   | {
       readonly kind: "skip";
@@ -40,6 +49,7 @@ export type CandidateBacktestLogEvent =
 
 export type RunCandidateBacktestResult = {
   readonly rowsWritten: number;
+  readonly rowsSkipped: number;
   readonly markets: number;
   readonly decisions: number;
 };
@@ -48,7 +58,7 @@ export async function runCandidateBacktest({
   db,
   assets = CANDIDATE_BACKTEST_ASSETS,
   periods = CANDIDATE_BACKTEST_PERIODS,
-  candidates = registeredCandidates,
+  candidates,
   startMs = CANDIDATE_BACKTEST_START_MS,
   endMs = CANDIDATE_BACKTEST_END_EXCLUSIVE_MS ?? Date.now(),
   log = () => {},
@@ -62,16 +72,19 @@ export async function runCandidateBacktest({
   readonly log?: (event: CandidateBacktestLogEvent) => void;
 }): Promise<RunCandidateBacktestResult> {
   let rowsWritten = 0;
+  let rowsSkipped = 0;
   let markets = 0;
   let decisions = 0;
 
   for (const asset of assets) {
     for (const period of periods) {
+      const periodCandidates =
+        candidates ?? registeredCandidatesForMarket({ asset, period });
       const result = await runMarketCandidateBacktest({
         db,
         asset,
         period,
-        candidates,
+        candidates: periodCandidates,
         startMs,
         endMs,
       });
@@ -85,20 +98,22 @@ export async function runCandidateBacktest({
         continue;
       }
       rowsWritten += result.rowsWritten;
+      rowsSkipped += result.rowsSkipped;
       decisions += result.decisionCount;
       markets += 1;
       log({
         kind: "market",
         asset,
         period,
-        candidateCount: candidates.length,
+        candidateCount: periodCandidates.length,
         targetCount: result.targetCount,
         rowCount: result.rowsWritten,
+        skippedRowCount: result.rowsSkipped,
       });
     }
   }
 
-  return { rowsWritten, markets, decisions };
+  return { rowsWritten, rowsSkipped, markets, decisions };
 }
 
 async function runMarketCandidateBacktest({
@@ -117,11 +132,13 @@ async function runMarketCandidateBacktest({
   readonly endMs: number;
 }): Promise<{
   readonly rowsWritten: number;
+  readonly rowsSkipped: number;
   readonly targetCount: number;
   readonly decisionCount: number;
 }> {
   const periodMs = timeframeMs({ timeframe: period });
   const hydrateBars = tradeDecisionHydrateBars({ period });
+  const leadTimeMs = tradeDecisionLeadTimeMs({ period });
   const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
   const [periodBars, minuteBars] = await Promise.all([
     loadPythBars({
@@ -143,15 +160,40 @@ async function runMarketCandidateBacktest({
     (bar) => bar.openTimeMs >= startMs && bar.openTimeMs < endMs,
   );
   if (targetBars.length === 0 || minuteBars.length === 0) {
-    return { rowsWritten: 0, targetCount: targetBars.length, decisionCount: 0 };
+    return {
+      rowsWritten: 0,
+      rowsSkipped: 0,
+      targetCount: targetBars.length,
+      decisionCount: 0,
+    };
   }
 
+  const cachePlans = await buildCachePlans({
+    db,
+    asset,
+    period,
+    candidates,
+    targetBars,
+    periodBars,
+    minuteBars,
+    startMs,
+    endMs,
+    periodMs,
+    leadTimeMs,
+    hydrateBars,
+  });
+  const skippedPlanKeys = new Set(
+    [...cachePlans.values()]
+      .filter((plan) => plan.cached)
+      .map((plan) => plan.key),
+  );
   const accumulators = new Map<string, QuarterAccumulator>();
   let decisionCount = 0;
   for (const targetBar of targetBars) {
     const targetTsMs = targetBar.openTimeMs;
     const activeOpenTimeMs = targetTsMs - periodMs;
-    const decisionTsMs = targetTsMs - tradeDecisionLeadTimeMs({ period });
+    const decisionTsMs = targetTsMs - leadTimeMs;
+    const quarterStartMs = quarterStartFor({ tsMs: targetTsMs });
     const closedEndIndex = lowerBoundOpenTime({
       bars: periodBars,
       openTimeMs: activeOpenTimeMs,
@@ -177,14 +219,15 @@ async function runMarketCandidateBacktest({
       endPrice: targetBar.close,
     });
     for (const candidate of candidates) {
+      const cachePlan = cachePlans.get(
+        cachePlanKey({ candidate, asset, period, quarterStartMs }),
+      );
+      if (cachePlan === undefined || cachePlan.cached) {
+        continue;
+      }
       const accumulator = getAccumulator({
         accumulators,
-        candidate,
-        asset,
-        period,
-        targetTsMs,
-        startMs,
-        endMs,
+        cachePlan,
       });
       const evaluation = candidate.evaluate({
         asset,
@@ -212,7 +255,186 @@ async function runMarketCandidateBacktest({
     await persistAccumulator({ db, accumulator });
     rowsWritten += 1;
   }
-  return { rowsWritten, targetCount: targetBars.length, decisionCount };
+  return {
+    rowsWritten,
+    rowsSkipped: skippedPlanKeys.size,
+    targetCount: targetBars.length,
+    decisionCount,
+  };
+}
+
+type CachePlan = {
+  readonly key: string;
+  readonly candidate: FilterCandidate;
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly quarterStartMs: number;
+  readonly quarterLabel: string;
+  readonly windowStartMs: number;
+  readonly windowEndMs: number;
+  readonly cacheHash: string;
+  readonly cached: boolean;
+};
+
+async function buildCachePlans({
+  db,
+  asset,
+  period,
+  candidates,
+  targetBars,
+  periodBars,
+  minuteBars,
+  startMs,
+  endMs,
+  periodMs,
+  leadTimeMs,
+  hydrateBars,
+}: {
+  readonly db: DatabaseClient;
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly candidates: readonly FilterCandidate[];
+  readonly targetBars: readonly MarketBar[];
+  readonly periodBars: readonly MarketBar[];
+  readonly minuteBars: readonly MarketBar[];
+  readonly startMs: number;
+  readonly endMs: number;
+  readonly periodMs: number;
+  readonly leadTimeMs: number;
+  readonly hydrateBars: number;
+}): Promise<ReadonlyMap<string, CachePlan>> {
+  const quarterStarts = [
+    ...new Set(
+      targetBars.map((targetBar) =>
+        quarterStartFor({ tsMs: targetBar.openTimeMs }),
+      ),
+    ),
+  ];
+  const existing = await loadExistingCacheHashes({
+    db,
+    asset,
+    period,
+    candidates,
+    quarterStarts,
+  });
+  const plans = new Map<string, CachePlan>();
+
+  for (const quarterStartMs of quarterStarts) {
+    const { windowStartMs, windowEndMs } = quarterWindowFor({
+      quarterStartMs,
+      startMs,
+      endMs,
+    });
+    const periodStartMs = Math.max(
+      0,
+      windowStartMs - periodMs * (hydrateBars + 2),
+    );
+    const minuteStartMs = Math.max(0, windowStartMs - periodMs);
+    const inputDataHash = candidateBacktestInputDataHash({
+      periodBars,
+      minuteBars,
+      periodStartMs,
+      minuteStartMs,
+      windowEndMs,
+    });
+    for (const candidate of candidates) {
+      const key = cachePlanKey({
+        candidate,
+        asset,
+        period,
+        quarterStartMs,
+      });
+      const cacheHash = candidateBacktestCacheHash({
+        candidate,
+        asset,
+        period,
+        source: "pyth",
+        quarterStartMs,
+        windowStartMs,
+        windowEndMs,
+        decisionSchemaVersion: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
+        engineVersion: CANDIDATE_BACKTEST_ENGINE_VERSION,
+        leadTimeMs,
+        hydrateBars,
+        inputDataHash,
+      });
+      plans.set(key, {
+        key,
+        candidate,
+        asset,
+        period,
+        quarterStartMs,
+        quarterLabel: quarterLabelFor({ quarterStartMs }),
+        windowStartMs,
+        windowEndMs,
+        cacheHash,
+        cached: existing.get(key) === cacheHash,
+      });
+    }
+  }
+
+  return plans;
+}
+
+async function loadExistingCacheHashes({
+  db,
+  asset,
+  period,
+  candidates,
+  quarterStarts,
+}: {
+  readonly db: DatabaseClient;
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly candidates: readonly FilterCandidate[];
+  readonly quarterStarts: readonly number[];
+}): Promise<ReadonlyMap<string, string>> {
+  if (candidates.length === 0 || quarterStarts.length === 0) {
+    return new Map();
+  }
+  const rows = await db
+    .selectFrom("candidate_backtest_quarter_results")
+    .select(["candidate_id", "quarter_start_ms", "cache_hash"])
+    .where("asset", "=", asset)
+    .where("timeframe", "=", period)
+    .where(
+      "candidate_id",
+      "in",
+      candidates.map((candidate) => candidate.id),
+    )
+    .where(
+      "quarter_start_ms",
+      "in",
+      quarterStarts.map((quarterStartMs) => String(quarterStartMs)),
+    )
+    .execute();
+  return new Map(
+    rows.map((row) => [
+      cachePlanKey({
+        candidateId: row.candidate_id,
+        asset,
+        period,
+        quarterStartMs: Number(row.quarter_start_ms),
+      }),
+      row.cache_hash,
+    ]),
+  );
+}
+
+function cachePlanKey({
+  candidate,
+  candidateId,
+  asset,
+  period,
+  quarterStartMs,
+}: {
+  readonly candidate?: FilterCandidate;
+  readonly candidateId?: string;
+  readonly asset: Asset;
+  readonly period: TradeDecisionPeriod;
+  readonly quarterStartMs: number;
+}): string {
+  return `${candidate?.id ?? candidateId}|${asset}|${period}|${quarterStartMs}`;
 }
 
 type CandleTimeframeForBacktest = "1m" | TradeDecisionPeriod;
@@ -311,6 +533,7 @@ function lowerBoundOpenTime({
 type DecisionTuple = readonly [number, "up" | "down", 0 | 1];
 
 type QuarterAccumulator = {
+  readonly cacheHash: string;
   readonly candidate: FilterCandidate;
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
@@ -328,35 +551,25 @@ type QuarterAccumulator = {
 
 function getAccumulator({
   accumulators,
-  candidate,
-  asset,
-  period,
-  targetTsMs,
-  startMs,
-  endMs,
+  cachePlan,
 }: {
   readonly accumulators: Map<string, QuarterAccumulator>;
-  readonly candidate: FilterCandidate;
-  readonly asset: Asset;
-  readonly period: TradeDecisionPeriod;
-  readonly targetTsMs: number;
-  readonly startMs: number;
-  readonly endMs: number;
+  readonly cachePlan: CachePlan;
 }): QuarterAccumulator {
-  const quarterStartMs = quarterStartFor({ tsMs: targetTsMs });
-  const key = `${candidate.id}|${asset}|${period}|${quarterStartMs}`;
+  const key = cachePlan.key;
   const existing = accumulators.get(key);
   if (existing !== undefined) {
     return existing;
   }
   const accumulator: QuarterAccumulator = {
-    candidate,
-    asset,
-    period,
-    quarterStartMs,
-    quarterLabel: quarterLabelFor({ quarterStartMs }),
-    windowStartMs: startMs,
-    windowEndMs: endMs,
+    cacheHash: cachePlan.cacheHash,
+    candidate: cachePlan.candidate,
+    asset: cachePlan.asset,
+    period: cachePlan.period,
+    quarterStartMs: cachePlan.quarterStartMs,
+    quarterLabel: cachePlan.quarterLabel,
+    windowStartMs: cachePlan.windowStartMs,
+    windowEndMs: cachePlan.windowEndMs,
     evaluatedCount: 0,
     decisionCount: 0,
     winCount: 0,
@@ -366,23 +579,6 @@ function getAccumulator({
   };
   accumulators.set(key, accumulator);
   return accumulator;
-}
-
-function quarterStartFor({ tsMs }: { readonly tsMs: number }): number {
-  const date = new Date(tsMs);
-  const year = date.getUTCFullYear();
-  const quarterMonth = Math.floor(date.getUTCMonth() / 3) * 3;
-  return Date.UTC(year, quarterMonth, 1);
-}
-
-function quarterLabelFor({
-  quarterStartMs,
-}: {
-  readonly quarterStartMs: number;
-}): string {
-  const date = new Date(quarterStartMs);
-  const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
-  return `${date.getUTCFullYear()} Q${quarter}`;
 }
 
 function predictionFromFilterDecision(
@@ -406,6 +602,7 @@ async function persistAccumulator({
       filter_id: candidate.filterId,
       filter_name: candidate.filterName,
       filter_version: candidate.filterVersion,
+      cache_hash: accumulator.cacheHash,
       config_canon: candidate.configCanon,
       config_hash: candidate.configHash,
       config_json: sql`${JSON.stringify(candidate.config)}::jsonb`,
@@ -432,6 +629,7 @@ async function persistAccumulator({
           filter_id: sql`excluded.filter_id`,
           filter_name: sql`excluded.filter_name`,
           filter_version: sql`excluded.filter_version`,
+          cache_hash: sql`excluded.cache_hash`,
           config_canon: sql`excluded.config_canon`,
           config_hash: sql`excluded.config_hash`,
           config_json: sql`excluded.config_json`,

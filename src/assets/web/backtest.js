@@ -6,7 +6,9 @@
   var payload = JSON.parse(payloadEl.textContent || "{}");
   var byPeriod = payload.byPeriod || {};
   var supportedPeriods = payload.supportedPeriods || ["5m"];
+  var supportedAssets = payload.supportedAssets || ["btc"];
   var currentPeriod = payload.defaultPeriod || supportedPeriods[0] || "5m";
+  var currentAsset = payload.defaultAsset || supportedAssets[0] || "btc";
   var TABLE_LIMIT = 20;
   var alea = window.alea;
   var escapeHtml = alea.escapeHtml;
@@ -15,14 +17,28 @@
 
   var head = document.getElementById("backtest-head");
   var body = document.getElementById("backtest-body");
-  var tabs = document.querySelectorAll(".backtest-period-tab");
+  var periodTabs = document.querySelectorAll(".backtest-period-tab");
+  var assetTabs = document.querySelectorAll(".backtest-asset-tab");
 
-  Array.prototype.forEach.call(tabs, function (tab) {
+  Array.prototype.forEach.call(periodTabs, function (tab) {
     tab.addEventListener("click", function () {
       currentPeriod = tab.dataset.period;
-      Array.prototype.forEach.call(tabs, function (t) {
+      var periodSlice = byPeriod[currentPeriod] || {};
+      if (!activeAssetSlice(periodSlice, currentAsset)) {
+        currentAsset = periodSlice.defaultAsset || supportedAssets[0] || "btc";
+      }
+      Array.prototype.forEach.call(periodTabs, function (t) {
         t.setAttribute("aria-selected", t === tab ? "true" : "false");
       });
+      syncAssetTabs();
+      renderTable(activeSlice());
+    });
+  });
+
+  Array.prototype.forEach.call(assetTabs, function (tab) {
+    tab.addEventListener("click", function () {
+      currentAsset = tab.dataset.asset;
+      syncAssetTabs();
       renderTable(activeSlice());
     });
   });
@@ -30,7 +46,27 @@
   renderTable(activeSlice());
 
   function activeSlice() {
-    return byPeriod[currentPeriod] || { quarters: [], rows: [] };
+    var periodSlice = byPeriod[currentPeriod] || {};
+    return (
+      activeAssetSlice(periodSlice, currentAsset) || {
+        quarters: [],
+        rows: [],
+      }
+    );
+  }
+
+  function activeAssetSlice(periodSlice, asset) {
+    var byAsset = periodSlice.byAsset || {};
+    return byAsset[asset] || null;
+  }
+
+  function syncAssetTabs() {
+    Array.prototype.forEach.call(assetTabs, function (tab) {
+      tab.setAttribute(
+        "aria-selected",
+        tab.dataset.asset === currentAsset ? "true" : "false",
+      );
+    });
   }
 
   function renderTable(slice) {
@@ -38,7 +74,7 @@
     var quarters = slice.quarters || [];
     var rows = slice.rows || [];
     head.innerHTML = renderHead(quarters);
-    body.innerHTML = renderRows(rows, quarters);
+    body.innerHTML = renderRows(rows, quarters, layoutRowCountForPeriod());
   }
 
   function renderHead(quarters) {
@@ -57,56 +93,61 @@
     );
   }
 
-  function renderRows(rows, quarters) {
+  function renderRows(rows, quarters, layoutRowCount) {
     var shown = rows.slice(0, TABLE_LIMIT);
     if (shown.length === 0) {
       return (
         '<tr><td colspan="' +
         (4 + quarters.length) +
-        '"><span class="alea-muted">No backtest rows yet.</span></td></tr>'
+        '"><span class="alea-muted">No backtest rows yet.</span></td></tr>' +
+        renderFillerRows(Math.max(0, layoutRowCount - 1), 4 + quarters.length)
       );
     }
-    return shown
-      .map(function (row) {
-        var wr =
-          row.winRate === null
-            ? '<span class="alea-muted">—</span>'
-            : percent(row.winRate);
-        var qByLabel = {};
-        (row.quarters || []).forEach(function (q) {
-          qByLabel[q.label] = q;
-        });
-        return (
-          "<tr>" +
-          "<td>" +
-          '<div class="backtest-filter-name">' +
-          escapeHtml(row.filterName) +
-          ' <span class="alea-muted">v' +
-          Number(row.filterVersion).toLocaleString() +
-          "</span></div>" +
-          "</td>" +
-          '<td class="backtest-config-cell">' +
-          '<div class="backtest-config">' +
-          escapeHtml(JSON.stringify(row.config || {})) +
-          "</div>" +
-          "</td>" +
-          '<td class="num-col alea-mono' +
-          toneClass(row.winRate) +
-          '">' +
-          wr +
-          "</td>" +
-          '<td class="num-col alea-mono">' +
-          Number(row.decisionCount).toLocaleString() +
-          "</td>" +
-          quarters
-            .map(function (q) {
-              return renderQuarterCell(qByLabel[q]);
-            })
-            .join("") +
-          "</tr>"
-        );
-      })
-      .join("");
+    return (
+      shown
+        .map(function (row) {
+          var wr =
+            row.winRate === null
+              ? '<span class="alea-muted">—</span>'
+              : percent(row.winRate);
+          var qByLabel = {};
+          (row.quarters || []).forEach(function (q) {
+            qByLabel[q.label] = q;
+          });
+          return (
+            "<tr>" +
+            "<td>" +
+            '<div class="backtest-filter-name">' +
+            escapeHtml(row.filterName) +
+            ' <span class="alea-muted">v' +
+            Number(row.filterVersion).toLocaleString() +
+            "</span></div>" +
+            "</td>" +
+            '<td class="backtest-config-cell">' +
+            renderConfig(row.config || {}) +
+            "</td>" +
+            '<td class="num-col alea-mono' +
+            toneClass(row.winRate) +
+            '">' +
+            wr +
+            "</td>" +
+            '<td class="num-col alea-mono">' +
+            Number(row.decisionCount).toLocaleString() +
+            "</td>" +
+            quarters
+              .map(function (q) {
+                return renderQuarterCell(qByLabel[q]);
+              })
+              .join("") +
+            "</tr>"
+          );
+        })
+        .join("") +
+      renderFillerRows(
+        Math.max(0, layoutRowCount - shown.length),
+        4 + quarters.length,
+      )
+    );
   }
 
   function renderQuarterCell(cell) {
@@ -122,5 +163,96 @@
       Number(cell.decisionCount).toLocaleString() +
       "</span></td>"
     );
+  }
+
+  function renderConfig(value) {
+    var entries = configEntries(value);
+    if (entries.length === 0) {
+      return '<div class="backtest-config"><span class="alea-muted">{}</span></div>';
+    }
+    return (
+      '<dl class="backtest-config">' +
+      entries
+        .map(function (entry) {
+          return (
+            '<div class="backtest-config-row"><dt>' +
+            escapeHtml(entry.key + ":") +
+            "</dt><dd>" +
+            escapeHtml(entry.value) +
+            "</dd></div>"
+          );
+        })
+        .join("") +
+      "</dl>"
+    );
+  }
+
+  function configEntries(value, prefix) {
+    if (value === null || typeof value !== "object") {
+      return prefix === undefined
+        ? []
+        : [{ key: prefix, value: formatConfigValue(value) }];
+    }
+    if (Array.isArray(value)) {
+      return prefix === undefined
+        ? []
+        : [{ key: prefix, value: JSON.stringify(value) }];
+    }
+    return Object.keys(value)
+      .sort()
+      .reduce(function (out, key) {
+        var child = value[key];
+        var childKey = prefix === undefined ? key : prefix + "." + key;
+        if (isPlainConfigObject(child)) {
+          var nested = configEntries(child, childKey);
+          return out.concat(
+            nested.length === 0
+              ? [{ key: childKey, value: "{}" }]
+              : nested,
+          );
+        }
+        return out.concat([{ key: childKey, value: formatConfigValue(child) }]);
+      }, []);
+  }
+
+  function isPlainConfigObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function formatConfigValue(value) {
+    if (typeof value === "string") {
+      return value;
+    }
+    if (
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      value === null
+    ) {
+      return String(value);
+    }
+    return JSON.stringify(value);
+  }
+
+  function layoutRowCountForPeriod() {
+    var periodSlice = byPeriod[currentPeriod] || {};
+    var byAsset = periodSlice.byAsset || {};
+    return Math.max.apply(
+      null,
+      [1].concat(
+        Object.keys(byAsset).map(function (asset) {
+          return Math.min(TABLE_LIMIT, (byAsset[asset].rows || []).length);
+        }),
+      ),
+    );
+  }
+
+  function renderFillerRows(count, colspan) {
+    return Array.from({ length: count }, function () {
+      return (
+        '<tr class="backtest-filler-row" aria-hidden="true"><td colspan="' +
+        colspan +
+        '">&nbsp;</td></tr>'
+      );
+    }).join("");
   }
 })();

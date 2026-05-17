@@ -1,4 +1,4 @@
-import { registeredCandidates } from "@alea/lib/filters/registry";
+import { tradeCandidatesForMarket } from "@alea/lib/filters/registry";
 import type {
   CandidateTradeDecision,
   CandidateVote,
@@ -8,12 +8,18 @@ import type {
 
 export function evaluateCandidateTradeDecision({
   context,
-  candidates = registeredCandidates,
+  candidates,
 }: {
   readonly context: FilterEvaluationContext;
   readonly candidates?: readonly FilterCandidate[];
 }): CandidateTradeDecision {
-  const votes: CandidateVote[] = candidates.map((candidate) => {
+  const selectedCandidates =
+    candidates ??
+    tradeCandidatesForMarket({
+      asset: context.asset,
+      period: context.period,
+    });
+  const votes: CandidateVote[] = selectedCandidates.map((candidate) => {
     const evaluation = candidate.evaluate(context);
     return {
       candidateId: candidate.id,
@@ -28,8 +34,11 @@ export function evaluateCandidateTradeDecision({
   const up = votes.filter((vote) => vote.decision === "up").length;
   const down = votes.filter((vote) => vote.decision === "down").length;
   const neutral = votes.length - up - down;
-  const decision = up > down ? "up" : down > up ? "down" : "neutral";
+  const decision =
+    up > 0 && down === 0 ? "up" : down > 0 && up === 0 ? "down" : "neutral";
   const prediction = decision === "up" ? "u" : decision === "down" ? "d" : null;
+  const summaryPrefix =
+    up > 0 && down > 0 ? "trade filters conflict" : "trade filters";
   return {
     decision,
     prediction,
@@ -37,6 +46,6 @@ export function evaluateCandidateTradeDecision({
     down,
     neutral,
     votes,
-    summary: `filters up=${up} down=${down} neutral=${neutral}`,
+    summary: `${summaryPrefix} up=${up} down=${down} neutral=${neutral}`,
   };
 }

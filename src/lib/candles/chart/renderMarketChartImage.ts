@@ -6,12 +6,13 @@ import { env } from "@alea/constants/env";
 import {
   buildDefaultMarketChartIndicators,
   type MarketChartIndicators,
+  type MarketChartLegendItem,
 } from "@alea/lib/candles/chart/buildMarketChartIndicators";
 import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
 import type { CandleSource } from "@alea/types/sources";
-import { chromium } from "playwright-core";
+import { type Browser,chromium } from "playwright-core";
 
 type RenderMarketChartImageParams = {
   readonly candles: readonly Candle[];
@@ -26,6 +27,8 @@ type RenderMarketChartImageParams = {
   readonly showPriceLine?: boolean;
   readonly showTopInfo?: boolean;
   readonly showIndicators?: boolean;
+  readonly indicators?: MarketChartIndicators;
+  readonly browser?: Browser;
 };
 
 export type RenderMarketChartImageResult = {
@@ -65,11 +68,6 @@ type LightweightVolumeBar = {
   readonly color: string;
 };
 
-type MarketChartLegendItem = {
-  readonly label: string;
-  readonly color: string;
-};
-
 const upColor = "#16a085";
 const downColor = "#e04f5f";
 const topbarHeight = 76;
@@ -101,7 +99,9 @@ export async function renderMarketChartImage({
   browserPath,
   showPriceLine = true,
   showTopInfo = true,
-  showIndicators = true,
+  showIndicators = false,
+  indicators,
+  browser: existingBrowser,
 }: RenderMarketChartImageParams): Promise<RenderMarketChartImageResult> {
   if (candles.length === 0) {
     throw new Error(
@@ -122,20 +122,12 @@ export async function renderMarketChartImage({
     showPriceLine,
     showTopInfo,
     showIndicators,
+    indicators,
   });
   const html = await buildMarketChartHtml({ payload });
-  const executablePath = await resolveBrowserPath({ browserPath });
-  let browser;
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      ...(executablePath === undefined ? {} : { executablePath }),
-    });
-  } catch (error) {
-    throw new Error(
-      `failed to launch Chrome for chart rendering. Install Google Chrome, run Playwright's browser installer, or set ALEA_CHART_BROWSER_PATH. Original error: ${(error as Error)?.message ?? String(error)}`,
-    );
-  }
+  const browser =
+    existingBrowser ?? (await launchMarketChartBrowser({ browserPath }));
+  const shouldCloseBrowser = existingBrowser === undefined;
 
   try {
     const page = await browser.newPage({
@@ -146,9 +138,13 @@ export async function renderMarketChartImage({
     await page.waitForFunction("window.__aleaMarketChartReady === true", null, {
       timeout: 10_000,
     });
-    await page.locator("#capture").screenshot({ path: outPath });
+    await page
+      .locator("#capture")
+      .screenshot({ path: outPath, timeout: 15_000 });
   } finally {
-    await browser.close();
+    if (shouldCloseBrowser) {
+      await browser.close();
+    }
   }
 
   return {
@@ -157,6 +153,25 @@ export async function renderMarketChartImage({
     start: candles[0]!.timestamp,
     end: candles[candles.length - 1]!.timestamp,
   };
+}
+
+export async function launchMarketChartBrowser({
+  browserPath,
+}: {
+  readonly browserPath?: string;
+}): Promise<Browser> {
+  const executablePath = await resolveBrowserPath({ browserPath });
+  try {
+    return await chromium.launch({
+      headless: true,
+      timeout: 15_000,
+      ...(executablePath === undefined ? {} : { executablePath }),
+    });
+  } catch (error) {
+    throw new Error(
+      `failed to launch Chrome for chart rendering. Install Google Chrome, run Playwright's browser installer, or set ALEA_CHART_BROWSER_PATH. Original error: ${(error as Error)?.message ?? String(error)}`,
+    );
+  }
 }
 
 export function marketChartPayload({
@@ -169,7 +184,8 @@ export function marketChartPayload({
   height,
   showPriceLine = true,
   showTopInfo = true,
-  showIndicators = true,
+  showIndicators = false,
+  indicators,
 }: {
   readonly candles: readonly Candle[];
   readonly asset: Asset;
@@ -181,6 +197,7 @@ export function marketChartPayload({
   readonly showPriceLine?: boolean;
   readonly showTopInfo?: boolean;
   readonly showIndicators?: boolean;
+  readonly indicators?: MarketChartIndicators;
 }): MarketChartPayload {
   const latest = candles[candles.length - 1];
   if (latest === undefined) {
@@ -193,9 +210,9 @@ export function marketChartPayload({
       : ((latest.close - previous.close) / previous.close) * 100;
   const title = `${asset.toUpperCase()}-${product === "spot" ? "USD" : "PERP"} ${timeframe}`;
   const subtitle = `${displaySource(source)} ${product}`;
-  const indicators = showIndicators
-    ? buildDefaultMarketChartIndicators({ candles })
-    : null;
+  const resolvedIndicators =
+    indicators ??
+    (showIndicators ? buildDefaultMarketChartIndicators({ candles }) : null);
 
   return {
     title,
@@ -225,8 +242,9 @@ export function marketChartPayload({
           : "rgba(224, 79, 95, 0.42)",
     })),
     hasVolume: candles.some((candle) => candle.volume > 0),
-    indicators,
-    indicatorLegend: indicators === null ? [] : indicatorLegend(indicators),
+    indicators: resolvedIndicators,
+    indicatorLegend:
+      resolvedIndicators === null ? [] : indicatorLegend(resolvedIndicators),
   };
 }
 
@@ -346,6 +364,45 @@ async function buildMarketChartHtml({
       width: ${payload.width}px;
       height: ${payload.height - topbarHeight}px;
     }
+    #chart-shell {
+      position: relative;
+      width: ${payload.width}px;
+      height: ${payload.height - topbarHeight}px;
+    }
+    #chart,
+    #annotation-layer {
+      position: absolute;
+      inset: 0;
+    }
+    #annotation-layer {
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #annotation-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .annotation-label {
+      position: absolute;
+      z-index: 2;
+      box-sizing: border-box;
+      padding: 3px 6px 4px;
+      border: 1px solid currentColor;
+      border-radius: 4px;
+      background: rgba(11, 15, 22, 0.88);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
+      color: #d6dde8;
+      font-size: 11px;
+      font-weight: 680;
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
+    }
   </style>
 </head>
 <body>
@@ -365,12 +422,25 @@ async function buildMarketChartHtml({
           : ""
       }
     </div>
-    <div id="chart"></div>
+    <div id="chart-shell">
+      <div id="chart"></div>
+      <div id="annotation-layer">
+        <svg id="annotation-svg" aria-hidden="true"></svg>
+      </div>
+    </div>
   </div>
   <script>${scriptSource}</script>
   <script>
     const payload = ${payloadJson};
     const chartHost = document.getElementById("chart");
+    const annotationLayer = document.getElementById("annotation-layer");
+    const annotationSvg = document.getElementById("annotation-svg");
+    const annotationMarkers = [
+      ...(payload.indicators?.rsiDivergenceMarkers ?? []),
+      ...(payload.indicators?.priceActionMarkers ?? []),
+    ].sort((a, b) => a.time - b.time);
+    const hasBelowAnnotations = annotationMarkers.some(marker => marker.position === "belowBar");
+    const hasAboveAnnotations = annotationMarkers.some(marker => marker.position === "aboveBar");
     const chart = LightweightCharts.createChart(chartHost, {
       width: payload.width,
       height: payload.height - ${topbarHeight},
@@ -391,7 +461,10 @@ async function buildMarketChartHtml({
       },
       rightPriceScale: {
         borderColor: "rgba(93, 110, 132, 0.34)",
-        scaleMargins: { top: 0.08, bottom: payload.hasVolume ? 0.24 : 0.08 },
+        scaleMargins: {
+          top: hasAboveAnnotations ? 0.22 : 0.08,
+          bottom: hasBelowAnnotations ? 0.44 : payload.hasVolume ? 0.24 : 0.08,
+        },
       },
       timeScale: {
         borderColor: "rgba(93, 110, 132, 0.34)",
@@ -442,24 +515,240 @@ async function buildMarketChartHtml({
       volumeSeries.setData(payload.volume);
     }
 
-    const markers = [
-      ...(payload.indicators?.rsiDivergenceMarkers ?? []),
-      ...(payload.indicators?.priceActionMarkers ?? []),
-    ].sort((a, b) => a.time - b.time);
-    if (markers.length > 0) {
-      LightweightCharts.createSeriesMarkers(
-        candleSeries,
-        markers,
-        { zOrder: "top" },
-      );
-    }
-
     chart.timeScale().fitContent();
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        renderAnnotationOverlay();
         window.__aleaMarketChartReady = true;
       });
     });
+
+    function renderAnnotationOverlay() {
+      annotationLayer.querySelectorAll(".annotation-label").forEach(node => node.remove());
+      annotationSvg.replaceChildren();
+      if (annotationMarkers.length === 0) {
+        return;
+      }
+      const candleByTime = new Map(payload.candles.map(candle => [Number(candle.time), candle]));
+      const belowMarkerCount = annotationMarkers.filter(
+        marker => marker.position === "belowBar",
+      ).length;
+      let belowMarkerIndex = 0;
+      let aboveMarkerIndex = 0;
+      const placed = [];
+      for (const marker of annotationMarkers) {
+        const candle = candleByTime.get(Number(marker.time));
+        if (candle === undefined) {
+          continue;
+        }
+        const x = chart.timeScale().timeToCoordinate(marker.time);
+        const anchorPrice = marker.position === "aboveBar" ? candle.high : candle.low;
+        const y = candleSeries.priceToCoordinate(anchorPrice);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          continue;
+        }
+        const label = document.createElement("div");
+        label.className = "annotation-label";
+        label.textContent = marker.text;
+        label.style.color = marker.color;
+        label.style.visibility = "hidden";
+        annotationLayer.appendChild(label);
+        const width = label.offsetWidth;
+        const height = label.offsetHeight;
+        const markerIndex =
+          marker.position === "belowBar"
+            ? belowMarkerIndex++
+            : aboveMarkerIndex++;
+        const preferredLane =
+          marker.position === "belowBar"
+            ? clamp(belowMarkerCount - markerIndex - 1, 0, 11)
+            : clamp(markerIndex, 0, 11);
+        const rect = placeAnnotationLabel({
+          x,
+          y,
+          width,
+          height,
+          position: marker.position,
+          preferredLane,
+          placed,
+        });
+        label.style.left = rect.left + "px";
+        label.style.top = rect.top + "px";
+        label.style.visibility = "visible";
+        placed.push(rect);
+        drawAnnotationConnector({
+          marker,
+          x,
+          y,
+          labelRect: rect,
+        });
+      }
+    }
+
+    function placeAnnotationLabel({
+      x,
+      y,
+      width,
+      height,
+      position,
+      preferredLane,
+      placed,
+    }) {
+      const maxLeft = Math.max(6, chartHost.clientWidth - width - 6);
+      const topRailPadding = 16;
+      const bottomRailPadding = 46;
+      const laneGap = 7;
+      for (const lane of laneSearchOrder(preferredLane, 12)) {
+        const left = clamp(x - width / 2, 6, maxLeft);
+        const railTop =
+          position === "aboveBar"
+            ? topRailPadding + lane * (height + laneGap)
+            : chartHost.clientHeight -
+              bottomRailPadding -
+              height -
+              lane * (height + laneGap);
+        const top = clamp(
+          railTop,
+          6,
+          Math.max(6, chartHost.clientHeight - height - 6),
+        );
+        const rect = {
+          left,
+          top,
+          right: left + width,
+          bottom: top + height,
+          width,
+          height,
+        };
+        if (!placed.some(existing => rectsOverlap(rect, existing, 5))) {
+          return rect;
+        }
+      }
+      const left = clamp(x - width / 2, 6, maxLeft);
+      const fallbackTop =
+        position === "aboveBar"
+          ? topRailPadding + preferredLane * (height + laneGap)
+          : chartHost.clientHeight -
+            bottomRailPadding -
+            height -
+            preferredLane * (height + laneGap);
+      const top = clamp(
+        fallbackTop,
+        6,
+        Math.max(6, chartHost.clientHeight - height - 6),
+      );
+      return {
+        left,
+        top,
+        right: left + width,
+        bottom: top + height,
+        width,
+        height,
+      };
+    }
+
+    function laneSearchOrder(preferredLane, laneCount) {
+      const lanes = [preferredLane];
+      for (let distance = 1; lanes.length < laneCount; distance += 1) {
+        const lower = preferredLane - distance;
+        const upper = preferredLane + distance;
+        if (lower >= 0) {
+          lanes.push(lower);
+        }
+        if (upper < laneCount) {
+          lanes.push(upper);
+        }
+      }
+      return lanes;
+    }
+
+    function drawAnnotationConnector({ marker, x, y, labelRect }) {
+      const labelX = clamp(x, labelRect.left + 5, labelRect.right - 5);
+      const labelY =
+        marker.position === "aboveBar" ? labelRect.bottom : labelRect.top;
+      appendSvg("line", {
+        x1: x,
+        y1: y,
+        x2: labelX,
+        y2: labelY,
+        stroke: marker.color,
+        "stroke-width": 1.15,
+        "stroke-opacity": 0.78,
+      });
+      drawAnnotationShape({
+        marker,
+        x,
+        y,
+      });
+    }
+
+    function drawAnnotationShape({ marker, x, y }) {
+      if (marker.shape === "circle") {
+        appendSvg("circle", {
+          cx: x,
+          cy: y,
+          r: 4,
+          fill: marker.color,
+          stroke: "#0b0f16",
+          "stroke-width": 1.5,
+        });
+        return;
+      }
+      if (marker.shape === "square") {
+        appendSvg("rect", {
+          x: x - 4,
+          y: y - 4,
+          width: 8,
+          height: 8,
+          rx: 1.5,
+          fill: marker.color,
+          stroke: "#0b0f16",
+          "stroke-width": 1.5,
+        });
+        return;
+      }
+      const points =
+        marker.shape === "arrowUp"
+          ? [
+              [x, y - 6],
+              [x - 5, y + 4],
+              [x + 5, y + 4],
+            ]
+          : [
+              [x, y + 6],
+              [x - 5, y - 4],
+              [x + 5, y - 4],
+            ];
+      appendSvg("polygon", {
+        points: points.map(point => point.join(",")).join(" "),
+        fill: marker.color,
+        stroke: "#0b0f16",
+        "stroke-width": 1.5,
+        "stroke-linejoin": "round",
+      });
+    }
+
+    function appendSvg(name, attrs) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      for (const [key, value] of Object.entries(attrs)) {
+        node.setAttribute(key, String(value));
+      }
+      annotationSvg.appendChild(node);
+      return node;
+    }
+
+    function rectsOverlap(a, b, margin) {
+      return (
+        a.left < b.right + margin &&
+        a.right > b.left - margin &&
+        a.top < b.bottom + margin &&
+        a.bottom > b.top - margin
+      );
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
   </script>
 </body>
 </html>`;
@@ -508,6 +797,9 @@ function displaySource(source: CandleSource): string {
 function indicatorLegend(
   indicators: MarketChartIndicators,
 ): readonly MarketChartLegendItem[] {
+  if (indicators.legendItems !== undefined) {
+    return indicators.legendItems;
+  }
   const legend = indicators.priceLines.map((line) => ({
     label: line.label,
     color: line.color,
