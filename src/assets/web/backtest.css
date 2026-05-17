@@ -52,11 +52,18 @@
   white-space: nowrap;
 }
 
+.backtest-config-cell {
+  min-width: 320px;
+  max-width: 360px;
+}
+
 .backtest-config {
   color: var(--alea-text-muted);
   font-family: var(--alea-font-mono);
   font-size: 10px;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 .backtest-cell-count {
