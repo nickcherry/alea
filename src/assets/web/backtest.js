@@ -1,15 +1,13 @@
 /* eslint-disable */
 (function () {
   var payloadEl = document.getElementById("backtest-payload");
-  var tokensEl = document.getElementById("backtest-tokens");
-  if (!payloadEl || !tokensEl) return;
+  if (!payloadEl) return;
 
   var payload = JSON.parse(payloadEl.textContent || "{}");
-  var tokens = JSON.parse(tokensEl.textContent || "{}");
   var byPeriod = payload.byPeriod || {};
   var supportedPeriods = payload.supportedPeriods || ["5m"];
   var currentPeriod = payload.defaultPeriod || supportedPeriods[0] || "5m";
-  var TABLE_LIMIT = 80;
+  var TABLE_LIMIT = 20;
   var alea = window.alea;
   var escapeHtml = alea.escapeHtml;
   var percent = alea.formatPercent;
@@ -17,11 +15,7 @@
 
   var head = document.getElementById("backtest-head");
   var body = document.getElementById("backtest-body");
-  var host = document.getElementById("backtest-chart");
-  var empty = document.getElementById("backtest-chart-empty");
-  var tooltip = document.getElementById("backtest-tooltip");
   var tabs = document.querySelectorAll(".backtest-period-tab");
-  var plot = null;
 
   Array.prototype.forEach.call(tabs, function (tab) {
     tab.addEventListener("click", function () {
@@ -29,25 +23,14 @@
       Array.prototype.forEach.call(tabs, function (t) {
         t.setAttribute("aria-selected", t === tab ? "true" : "false");
       });
-      renderAll();
+      renderTable(activeSlice());
     });
   });
 
-  renderAll();
-
-  window.addEventListener("resize", function () {
-    window.clearTimeout(window.__aleaBacktestResize);
-    window.__aleaBacktestResize = window.setTimeout(renderChart, 120);
-  });
+  renderTable(activeSlice());
 
   function activeSlice() {
     return byPeriod[currentPeriod] || { quarters: [], rows: [] };
-  }
-
-  function renderAll() {
-    var slice = activeSlice();
-    renderTable(slice);
-    renderChart();
   }
 
   function renderTable(slice) {
@@ -138,125 +121,6 @@
       '<span class="backtest-cell-count">' +
       Number(cell.decisionCount).toLocaleString() +
       "</span></td>"
-    );
-  }
-
-  function renderChart() {
-    if (!host) return;
-    if (plot !== null) {
-      plot.destroy();
-      plot = null;
-    }
-    host.innerHTML = "";
-    var slice = activeSlice();
-    var quarters = slice.quarters || [];
-    var rows = (slice.rows || []).filter(function (row) {
-      return row.decisionCount > 0;
-    });
-    if (quarters.length === 0 || rows.length === 0) {
-      if (empty) empty.style.display = "flex";
-      return;
-    }
-    if (empty) empty.style.display = "none";
-    var topRows = rows.slice(0, 6);
-    var xs = quarters.map(function (_q, idx) {
-      return idx + 1;
-    });
-    var data = [xs];
-    topRows.forEach(function (row) {
-      var qByLabel = {};
-      (row.quarters || []).forEach(function (q) {
-        qByLabel[q.label] = q;
-      });
-      data.push(
-        quarters.map(function (q) {
-          var cell = qByLabel[q];
-          return cell && cell.winRate !== null ? cell.winRate * 100 : null;
-        }),
-      );
-    });
-    var palette = [
-      tokens.green || "#46c37b",
-      tokens.blue || "#5b95ff",
-      tokens.gold || "#d7aa45",
-      tokens.orange || "#ffa566",
-      tokens.red || "#d85a4f",
-      tokens.marble || "#e8dec4",
-    ];
-    plot = new uPlot(
-      {
-        width: host.clientWidth || 900,
-        height: 260,
-        padding: [10, 12, 0, 0],
-        scales: { x: { time: false }, y: { range: [35, 65] } },
-        axes: [
-          {
-            stroke: tokens.muted,
-            grid: { stroke: tokens.grid },
-            splits: function () {
-              return xs;
-            },
-            values: function (_u, vals) {
-              return vals.map(function (v) {
-                var idx = Math.round(v) - 1;
-                if (idx < 0 || idx >= quarters.length) return "";
-                return quarters[idx] || "";
-              });
-            },
-          },
-          {
-            stroke: tokens.muted,
-            grid: { stroke: tokens.grid },
-            values: function (_u, vals) {
-              return vals.map(function (v) {
-                return v.toFixed(0) + "%";
-              });
-            },
-          },
-        ],
-        series: [
-          {},
-          ...topRows.map(function (row, idx) {
-            return {
-              label: row.filterName,
-              stroke: palette[idx % palette.length],
-              width: 2,
-              points: { show: true, size: 5 },
-            };
-          }),
-        ],
-        cursor: { drag: { x: false, y: false } },
-        hooks: {
-          setCursor: [
-            function (u) {
-              if (!tooltip) return;
-              var idx = u.cursor.idx;
-              if (idx == null || idx < 0) {
-                tooltip.style.display = "none";
-                return;
-              }
-              var lines = [
-                "<strong>" + escapeHtml(quarters[idx] || "") + "</strong>",
-              ];
-              topRows.forEach(function (row, seriesIdx) {
-                var value = data[seriesIdx + 1][idx];
-                if (value !== null && value !== undefined) {
-                  lines.push(
-                    escapeHtml(row.filterName) + ": " + value.toFixed(1) + "%",
-                  );
-                }
-              });
-              tooltip.innerHTML = lines.join("<br>");
-              tooltip.style.display = "block";
-              tooltip.style.left =
-                Math.min(u.cursor.left + 18, host.clientWidth - 220) + "px";
-              tooltip.style.top = Math.max(12, u.cursor.top - 12) + "px";
-            },
-          ],
-        },
-      },
-      data,
-      host,
     );
   }
 })();

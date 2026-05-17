@@ -4,7 +4,6 @@ import type {
 } from "@alea/lib/backtest/dashboard/types";
 import {
   aleaBrandMark,
-  aleaChartTokens,
   aleaDesignSystemHead,
 } from "@alea/lib/ui/aleaDesignSystem";
 import {
@@ -17,7 +16,7 @@ import {
 } from "@alea/lib/ui/aleaFormat";
 import { renderTopNav } from "@alea/lib/ui/topNav";
 
-const TABLE_LIMIT = 80;
+const TABLE_LIMIT = 20;
 
 export function renderBacktestHtml({
   payload,
@@ -30,9 +29,6 @@ export function renderBacktestHtml({
   };
 }): string {
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
-  const chartTokensJson = escapeJsonForHtml({
-    value: JSON.stringify(aleaChartTokens),
-  });
   const initialPeriod = payload.defaultPeriod;
   const initialSlice =
     payload.byPeriod[initialPeriod] ??
@@ -43,8 +39,6 @@ export function renderBacktestHtml({
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Alea &middot; Backtest</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js" charset="utf-8"></script>
   ${aleaDesignSystemHead({ stylesheets: assets.stylesheets })}
 </head>
 <body>
@@ -68,17 +62,6 @@ export function renderBacktestHtml({
       </div>
 
       <section class="backtest-section">
-        <div class="alea-section-rule"><h2>Quarterly Win Rate</h2></div>
-        <div class="backtest-chart-frame">
-          <div id="backtest-chart" class="backtest-chart-host"></div>
-          <div id="backtest-chart-empty" class="backtest-empty"${initialSlice.rows.length === 0 ? "" : ' style="display:none"'}>
-            No backtest rows yet. Run <span class="alea-mono">bun alea backtest:run</span>.
-          </div>
-          <div id="backtest-tooltip" class="alea-tooltip"></div>
-        </div>
-      </section>
-
-      <section class="backtest-section">
         <div class="alea-section-rule"><h2>Candidates</h2></div>
         <div class="alea-table-wrap">
           <table class="alea-table backtest-table">
@@ -94,7 +77,6 @@ export function renderBacktestHtml({
     </main>
   </div>
   <script id="backtest-payload" type="application/json">${payloadJson}</script>
-  <script id="backtest-tokens" type="application/json">${chartTokensJson}</script>
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
