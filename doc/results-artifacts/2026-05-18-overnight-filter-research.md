@@ -81,3 +81,63 @@ fire with `barsAgo = 0` — the synthetic bar IS the trigger. Higher
 `maxSignalAgeBars` only adds ~40 marginal decisions out of ~3,855. The
 persistence harness is mostly defensive (catches the structural re-break
 edge cases).
+
+## The synth-direction baseline (the bar future filters must beat)
+
+Before reading filter 2 results, an important calibration. Across the full
+70,044 decision points, the naive predictor "bet whatever direction the
+synthetic bar shows at HH:50 (`close - open`)" wins **88.48%** of the time.
+
+Layering in a body-and-close-location strength filter pushes that even
+higher:
+
+| naive predictor                                                       | decisions | WR     |
+| --------------------------------------------------------------------- | --------- | ------ |
+| bet synth direction                                                   | 70,039    | 88.48% |
+| same, but only when `bodyPct >= 0.4` and `closeLoc` favorable >= 0.55 | 37,768    | 98.04% |
+| same, but `closeLoc` favorable >= 0.65                                | 33,779    | 98.18% |
+
+This isn't surprising. At HH:50, the 1h bar is 50/60 done; the last
+10 minutes rarely flip its direction. A filter that fires only when
+`synth.close > synth.open` (bullish) or `synth.close < synth.open`
+(bearish) is essentially re-stating this trivial fact.
+
+**Implication.** A filter that locks predicted direction to synth
+direction (e.g. requires `bar.close > bar.open` for bullish) is not adding
+alpha; it is regurgitating the 98% baseline. Only filters that can
+_disagree_ with synth direction at the trigger candle — like RSI
+Divergence (75.33% WR) and Failed Breakout Reversal (84.80% WR, with
+clearly counter-intuitive triggers like a bearish call on a green synth)
+— are doing real work.
+
+Going forward: every new filter is judged not just by raw WR / count
+but by whether it can predict against the synth-direction baseline. If a
+filter never disagrees with the synth bar, that is a red flag.
+
+## Filter 2: Trend Pullback Resume (SKIPPED — trivial-baseline detector)
+
+`src/lib/filters/trendPullbackResume.ts` — implemented, swept, **not
+registered**.
+
+**Idea (from chatgpt's list).** Established trend (fast EMA above slow EMA
+with positive slope, close above slow EMA), pullback of N candles that
+does not break slow EMA, current candle is green with strong body and
+close-location. Bearish is the mirror.
+
+**Sweep top:** 99.40% WR on 5,003 decisions (`fast=20,slow=50,slope=1,
+pull=2,body=0.6,closeLoc=0.75,age=0`). Per-quarter min 98.6%, per-asset
+min 99.30%.
+
+**Why I am not registering it.** The trigger requires `synth.close >
+synth.open` (bullish) or the inverse (bearish), so it can never predict
+against the synth-direction baseline. Its 99% WR is within the noise of
+the 98% body-and-closeLoc baseline above; the EMA conditions only filter
+_which_ of those obvious cases qualify. Registering it would pollute the
+canonical set with a filter that does not add information beyond "this
+bar is almost decided already."
+
+I kept the filter, core, sweep, and tests in tree because the EMA
+infrastructure and pullback-window detection are reusable for later
+filters that _can_ go against synth direction (e.g. counter-trend pullback
+fade variants). The sweep artifact lives at
+`doc/results-artifacts/*-trend-pullback-resume-sweep.json` for reference.

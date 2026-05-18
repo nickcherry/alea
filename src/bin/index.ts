@@ -18,6 +18,7 @@ import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
+import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
 import { sayTextCommand } from "@alea/bin/say/text";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
 import {
@@ -60,6 +61,7 @@ const cli = createCli({
     polymarketResolutionsSyncCommand,
     researchFailedBreakoutReversalSweepCommand,
     researchRsiDivergenceSweepCommand,
+    researchTrendPullbackResumeSweepCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,
