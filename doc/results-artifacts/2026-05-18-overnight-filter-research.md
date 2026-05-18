@@ -1,5 +1,41 @@
 # Overnight Filter Research (2026-05-18)
 
+> ⚠️ **EVERY WIN-RATE NUMBER IN THE SECTIONS BELOW IS INVALID.** They were
+> measured under the old decision-timing pipeline, which fired decisions
+> *inside* the candle being predicted (HH:25 or HH:50 of the same hour),
+> letting filters peek at 25–50 minutes of the target candle's own
+> partial data. That is not how the system actually trades — maker bids
+> at 50c need to be in the book before the candle has direction, so the
+> decision must fire *before* the target opens. See
+> [doc/DECISION_TIMING.md](../DECISION_TIMING.md) for the correct setup.
+>
+> Under the corrected timing (decision = `target.open - 35min`, synth =
+> partial of the *prior* in-progress hour, filter sees zero target data),
+> all 6 registered candidates collapse to coin-flip:
+>
+> | filter | corrected WR | qMin |
+> |---|---:|---:|
+> | failed_breakout_reversal | 50.22% | 43.72% |
+> | rsi_divergence | 48.68% | 45.44% |
+> | ma_rejection | 47.97% | 40.50% |
+> | exhaustion_reversal | 47.28% | 44.05% |
+> | pin_bar_reversal | 47.27% | 39.04% |
+> | htf_alignment | 46.98% | 36.36% |
+>
+> Blended: 48.34% on 21,556 decisions. Baselines under the corrected
+> timing: base-rate UP 50.41%, bet-synth-direction (partial of prior
+> hour) 49.48%, bet-most-recent-closed-bar 48.41%. None of the filters
+> show meaningful alpha over coin flip. All historical 70–92% numbers
+> in this document are artifacts of the filter looking at its own
+> target's partial.
+>
+> The original-but-wrong numbers remain below for archival reference
+> and to show where the filters came from. **Do not cite them**.
+
+---
+
+# (Archival) Original overnight session — old timing, invalid WRs
+
 Systematic implementation of high-quality stateful filters in the same shape
 as `rsi_divergence`: `trigger -> direction -> active window -> invalidation`.
 Acceptance bar: >=60% win rate / >=500 decisions minimum; target 70%+ WR
@@ -705,7 +741,7 @@ acceptance floor with high frequency.
 
 Synth-direction decomposition: 5,417 with-synth at **89.50% WR**;
 2,178 against-synth at **13.13% WR** (28.7% of total). Same shape as
-every other filter — even a filter *constructed* to ignore synth
+every other filter — even a filter _constructed_ to ignore synth
 direction ends up with most of its decisions agreeing with synth (when
 the streak ends and the bar reverses, the synth often shows the
 reversal direction too). The aggregate WR drops because the
