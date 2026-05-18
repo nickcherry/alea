@@ -167,9 +167,9 @@ function renderQuarterCell(
   cell: BacktestDashboardCandidateRow["quarters"][number] | undefined,
 ): string {
   if (cell === undefined || cell.winRate === null) {
-    return '<td class="num-col alea-muted">—</td>';
+    return '<td class="num-col quarter-col alea-muted">—</td>';
   }
-  return `<td class="num-col alea-mono${winRateToneClass({ value: cell.winRate })}">${formatPercent({ value: cell.winRate })}<span class="backtest-cell-count">${cell.decisionCount.toLocaleString()}</span></td>`;
+  return `<td class="num-col quarter-col alea-mono${winRateToneClass({ value: cell.winRate })}">${formatPercent({ value: cell.winRate })}<span class="backtest-cell-count">${cell.decisionCount.toLocaleString()}</span></td>`;
 }
 
 function renderConfig({ value }: { readonly value: unknown }): string {
@@ -209,9 +209,7 @@ function configEntries({
     const childKey = prefix === undefined ? key : `${prefix}.${key}`;
     if (isPlainConfigObject(child)) {
       const nested = configEntries({ value: child, prefix: childKey });
-      return nested.length === 0
-        ? [{ key: childKey, value: "{}" }]
-        : nested;
+      return nested.length === 0 ? [{ key: childKey, value: "{}" }] : nested;
     }
     return [{ key: childKey, value: formatValue(child) }];
   });

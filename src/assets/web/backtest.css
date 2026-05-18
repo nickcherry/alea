@@ -72,3 +72,98 @@
   color: transparent;
   pointer-events: none;
 }
+
+@media (max-width: 720px) {
+  .backtest-table .quarter-col {
+    display: none;
+  }
+
+  .backtest-table thead {
+    display: none;
+  }
+
+  .backtest-table,
+  .backtest-table tbody {
+    display: block;
+  }
+
+  .backtest-table tr {
+    display: block;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--alea-border);
+  }
+
+  .backtest-table td {
+    display: block;
+    padding: 0;
+    border: none;
+  }
+
+  .backtest-filter-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .backtest-table tr > td:nth-child(3),
+  .backtest-table tr > td:nth-child(4) {
+    display: inline-block;
+    margin-right: 16px;
+    margin-bottom: 8px;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .backtest-table tr > td:nth-child(3)::before {
+    content: "WR ";
+    color: var(--alea-text-muted);
+    font-family: var(--alea-font);
+    font-weight: 600;
+    font-size: 11px;
+    margin-right: 4px;
+  }
+
+  .backtest-table tr > td:nth-child(4)::before {
+    content: "Decisions ";
+    color: var(--alea-text-muted);
+    font-family: var(--alea-font);
+    font-weight: 600;
+    font-size: 11px;
+    margin-right: 4px;
+  }
+
+  .backtest-config-cell {
+    min-width: 0;
+    max-width: none;
+    margin-top: 4px;
+  }
+
+  .backtest-config {
+    display: block;
+    gap: 0;
+  }
+
+  .backtest-config-row {
+    display: block;
+    grid-template-columns: none;
+    gap: 0;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .backtest-config-row dt {
+    display: inline;
+    margin-right: 4px;
+    overflow-wrap: normal;
+  }
+
+  .backtest-config-row dd {
+    display: inline;
+    overflow-wrap: break-word;
+  }
+
+  .backtest-filler-row {
+    display: none;
+  }
+}

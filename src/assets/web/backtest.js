@@ -152,10 +152,10 @@
 
   function renderQuarterCell(cell) {
     if (!cell || cell.winRate === null) {
-      return '<td class="num-col alea-muted">—</td>';
+      return '<td class="num-col quarter-col alea-muted">—</td>';
     }
     return (
-      '<td class="num-col alea-mono' +
+      '<td class="num-col quarter-col alea-mono' +
       toneClass(cell.winRate) +
       '">' +
       percent(cell.winRate) +
@@ -206,9 +206,7 @@
         if (isPlainConfigObject(child)) {
           var nested = configEntries(child, childKey);
           return out.concat(
-            nested.length === 0
-              ? [{ key: childKey, value: "{}" }]
-              : nested,
+            nested.length === 0 ? [{ key: childKey, value: "{}" }] : nested,
           );
         }
         return out.concat([{ key: childKey, value: formatConfigValue(child) }]);
