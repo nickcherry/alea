@@ -1,0 +1,4700 @@
+{
+  "generatedAt": "2026-05-18T02:15:49.142Z",
+  "runtimeMs": 192,
+  "objective": "Sweep Failed Breakdown / Failed Breakout Reversal candidates on 1h markets with shared thesis lifecycle invalidation.",
+  "outcomeSource": "Pyth spot 1h candle direction. This does not include Polymarket market prices or odds.",
+  "decisionTiming": "For each 1h target candle, decide 10 minutes before that same candle closes using a synthetic current-hour bar built from 1m Pyth candles through HH:50.",
+  "startMs": 1764547200000,
+  "endMs": 1767225600000,
+  "assets": ["btc"],
+  "timeframe": "1h",
+  "records": 744,
+  "candidateCount": 5760,
+  "lookbackBarsValues": [20, 30, 40, 50, 60],
+  "minCloseLocationValues": [0.55, 0.6, 0.65, 0.7],
+  "maxSignalAgeBarsValues": [0, 1, 2, 3, 5, 8],
+  "maxAgeValues": [4, 8, 12, 20],
+  "maxConsecutiveWrongValues": [1, 2, 3],
+  "requireWrongLessThanRightValues": [false, true],
+  "requireFirstTradeWinValues": [false, true],
+  "topOverall": [
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 106,
+      "wins": 76,
+      "losses": 30,
+      "coverage": 14.25,
+      "winRate": 71.7,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.7,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.7,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 71.7
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 102,
+      "wins": 73,
+      "losses": 29,
+      "coverage": 13.71,
+      "winRate": 71.57,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.57,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.57,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 102,
+          "winRate": 71.57
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=2|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=2|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=2|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 126,
+      "wins": 90,
+      "losses": 36,
+      "coverage": 16.94,
+      "winRate": 71.43,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71.43,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71.43,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 71.43
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=4|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 100,
+      "wins": 71,
+      "losses": 29,
+      "coverage": 13.44,
+      "winRate": 71,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 100,
+          "winRate": 71
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 100,
+          "winRate": 71
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=4|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 100,
+      "wins": 71,
+      "losses": 29,
+      "coverage": 13.44,
+      "winRate": 71,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 71,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 71,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 100,
+          "winRate": 71
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 100,
+          "winRate": 71
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 77,
+      "losses": 32,
+      "coverage": 14.65,
+      "winRate": 70.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 70.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 70.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 70.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=8|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=8|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=12|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=12|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=20|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=20|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 104,
+      "wins": 72,
+      "losses": 32,
+      "coverage": 13.98,
+      "winRate": 69.23,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 69.23,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 69.23,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 104,
+          "winRate": 69.23
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 134,
+      "wins": 92,
+      "losses": 42,
+      "coverage": 18.01,
+      "winRate": 68.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 134,
+          "winRate": 68.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 114,
+      "wins": 78,
+      "losses": 36,
+      "coverage": 15.32,
+      "winRate": 68.42,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.42,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.42,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 114,
+      "wins": 78,
+      "losses": 36,
+      "coverage": 15.32,
+      "winRate": 68.42,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.42,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.42,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 114,
+      "wins": 78,
+      "losses": 36,
+      "coverage": 15.32,
+      "winRate": 68.42,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 68.42,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 68.42,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 68.42
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=3|wLR=true|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=3|wLR=true|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": true,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 109,
+      "wins": 74,
+      "losses": 35,
+      "coverage": 14.65,
+      "winRate": 67.89,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.89,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.89,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 109,
+          "winRate": 67.89
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=5|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 110,
+      "wins": 74,
+      "losses": 36,
+      "coverage": 14.78,
+      "winRate": 67.27,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.27,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.27,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=5|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 110,
+      "wins": 74,
+      "losses": 36,
+      "coverage": 14.78,
+      "winRate": 67.27,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.27,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.27,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=5|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 110,
+      "wins": 74,
+      "losses": 36,
+      "coverage": 14.78,
+      "winRate": 67.27,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.27,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.27,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 110,
+          "winRate": 67.27
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=5|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 113,
+      "wins": 76,
+      "losses": 37,
+      "coverage": 15.19,
+      "winRate": 67.26,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.26,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.26,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 113,
+          "winRate": 67.26
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 113,
+          "winRate": 67.26
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 113,
+      "wins": 76,
+      "losses": 37,
+      "coverage": 15.19,
+      "winRate": 67.26,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.26,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.26,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 113,
+          "winRate": 67.26
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 113,
+          "winRate": 67.26
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 82,
+      "losses": 40,
+      "coverage": 16.4,
+      "winRate": 67.21,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.21,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.21,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 82,
+      "losses": 40,
+      "coverage": 16.4,
+      "winRate": 67.21,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.21,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.21,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 82,
+      "losses": 40,
+      "coverage": 16.4,
+      "winRate": 67.21,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.21,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.21,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 67.21
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 137,
+      "wins": 92,
+      "losses": 45,
+      "coverage": 18.41,
+      "winRate": 67.15,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.15,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.15,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 137,
+          "winRate": 67.15
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 137,
+          "winRate": 67.15
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 137,
+      "wins": 92,
+      "losses": 45,
+      "coverage": 18.41,
+      "winRate": 67.15,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 67.15,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 67.15,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 137,
+          "winRate": 67.15
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 137,
+          "winRate": 67.15
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=3|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 3,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 118,
+      "wins": 79,
+      "losses": 39,
+      "coverage": 15.86,
+      "winRate": 66.95,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.95,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.95,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=3|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 3,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 118,
+      "wins": 79,
+      "losses": 39,
+      "coverage": 15.86,
+      "winRate": 66.95,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.95,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.95,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=3|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 3,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 118,
+      "wins": 79,
+      "losses": 39,
+      "coverage": 15.86,
+      "winRate": 66.95,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.95,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.95,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=3|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 3,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 118,
+      "wins": 79,
+      "losses": 39,
+      "coverage": 15.86,
+      "winRate": 66.95,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.95,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.95,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 118,
+          "winRate": 66.95
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=5|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 124,
+      "wins": 83,
+      "losses": 41,
+      "coverage": 16.67,
+      "winRate": 66.94,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.94,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.94,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 124,
+          "winRate": 66.94
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 124,
+          "winRate": 66.94
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 124,
+      "wins": 83,
+      "losses": 41,
+      "coverage": 16.67,
+      "winRate": 66.94,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.94,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.94,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 124,
+          "winRate": 66.94
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 124,
+          "winRate": 66.94
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 81,
+      "losses": 41,
+      "coverage": 16.4,
+      "winRate": 66.39,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.39,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.39,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 81,
+      "losses": 41,
+      "coverage": 16.4,
+      "winRate": 66.39,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.39,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.39,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 122,
+      "wins": 81,
+      "losses": 41,
+      "coverage": 16.4,
+      "winRate": 66.39,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.39,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.39,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 122,
+          "winRate": 66.39
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=3|maxAge=4|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 3,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 107,
+      "wins": 71,
+      "losses": 36,
+      "coverage": 14.38,
+      "winRate": 66.36,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.36,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.36,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=3|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 3,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 107,
+      "wins": 71,
+      "losses": 36,
+      "coverage": 14.38,
+      "winRate": 66.36,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.36,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.36,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=3|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 3,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 107,
+      "wins": 71,
+      "losses": 36,
+      "coverage": 14.38,
+      "winRate": 66.36,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.36,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.36,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=3|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 3,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 107,
+      "wins": 71,
+      "losses": 36,
+      "coverage": 14.38,
+      "winRate": 66.36,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.36,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.36,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 107,
+          "winRate": 66.36
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=8|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 101,
+      "wins": 67,
+      "losses": 34,
+      "coverage": 13.58,
+      "winRate": 66.34,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.34,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.34,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=12|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 101,
+      "wins": 67,
+      "losses": 34,
+      "coverage": 13.58,
+      "winRate": 66.34,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.34,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.34,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=20|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 101,
+      "wins": 67,
+      "losses": 34,
+      "coverage": 13.58,
+      "winRate": 66.34,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 66.34,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 66.34,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 101,
+          "winRate": 66.34
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 141,
+      "wins": 93,
+      "losses": 48,
+      "coverage": 18.95,
+      "winRate": 65.96,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.96,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.96,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 141,
+      "wins": 93,
+      "losses": 48,
+      "coverage": 18.95,
+      "winRate": 65.96,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.96,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.96,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 141,
+      "wins": 93,
+      "losses": 48,
+      "coverage": 18.95,
+      "winRate": 65.96,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.96,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.96,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.96
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=5|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 83,
+      "losses": 43,
+      "coverage": 16.94,
+      "winRate": 65.87,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.87,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.87,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=5|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 83,
+      "losses": 43,
+      "coverage": 16.94,
+      "winRate": 65.87,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.87,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.87,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=5|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 126,
+      "wins": 83,
+      "losses": 43,
+      "coverage": 16.94,
+      "winRate": 65.87,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.87,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.87,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 126,
+          "winRate": 65.87
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 155,
+      "wins": 102,
+      "losses": 53,
+      "coverage": 20.83,
+      "winRate": 65.81,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.81,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.81,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 155,
+      "wins": 102,
+      "losses": 53,
+      "coverage": 20.83,
+      "winRate": 65.81,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.81,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.81,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 155,
+      "wins": 102,
+      "losses": 53,
+      "coverage": 20.83,
+      "winRate": 65.81,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.81,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.81,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 155,
+          "winRate": 65.81
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=8|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 111,
+      "wins": 73,
+      "losses": 38,
+      "coverage": 14.92,
+      "winRate": 65.77,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.77,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.77,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=12|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 111,
+      "wins": 73,
+      "losses": 38,
+      "coverage": 14.92,
+      "winRate": 65.77,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.77,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.77,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=20|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 111,
+      "wins": 73,
+      "losses": 38,
+      "coverage": 14.92,
+      "winRate": 65.77,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.77,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.77,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 111,
+          "winRate": 65.77
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=5|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 139,
+      "wins": 91,
+      "losses": 48,
+      "coverage": 18.68,
+      "winRate": 65.47,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.47,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.47,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=5|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 139,
+      "wins": 91,
+      "losses": 48,
+      "coverage": 18.68,
+      "winRate": 65.47,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.47,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.47,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=5|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 139,
+      "wins": 91,
+      "losses": 48,
+      "coverage": 18.68,
+      "winRate": 65.47,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.47,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.47,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 139,
+          "winRate": 65.47
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 141,
+      "wins": 92,
+      "losses": 49,
+      "coverage": 18.95,
+      "winRate": 65.25,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.25,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.25,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 141,
+      "wins": 92,
+      "losses": 49,
+      "coverage": 18.95,
+      "winRate": 65.25,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.25,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.25,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.65|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.65,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 141,
+      "wins": 92,
+      "losses": 49,
+      "coverage": 18.95,
+      "winRate": 65.25,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.25,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.25,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 141,
+          "winRate": 65.25
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.6|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 69,
+      "losses": 37,
+      "coverage": 14.25,
+      "winRate": 65.09,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.09,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.09,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.6|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 69,
+      "losses": 37,
+      "coverage": 14.25,
+      "winRate": 65.09,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.09,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.09,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.6|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 106,
+      "wins": 69,
+      "losses": 37,
+      "coverage": 14.25,
+      "winRate": 65.09,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.09,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.09,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 106,
+          "winRate": 65.09
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 183,
+      "wins": 119,
+      "losses": 64,
+      "coverage": 24.6,
+      "winRate": 65.03,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.03,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.03,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 183,
+      "wins": 119,
+      "losses": 64,
+      "coverage": 24.6,
+      "winRate": 65.03,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.03,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.03,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 183,
+      "wins": 119,
+      "losses": 64,
+      "coverage": 24.6,
+      "winRate": 65.03,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 65.03,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 65.03,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 183,
+          "winRate": 65.03
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 116,
+      "wins": 75,
+      "losses": 41,
+      "coverage": 15.59,
+      "winRate": 64.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 116,
+      "wins": 75,
+      "losses": 41,
+      "coverage": 15.59,
+      "winRate": 64.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=3|wLR=false|first=true",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": true
+      },
+      "decisions": 116,
+      "wins": 75,
+      "losses": 41,
+      "coverage": 15.59,
+      "winRate": 64.66,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.66,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.66,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 116,
+          "winRate": 64.66
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 159,
+      "wins": 102,
+      "losses": 57,
+      "coverage": 21.37,
+      "winRate": 64.15,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.15,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.15,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=12|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 159,
+      "wins": 102,
+      "losses": 57,
+      "coverage": 21.37,
+      "winRate": 64.15,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.15,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.15,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.6|age=8|maxAge=20|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.6,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 159,
+      "wins": 102,
+      "losses": 57,
+      "coverage": 21.37,
+      "winRate": 64.15,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.15,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.15,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 159,
+          "winRate": 64.15
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=5|maxAge=4|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 153,
+      "wins": 98,
+      "losses": 55,
+      "coverage": 20.56,
+      "winRate": 64.05,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.05,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.05,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 153,
+          "winRate": 64.05
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 153,
+          "winRate": 64.05
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=4|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 153,
+      "wins": 98,
+      "losses": 55,
+      "coverage": 20.56,
+      "winRate": 64.05,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.05,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.05,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 153,
+          "winRate": 64.05
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 153,
+          "winRate": 64.05
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=5|maxAge=4|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 5,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 114,
+      "wins": 73,
+      "losses": 41,
+      "coverage": 15.32,
+      "winRate": 64.04,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.04,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.04,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.7|age=8|maxAge=4|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.7,
+        "maxSignalAgeBars": 8,
+        "maxAge": 4,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 114,
+      "wins": 73,
+      "losses": 41,
+      "coverage": 15.32,
+      "winRate": 64.04,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.04,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.04,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=5|maxAge=8|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 114,
+      "wins": 73,
+      "losses": 41,
+      "coverage": 15.32,
+      "winRate": 64.04,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.04,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.04,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=5|maxAge=12|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 114,
+      "wins": 73,
+      "losses": 41,
+      "coverage": 15.32,
+      "winRate": 64.04,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.04,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.04,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ]
+    },
+    {
+      "key": "lookback=30|closeLoc=0.55|age=5|maxAge=20|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 30,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 5,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 114,
+      "wins": 73,
+      "losses": 41,
+      "coverage": 15.32,
+      "winRate": 64.04,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64.04,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64.04,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 114,
+          "winRate": 64.04
+        }
+      ]
+    },
+    {
+      "key": "lookback=40|closeLoc=0.55|age=8|maxAge=8|consec=2|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 40,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 2,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 100,
+      "wins": 64,
+      "losses": 36,
+      "coverage": 13.44,
+      "winRate": 64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 100,
+          "winRate": 64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 100,
+          "winRate": 64
+        }
+      ]
+    }
+  ],
+  "topAtLeast500": [],
+  "topAtLeast1000": [],
+  "topRobust": [
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=8|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 8,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 223,
+      "wins": 133,
+      "losses": 90,
+      "coverage": 29.97,
+      "winRate": 59.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 59.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 59.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=12|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 12,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 223,
+      "wins": 133,
+      "losses": 90,
+      "coverage": 29.97,
+      "winRate": 59.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 59.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 59.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ]
+    },
+    {
+      "key": "lookback=20|closeLoc=0.55|age=8|maxAge=20|consec=3|wLR=false|first=false",
+      "config": {
+        "lookbackBars": 20,
+        "minCloseLocation": 0.55,
+        "maxSignalAgeBars": 8,
+        "maxAge": 20,
+        "maxConsecutiveWrong": 3,
+        "requireWrongLessThanRight": false,
+        "requireFirstTradeWin": false
+      },
+      "decisions": 223,
+      "wins": 133,
+      "losses": 90,
+      "coverage": 29.97,
+      "winRate": 59.64,
+      "quarterCount": 1,
+      "coveredQuarters": 1,
+      "positiveQuarters": 1,
+      "minQuarterWinRate": 59.64,
+      "coveredAssets": 1,
+      "positiveAssets": 1,
+      "minAssetWinRate": 59.64,
+      "quarterRates": [
+        {
+          "name": "2025 Q4",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ],
+      "assetRates": [
+        {
+          "name": "btc",
+          "decisions": 223,
+          "winRate": 59.64
+        }
+      ]
+    }
+  ]
+}

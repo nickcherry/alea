@@ -1,10 +1,8 @@
 import { writeFileSync } from "node:fs";
 
+import { CANDIDATE_BACKTEST_START_MS } from "@alea/constants/backtest";
 import { TRADE_DECISION_DEFAULT_ASSETS } from "@alea/constants/tradeDecision";
-import {
-  quarterLabelFor,
-  quarterStartFor,
-} from "@alea/lib/backtest/cache";
+import { quarterLabelFor, quarterStartFor } from "@alea/lib/backtest/cache";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -61,7 +59,6 @@ type TargetRecord = {
   readonly outcome: Direction;
 };
 
-const DEFAULT_START_MS = Date.UTC(2025, 0, 1);
 const ONE_MINUTE_MS = timeframeMs({ timeframe: "1m" });
 const ONE_HOUR_MS = timeframeMs({ timeframe: "1h" });
 const DECISION_BEFORE_CLOSE_MS = 10 * ONE_MINUTE_MS;
@@ -125,7 +122,9 @@ export const researchRsiDivergenceSweepCommand = defineCommand({
         .string()
         .optional()
         .transform((value) =>
-          value === undefined ? DEFAULT_START_MS : parseDateMs(value),
+          value === undefined
+            ? CANDIDATE_BACKTEST_START_MS
+            : parseDateMs(value),
         )
         .describe("Inclusive UTC start date."),
     }),
@@ -201,7 +200,11 @@ async function runSweep({
       quarterLabels.add(target.quarter);
     }
 
-    for (let configIndex = 0; configIndex < baseConfigs.length; configIndex += 1) {
+    for (
+      let configIndex = 0;
+      configIndex < baseConfigs.length;
+      configIndex += 1
+    ) {
       const baseConfig = baseConfigs[configIndex]!;
       for (const target of targets) {
         evaluateTargetBaseConfig({
@@ -210,7 +213,10 @@ async function runSweep({
           stats,
         });
       }
-      if ((configIndex + 1) % 10 === 0 || configIndex + 1 === baseConfigs.length) {
+      if (
+        (configIndex + 1) % 10 === 0 ||
+        configIndex + 1 === baseConfigs.length
+      ) {
         log(
           JSON.stringify({
             kind: "asset-progress",
@@ -607,11 +613,7 @@ function isInvalidated({
 }): boolean {
   let agreementScore = 0;
   let consecutiveDisagreements = 0;
-  for (
-    let index = signal.confirmedIndex + 1;
-    index < bars.length;
-    index += 1
-  ) {
+  for (let index = signal.confirmedIndex + 1; index < bars.length; index += 1) {
     const bar = bars[index]!;
     const direction = agreementDirectionForBar({
       decision,
@@ -711,10 +713,7 @@ function getCandidateStat({
   return stat;
 }
 
-function getBasicStat(
-  map: Map<string, BasicStat>,
-  key: string,
-): BasicStat {
+function getBasicStat(map: Map<string, BasicStat>, key: string): BasicStat {
   const existing = map.get(key);
   if (existing !== undefined) {
     return existing;
@@ -771,7 +770,10 @@ function summarizeStat({
     return {
       name,
       decisions: quarter?.n ?? 0,
-      winRate: quarter === undefined || quarter.n === 0 ? null : pct(quarter.wins, quarter.n),
+      winRate:
+        quarter === undefined || quarter.n === 0
+          ? null
+          : pct(quarter.wins, quarter.n),
     };
   });
   const assetRates = assets.map((name) => {
@@ -779,10 +781,13 @@ function summarizeStat({
     return {
       name,
       decisions: asset?.n ?? 0,
-      winRate: asset === undefined || asset.n === 0 ? null : pct(asset.wins, asset.n),
+      winRate:
+        asset === undefined || asset.n === 0 ? null : pct(asset.wins, asset.n),
     };
   });
-  const coveredQuarters = quarterRates.filter((row) => row.decisions > 0).length;
+  const coveredQuarters = quarterRates.filter(
+    (row) => row.decisions > 0,
+  ).length;
   const coveredAssets = assetRates.filter((row) => row.decisions > 0).length;
   const positiveQuarters = quarterRates.filter(
     (row) => row.winRate !== null && row.winRate > 50,

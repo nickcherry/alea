@@ -1,6 +1,10 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import { defineCandidate } from "@alea/lib/filters/config";
 import {
+  type FailedBreakoutReversalConfig,
+  failedBreakoutReversalFilter,
+} from "@alea/lib/filters/failedBreakoutReversal";
+import {
   type RsiDivergenceConfig,
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
@@ -40,12 +44,37 @@ const oneHourRsiDivergenceCandidate = defineCandidate({
   } satisfies RsiDivergenceConfig,
 });
 
+const oneHourFailedBreakoutReversalCandidate = defineCandidate({
+  filter: failedBreakoutReversalFilter,
+  config: {
+    lookbackBars: 40,
+    minCloseLocation: 0.7,
+    maxSignalAgeBars: 5,
+    maxAge: 8,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies FailedBreakoutReversalConfig,
+});
+
 export const registeredCandidatesByMarket = {
   "1h": candidatesByAsset({
-    btc: [oneHourRsiDivergenceCandidate],
-    eth: [oneHourRsiDivergenceCandidate],
-    sol: [oneHourRsiDivergenceCandidate],
-    doge: [oneHourRsiDivergenceCandidate],
+    btc: [
+      oneHourRsiDivergenceCandidate,
+      oneHourFailedBreakoutReversalCandidate,
+    ],
+    eth: [
+      oneHourRsiDivergenceCandidate,
+      oneHourFailedBreakoutReversalCandidate,
+    ],
+    sol: [
+      oneHourRsiDivergenceCandidate,
+      oneHourFailedBreakoutReversalCandidate,
+    ],
+    doge: [
+      oneHourRsiDivergenceCandidate,
+      oneHourFailedBreakoutReversalCandidate,
+    ],
   }),
 } as const satisfies CandidateRegistryByMarket;
 

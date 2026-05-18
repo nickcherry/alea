@@ -23,36 +23,23 @@ describe("registeredCandidates", () => {
     ).toBe(true);
   });
 
-  it("registers the curated 1h RSI divergence candidate by market", () => {
-    const expectedCounts = {
-      "1h/btc": 1,
-      "1h/eth": 1,
-      "1h/sol": 1,
-      "1h/doge": 1,
-    } as const;
-
-    for (const [market, expectedCount] of Object.entries(expectedCounts)) {
-      const [period, asset] = market.split("/") as [
-        "1h",
-        "btc" | "eth" | "sol" | "doge",
-      ];
-      const candidates = registeredCandidatesForMarket({ asset, period });
-      expect(candidates).toHaveLength(expectedCount);
-      expect(
-        candidates.every(
-          (candidate) =>
-            candidate.filterId === "rsi_divergence" &&
-            candidate.filterVersion === 6,
-        ),
-      ).toBe(true);
-      for (const candidate of candidates) {
-        const config = candidate.config as RsiDivergenceConfig;
-        expect(config.rsiLength).toBe(21);
-        expect(config.includeHidden).toBe(true);
-        expect(config.maxSignalAgeBars).toBe(13);
-        expect(config.minAgreementScore).toBe(0);
-        expect(config.maxConsecutiveDisagreements).toBe(1);
-      }
+  it("registers the curated 1h candidates for every tradable asset", () => {
+    const assets = ["btc", "eth", "sol", "doge"] as const;
+    for (const asset of assets) {
+      const candidates = registeredCandidatesForMarket({ asset, period: "1h" });
+      const filterIds = new Set(candidates.map((c) => c.filterId));
+      expect(filterIds.has("rsi_divergence")).toBe(true);
+      expect(filterIds.has("failed_breakout_reversal")).toBe(true);
+      const rsiCandidate = candidates.find(
+        (c) => c.filterId === "rsi_divergence",
+      );
+      expect(rsiCandidate?.filterVersion).toBe(6);
+      const rsiConfig = rsiCandidate?.config as RsiDivergenceConfig;
+      expect(rsiConfig.rsiLength).toBe(21);
+      expect(rsiConfig.includeHidden).toBe(true);
+      expect(rsiConfig.maxSignalAgeBars).toBe(13);
+      expect(rsiConfig.minAgreementScore).toBe(0);
+      expect(rsiConfig.maxConsecutiveDisagreements).toBe(1);
     }
   });
 
