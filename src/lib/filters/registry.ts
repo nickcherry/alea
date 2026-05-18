@@ -1,4 +1,9 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
+import { defineCandidate } from "@alea/lib/filters/config";
+import {
+  type RsiDivergenceConfig,
+  rsiDivergenceFilter,
+} from "@alea/lib/filters/rsiDivergence";
 import type { FilterCandidate } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 
@@ -13,31 +18,38 @@ export type CandidateRegistryByMarket = Readonly<
   >
 >;
 
-const EMPTY: readonly FilterCandidate[] = [];
+const oneHourRsiDivergenceCandidate = defineCandidate({
+  filter: rsiDivergenceFilter,
+  config: {
+    rsiLength: 21,
+    includeHidden: true,
+    leftBars: 2,
+    rightBars: 2,
+    rangeLower: 2,
+    rangeUpper: 30,
+    maxSignalAgeBars: 13,
+  } satisfies RsiDivergenceConfig,
+});
 
-/**
- * No candidates are currently registered. The old filter family was
- * built for the synth-bar/predict-next-candle model; under the new
- * take-profit-within-N-candles model with no synth, filters need to
- * be re-derived from scratch. Register new candidates here when ready.
- */
+const baseCandidates = [oneHourRsiDivergenceCandidate];
+
 export const registeredCandidatesByMarket = {
   "1h": {
-    btc: EMPTY,
-    eth: EMPTY,
-    sol: EMPTY,
-    xrp: EMPTY,
-    doge: EMPTY,
+    btc: baseCandidates,
+    eth: baseCandidates,
+    sol: baseCandidates,
+    xrp: baseCandidates,
+    doge: baseCandidates,
   },
 } as const satisfies CandidateRegistryByMarket;
 
 export const tradeCandidatesByMarket = registeredCandidatesByMarket;
 
 export const registeredCandidatesByPeriod = {
-  "1h": EMPTY,
+  "1h": baseCandidates,
 } as const satisfies CandidateRegistryByPeriod;
 
-export const registeredCandidates: readonly FilterCandidate[] = EMPTY;
+export const registeredCandidates: readonly FilterCandidate[] = baseCandidates;
 
 export function registeredCandidatesForMarket({
   period,
@@ -46,7 +58,7 @@ export function registeredCandidatesForMarket({
   readonly period: TradeDecisionPeriod;
   readonly asset: Asset;
 }): readonly FilterCandidate[] {
-  return registeredCandidatesByMarket[period][asset] ?? EMPTY;
+  return registeredCandidatesByMarket[period][asset] ?? [];
 }
 
 export function tradeCandidatesForMarket({
@@ -56,7 +68,7 @@ export function tradeCandidatesForMarket({
   readonly period: TradeDecisionPeriod;
   readonly asset: Asset;
 }): readonly FilterCandidate[] {
-  return tradeCandidatesByMarket[period][asset] ?? EMPTY;
+  return tradeCandidatesByMarket[period][asset] ?? [];
 }
 
 export function registeredCandidatesForPeriod({
