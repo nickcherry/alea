@@ -42,6 +42,7 @@ const registryAssets = [
   "btc",
   "eth",
   "sol",
+  "xrp",
   "doge",
 ] as const satisfies readonly Asset[];
 
@@ -157,6 +158,7 @@ export const registeredCandidatesByMarket = {
     btc: baseCandidates,
     eth: baseCandidates,
     sol: baseCandidates,
+    xrp: baseCandidates,
     doge: baseCandidates,
   }),
 } as const satisfies CandidateRegistryByMarket;

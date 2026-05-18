@@ -38,6 +38,7 @@ export const TRADE_DECISION_TRADABLE_ASSETS = [
   "btc",
   "eth",
   "sol",
+  "xrp",
   "doge",
 ] as const satisfies readonly Asset[];
 
@@ -49,6 +50,7 @@ export const TRADE_DECISION_DEFAULT_MARKETS = [
   { asset: "btc", period: "1h" },
   { asset: "eth", period: "1h" },
   { asset: "sol", period: "1h" },
+  { asset: "xrp", period: "1h" },
   { asset: "doge", period: "1h" },
 ] as const satisfies readonly TradeDecisionMarket[];
 
