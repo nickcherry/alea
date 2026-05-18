@@ -16,6 +16,7 @@ import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
+import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhaustionReversalSweep";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
@@ -59,6 +60,7 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
+    researchExhaustionReversalSweepCommand,
     researchFailedBreakoutReversalSweepCommand,
     researchRsiDivergenceSweepCommand,
     researchTrendPullbackResumeSweepCommand,

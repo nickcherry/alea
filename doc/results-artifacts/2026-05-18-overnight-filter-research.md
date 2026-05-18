@@ -141,3 +141,96 @@ infrastructure and pullback-window detection are reusable for later
 filters that _can_ go against synth direction (e.g. counter-trend pullback
 fade variants). The sweep artifact lives at
 `doc/results-artifacts/*-trend-pullback-resume-sweep.json` for reference.
+
+## Calibration: all three registered filters disagree with synth bar sometimes — and lose when they do
+
+Decomposing each registered filter's decisions by whether the predicted
+direction agrees with the synthetic bar's direction at HH:50:
+
+| filter                   | total decisions |     WR | with-synth (n, WR) | against-synth (n, WR)   |
+| ------------------------ | --------------: | -----: | ------------------ | ----------------------- |
+| rsi_divergence (v6)      |           6,098 | 75.30% | 4,936 at 88.39%    | 1,162 at 19.71% (19.1%) |
+| failed_breakout_reversal |           3,855 | 84.80% | 3,506 at 89.90%    | 349 at 33.81% (9.1%)    |
+| exhaustion_reversal      |           1,024 | 84.28% | 923 at 90.36%      | 101 at 28.71% (9.9%)    |
+
+This is the same pattern in all three. The bulk of each filter's decisions
+agree with the synth direction at HH:50 and win close to the body+closeLoc
+baseline (98%). The against-synth slice — what one might call the "real
+reversal alpha" — _loses_ in every filter, badly. RSI Divergence loses
+80% of its 1,162 against-synth bets; Failed Breakout Reversal loses 66%
+of its 349; Exhaustion Reversal loses 71% of its 101.
+
+A few things follow:
+
+- These filters are not "pure" reversal callers. They are mostly
+  synth-direction predictors that occasionally guess against the bar.
+  The against-synth guesses are net-negative; the with-synth guesses
+  carry the aggregate.
+- The user's existing RSI Divergence at 75% WR already had this
+  property. The new filters don't break a pattern that wasn't already
+  there; they ride the same dynamic at higher aggregate WR.
+- Filters that can hard-lock predicted direction to synth direction (the
+  trend-pullback-resume case) will saturate at the body+closeLoc
+  baseline ~98% and add nothing.
+- Filters that try to be more contrarian than these (always go against
+  the obvious synth direction) will likely have terrible aggregate WR
+  unless they find a sub-pattern that genuinely predicts reversal on
+  10-minute horizons.
+
+The takeaway for future filters: track the with-vs-against synth split
+and the per-quarter consistency, not just aggregate WR. A filter with
+materially better against-synth WR than these three would be a genuine
+breakthrough.
+
+## Filter 3: Exhaustion Reversal
+
+`src/lib/filters/exhaustionReversal.ts` — `filter id = exhaustion_reversal`, `version = 1`.
+
+**Idea.** A strong recent directional run (enough green bars over N
+candles plus positive cumulative return), price extended away from the
+EMA, then the current candle shows exhaustion characteristics (tall wick
+against trend, close in the lower/upper half of its range, optionally a
+body smaller than the prior bar). Bet against the run.
+
+**Sweep.** 46,656 candidate configs (648 base × 72 lifecycle), 4 assets,
+9 quarters. Run via `bun alea research:exhaustion-reversal-sweep`.
+
+**Registered config.**
+
+```
+emaLength: 20
+runWindow: 5
+minDirectionalCount: 5
+minRunReturnPct: 0.02
+minDistanceFromEmaPct: 0.002
+minWickPct: 0.10
+maxCloseLocation: 0.40
+requireBodyShrink: false
+maxSignalAgeBars: 3
+maxAge: 8
+maxConsecutiveWrong: 1
+requireWrongLessThanRight: false
+requireFirstTradeWin: false
+```
+
+**Backtest results (`backtest:run`).**
+
+| asset     | decisions | wins    | win rate   |
+| --------- | --------- | ------- | ---------- |
+| btc       | 153       | 131     | 85.62%     |
+| eth       | 242       | 210     | 86.78%     |
+| sol       | 311       | 252     | 81.03%     |
+| doge      | 319       | 271     | 84.95%     |
+| **total** | **1,025** | **864** | **84.29%** |
+
+Per-quarter min WR: 74.32% (one weak quarter). Per-asset min: 81.03%.
+
+**Frequency.** ~1.5% of decision opportunities — lower than RSI
+divergence and failed-breakout reversal, but still produces 1,000+
+decisions across the 2.3-year window. Most decisions are on the synth
+bar (`barsAgo = 0`); the persistence harness occasionally extends the
+thesis 1-3 bars before invalidation.
+
+**Caveat (see calibration section above).** 90% of decisions agree with
+synth direction at 90.36% WR; the 10% against-synth slice loses 71% of
+the time. Same shape as RSI Divergence and Failed Breakout Reversal.
