@@ -61,20 +61,15 @@ export const TRADE_DECISION_DEFAULT_ASSETS = TRADE_DECISION_TRADABLE_ASSETS;
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 
 /**
- * Outcome window. The number of candles (starting with the entry
- * candle itself) inside which take-profit must be touched for the
- * trade to count as a win. If neither TP nor SL is reached by the
- * end of the window, the time-stop fires and the trade counts as a
- * loss.
+ * Take-profit, stop-loss, and the outcome window are all
+ * candidate-specific — each filter candidate sets its own
+ * `takeProfitPct`, `stopLossPct`, and `outcomeWindowBars` via
+ * `defineCandidate`.
  *
- * The take-profit and stop-loss percentages are now candidate-specific
- * — each filter candidate sets its own `takeProfitPct` and
- * `stopLossPct` via `defineCandidate`. Within a single bar OHLC
- * cannot tell us which side was touched first; the backtest applies
- * the conservative convention that SL is reached before TP when both
- * are inside the bar's range.
+ * Within a single bar OHLC cannot tell us which side was touched
+ * first; the backtest applies the conservative convention that SL is
+ * reached before TP when both are inside the bar's range.
  */
-export const TRADE_OUTCOME_WINDOW_BARS = 5;
 
 /**
  * How many closed bars to feed each filter at decision time. The

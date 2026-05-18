@@ -16,7 +16,6 @@ export type CandidateBacktestCacheInput = {
   readonly decisionSchemaVersion: number;
   readonly engineVersion: number;
   readonly hydrateBars: number;
-  readonly outcomeWindowBars: number;
   readonly inputDataHash: string;
 };
 
@@ -40,12 +39,12 @@ export function candidateBacktestCachePayload({
   decisionSchemaVersion,
   engineVersion,
   hydrateBars,
-  outcomeWindowBars,
   inputDataHash,
 }: CandidateBacktestCacheInput): string {
-  // The candidate's `configCanon` already includes `takeProfitPct` and
-  // `stopLossPct` (see `defineCandidate`), so a TP/SL change naturally
-  // invalidates the cache row through the candidate hash.
+  // The candidate's `configCanon` already includes `takeProfitPct`,
+  // `stopLossPct`, and `outcomeWindowBars` (see `defineCandidate`),
+  // so any change to those naturally invalidates the cache row
+  // through the candidate hash.
   return JSON.stringify({
     asset,
     candidateId: candidate.id,
@@ -57,7 +56,6 @@ export function candidateBacktestCachePayload({
     filterVersion: candidate.filterVersion,
     hydrateBars,
     inputDataHash,
-    outcomeWindowBars,
     period,
     quarterStartMs,
     source,

@@ -20,9 +20,8 @@ describe("candidateBacktestCacheHash", () => {
       windowStartMs: Date.UTC(2026, 4, 1),
       windowEndMs: Date.UTC(2026, 4, 2),
       decisionSchemaVersion: 2,
-      engineVersion: 9,
+      engineVersion: 10,
       hydrateBars: 288,
-      outcomeWindowBars: 5,
       inputDataHash: "data-a",
     } as const;
     const hash = candidateBacktestCacheHash(base);
@@ -39,9 +38,6 @@ describe("candidateBacktestCacheHash", () => {
         ...base,
         candidate: candidate({ configCanon: '{"length":14}', version: 3 }),
       }),
-    ).not.toBe(hash);
-    expect(
-      candidateBacktestCacheHash({ ...base, outcomeWindowBars: 6 }),
     ).not.toBe(hash);
     expect(
       candidateBacktestCacheHash({
@@ -124,6 +120,7 @@ function candidate({
     configHash: configCanon,
     takeProfitPct: 0.03,
     stopLossPct: 0.02,
+    outcomeWindowBars: 5,
     evaluate: () => ({ decision: "neutral" }),
   };
 }

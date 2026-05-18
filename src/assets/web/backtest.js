@@ -9,7 +9,7 @@
   var supportedAssets = payload.supportedAssets || ["btc"];
   var currentPeriod = payload.defaultPeriod || supportedPeriods[0] || "1h";
   var currentAsset = payload.defaultAsset || supportedAssets[0] || "btc";
-  var TABLE_LIMIT = 20;
+  var TABLE_LIMIT = 100;
   var alea = window.alea;
   var escapeHtml = alea.escapeHtml;
   var percent = alea.formatPercent;
@@ -127,7 +127,11 @@
             Number(row.filterVersion).toLocaleString() +
             "</span></div>" +
             description +
-            renderTradeProfile(row.takeProfitPct, row.stopLossPct) +
+            renderTradeProfile(
+              row.takeProfitPct,
+              row.stopLossPct,
+              row.outcomeWindowBars,
+            ) +
             renderConfig(row.config || {}) +
             "</td>" +
             '<td class="num-col alea-mono' +
@@ -169,8 +173,8 @@
     );
   }
 
-  function renderTradeProfile(takeProfitPct, stopLossPct) {
-    function fmt(pct) {
+  function renderTradeProfile(takeProfitPct, stopLossPct, outcomeWindowBars) {
+    function fmtPct(pct) {
       if (pct === null || pct === undefined || !isFinite(pct)) return "—";
       return (
         Number(pct * 100)
@@ -178,13 +182,20 @@
           .replace(/\.?0+$/, "") + "%"
       );
     }
+    function fmtBars(bars) {
+      if (bars === null || bars === undefined || !isFinite(bars)) return "—";
+      return Number(bars).toLocaleString() + "bar";
+    }
     return (
       '<dl class="backtest-trade-profile">' +
       '<div class="backtest-trade-profile-row"><dt>TP</dt><dd>' +
-      escapeHtml(fmt(takeProfitPct)) +
+      escapeHtml(fmtPct(takeProfitPct)) +
       "</dd></div>" +
       '<div class="backtest-trade-profile-row"><dt>SL</dt><dd>' +
-      escapeHtml(fmt(stopLossPct)) +
+      escapeHtml(fmtPct(stopLossPct)) +
+      "</dd></div>" +
+      '<div class="backtest-trade-profile-row"><dt>WIN</dt><dd>' +
+      escapeHtml(fmtBars(outcomeWindowBars)) +
       "</dd></div>" +
       "</dl>"
     );

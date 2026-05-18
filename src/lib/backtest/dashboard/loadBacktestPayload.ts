@@ -35,6 +35,7 @@ type BacktestRow = {
   readonly neutral_count: number;
   readonly take_profit_pct: number;
   readonly stop_loss_pct: number;
+  readonly outcome_window_bars: number;
 };
 
 export async function loadBacktestPayload({
@@ -64,6 +65,7 @@ export async function loadBacktestPayload({
       "neutral_count",
       "take_profit_pct",
       "stop_loss_pct",
+      "outcome_window_bars",
     ])
     .execute()) as readonly BacktestRow[];
 
@@ -207,6 +209,7 @@ function buildAssetSlice({
       config: row.config_json,
       takeProfitPct: Number(row.take_profit_pct),
       stopLossPct: Number(row.stop_loss_pct),
+      outcomeWindowBars: Number(row.outcome_window_bars),
       evaluatedCount: 0,
       decisionCount: 0,
       winCount: 0,
@@ -266,6 +269,7 @@ function buildAssetSlice({
         config: acc.config,
         takeProfitPct: acc.takeProfitPct,
         stopLossPct: acc.stopLossPct,
+        outcomeWindowBars: acc.outcomeWindowBars,
         evaluatedCount: acc.evaluatedCount,
         decisionCount: acc.decisionCount,
         winCount: acc.winCount,
@@ -315,6 +319,7 @@ type CandidateAccumulator = {
   readonly config: unknown;
   readonly takeProfitPct: number;
   readonly stopLossPct: number;
+  readonly outcomeWindowBars: number;
   evaluatedCount: number;
   decisionCount: number;
   winCount: number;

@@ -24,4 +24,6 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 2;
 // per-candidate (set via `defineCandidate`); each cache row carries
 // its own TP/SL. The candidate's `configCanon` now folds in TP/SL,
 // so the cache hash invalidates automatically when either changes.
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 9;
+// v10: outcomeWindowBars is now per-candidate too. The candidate's
+// `configCanon` folds it in alongside TP/SL.
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 10;

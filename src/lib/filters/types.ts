@@ -76,11 +76,16 @@ export type FilterCandidate<Config extends FilterConfig = FilterConfig> = {
   /**
    * Trade execution profile attached to this candidate. The signal
    * (filter + config) decides direction; these decide what counts as
-   * a win or loss for that decision. Both are fractions of entry
-   * price — e.g. 0.03 = 3%.
+   * a win or loss for that decision.
+   *
+   * `takeProfitPct` and `stopLossPct` are fractions of entry price
+   * (e.g. 0.03 = 3%). `outcomeWindowBars` is the number of candles
+   * starting with the entry candle within which TP must be touched
+   * before SL for the trade to count as a win.
    */
   readonly takeProfitPct: number;
   readonly stopLossPct: number;
+  readonly outcomeWindowBars: number;
   readonly evaluate: (context: FilterEvaluationContext) => FilterEvaluation;
 };
 

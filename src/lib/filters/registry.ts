@@ -18,22 +18,44 @@ export type CandidateRegistryByMarket = Readonly<
   >
 >;
 
-const oneHourRsiDivergenceCandidate = defineCandidate({
-  filter: rsiDivergenceFilter,
-  config: {
-    rsiLength: 21,
-    includeHidden: true,
-    leftBars: 2,
-    rightBars: 2,
-    rangeLower: 2,
-    rangeUpper: 30,
-    maxSignalAgeBars: 13,
-  } satisfies RsiDivergenceConfig,
-  takeProfitPct: 0.03,
-  stopLossPct: 0.02,
-});
+const RSI_DIVERGENCE_CONFIG: RsiDivergenceConfig = {
+  rsiLength: 21,
+  includeHidden: true,
+  leftBars: 2,
+  rightBars: 2,
+  rangeLower: 2,
+  rangeUpper: 30,
+  maxSignalAgeBars: 13,
+};
 
-const baseCandidates = [oneHourRsiDivergenceCandidate];
+// Sweep grid: TP must be >= 2% (operator floor). SL widens above TP
+// so a healthy WR is plausible. Outcome window varies from short
+// scalps (5 bars / 5h) to multi-day holds (48 bars / 2 days).
+const RSI_DIVERGENCE_TP_PCTS = [0.02, 0.025, 0.03, 0.04, 0.05] as const;
+const RSI_DIVERGENCE_SL_PCTS = [0.02, 0.03, 0.05, 0.08] as const;
+const RSI_DIVERGENCE_WINDOW_BARS = [5, 10, 24, 48] as const;
+
+const rsiDivergenceCandidates: readonly FilterCandidate[] = (() => {
+  const out: FilterCandidate[] = [];
+  for (const takeProfitPct of RSI_DIVERGENCE_TP_PCTS) {
+    for (const stopLossPct of RSI_DIVERGENCE_SL_PCTS) {
+      for (const outcomeWindowBars of RSI_DIVERGENCE_WINDOW_BARS) {
+        out.push(
+          defineCandidate({
+            filter: rsiDivergenceFilter,
+            config: RSI_DIVERGENCE_CONFIG,
+            takeProfitPct,
+            stopLossPct,
+            outcomeWindowBars,
+          }),
+        );
+      }
+    }
+  }
+  return out;
+})();
+
+const baseCandidates: readonly FilterCandidate[] = rsiDivergenceCandidates;
 
 export const registeredCandidatesByMarket = {
   "1h": {

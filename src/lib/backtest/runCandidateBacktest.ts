@@ -7,7 +7,6 @@ import {
   CANDIDATE_BACKTEST_START_MS,
 } from "@alea/constants/backtest";
 import {
-  TRADE_OUTCOME_WINDOW_BARS,
   tradeDecisionHydrateBars,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
@@ -162,13 +161,18 @@ async function runMarketCandidateBacktest({
 }> {
   const periodMs = timeframeMs({ timeframe: period });
   const hydrateBars = tradeDecisionHydrateBars({ period });
+  // A target is admissible if EVERY candidate has enough future bars
+  // to resolve its outcome window. Each candidate brings its own
+  // `outcomeWindowBars`, so use the widest one when filtering.
+  const maxOutcomeWindowBars = candidates.reduce(
+    (max, candidate) => Math.max(max, candidate.outcomeWindowBars),
+    0,
+  );
   const targetBars = periodBars.filter(
     (bar) =>
       bar.openTimeMs >= startMs &&
       bar.openTimeMs < endMs &&
-      // Need at least `outcomeWindowBars` candles in the window starting
-      // here for the outcome to be well-defined.
-      bar.openTimeMs + periodMs * TRADE_OUTCOME_WINDOW_BARS <= endMs,
+      bar.openTimeMs + periodMs * maxOutcomeWindowBars <= endMs,
   );
   if (targetBars.length === 0) {
     return {
@@ -221,11 +225,11 @@ async function runMarketCandidateBacktest({
     if (bars.length === 0) {
       continue;
     }
-    const outcomeBars = periodBars.slice(
+    const maxOutcomeBars = periodBars.slice(
       closedEndIndex,
-      closedEndIndex + TRADE_OUTCOME_WINDOW_BARS,
+      closedEndIndex + maxOutcomeWindowBars,
     );
-    if (outcomeBars.length < TRADE_OUTCOME_WINDOW_BARS) {
+    if (maxOutcomeBars.length < maxOutcomeWindowBars) {
       continue;
     }
     const crossAssetBars = buildCrossAssetBars({
@@ -261,7 +265,7 @@ async function runMarketCandidateBacktest({
       const outcome = resolveTradeOutcome({
         direction,
         entryPrice: targetBar.open,
-        outcomeBars,
+        outcomeBars: maxOutcomeBars.slice(0, candidate.outcomeWindowBars),
         takeProfitPct: candidate.takeProfitPct,
         stopLossPct: candidate.stopLossPct,
       });
@@ -398,7 +402,6 @@ async function buildCachePlans({
         decisionSchemaVersion: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
         engineVersion: CANDIDATE_BACKTEST_ENGINE_VERSION,
         hydrateBars,
-        outcomeWindowBars: TRADE_OUTCOME_WINDOW_BARS,
         inputDataHash,
       });
       plans.set(key, {
@@ -624,6 +627,7 @@ async function persistAccumulator({
       neutral_count: accumulator.neutralCount,
       take_profit_pct: candidate.takeProfitPct,
       stop_loss_pct: candidate.stopLossPct,
+      outcome_window_bars: candidate.outcomeWindowBars,
       decision_schema_version: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
       decisions: sql`${JSON.stringify(accumulator.decisions)}::jsonb`,
       generated_at_ms: Date.now(),
@@ -650,6 +654,7 @@ async function persistAccumulator({
           neutral_count: sql`excluded.neutral_count`,
           take_profit_pct: sql`excluded.take_profit_pct`,
           stop_loss_pct: sql`excluded.stop_loss_pct`,
+          outcome_window_bars: sql`excluded.outcome_window_bars`,
           decision_schema_version: sql`excluded.decision_schema_version`,
           decisions: sql`excluded.decisions`,
           generated_at_ms: sql`excluded.generated_at_ms`,

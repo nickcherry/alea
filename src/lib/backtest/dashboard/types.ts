@@ -15,6 +15,7 @@ export type BacktestDashboardCandidateRow = {
   readonly config: unknown;
   readonly takeProfitPct: number;
   readonly stopLossPct: number;
+  readonly outcomeWindowBars: number;
   readonly evaluatedCount: number;
   readonly decisionCount: number;
   readonly winCount: number;
