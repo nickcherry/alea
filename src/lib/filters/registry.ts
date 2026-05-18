@@ -32,6 +32,10 @@ import {
   type RsiDivergenceConfig,
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
+import {
+  type StreakReversalConfig,
+  streakReversalFilter,
+} from "@alea/lib/filters/streakReversal";
 import type { FilterCandidate } from "@alea/lib/filters/types";
 import {
   type WickDivergenceConfig,
@@ -201,6 +205,19 @@ const oneHourPinBarReversalCandidate = defineCandidate({
   } satisfies PinBarReversalConfig,
 });
 
+const oneHourStreakReversalCandidate = defineCandidate({
+  filter: streakReversalFilter,
+  config: {
+    streakLength: 3,
+    minTotalReturnPct: 0.02,
+    maxSignalAgeBars: 3,
+    maxAge: 4,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies StreakReversalConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
@@ -211,6 +228,7 @@ const baseCandidates = [
   oneHourBodyDivergenceCandidate,
   oneHourHtfAlignmentCandidate,
   oneHourPinBarReversalCandidate,
+  oneHourStreakReversalCandidate,
 ];
 
 export const registeredCandidatesByMarket = {
