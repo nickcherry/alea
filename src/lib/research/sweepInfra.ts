@@ -10,18 +10,30 @@ import type { Asset } from "@alea/types/assets";
 
 const ONE_MINUTE_MS = timeframeMs({ timeframe: "1m" });
 const ONE_HOUR_MS = timeframeMs({ timeframe: "1h" });
-const DECISION_BEFORE_CLOSE_MS = tradeDecisionLeadTimeMs({ period: "1h" });
-const DECISION_AFTER_OPEN_MS = ONE_HOUR_MS - DECISION_BEFORE_CLOSE_MS;
+
+/**
+ * Lead time in milliseconds — minutes before the *target candle opens*.
+ * See doc/DECISION_TIMING.md. NOT minutes before close.
+ */
+const DECISION_BEFORE_OPEN_MS = tradeDecisionLeadTimeMs({ period: "1h" });
 
 export const SWEEP_HISTORY_BARS = 340;
-export const SWEEP_DECISION_AFTER_OPEN_MS = DECISION_AFTER_OPEN_MS;
+export const SWEEP_DECISION_BEFORE_OPEN_MS = DECISION_BEFORE_OPEN_MS;
 export type SweepDirection = "up" | "down";
 
 export type SweepTargetRecord = {
   readonly asset: Asset;
   readonly quarter: string;
+  /** The 1h bar we are predicting. Filter inputs never include this bar. */
   readonly targetBar: MarketBar;
+  /**
+   * Partial synthetic of the *prior* (now-in-progress) 1h candle, built from
+   * 1m data between `targetBar.openTimeMs - 1h` and the decision timestamp
+   * (`targetBar.openTimeMs - leadTime`). This is the most-recent bar in the
+   * filter's input series — it is NOT a partial of the target.
+   */
   readonly syntheticBar: MarketBar;
+  /** Fully-closed 1h bars strictly before the in-progress now candle. */
   readonly history: readonly MarketBar[];
   readonly outcome: SweepDirection;
 };
@@ -42,6 +54,10 @@ export async function loadSweepTargets({
   readonly log?: (line: string) => void;
 }): Promise<readonly SweepTargetRecord[]> {
   const historyStartMs = Math.max(0, startMs - historyBars * ONE_HOUR_MS);
+  // The synthetic is built from 1m bars in the hour *before* the target
+  // opens. We need 1m coverage starting at `startMs - 1h` for the earliest
+  // target whose open == startMs.
+  const minuteStartMs = Math.max(0, startMs - ONE_HOUR_MS);
   const [hourBars, minuteBars] = await Promise.all([
     loadPythBars({
       db,
@@ -54,7 +70,7 @@ export async function loadSweepTargets({
       db,
       asset,
       timeframe: "1m",
-      startMs,
+      startMs: minuteStartMs,
       endMs,
     }),
   ]);
@@ -68,19 +84,29 @@ export async function loadSweepTargets({
     if (targetBar.openTimeMs >= endMs) {
       break;
     }
-    const decisionTsMs = targetBar.openTimeMs + DECISION_AFTER_OPEN_MS;
+    // The "now" candle is the one immediately preceding the target. It is
+    // in progress at decision time. Decision fires at:
+    //   decisionTsMs = targetBar.openTimeMs - leadTime
+    // and the synthetic spans 1m data from nowOpen to decisionTsMs.
+    const nowOpenTimeMs = targetBar.openTimeMs - ONE_HOUR_MS;
+    const decisionTsMs = targetBar.openTimeMs - DECISION_BEFORE_OPEN_MS;
     if (decisionTsMs > endMs) {
       continue;
     }
     const syntheticBar = synthesizePartialBar({
       minuteBars,
-      activeOpenTimeMs: targetBar.openTimeMs,
+      activeOpenTimeMs: nowOpenTimeMs,
       decisionTsMs,
     });
     if (syntheticBar === null) {
       continue;
     }
-    const history = hourBars.slice(Math.max(0, i - historyBars), i);
+    // History is the fully-closed 1h bars strictly before the now candle.
+    // The now candle's own bar exists in `hourBars` as a closed bar (we are
+    // looking at past data), but the filter must only see the *partial*
+    // version of it via the synthetic — never the closed version — so we
+    // slice up to and excluding `i - 1`.
+    const history = hourBars.slice(Math.max(0, i - 1 - historyBars), i - 1);
     if (history.length < 80) {
       continue;
     }

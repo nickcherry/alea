@@ -64,8 +64,11 @@ type TargetRecord = {
 
 const ONE_MINUTE_MS = timeframeMs({ timeframe: "1m" });
 const ONE_HOUR_MS = timeframeMs({ timeframe: "1h" });
-const DECISION_BEFORE_CLOSE_MS = tradeDecisionLeadTimeMs({ period: "1h" });
-const DECISION_AFTER_OPEN_MS = ONE_HOUR_MS - DECISION_BEFORE_CLOSE_MS;
+/**
+ * Lead time in ms — minutes before the *target candle opens*.
+ * See doc/DECISION_TIMING.md.
+ */
+const DECISION_BEFORE_OPEN_MS = tradeDecisionLeadTimeMs({ period: "1h" });
 const HISTORY_BARS = 340;
 
 const assetSchema = z.enum(TRADE_DECISION_DEFAULT_ASSETS);
@@ -107,7 +110,7 @@ export const researchRsiDivergenceSweepCommand = defineCommand({
   name: "research:rsi-divergence-sweep",
   summary: "Sweep 1h RSI divergence configs",
   description:
-    "Runs a formal local research sweep for TradingView-style RSI divergence candidates on 1h markets. Each simulated decision happens 35 minutes before the current 1h market closes, using a synthetic current-hour candle built only from stored 1m Pyth bars available by HH:25.",
+    "Runs a formal local research sweep for TradingView-style RSI divergence candidates on 1h markets. Each simulated decision happens 35 minutes before the *next* (not-yet-open) 1h target market opens, using a synthetic of the prior (in-progress) hour built from stored 1m Pyth bars available by `target.open - 35min`.",
   options: [
     defineValueOption({
       key: "assets",
@@ -389,6 +392,7 @@ async function loadTargets({
   readonly log: (line: string) => void;
 }): Promise<readonly TargetRecord[]> {
   const historyStartMs = Math.max(0, startMs - HISTORY_BARS * ONE_HOUR_MS);
+  const minuteStartMs = Math.max(0, startMs - ONE_HOUR_MS);
   const [hourBars, minuteBars] = await Promise.all([
     loadPythBars({
       db,
@@ -401,7 +405,7 @@ async function loadTargets({
       db,
       asset,
       timeframe: "1m",
-      startMs,
+      startMs: minuteStartMs,
       endMs,
     }),
   ]);
@@ -415,19 +419,24 @@ async function loadTargets({
     if (targetBar.openTimeMs >= endMs) {
       break;
     }
-    const decisionTsMs = targetBar.openTimeMs + DECISION_AFTER_OPEN_MS;
+    // See doc/DECISION_TIMING.md. Target is not yet open; synth is the
+    // partial prior (in-progress) hour built from 1m data through
+    // `target.open - leadTime`.
+    const nowOpenTimeMs = targetBar.openTimeMs - ONE_HOUR_MS;
+    const decisionTsMs = targetBar.openTimeMs - DECISION_BEFORE_OPEN_MS;
     if (decisionTsMs > endMs) {
       continue;
     }
     const syntheticBar = synthesizePartialBar({
       minuteBars,
-      activeOpenTimeMs: targetBar.openTimeMs,
+      activeOpenTimeMs: nowOpenTimeMs,
       decisionTsMs,
     });
     if (syntheticBar === null) {
       continue;
     }
-    const history = hourBars.slice(Math.max(0, i - HISTORY_BARS), i);
+    // History excludes the prior (now) candle whose partial is in `synth`.
+    const history = hourBars.slice(Math.max(0, i - 1 - HISTORY_BARS), i - 1);
     if (history.length < 80) {
       continue;
     }

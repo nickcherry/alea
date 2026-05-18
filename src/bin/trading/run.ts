@@ -43,7 +43,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live filter trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth 1h bar history, discovers and subscribes the current Polymarket 1h markets, evaluates registered filters 10 minutes before the current 1h candle closes, and starts real post-only maker GTD order placement immediately after an actionable filter majority. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
+    "Long-running live trader. Hydrates Pyth 1h bar history, discovers and subscribes the current Polymarket 1h markets, evaluates registered filters 35 minutes before the next (not-yet-open) 1h target candle opens, and starts real post-only maker GTD order placement immediately after an actionable filter majority. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
   options: [
     defineValueOption({
       key: "periods",

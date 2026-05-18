@@ -1,15 +1,26 @@
 # Alea
 
+> ⚠️ **Read [doc/DECISION_TIMING.md](./doc/DECISION_TIMING.md) before
+> touching anything filter-, backtest-, dry-run- or live-trading-related.**
+> The candle a filter is predicting at decision time *has not opened yet*.
+> The partial-hour synthetic candle that appears in the filter input is the
+> candle *before* the target, not the target itself. Getting this wrong
+> invalidates every backtest number.
+
 Alea is a Polymarket crypto up/down trading system built around
 versioned filter candidates. It keeps recent Pyth candles available,
 evaluates deterministic filters against the same candle state in dry-run,
 live, and backtest modes, and places or simulates Polymarket maker orders
 when those candidates produce actionable up/down signals.
 
-The strategy is directional prediction for the currently open `1h`
-Polymarket market, decided 10 minutes before the hourly candle closes
-and paired with maker orders near 50c. With zero fees and roughly 1:1
-risk/reward, win rate is the edge.
+The strategy is directional prediction for the *next* (not-yet-open) `1h`
+Polymarket market, decided 35 minutes before that candle opens and paired
+with maker orders near 50c. With zero fees and roughly 1:1 risk/reward,
+win rate is the edge. We deliberately fire the decision *before* the
+target candle opens so the maker order is in the book while the market
+is still around 50c — by the time the candle is in progress, price moves
+on the winning side run away from 50c and only losing-side maker bids
+fill.
 
 Pyth remains the canonical price and outcome source because it closes
 closest to Polymarket settlement. Coinbase spot remains available for
@@ -32,6 +43,7 @@ run, and candidate backtests operate on `1h` Polymarket markets.
 
 ## Docs
 
+- [Decision Timing](./doc/DECISION_TIMING.md) — **READ FIRST**. When the decision fires, what the filter sees, what the target candle is.
 - [CLI](./doc/CLI.md) — command structure and side effects.
 - [Coding Conventions](./doc/CODING_CONVENTIONS.md) — TypeScript and repo style.
 - [Dashboards](./doc/DASHBOARDS.md) — static dashboard build/deploy.

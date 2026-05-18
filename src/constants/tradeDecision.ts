@@ -71,10 +71,16 @@ export const TRADE_DECISION_DEFAULT_ASSETS = TRADE_DECISION_TRADABLE_ASSETS;
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 
 /**
- * How long before the target candle closes the loop snapshots the live price
- * and evaluates filters. The target candle is the currently open Polymarket
- * market window; for 1h that means evaluating at HH:25 for the HH:00-HH:59
- * market.
+ * How long before the target candle *opens* the loop snapshots the live price
+ * and evaluates filters. The target candle is the *next* (not-yet-open)
+ * Polymarket market window. For 1h with a 35-min lead, that means evaluating
+ * at HH:25 of the current hour for the HH+1:00 – HH+2:00 target market.
+ *
+ * The decision must fire before the target opens so the maker order is in the
+ * book while the market is still around 50c. Once the candle is in progress,
+ * winning-side bids stop filling at 50c.
+ *
+ * See doc/DECISION_TIMING.md for the full timing semantics.
  */
 export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
   Record<TradeDecisionPeriod, number>
@@ -90,6 +96,13 @@ export function tradeDecisionLeadTimeMs({
   return TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS[period];
 }
 
+/**
+ * Returns the open timestamp of the *target* candle — the next 1h candle
+ * that has not yet started. At now=HH:20 the target is HH+1:00. At
+ * now=HH:00 exactly (or any tick boundary), the target is the next tick
+ * (HH+1:00), since the candle whose open == now has just started and is
+ * therefore no longer predictable from "before it opens" timing.
+ */
 export function tradeDecisionTargetOpenTimeMs({
   period,
   nowMs,
@@ -98,9 +111,19 @@ export function tradeDecisionTargetOpenTimeMs({
   readonly nowMs: number;
 }): number {
   const periodMs = timeframeMs({ timeframe: period });
-  return Math.floor(nowMs / periodMs) * periodMs;
+  return Math.floor(nowMs / periodMs) * periodMs + periodMs;
 }
 
+/**
+ * Returns the clock time at which the decision must fire for the given
+ * target candle: `target.open - leadTime`. For 1h with 35-min lead and
+ * target.open = HH+1:00, fire time = HH:25.
+ *
+ * Do not flip the sign back to `targetTsMs + periodMs - leadTime` — that
+ * semantic would put the decision *inside* the target candle, which lets
+ * filters peek at partial data of the candle they are predicting and
+ * invalidates every backtest number. See doc/DECISION_TIMING.md.
+ */
 export function tradeDecisionFireTimeMs({
   period,
   targetTsMs,
@@ -108,8 +131,8 @@ export function tradeDecisionFireTimeMs({
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
 }): number {
-  const periodMs = timeframeMs({ timeframe: period });
-  return targetTsMs + periodMs - tradeDecisionLeadTimeMs({ period });
+  void period;
+  return targetTsMs - tradeDecisionLeadTimeMs({ period });
 }
 
 export function nextTradeDecisionFireTimeMs({
@@ -120,18 +143,13 @@ export function nextTradeDecisionFireTimeMs({
   readonly nowMs: number;
 }): number {
   const periodMs = timeframeMs({ timeframe: period });
-  const currentTargetTsMs = tradeDecisionTargetOpenTimeMs({ period, nowMs });
-  const currentFireTimeMs = tradeDecisionFireTimeMs({
-    period,
-    targetTsMs: currentTargetTsMs,
-  });
-  if (nowMs < currentFireTimeMs) {
-    return currentFireTimeMs;
+  let target = tradeDecisionTargetOpenTimeMs({ period, nowMs });
+  let fireTime = tradeDecisionFireTimeMs({ period, targetTsMs: target });
+  if (fireTime < nowMs) {
+    target = target + periodMs;
+    fireTime = tradeDecisionFireTimeMs({ period, targetTsMs: target });
   }
-  return tradeDecisionFireTimeMs({
-    period,
-    targetTsMs: currentTargetTsMs + periodMs,
-  });
+  return fireTime;
 }
 
 /**

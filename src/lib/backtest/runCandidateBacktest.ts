@@ -141,6 +141,10 @@ async function runMarketCandidateBacktest({
   const hydrateBars = tradeDecisionHydrateBars({ period });
   const leadTimeMs = tradeDecisionLeadTimeMs({ period });
   const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
+  // The synthetic bar is built from 1m data in the hour *before* the target
+  // opens (see doc/DECISION_TIMING.md). We need 1m coverage starting at
+  // `startMs - period` for the earliest target whose open == startMs.
+  const minuteStartMs = Math.max(0, startMs - periodMs);
   const [periodBars, minuteBars] = await Promise.all([
     loadPythBars({
       db,
@@ -153,7 +157,7 @@ async function runMarketCandidateBacktest({
       db,
       asset,
       timeframe: "1m",
-      startMs,
+      startMs: minuteStartMs,
       endMs,
     }),
   ]);
@@ -192,7 +196,10 @@ async function runMarketCandidateBacktest({
   let decisionCount = 0;
   for (const targetBar of targetBars) {
     const targetTsMs = targetBar.openTimeMs;
-    const activeOpenTimeMs = targetTsMs;
+    // See doc/DECISION_TIMING.md.
+    // Decision fires `leadTimeMs` BEFORE the target opens.
+    // The synthetic represents the *prior* (in-progress) candle, built from
+    // 1m bars in [targetTsMs - period, decisionTsMs].
     const decisionTsMs = tradeDecisionFireTimeMs({
       period,
       targetTsMs,
@@ -200,14 +207,18 @@ async function runMarketCandidateBacktest({
     if (decisionTsMs >= endMs) {
       continue;
     }
+    const activeOpenTimeMs = targetTsMs - periodMs;
     const quarterStartMs = quarterStartFor({ tsMs: targetTsMs });
     const closedEndIndex = lowerBoundOpenTime({
       bars: periodBars,
       openTimeMs: targetTsMs,
     });
+    // History is fully-closed bars strictly before the now candle. The now
+    // candle sits at `closedEndIndex - 1`; we exclude it from history and
+    // include its partial via the synthetic instead.
     const history = periodBars.slice(
-      Math.max(0, closedEndIndex - (hydrateBars - 1)),
-      closedEndIndex,
+      Math.max(0, closedEndIndex - 1 - (hydrateBars - 1)),
+      Math.max(0, closedEndIndex - 1),
     );
     const syntheticBar = synthesizePartialBar({
       minuteBars,

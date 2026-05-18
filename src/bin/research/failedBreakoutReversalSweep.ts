@@ -69,7 +69,7 @@ export const researchFailedBreakoutReversalSweepCommand = defineCommand({
   name: "research:failed-breakout-reversal-sweep",
   summary: "Sweep 1h failed-breakout reversal candidates",
   description:
-    "Runs a local research sweep for the Failed Breakdown / Failed Breakout Reversal filter on 1h markets. The trigger detects a candle whose low pierced a prior N-bar low (or high pierced a prior N-bar high) and then closed back across that level with a strong close-location. The thesis stays active until invalidated by max age, consecutive wrong bars, an unfavorable right-vs-wrong tally, or a re-break of the trigger's sweep extreme. Decisions happen 35 minutes before each 1h candle closes using a synthetic current-hour bar.",
+    "Runs a local research sweep for the Failed Breakdown / Failed Breakout Reversal filter on 1h markets. The trigger detects a candle whose low pierced a prior N-bar low (or high pierced a prior N-bar high) and then closed back across that level with a strong close-location. The thesis stays active until invalidated by max age, consecutive wrong bars, an unfavorable right-vs-wrong tally, or a re-break of the trigger's sweep extreme. Decisions happen 35 minutes before each 1h target candle opens using a synthetic of the prior (in-progress) hour built from 1m Pyth candles.",
   options: [
     defineValueOption({
       key: "assets",
@@ -195,7 +195,7 @@ async function runSweep({
     outcomeSource:
       "Pyth spot 1h candle direction. This does not include Polymarket market prices or odds.",
     decisionTiming:
-      "For each 1h target candle, decide 35 minutes before that same candle closes using a synthetic current-hour bar built from 1m Pyth candles through HH:25.",
+      "For each 1h target candle, decide 35 minutes before the target candle opens using a synthetic of the prior (in-progress) hour built from 1m Pyth candles through `target.open - 35min`. The filter never sees any data from the target candle itself.",
     startMs,
     endMs,
     assets,

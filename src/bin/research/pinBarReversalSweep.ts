@@ -178,7 +178,7 @@ async function runSweep({
     outcomeSource:
       "Pyth spot 1h candle direction. This does not include Polymarket market prices or odds.",
     decisionTiming:
-      "For each 1h target candle, decide 35 minutes before that same candle closes using a synthetic current-hour bar built from 1m Pyth candles through HH:25.",
+      "For each 1h target candle, decide 35 minutes before the target candle opens using a synthetic of the prior (in-progress) hour built from 1m Pyth candles through `target.open - 35min`. The filter never sees any data from the target candle itself.",
     startMs,
     endMs,
     assets,
