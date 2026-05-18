@@ -9,9 +9,9 @@
 > decision must fire *before* the target opens. See
 > [doc/DECISION_TIMING.md](../DECISION_TIMING.md) for the correct setup.
 >
-> Under the corrected timing (decision = `target.open - 35min`, synth =
+> Under the corrected timing (decision = `target.open - leadTime`, synth =
 > partial of the *prior* in-progress hour, filter sees zero target data),
-> all 6 registered candidates collapse to coin-flip:
+> all 6 of these legacy candidates collapse to coin-flip:
 >
 > | filter | corrected WR | qMin |
 > |---|---:|---:|
@@ -31,6 +31,10 @@
 >
 > The original-but-wrong numbers remain below for archival reference
 > and to show where the filters came from. **Do not cite them**.
+>
+> A new candidate with a real edge under the corrected timing —
+> Extension Reversal — was added on 2026-05-18; see
+> [2026-05-18-extension-reversal-discovery.md](2026-05-18-extension-reversal-discovery.md).
 
 ---
 

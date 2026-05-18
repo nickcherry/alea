@@ -10,6 +10,7 @@ export type BacktestDashboardCandidateRow = {
   readonly filterId: string;
   readonly filterName: string;
   readonly filterVersion: number;
+  readonly filterDescription: string;
   readonly configHash: string;
   readonly config: unknown;
   readonly evaluatedCount: number;

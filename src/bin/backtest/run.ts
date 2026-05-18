@@ -42,7 +42,7 @@ export const backtestRunCommand = defineCommand({
   name: "backtest:run",
   summary: "Backtest registered filter candidates",
   description:
-    "Evaluates the filter candidates registered for each selected 1h market against stored Pyth candles. The simulator makes each decision 35 minutes before the *next* (not-yet-open) 1h target market opens and builds the synthetic current-hour candle only from stored 1m bars from the prior hour available by that decision timestamp.",
+    "Evaluates the filter candidates registered for each selected 1h market against stored Pyth candles. The simulator makes each decision `tradeDecisionLeadTimeMs` before the *next* (not-yet-open) 1h target market opens (see doc/DECISION_TIMING.md) and builds the synthetic current-hour candle only from stored 1m bars from the prior hour available by that decision timestamp.",
   options: [
     defineValueOption({
       key: "periods",

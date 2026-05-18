@@ -5,6 +5,10 @@ import {
   exhaustionReversalFilter,
 } from "@alea/lib/filters/exhaustionReversal";
 import {
+  type ExtensionReversalConfig,
+  extensionReversalFilter,
+} from "@alea/lib/filters/extensionReversal";
+import {
   type FailedBreakoutReversalConfig,
   failedBreakoutReversalFilter,
 } from "@alea/lib/filters/failedBreakoutReversal";
@@ -139,6 +143,19 @@ const oneHourPinBarReversalCandidate = defineCandidate({
   } satisfies PinBarReversalConfig,
 });
 
+const oneHourExtensionReversalCandidate = defineCandidate({
+  filter: extensionReversalFilter,
+  config: {
+    minSynthReturnPct: 0.02,
+    minLastReturnPct: 0.01,
+    maxSignalAgeBars: 0,
+    maxAge: 4,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies ExtensionReversalConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
@@ -146,6 +163,7 @@ const baseCandidates = [
   oneHourMaRejectionCandidate,
   oneHourHtfAlignmentCandidate,
   oneHourPinBarReversalCandidate,
+  oneHourExtensionReversalCandidate,
 ];
 
 export const registeredCandidatesByMarket = {

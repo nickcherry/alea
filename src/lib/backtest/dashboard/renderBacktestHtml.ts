@@ -106,8 +106,7 @@ function renderTableHead({
   readonly quarters: readonly string[];
 }): string {
   return `<tr>
-    <th>Filter${infoTip({ text: "Filter name and version. Rows are sorted by overall win rate for the active asset and period." })}</th>
-    <th>Config${infoTip({ text: "Exact configuration values evaluated for this candidate." })}</th>
+    <th>Filter${infoTip({ text: "Filter name, version, description, and the exact config evaluated. Rows are sorted by overall win rate for the active asset and period." })}</th>
     <th class="num-col">WR${infoTip({ text: "Wins divided by non-neutral decisions for the active asset and period." })}</th>
     <th class="num-col">Decisions${infoTip({ text: "Non-neutral historical decisions stored in the quarterly blobs." })}</th>
     ${quarters.map((quarter) => `<th class="num-col quarter-col">${escapeHtml({ value: quarter })}</th>`).join("")}
@@ -126,10 +125,10 @@ function renderRows({
   const shown = rows.slice(0, TABLE_LIMIT);
   if (shown.length === 0) {
     return [
-      `<tr><td colspan="${4 + quarters.length}"><span class="alea-muted">No backtest rows yet.</span></td></tr>`,
+      `<tr><td colspan="${3 + quarters.length}"><span class="alea-muted">No backtest rows yet.</span></td></tr>`,
       renderFillerRows({
         count: Math.max(0, layoutRowCount - 1),
-        colspan: 4 + quarters.length,
+        colspan: 3 + quarters.length,
       }),
     ].join("");
   }
@@ -142,10 +141,9 @@ function renderRows({
             : formatPercent({ value: row.winRate });
         const quarterByLabel = new Map(row.quarters.map((q) => [q.label, q]));
         return `<tr>
-        <td>
+        <td class="backtest-filter-cell">
           <div class="backtest-filter-name">${escapeHtml({ value: row.filterName })} <span class="alea-muted">v${row.filterVersion}</span></div>
-        </td>
-        <td class="backtest-config-cell">
+          ${row.filterDescription ? `<div class="backtest-filter-description">${escapeHtml({ value: row.filterDescription })}</div>` : ""}
           ${renderConfig({ value: row.config })}
         </td>
         <td class="num-col alea-mono${winRateToneClass({ value: row.winRate })}">${wr}</td>
@@ -158,7 +156,7 @@ function renderRows({
       .join(""),
     renderFillerRows({
       count: Math.max(0, layoutRowCount - shown.length),
-      colspan: 4 + quarters.length,
+      colspan: 3 + quarters.length,
     }),
   ].join("");
 }

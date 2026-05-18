@@ -85,7 +85,7 @@ export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
   Record<TradeDecisionPeriod, number>
 > = {
-  "1h": 35 * 60 * 1000,
+  "1h": 15 * 60 * 1000,
 };
 
 export function tradeDecisionLeadTimeMs({

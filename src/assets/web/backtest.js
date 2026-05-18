@@ -81,7 +81,6 @@
     return (
       "<tr>" +
       "<th>Filter</th>" +
-      "<th>Config</th>" +
       '<th class="num-col">WR</th>' +
       '<th class="num-col">Decisions</th>' +
       quarters
@@ -98,9 +97,9 @@
     if (shown.length === 0) {
       return (
         '<tr><td colspan="' +
-        (4 + quarters.length) +
+        (3 + quarters.length) +
         '"><span class="alea-muted">No backtest rows yet.</span></td></tr>' +
-        renderFillerRows(Math.max(0, layoutRowCount - 1), 4 + quarters.length)
+        renderFillerRows(Math.max(0, layoutRowCount - 1), 3 + quarters.length)
       );
     }
     return (
@@ -114,16 +113,20 @@
           (row.quarters || []).forEach(function (q) {
             qByLabel[q.label] = q;
           });
+          var description = row.filterDescription
+            ? '<div class="backtest-filter-description">' +
+              escapeHtml(row.filterDescription) +
+              "</div>"
+            : "";
           return (
             "<tr>" +
-            "<td>" +
+            '<td class="backtest-filter-cell">' +
             '<div class="backtest-filter-name">' +
             escapeHtml(row.filterName) +
             ' <span class="alea-muted">v' +
             Number(row.filterVersion).toLocaleString() +
             "</span></div>" +
-            "</td>" +
-            '<td class="backtest-config-cell">' +
+            description +
             renderConfig(row.config || {}) +
             "</td>" +
             '<td class="num-col alea-mono' +
@@ -145,7 +148,7 @@
         .join("") +
       renderFillerRows(
         Math.max(0, layoutRowCount - shown.length),
-        4 + quarters.length,
+        3 + quarters.length,
       )
     );
   }

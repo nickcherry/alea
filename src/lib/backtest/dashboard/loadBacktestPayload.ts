@@ -11,7 +11,10 @@ import type {
   BacktestDashboardQuarterCell,
 } from "@alea/lib/backtest/dashboard/types";
 import type { DatabaseClient } from "@alea/lib/db/types";
-import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
+import {
+  registeredCandidates,
+  registeredCandidatesForMarket,
+} from "@alea/lib/filters/registry";
 import type { Asset } from "@alea/types/assets";
 
 type BacktestRow = {
@@ -60,11 +63,15 @@ export async function loadBacktestPayload({
     ])
     .execute()) as readonly BacktestRow[];
 
+  const descriptionByFilterId = new Map(
+    registeredCandidates.map((c) => [c.filterId, c.description]),
+  );
   const byPeriod: Record<string, BacktestDashboardPeriodSlice> = {};
   for (const period of CANDIDATE_BACKTEST_PERIODS) {
     byPeriod[period] = buildPeriodSlice({
       period,
       rows,
+      descriptionByFilterId,
     });
   }
 
@@ -121,9 +128,11 @@ function defaultPeriodFor({
 function buildPeriodSlice({
   period,
   rows,
+  descriptionByFilterId,
 }: {
   readonly period: TradeDecisionPeriod;
   readonly rows: readonly BacktestRow[];
+  readonly descriptionByFilterId: ReadonlyMap<string, string>;
 }): BacktestDashboardPeriodSlice {
   const byAsset: Record<string, BacktestDashboardAssetSlice> = {};
   const periodRows = rows.filter((row) => row.timeframe === period);
@@ -138,6 +147,7 @@ function buildPeriodSlice({
       period,
       asset,
       quarters,
+      descriptionByFilterId,
       rows: rows.filter(
         (row) =>
           row.asset === asset &&
@@ -173,11 +183,13 @@ function buildAssetSlice({
   asset,
   quarters,
   rows,
+  descriptionByFilterId,
 }: {
   readonly period: TradeDecisionPeriod;
   readonly asset: Asset;
   readonly quarters: readonly string[];
   readonly rows: readonly BacktestRow[];
+  readonly descriptionByFilterId: ReadonlyMap<string, string>;
 }): BacktestDashboardAssetSlice {
   const candidates = new Map<string, CandidateAccumulator>();
   for (const row of rows) {
@@ -186,6 +198,7 @@ function buildAssetSlice({
       filterId: row.filter_id,
       filterName: row.filter_name,
       filterVersion: row.filter_version,
+      filterDescription: descriptionByFilterId.get(row.filter_id) ?? "",
       configHash: row.config_hash,
       config: row.config_json,
       evaluatedCount: 0,
@@ -242,6 +255,7 @@ function buildAssetSlice({
         filterId: acc.filterId,
         filterName: acc.filterName,
         filterVersion: acc.filterVersion,
+        filterDescription: acc.filterDescription,
         configHash: acc.configHash,
         config: acc.config,
         evaluatedCount: acc.evaluatedCount,
@@ -288,6 +302,7 @@ type CandidateAccumulator = {
   readonly filterId: string;
   readonly filterName: string;
   readonly filterVersion: number;
+  readonly filterDescription: string;
   readonly configHash: string;
   readonly config: unknown;
   evaluatedCount: number;

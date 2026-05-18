@@ -18,4 +18,6 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 1;
 // v3: decision timing flipped — target candle is the *next* (not-yet-open)
 // 1h bar; synthetic bar represents the in-progress *prior* hour, not the
 // target. See doc/DECISION_TIMING.md. Bumping invalidates all v2 cache rows.
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 3;
+// v4: registered Extension Reversal candidate added to the live set; bump so
+// dashboards rebuild rows for the new candidate alongside the rest.
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 4;

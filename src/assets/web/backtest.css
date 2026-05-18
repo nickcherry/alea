@@ -3,8 +3,7 @@
   vertical-align: top;
 }
 
-.backtest-table tbody td:first-child,
-.backtest-table tbody td.backtest-config-cell {
+.backtest-table tbody td.backtest-filter-cell {
   text-align: left;
 }
 
@@ -17,44 +16,72 @@
   min-width: 92px;
 }
 
-.backtest-filter-name {
-  color: var(--alea-text);
-  font-weight: 650;
-  white-space: nowrap;
+.backtest-filter-cell {
+  min-width: 480px;
+  max-width: 620px;
 }
 
-.backtest-config-cell {
-  min-width: 300px;
-  max-width: 420px;
+.backtest-table thead th:nth-child(4),
+.backtest-table tbody td:nth-child(4) {
+  border-left: 1px solid var(--alea-border-faint);
+}
+
+.backtest-filter-name {
+  color: var(--alea-text);
+  font-size: 14.5px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.backtest-table tbody tr:not(.backtest-filler-row) > td:nth-child(2),
+.backtest-table tbody tr:not(.backtest-filler-row) > td:nth-child(3) {
+  font-size: 15.5px;
+  font-weight: 600;
+  padding-top: 14px;
+}
+
+.backtest-table .quarter-col {
+  font-size: 11.5px;
+}
+
+.backtest-filter-description {
+  margin-top: 4px;
+  color: var(--alea-text-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .backtest-config {
   color: var(--alea-text-muted);
   display: grid;
-  gap: 3px;
-  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 18px;
+  row-gap: 3px;
+  margin: 8px 0 0;
+  padding: 0;
   font-size: 11px;
   line-height: 1.3;
 }
 
 .backtest-config-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.62fr) minmax(90px, 1fr);
-  gap: 8px;
-  align-items: baseline;
+  display: block;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .backtest-config-row dt {
+  display: inline;
   color: var(--alea-text);
   font-weight: 680;
-  overflow-wrap: anywhere;
+  margin-right: 4px;
 }
 
 .backtest-config-row dd {
+  display: inline;
   margin: 0;
   color: var(--alea-text-muted);
   font-family: var(--alea-font-mono);
-  overflow-wrap: anywhere;
 }
 
 .backtest-cell-count {
@@ -99,6 +126,11 @@
     border: none;
   }
 
+  .backtest-filter-cell {
+    min-width: 0;
+    max-width: none;
+  }
+
   .backtest-filter-name {
     white-space: normal;
     overflow-wrap: anywhere;
@@ -106,16 +138,22 @@
     margin-bottom: 6px;
   }
 
-  .backtest-table tr > td:nth-child(3),
-  .backtest-table tr > td:nth-child(4) {
+  .backtest-filter-description {
+    font-size: 12px;
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .backtest-table tr > td:nth-child(2),
+  .backtest-table tr > td:nth-child(3) {
     display: inline-block;
     margin-right: 16px;
-    margin-bottom: 8px;
+    margin-top: 8px;
     text-align: left;
     font-size: 14px;
   }
 
-  .backtest-table tr > td:nth-child(3)::before {
+  .backtest-table tr > td:nth-child(2)::before {
     content: "WR ";
     color: var(--alea-text-muted);
     font-family: var(--alea-font);
@@ -124,7 +162,7 @@
     margin-right: 4px;
   }
 
-  .backtest-table tr > td:nth-child(4)::before {
+  .backtest-table tr > td:nth-child(3)::before {
     content: "Decisions ";
     color: var(--alea-text-muted);
     font-family: var(--alea-font);
@@ -133,15 +171,12 @@
     margin-right: 4px;
   }
 
-  .backtest-config-cell {
-    min-width: 0;
-    max-width: none;
-    margin-top: 4px;
-  }
-
   .backtest-config {
     display: block;
-    gap: 0;
+    grid-template-columns: none;
+    column-gap: 0;
+    row-gap: 0;
+    margin-top: 8px;
   }
 
   .backtest-config-row {

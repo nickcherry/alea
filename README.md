@@ -14,8 +14,8 @@ live, and backtest modes, and places or simulates Polymarket maker orders
 when those candidates produce actionable up/down signals.
 
 The strategy is directional prediction for the *next* (not-yet-open) `1h`
-Polymarket market, decided 35 minutes before that candle opens and paired
-with maker orders near 50c. With zero fees and roughly 1:1 risk/reward,
+Polymarket market, decided shortly before that candle opens (lead time set
+by `tradeDecisionLeadTimeMs`) and paired with maker orders near 50c. With zero fees and roughly 1:1 risk/reward,
 win rate is the edge. We deliberately fire the decision *before* the
 target candle opens so the maker order is in the book while the market
 is still around 50c — by the time the candle is in progress, price moves

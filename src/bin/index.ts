@@ -21,6 +21,7 @@ import { researchBodyDivergenceSweepCommand } from "@alea/bin/research/bodyDiver
 import { researchCompressionBreakoutSweepCommand } from "@alea/bin/research/compressionBreakoutSweep";
 import { researchEmaReversionSweepCommand } from "@alea/bin/research/emaReversionSweep";
 import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhaustionReversalSweep";
+import { researchExtensionReversalSweepCommand } from "@alea/bin/research/extensionReversalSweep";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchHtfAlignmentSweepCommand } from "@alea/bin/research/htfAlignmentSweep";
 import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
@@ -75,6 +76,7 @@ const cli = createCli({
     researchCompressionBreakoutSweepCommand,
     researchEmaReversionSweepCommand,
     researchExhaustionReversalSweepCommand,
+    researchExtensionReversalSweepCommand,
     researchFailedBreakoutReversalSweepCommand,
     researchHtfAlignmentSweepCommand,
     researchMaRejectionSweepCommand,
