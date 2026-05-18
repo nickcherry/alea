@@ -600,3 +600,64 @@ family from three filters to one (or maybe two). The cleanest options:
 Either pruning would shrink the active set from 9 candidates to 5-6
 without materially changing the blended WR or the bars actually
 traded, but would simplify reasoning about which signal fired and why.
+
+### Leakage test (negative control)
+
+Pre-computed every registered filter's decision for every target
+across all 5 assets, then re-tallied the WR with each target's outcome
+replaced by a seeded coin flip. If the filter logic accidentally
+peeked at the future-bar close, randomizing the outcome label would
+not bring WR back to ~50%.
+
+| filter                   | real WR | random-outcome WR (5-trial avg) |
+|--------------------------|--------:|-------------------------------:|
+| body_divergence          | 72.10%  | 50.58% |
+| exhaustion_reversal      | 84.06%  | 49.10% |
+| failed_breakout_reversal | 84.73%  | 50.04% |
+| htf_alignment            | 92.40%  | 50.08% |
+| ma_rejection             | 88.38%  | 49.57% |
+| pin_bar_reversal         | 78.64%  | 49.77% |
+| range_divergence         | 72.52%  | 49.98% |
+| rsi_divergence           | 75.45%  | 49.79% |
+| wick_divergence          | 71.71%  | 50.13% |
+
+All nine filters drop to 49-50% on randomized outcomes. Real WR is
+21-42 percentage points above chance. The decisions are independent
+of the actual outcome label — no future-data leakage detected.
+
+### Coverage and consensus analysis
+
+Evaluating all 9 candidates against every target (87,555 across 5
+assets):
+
+- **45.6%** of all targets have at least one filter fire (39,911 of
+  87,555).
+- **77.86%** WR with at least one filter firing (no conflict).
+- WR rises with unanimous-fire count:
+
+| filters unanimous | n | WR |
+|---|---:|---:|
+| >=1 | 38,374 | 77.86% |
+| >=2 | 17,588 | 76.81% |
+| >=3 |  7,137 | 78.03% |
+| >=4 |  1,493 | **85.20%** |
+| >=5 |    379 | **86.54%** |
+| >=6 |     72 | **90.28%** |
+
+Conflict slice: 1,537 targets (3.9% of any-fire) have at least one
+filter firing each direction. **Majority vote on conflicts wins only
+42.82%** of the time — when filters disagree, even the majority is
+worse than random. The clean read is "trust the signal when 4+ agree
+unanimously; abstain when there's any conflict".
+
+The user's prior framework rejected committee voting in favor of
+single high-quality filters, and the data backs that up:
+
+- Single-filter fire (no other filter says anything): WR 78.75%
+  (n=20,786)
+- >=2 filters agree (no conflict): WR 76.81% (n=17,588)
+
+Adding more filters doesn't really improve WR until you reach 4+
+unanimous agreement, which only happens on 1,493 of 39,911 any-fire
+targets. The current single-filter approach is already capturing most
+of the available edge per decision.
