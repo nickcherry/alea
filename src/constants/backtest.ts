@@ -20,4 +20,8 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 2;
 // only, and the win condition is "take-profit threshold hit within N
 // candles" rather than "next-candle close direction." Bumping
 // invalidates every v7 cache row.
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 8;
+// v9: outcome model gained a stop-loss leg. TP and SL are now
+// per-candidate (set via `defineCandidate`); each cache row carries
+// its own TP/SL. The candidate's `configCanon` now folds in TP/SL,
+// so the cache hash invalidates automatically when either changes.
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 9;

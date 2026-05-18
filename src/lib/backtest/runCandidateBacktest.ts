@@ -8,7 +8,6 @@ import {
 } from "@alea/constants/backtest";
 import {
   TRADE_OUTCOME_WINDOW_BARS,
-  TRADE_TAKE_PROFIT_PCT,
   tradeDecisionHydrateBars,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
@@ -263,7 +262,8 @@ async function runMarketCandidateBacktest({
         direction,
         entryPrice: targetBar.open,
         outcomeBars,
-        takeProfitPct: TRADE_TAKE_PROFIT_PCT,
+        takeProfitPct: candidate.takeProfitPct,
+        stopLossPct: candidate.stopLossPct,
       });
       const won = outcome === "win" ? 1 : 0;
       accumulator.decisions.push([targetTsMs, direction, won]);
@@ -398,7 +398,6 @@ async function buildCachePlans({
         decisionSchemaVersion: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
         engineVersion: CANDIDATE_BACKTEST_ENGINE_VERSION,
         hydrateBars,
-        takeProfitPct: TRADE_TAKE_PROFIT_PCT,
         outcomeWindowBars: TRADE_OUTCOME_WINDOW_BARS,
         inputDataHash,
       });
@@ -623,6 +622,8 @@ async function persistAccumulator({
       win_count: accumulator.winCount,
       loss_count: accumulator.lossCount,
       neutral_count: accumulator.neutralCount,
+      take_profit_pct: candidate.takeProfitPct,
+      stop_loss_pct: candidate.stopLossPct,
       decision_schema_version: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
       decisions: sql`${JSON.stringify(accumulator.decisions)}::jsonb`,
       generated_at_ms: Date.now(),
@@ -647,6 +648,8 @@ async function persistAccumulator({
           win_count: sql`excluded.win_count`,
           loss_count: sql`excluded.loss_count`,
           neutral_count: sql`excluded.neutral_count`,
+          take_profit_pct: sql`excluded.take_profit_pct`,
+          stop_loss_pct: sql`excluded.stop_loss_pct`,
           decision_schema_version: sql`excluded.decision_schema_version`,
           decisions: sql`excluded.decisions`,
           generated_at_ms: sql`excluded.generated_at_ms`,

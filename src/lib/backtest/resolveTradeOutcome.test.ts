@@ -24,76 +24,96 @@ const bar = ({
 });
 
 describe("resolveTradeOutcome", () => {
-  it("wins long when any bar high reaches the take-profit", () => {
+  it("wins long when TP is touched before SL", () => {
     const bars = [
       bar({ open: 100, high: 102, low: 99, close: 101 }),
-      bar({ open: 101, high: 106, low: 100, close: 105 }), // touches TP
+      bar({ open: 101, high: 104, low: 100, close: 103 }), // touches +3% TP at 103
     ];
     expect(
       resolveTradeOutcome({
         direction: "up",
         entryPrice: 100,
         outcomeBars: bars,
-        takeProfitPct: 0.05,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
       }),
     ).toBe("win");
   });
 
-  it("loses long when no bar high reaches the take-profit", () => {
+  it("loses long when SL is touched first", () => {
     const bars = [
-      bar({ open: 100, high: 103, low: 95, close: 96 }),
-      bar({ open: 96, high: 99, low: 90, close: 92 }),
+      bar({ open: 100, high: 101, low: 97.5, close: 98 }), // touches -2% SL at 98
     ];
     expect(
       resolveTradeOutcome({
         direction: "up",
         entryPrice: 100,
         outcomeBars: bars,
-        takeProfitPct: 0.05,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
       }),
     ).toBe("loss");
   });
 
-  it("wins short when any bar low reaches the take-profit", () => {
+  it("loses long via time-stop when neither side is touched", () => {
     const bars = [
-      bar({ open: 100, high: 101, low: 97, close: 98 }),
-      bar({ open: 98, high: 99, low: 94, close: 95 }), // 94 < 95 (5% below 100)
+      bar({ open: 100, high: 102, low: 99, close: 101 }),
+      bar({ open: 101, high: 102.5, low: 99.5, close: 100.5 }),
+    ];
+    expect(
+      resolveTradeOutcome({
+        direction: "up",
+        entryPrice: 100,
+        outcomeBars: bars,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
+      }),
+    ).toBe("loss");
+  });
+
+  it("treats SL as touched first when both are inside the same bar's range (conservative)", () => {
+    // A single bar that ranges from 96 (SL=98) to 105 (TP=103). OHLC
+    // cannot tell us which came first, so we book a loss.
+    const bars = [bar({ open: 100, high: 105, low: 96, close: 102 })];
+    expect(
+      resolveTradeOutcome({
+        direction: "up",
+        entryPrice: 100,
+        outcomeBars: bars,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
+      }),
+    ).toBe("loss");
+  });
+
+  it("wins short when TP is touched before SL", () => {
+    const bars = [
+      bar({ open: 100, high: 101, low: 96, close: 97 }), // touches -3% TP at 97
     ];
     expect(
       resolveTradeOutcome({
         direction: "down",
         entryPrice: 100,
         outcomeBars: bars,
-        takeProfitPct: 0.05,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
       }),
     ).toBe("win");
   });
 
-  it("loses short when no bar low reaches the take-profit", () => {
+  it("loses short when SL is touched first", () => {
     const bars = [
-      bar({ open: 100, high: 105, low: 99, close: 104 }),
-      bar({ open: 104, high: 108, low: 100, close: 107 }),
+      bar({ open: 100, high: 102.5, low: 99, close: 101 }), // touches +2% SL at 102
     ];
     expect(
       resolveTradeOutcome({
         direction: "down",
         entryPrice: 100,
         outcomeBars: bars,
-        takeProfitPct: 0.05,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
       }),
     ).toBe("loss");
-  });
-
-  it("wins on the very first bar of the window when the entry bar itself touches TP", () => {
-    const bars = [bar({ open: 100, high: 106, low: 99, close: 102 })];
-    expect(
-      resolveTradeOutcome({
-        direction: "up",
-        entryPrice: 100,
-        outcomeBars: bars,
-        takeProfitPct: 0.05,
-      }),
-    ).toBe("win");
   });
 
   it("rejects non-positive entry price", () => {
@@ -102,18 +122,29 @@ describe("resolveTradeOutcome", () => {
         direction: "up",
         entryPrice: 0,
         outcomeBars: [],
-        takeProfitPct: 0.05,
+        takeProfitPct: 0.03,
+        stopLossPct: 0.02,
       }),
     ).toThrow();
   });
 
-  it("rejects non-positive take-profit pct", () => {
+  it("rejects non-positive thresholds", () => {
     expect(() =>
       resolveTradeOutcome({
         direction: "up",
         entryPrice: 100,
         outcomeBars: [],
         takeProfitPct: 0,
+        stopLossPct: 0.02,
+      }),
+    ).toThrow();
+    expect(() =>
+      resolveTradeOutcome({
+        direction: "up",
+        entryPrice: 100,
+        outcomeBars: [],
+        takeProfitPct: 0.03,
+        stopLossPct: 0,
       }),
     ).toThrow();
   });

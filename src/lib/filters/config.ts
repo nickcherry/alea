@@ -9,11 +9,16 @@ import type {
 export function defineCandidate<const Config extends FilterConfig>({
   filter,
   config,
+  takeProfitPct,
+  stopLossPct,
 }: {
   readonly filter: TradingFilter<Config>;
   readonly config: Config;
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
 }): FilterCandidate<Config> {
-  const configCanon = canonicalizeConfig(config);
+  validateTradeProfile({ takeProfitPct, stopLossPct });
+  const configCanon = canonicalizeConfig({ config, takeProfitPct, stopLossPct });
   const configHash = hashConfigCanon({ configCanon });
   return {
     id: `${filter.id}@v${filter.version}:${configHash}`,
@@ -25,12 +30,43 @@ export function defineCandidate<const Config extends FilterConfig>({
     config,
     configCanon,
     configHash,
+    takeProfitPct,
+    stopLossPct,
     evaluate: (context) => filter.evaluate({ ...context, config }),
   };
 }
 
-export function canonicalizeConfig(value: unknown): string {
-  return JSON.stringify(sortJson(value));
+function validateTradeProfile({
+  takeProfitPct,
+  stopLossPct,
+}: {
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
+}): void {
+  if (!Number.isFinite(takeProfitPct) || takeProfitPct <= 0) {
+    throw new Error("takeProfitPct must be a positive finite number");
+  }
+  if (!Number.isFinite(stopLossPct) || stopLossPct <= 0) {
+    throw new Error("stopLossPct must be a positive finite number");
+  }
+}
+
+export function canonicalizeConfig({
+  config,
+  takeProfitPct,
+  stopLossPct,
+}: {
+  readonly config: unknown;
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
+}): string {
+  return JSON.stringify(
+    sortJson({
+      config,
+      takeProfitPct,
+      stopLossPct,
+    }),
+  );
 }
 
 function hashConfigCanon({

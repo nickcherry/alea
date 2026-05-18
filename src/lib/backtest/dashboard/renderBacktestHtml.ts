@@ -142,6 +142,7 @@ function renderRows({
         <td class="backtest-filter-cell">
           <div class="backtest-filter-name">${escapeHtml({ value: row.filterName })} <span class="alea-muted">v${row.filterVersion}</span></div>
           ${row.filterDescription ? `<div class="backtest-filter-description">${escapeHtml({ value: row.filterDescription })}</div>` : ""}
+          ${renderTradeProfile({ takeProfitPct: row.takeProfitPct, stopLossPct: row.stopLossPct })}
           ${renderConfig({ value: row.config })}
         </td>
         <td class="num-col alea-mono${winRateToneClass({ value: row.winRate })}">${wr}</td>
@@ -166,6 +167,18 @@ function renderQuarterCell(
     return '<td class="num-col quarter-col alea-muted">—</td>';
   }
   return `<td class="num-col quarter-col alea-mono${winRateToneClass({ value: cell.winRate })}">${formatPercent({ value: cell.winRate })}<span class="backtest-cell-count">${cell.decisionCount.toLocaleString()}</span></td>`;
+}
+
+function renderTradeProfile({
+  takeProfitPct,
+  stopLossPct,
+}: {
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
+}): string {
+  const tp = `${(takeProfitPct * 100).toFixed(2).replace(/\.?0+$/, "")}%`;
+  const sl = `${(stopLossPct * 100).toFixed(2).replace(/\.?0+$/, "")}%`;
+  return `<dl class="backtest-trade-profile"><div class="backtest-trade-profile-row"><dt>TP</dt><dd>${escapeHtml({ value: tp })}</dd></div><div class="backtest-trade-profile-row"><dt>SL</dt><dd>${escapeHtml({ value: sl })}</dd></div></dl>`;
 }
 
 function renderConfig({ value }: { readonly value: unknown }): string {

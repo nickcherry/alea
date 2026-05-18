@@ -61,16 +61,18 @@ export const TRADE_DECISION_DEFAULT_ASSETS = TRADE_DECISION_TRADABLE_ASSETS;
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 
 /**
- * Take-profit threshold relative to entry. A long wins if any candle
- * in the outcome window reaches `entry * (1 + TRADE_TAKE_PROFIT_PCT)`;
- * a short wins on `entry * (1 - TRADE_TAKE_PROFIT_PCT)`.
- */
-export const TRADE_TAKE_PROFIT_PCT = 0.05;
-
-/**
  * Outcome window. The number of candles (starting with the entry
- * candle itself) inside which the take-profit threshold must be touched
- * for the trade to count as a win.
+ * candle itself) inside which take-profit must be touched for the
+ * trade to count as a win. If neither TP nor SL is reached by the
+ * end of the window, the time-stop fires and the trade counts as a
+ * loss.
+ *
+ * The take-profit and stop-loss percentages are now candidate-specific
+ * — each filter candidate sets its own `takeProfitPct` and
+ * `stopLossPct` via `defineCandidate`. Within a single bar OHLC
+ * cannot tell us which side was touched first; the backtest applies
+ * the conservative convention that SL is reached before TP when both
+ * are inside the bar's range.
  */
 export const TRADE_OUTCOME_WINDOW_BARS = 5;
 

@@ -58,6 +58,8 @@ export interface CandidateBacktestQuarterResultTable {
   readonly win_count: number;
   readonly loss_count: number;
   readonly neutral_count: number;
+  readonly take_profit_pct: number;
+  readonly stop_loss_pct: number;
   readonly decision_schema_version: number;
   readonly decisions: unknown;
   readonly generated_at_ms: ColumnType<

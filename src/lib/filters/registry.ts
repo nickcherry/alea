@@ -29,6 +29,8 @@ const oneHourRsiDivergenceCandidate = defineCandidate({
     rangeUpper: 30,
     maxSignalAgeBars: 13,
   } satisfies RsiDivergenceConfig,
+  takeProfitPct: 0.03,
+  stopLossPct: 0.02,
 });
 
 const baseCandidates = [oneHourRsiDivergenceCandidate];

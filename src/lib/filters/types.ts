@@ -73,6 +73,14 @@ export type FilterCandidate<Config extends FilterConfig = FilterConfig> = {
   readonly config: Config;
   readonly configCanon: string;
   readonly configHash: string;
+  /**
+   * Trade execution profile attached to this candidate. The signal
+   * (filter + config) decides direction; these decide what counts as
+   * a win or loss for that decision. Both are fractions of entry
+   * price — e.g. 0.03 = 3%.
+   */
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
   readonly evaluate: (context: FilterEvaluationContext) => FilterEvaluation;
 };
 

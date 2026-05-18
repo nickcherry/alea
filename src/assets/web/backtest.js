@@ -127,6 +127,7 @@
             Number(row.filterVersion).toLocaleString() +
             "</span></div>" +
             description +
+            renderTradeProfile(row.takeProfitPct, row.stopLossPct) +
             renderConfig(row.config || {}) +
             "</td>" +
             '<td class="num-col alea-mono' +
@@ -165,6 +166,27 @@
       '<span class="backtest-cell-count">' +
       Number(cell.decisionCount).toLocaleString() +
       "</span></td>"
+    );
+  }
+
+  function renderTradeProfile(takeProfitPct, stopLossPct) {
+    function fmt(pct) {
+      if (pct === null || pct === undefined || !isFinite(pct)) return "—";
+      return (
+        Number(pct * 100)
+          .toFixed(2)
+          .replace(/\.?0+$/, "") + "%"
+      );
+    }
+    return (
+      '<dl class="backtest-trade-profile">' +
+      '<div class="backtest-trade-profile-row"><dt>TP</dt><dd>' +
+      escapeHtml(fmt(takeProfitPct)) +
+      "</dd></div>" +
+      '<div class="backtest-trade-profile-row"><dt>SL</dt><dd>' +
+      escapeHtml(fmt(stopLossPct)) +
+      "</dd></div>" +
+      "</dl>"
     );
   }
 

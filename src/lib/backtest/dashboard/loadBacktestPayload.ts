@@ -33,6 +33,8 @@ type BacktestRow = {
   readonly win_count: number;
   readonly loss_count: number;
   readonly neutral_count: number;
+  readonly take_profit_pct: number;
+  readonly stop_loss_pct: number;
 };
 
 export async function loadBacktestPayload({
@@ -60,6 +62,8 @@ export async function loadBacktestPayload({
       "win_count",
       "loss_count",
       "neutral_count",
+      "take_profit_pct",
+      "stop_loss_pct",
     ])
     .execute()) as readonly BacktestRow[];
 
@@ -201,6 +205,8 @@ function buildAssetSlice({
       filterDescription: descriptionByFilterId.get(row.filter_id) ?? "",
       configHash: row.config_hash,
       config: row.config_json,
+      takeProfitPct: Number(row.take_profit_pct),
+      stopLossPct: Number(row.stop_loss_pct),
       evaluatedCount: 0,
       decisionCount: 0,
       winCount: 0,
@@ -258,6 +264,8 @@ function buildAssetSlice({
         filterDescription: acc.filterDescription,
         configHash: acc.configHash,
         config: acc.config,
+        takeProfitPct: acc.takeProfitPct,
+        stopLossPct: acc.stopLossPct,
         evaluatedCount: acc.evaluatedCount,
         decisionCount: acc.decisionCount,
         winCount: acc.winCount,
@@ -305,6 +313,8 @@ type CandidateAccumulator = {
   readonly filterDescription: string;
   readonly configHash: string;
   readonly config: unknown;
+  readonly takeProfitPct: number;
+  readonly stopLossPct: number;
   evaluatedCount: number;
   decisionCount: number;
   winCount: number;
