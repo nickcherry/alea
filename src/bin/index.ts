@@ -19,6 +19,7 @@ import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
 import { researchCompressionBreakoutSweepCommand } from "@alea/bin/research/compressionBreakoutSweep";
 import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhaustionReversalSweep";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
+import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
 import { sayTextCommand } from "@alea/bin/say/text";
@@ -64,6 +65,7 @@ const cli = createCli({
     researchCompressionBreakoutSweepCommand,
     researchExhaustionReversalSweepCommand,
     researchFailedBreakoutReversalSweepCommand,
+    researchMaRejectionSweepCommand,
     researchRsiDivergenceSweepCommand,
     researchTrendPullbackResumeSweepCommand,
     tradingRunCommand,

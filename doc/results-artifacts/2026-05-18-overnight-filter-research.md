@@ -257,3 +257,70 @@ WR is at or above the synth-direction body+closeLoc baseline (~98%) but
 adds no unique alpha. The filter, core, sweep, and tests stay in tree
 for reuse (compression detection is useful infrastructure for other
 ideas) and the sweep artifact is in `doc/results-artifacts/`.
+
+## Filter 5: Trap Candle / Failed Continuation (SKIPPED — predicted trivial)
+
+Not implemented. ChatGPT's spec required the trigger candle to have
+`currentClose < currentOpen` for bearish (and the inverse for bullish),
+which would lock the predicted direction to the synth bar's direction —
+the same shape as compression breakout and trend pullback resume. Without
+the alpha-mode handle, the filter would just replay the synth-direction
+baseline. Holding off in favor of higher-alpha candidates.
+
+## Filter 6: Moving-Average Rejection
+
+`src/lib/filters/maRejection.ts` — `filter id = ma_rejection`, `version = 1`.
+**Registered.**
+
+**Idea.** In a stacked-EMA uptrend (`ema20 > ema50 > ema100`), the
+current bar's low pierces the fast or mid EMA from above, and the close
+back above the fast EMA shows a strong lower wick (>=15% of range) and
+close-location (>=0.75). Bearish is the mirror image. The thesis stays
+active until a close back through the fast EMA against the trend (or
+the shared lifecycle invalidation conditions fire).
+
+**Sweep.** 3,888 candidate configs, 4 assets, 9 quarters. Run via
+`bun alea research:ma-rejection-sweep`.
+
+**Registered config.**
+
+```
+fastEmaLength: 20
+midEmaLength: 50
+slowEmaLength: 100
+touchTolerancePct: 0.0005
+minLowerWickPct: 0.15
+minCloseLocation: 0.75
+maxSignalAgeBars: 0
+maxAge: 4
+maxConsecutiveWrong: 1
+requireWrongLessThanRight: false
+requireFirstTradeWin: false
+```
+
+**Backtest results.**
+
+| asset     | decisions | wins      | win rate   |
+| --------- | --------- | --------- | ---------- |
+| btc       | 763       | 685       | 89.78%     |
+| eth       | 656       | 581       | 88.57%     |
+| sol       | 688       | 614       | 89.24%     |
+| doge      | 660       | 578       | 87.58%     |
+| **total** | **2,767** | **2,458** | **88.83%** |
+
+Per-quarter min WR 85.99%, per-asset min 87.58%. Highest aggregate WR of
+the registered set with strong frequency (~4% of decision opportunities,
+between failed-breakout and rsi-divergence).
+
+**Why this is the best of the new filters.** 93.4% of decisions agree
+with synth direction at 92.35% WR (vs failed-breakout's 89.90%); the
+6.6% against-synth slice loses 62% of the time, smallest against-synth
+share of any of the four registered filters. So MA Rejection is even
+more selective about firing only on clear cases — but because the
+with-synth WR is materially higher (92.35% vs 88-90% for the others)
+and the against-synth drag is smaller, the aggregate is the highest of
+the set.
+
+**Caveat.** Per the calibration note above, "highest WR" mostly means
+"most synth-aligned". Treat as a high-confidence directional confirmation
+rather than a contrarian reversal signal.

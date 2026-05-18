@@ -9,6 +9,10 @@ import {
   failedBreakoutReversalFilter,
 } from "@alea/lib/filters/failedBreakoutReversal";
 import {
+  type MaRejectionConfig,
+  maRejectionFilter,
+} from "@alea/lib/filters/maRejection";
+import {
   type RsiDivergenceConfig,
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
@@ -80,10 +84,28 @@ const oneHourExhaustionReversalCandidate = defineCandidate({
   } satisfies ExhaustionReversalConfig,
 });
 
+const oneHourMaRejectionCandidate = defineCandidate({
+  filter: maRejectionFilter,
+  config: {
+    fastEmaLength: 20,
+    midEmaLength: 50,
+    slowEmaLength: 100,
+    touchTolerancePct: 0.0005,
+    minLowerWickPct: 0.15,
+    minCloseLocation: 0.75,
+    maxSignalAgeBars: 0,
+    maxAge: 4,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies MaRejectionConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
   oneHourExhaustionReversalCandidate,
+  oneHourMaRejectionCandidate,
 ];
 
 export const registeredCandidatesByMarket = {
