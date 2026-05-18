@@ -1,4 +1,8 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
+import {
+  type BodyDivergenceConfig,
+  bodyDivergenceFilter,
+} from "@alea/lib/filters/bodyDivergence";
 import { defineCandidate } from "@alea/lib/filters/config";
 import {
   type ExhaustionReversalConfig,
@@ -8,6 +12,10 @@ import {
   type FailedBreakoutReversalConfig,
   failedBreakoutReversalFilter,
 } from "@alea/lib/filters/failedBreakoutReversal";
+import {
+  type HtfAlignmentConfig,
+  htfAlignmentFilter,
+} from "@alea/lib/filters/htfAlignment";
 import {
   type MaRejectionConfig,
   maRejectionFilter,
@@ -144,6 +152,36 @@ const oneHourRangeDivergenceCandidate = defineCandidate({
   } satisfies RangeDivergenceConfig,
 });
 
+const oneHourBodyDivergenceCandidate = defineCandidate({
+  filter: bodyDivergenceFilter,
+  config: {
+    leftBars: 2,
+    rightBars: 2,
+    rangeLower: 5,
+    rangeUpper: 60,
+    minBodyShrinkPct: 0.8,
+    maxSignalAgeBars: 13,
+    maxAge: 16,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies BodyDivergenceConfig,
+});
+
+const oneHourHtfAlignmentCandidate = defineCandidate({
+  filter: htfAlignmentFilter,
+  config: {
+    htfWindow: 4,
+    minReturnPct: 0.03,
+    requireSynthAlignment: true,
+    maxSignalAgeBars: 0,
+    maxAge: 4,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies HtfAlignmentConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
@@ -151,6 +189,8 @@ const baseCandidates = [
   oneHourMaRejectionCandidate,
   oneHourWickDivergenceCandidate,
   oneHourRangeDivergenceCandidate,
+  oneHourBodyDivergenceCandidate,
+  oneHourHtfAlignmentCandidate,
 ];
 
 export const registeredCandidatesByMarket = {
