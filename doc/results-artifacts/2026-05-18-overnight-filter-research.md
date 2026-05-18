@@ -386,3 +386,80 @@ cheap to add more filters from here.
    diversity in _which bars get traded_. A real-portfolio-style
    correlation matrix between candidate decisions would tell us how
    much each new filter adds.
+
+## Second pass: targeting ambiguous bars and an RSI Div sibling
+
+After the wrap-up I tried two more angles in the same session.
+
+### Negative finding: Ambiguous-Synth Trend Continuation
+
+`src/lib/filters/ambiguousTrend.ts` — implemented, swept, **not
+registered**.
+
+Hypothesis: on ambiguous synth bars (small body, mid close-location)
+where the synth-direction baseline drops to ~53%, the prevailing EMA
+trend (fast > slow, slope positive, optional close > slow) might
+predict the 10-minute outcome.
+
+15,552 candidate configs swept. Best result: 54.77% WR on 524 decisions
+(per-quarter min 47.30% — one quarter loses money). Best with ≥1000
+decisions: 53.29% WR on 1,293 decisions. Below the 60% bar and below
+the 53-67% body-conditional baselines — i.e. EMA trend context adds
+essentially nothing on ambiguous bars over the 10-minute horizon.
+
+This is a useful **negative result**: ambiguous synth bars are
+genuinely close to random over 10 minutes, and no simple trend overlay
+recovers signal there. Anyone considering "ambiguous bar + X" filter
+ideas needs a feature stronger than EMA trend to make it work.
+
+### Filter 9: Wick Divergence — registered
+
+`src/lib/filters/wickDivergence.ts` — `filter id = wick_divergence`,
+`version = 1`. **Registered.**
+
+ChatGPT's "divergence cousins" — RSI Divergence with the RSI replaced
+by the bar's own wick:
+
+- Bullish: a confirmed swing-low bar prints a lower low than the prior
+  swing low, but its lower wick (as a fraction of its range) is larger,
+  and optionally its close-location is stronger.
+- Bearish: mirror at swing highs with upper wicks.
+
+12,960 candidate configs swept. Top config: pivot left/right = 2,
+prior-pivot search range = 2-30 bars, `minCurrentWickPct = 0.10`,
+`requireCloseLocImprovement = true`, `maxSignalAgeBars = 13`,
+`maxAge = 16`, `maxConsecutiveWrong = 1`.
+
+Backtest aggregate: **71.65% WR on 15,865 decisions** across 4 assets,
+9 quarters. Per-asset 70.04% – 72.61% (BTC), 64.62% – 75.59% (ETH),
+68.40% – 78.17% (SOL), 68.23% – 75.40% (DOGE). Per-quarter min ~68.5%.
+
+**Frequency.** Fires on ~22.6% of decision opportunities — roughly
+2.6× RSI Divergence (~8.7%) and the highest of the registered set by
+a wide margin. Useful as a high-coverage candidate but per-decision
+edge is smaller than the more selective filters.
+
+**Synth-direction split.** 12,215 with-synth bets at 88.87% WR; **3,621
+against-synth bets at 13.70% WR** (22.9% of total). That against-synth
+WR is the worst of the registered set (RSI Div 19.71%, Failed Breakout
+33.81%, Exhaustion 28.71%, MA Rejection 38.25%). Wick Divergence is
+the most contrarian-leaning of the new filters and pays for that with
+the worst against-synth slice; the with-synth slice carries the
+aggregate.
+
+## Updated registry summary
+
+```
+1h / btc, eth, sol, doge:
+  - rsi_divergence v6           (75.33% WR,  6,108 decisions)
+  - failed_breakout_reversal v1 (84.80% WR,  3,863 decisions)
+  - exhaustion_reversal v1      (84.29% WR,  1,025 decisions)
+  - ma_rejection v1             (88.83% WR,  2,767 decisions)
+  - wick_divergence v1          (71.65% WR, 15,865 decisions)
+```
+
+Total: **29,628 decisions** at a blended **~76% WR** over 2024 Q2 –
+2026 Q2. Five candidates per asset × four assets. Four additional
+filters live in tree but were not registered because they only
+reproduce the body+closeLoc baseline (`trend_pullback_resume`,
+`compression_breakout`, `ambiguous_trend_continuation`).

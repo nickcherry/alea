@@ -17,6 +17,10 @@ import {
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
 import type { FilterCandidate } from "@alea/lib/filters/types";
+import {
+  type WickDivergenceConfig,
+  wickDivergenceFilter,
+} from "@alea/lib/filters/wickDivergence";
 import type { Asset } from "@alea/types/assets";
 
 export type CandidateRegistryByPeriod = Readonly<
@@ -101,11 +105,29 @@ const oneHourMaRejectionCandidate = defineCandidate({
   } satisfies MaRejectionConfig,
 });
 
+const oneHourWickDivergenceCandidate = defineCandidate({
+  filter: wickDivergenceFilter,
+  config: {
+    leftBars: 2,
+    rightBars: 2,
+    rangeLower: 2,
+    rangeUpper: 30,
+    minCurrentWickPct: 0.1,
+    requireCloseLocImprovement: true,
+    maxSignalAgeBars: 13,
+    maxAge: 16,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies WickDivergenceConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
   oneHourExhaustionReversalCandidate,
   oneHourMaRejectionCandidate,
+  oneHourWickDivergenceCandidate,
 ];
 
 export const registeredCandidatesByMarket = {

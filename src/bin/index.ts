@@ -16,12 +16,14 @@ import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
+import { researchAmbiguousTrendSweepCommand } from "@alea/bin/research/ambiguousTrendSweep";
 import { researchCompressionBreakoutSweepCommand } from "@alea/bin/research/compressionBreakoutSweep";
 import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhaustionReversalSweep";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
+import { researchWickDivergenceSweepCommand } from "@alea/bin/research/wickDivergenceSweep";
 import { sayTextCommand } from "@alea/bin/say/text";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
 import {
@@ -62,11 +64,13 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
+    researchAmbiguousTrendSweepCommand,
     researchCompressionBreakoutSweepCommand,
     researchExhaustionReversalSweepCommand,
     researchFailedBreakoutReversalSweepCommand,
     researchMaRejectionSweepCommand,
     researchRsiDivergenceSweepCommand,
+    researchWickDivergenceSweepCommand,
     researchTrendPullbackResumeSweepCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
