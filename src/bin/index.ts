@@ -21,6 +21,7 @@ import { researchCompressionBreakoutSweepCommand } from "@alea/bin/research/comp
 import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhaustionReversalSweep";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
+import { researchRangeDivergenceSweepCommand } from "@alea/bin/research/rangeDivergenceSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
 import { researchWickDivergenceSweepCommand } from "@alea/bin/research/wickDivergenceSweep";
@@ -70,6 +71,7 @@ const cli = createCli({
     researchFailedBreakoutReversalSweepCommand,
     researchMaRejectionSweepCommand,
     researchRsiDivergenceSweepCommand,
+    researchRangeDivergenceSweepCommand,
     researchWickDivergenceSweepCommand,
     researchTrendPullbackResumeSweepCommand,
     tradingRunCommand,

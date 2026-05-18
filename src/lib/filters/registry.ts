@@ -13,6 +13,10 @@ import {
   maRejectionFilter,
 } from "@alea/lib/filters/maRejection";
 import {
+  type RangeDivergenceConfig,
+  rangeDivergenceFilter,
+} from "@alea/lib/filters/rangeDivergence";
+import {
   type RsiDivergenceConfig,
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
@@ -122,12 +126,30 @@ const oneHourWickDivergenceCandidate = defineCandidate({
   } satisfies WickDivergenceConfig,
 });
 
+const oneHourRangeDivergenceCandidate = defineCandidate({
+  filter: rangeDivergenceFilter,
+  config: {
+    leftBars: 2,
+    rightBars: 2,
+    rangeLower: 2,
+    rangeUpper: 30,
+    minRangeShrinkPct: 0.2,
+    requireBodyShrink: false,
+    maxSignalAgeBars: 13,
+    maxAge: 16,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies RangeDivergenceConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
   oneHourExhaustionReversalCandidate,
   oneHourMaRejectionCandidate,
   oneHourWickDivergenceCandidate,
+  oneHourRangeDivergenceCandidate,
 ];
 
 export const registeredCandidatesByMarket = {

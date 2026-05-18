@@ -447,6 +447,26 @@ the most contrarian-leaning of the new filters and pays for that with
 the worst against-synth slice; the with-synth slice carries the
 aggregate.
 
+### Filter 10: Range Divergence — registered
+
+`src/lib/filters/rangeDivergence.ts` — `filter id = range_divergence`,
+`version = 1`. **Registered.**
+
+Third divergence cousin: same shape as Wick Divergence but replaces
+the wick proxy with bar **range**. Bullish: confirmed swing-low prints
+a lower low than the prior pivot, but the bar's range (high - low)
+shrunk by at least `minRangeShrinkPct` relative to the prior pivot bar
+— a less violent move into the new low. Bearish is the mirror.
+
+Best config: pivot left/right = 2, prior-pivot search 2-30 bars,
+`minRangeShrinkPct = 0.20`, `requireBodyShrink = false`,
+`maxSignalAgeBars = 13`, `maxAge = 16`, `maxConsecutiveWrong = 1`.
+
+Backtest: **72.45% WR on 12,704 decisions**. Per-quarter min 69.5%,
+per-asset min 71.54%. Sits between Wick Divergence (71.65% / 15.8k)
+and RSI Divergence (75.33% / 6.1k) — same divergence family, mildly
+more selective than wick.
+
 ## Updated registry summary
 
 ```
@@ -456,10 +476,16 @@ aggregate.
   - exhaustion_reversal v1      (84.29% WR,  1,025 decisions)
   - ma_rejection v1             (88.83% WR,  2,767 decisions)
   - wick_divergence v1          (71.65% WR, 15,865 decisions)
+  - range_divergence v1         (72.45% WR, 12,704 decisions)
 ```
 
-Total: **29,628 decisions** at a blended **~76% WR** over 2024 Q2 –
-2026 Q2. Five candidates per asset × four assets. Four additional
+Total: **42,332 decisions** at a blended **75.05% WR** over 2024 Q2 –
+2026 Q2. Six candidates per asset × four assets. Four additional
 filters live in tree but were not registered because they only
 reproduce the body+closeLoc baseline (`trend_pullback_resume`,
 `compression_breakout`, `ambiguous_trend_continuation`).
+
+The divergence family (rsi / wick / range) likely correlates heavily —
+all three fire on swing-pivot patterns with momentum disagreement. A
+correlation matrix in a future session would tell us how much marginal
+coverage each adds versus how often they all fire on the same bars.
