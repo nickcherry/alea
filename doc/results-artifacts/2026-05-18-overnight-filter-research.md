@@ -234,3 +234,26 @@ thesis 1-3 bars before invalidation.
 **Caveat (see calibration section above).** 90% of decisions agree with
 synth direction at 90.36% WR; the 10% against-synth slice loses 71% of
 the time. Same shape as RSI Divergence and Failed Breakout Reversal.
+
+## Filter 4: Compression Breakout Acceptance (SKIPPED — trivial-baseline detector)
+
+`src/lib/filters/compressionBreakout.ts` — implemented, swept, **not
+registered**.
+
+**Idea.** Detect a tight compression window where the recent average
+range is materially smaller than the longer baseline, then a current
+candle that closes outside the compression high/low with a strong body
+and close-location.
+
+**Sweep top.** 100% WR on 405 decisions (`tW=8,bW=50,ratio=0.5,
+body=0.55,cLoc=0.6,age=0,mAge=4,mCons=1`). 99.74% WR on 1,524 decisions
+with looser ratio (0.8) but stricter close-location (0.8).
+
+**Why I am not registering it.** The bullish trigger requires
+`bar.close > compressionHigh` combined with `closeLoc >= 0.6` and
+`bodyPct >= 0.55`. That set of conditions guarantees the synth bar is
+strongly green; the trigger never fires against synth direction. So the
+WR is at or above the synth-direction body+closeLoc baseline (~98%) but
+adds no unique alpha. The filter, core, sweep, and tests stay in tree
+for reuse (compression detection is useful infrastructure for other
+ideas) and the sweep artifact is in `doc/results-artifacts/`.
