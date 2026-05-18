@@ -43,7 +43,6 @@ import {
   telemetryRejectsCommand,
 } from "@alea/bin/telemetry/query";
 import { tradingHydrateLifetimePnlCommand } from "@alea/bin/trading/hydrateLifetimePnl";
-import { tradingPerformanceCommand } from "@alea/bin/trading/performance";
 import { tradingRunCommand } from "@alea/bin/trading/run";
 import { createCli } from "@alea/lib/cli/createCli";
 
@@ -94,7 +93,6 @@ const cli = createCli({
     researchTrendPullbackResumeSweepCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
-    tradingPerformanceCommand,
   ],
 });
 

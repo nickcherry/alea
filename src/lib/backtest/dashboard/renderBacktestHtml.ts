@@ -14,7 +14,6 @@ import {
   infoTip,
   winRateToneClass,
 } from "@alea/lib/ui/aleaFormat";
-import { renderTopNav } from "@alea/lib/ui/topNav";
 
 const TABLE_LIMIT = 20;
 
@@ -58,7 +57,6 @@ export function renderBacktestHtml({
       <h1 class="alea-title">Backtest</h1>
       <p class="alea-subtitle">generated ${formatDateTime({ ms: payload.generatedAtMs })}</p>
     </header>
-    ${renderTopNav({ activeId: "backtest" })}
     <main class="alea-main">
       <div class="alea-page-controls">
         <div class="alea-pill-tabs" role="tablist" aria-label="Market timeframe">
