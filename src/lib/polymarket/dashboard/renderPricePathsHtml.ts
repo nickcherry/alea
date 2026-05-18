@@ -129,12 +129,9 @@ function renderControls({
         </div>`;
   return `<div class="alea-page-controls price-path-controls">
         ${timeframeControls}
-        <label class="price-path-select-wrap alea-page-controls-right">
-          <span>Asset</span>
-          <select id="price-path-asset-select">
-            ${renderAssetOptions({ breakdown: initialBreakdown })}
-          </select>
-        </label>
+        <div id="price-path-asset-tabs" class="alea-pill-tabs" role="tablist" aria-label="Asset">
+          ${renderAssetTabs({ breakdown: initialBreakdown, activeAsset: "all" })}
+        </div>
       </div>`;
 }
 
@@ -150,22 +147,23 @@ function initialTimeframeBreakdown({
   );
 }
 
-function renderAssetOptions({
+function renderAssetTabs({
   breakdown,
+  activeAsset,
 }: {
   readonly breakdown: PricePathTimeframeBreakdown | null;
+  readonly activeAsset: string;
 }): string {
   if (breakdown === null) {
-    return `<option value="all">All assets</option>`;
+    return `<button class="alea-pill-tab price-path-asset-tab" role="tab" data-asset="all" aria-selected="true">All</button>`;
   }
   return breakdown.slices
     .map((slice) => {
       const value = slice.asset ?? "all";
-      return `<option value="${escapeHtml({ value })}">${escapeHtml({
-        value: slice.label,
-      })}</option>`;
+      const selected = value === activeAsset ? "true" : "false";
+      return `<button class="alea-pill-tab price-path-asset-tab" role="tab" data-asset="${escapeHtml({ value })}" aria-selected="${selected}">${escapeHtml({ value: slice.label })}</button>`;
     })
-    .join("\n            ");
+    .join("\n          ");
 }
 
 function formatDateTime({ ms }: { readonly ms: number }): string {

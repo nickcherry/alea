@@ -23,7 +23,7 @@
   var escapeHtml = alea.escapeHtml || fallbackEscapeHtml;
 
   var tabs = document.querySelectorAll(".price-path-period-tab");
-  var assetSelect = document.getElementById("price-path-asset-select");
+  var assetTabsContainer = document.getElementById("price-path-asset-tabs");
   var canvas = document.getElementById("price-path-heatmap");
   var tooltip = document.getElementById("price-path-tooltip");
   var empty = document.getElementById("price-path-empty");
@@ -69,10 +69,26 @@
     });
   });
 
-  if (assetSelect) {
-    assetSelect.addEventListener("change", function () {
-      state.asset = assetSelect.value || "all";
-      renderAll();
+  if (assetTabsContainer) {
+    assetTabsContainer.addEventListener("click", function (event) {
+      var target = event.target;
+      while (target && target !== assetTabsContainer) {
+        if (
+          target.classList &&
+          target.classList.contains("price-path-asset-tab")
+        ) {
+          state.asset = target.dataset.asset || "all";
+          syncAssetTabs();
+          state.slice = activeSlice(activeBreakdown());
+          renderHeatmap();
+          renderBandChart();
+          renderCrossingsChart();
+          renderDriftSharesChart();
+          renderFlipShareChart();
+          return;
+        }
+        target = target.parentNode;
+      }
     });
   }
 
@@ -128,7 +144,7 @@
 
   function renderAll() {
     var breakdown = activeBreakdown();
-    renderAssetSelect(breakdown);
+    renderAssetTabs(breakdown);
     state.slice = activeSlice(breakdown);
     renderHeatmap();
     renderBandChart();
@@ -159,27 +175,46 @@
     );
   }
 
-  function renderAssetSelect(breakdown) {
-    if (!assetSelect || !breakdown) return;
-    var options = (breakdown.slices || [])
+  function renderAssetTabs(breakdown) {
+    if (!assetTabsContainer || !breakdown) return;
+    var slices = breakdown.slices || [];
+    if (slices.length === 0) {
+      assetTabsContainer.innerHTML =
+        '<button class="alea-pill-tab price-path-asset-tab" role="tab" data-asset="all" aria-selected="true">All</button>';
+      return;
+    }
+    var available = slices.filter(function (s) {
+      return (s.asset || "all") === state.asset;
+    });
+    if (available.length === 0) {
+      state.asset = "all";
+    }
+    assetTabsContainer.innerHTML = slices
       .map(function (slice) {
         var value = slice.asset || "all";
+        var selected = value === state.asset ? "true" : "false";
         return (
-          '<option value="' +
+          '<button class="alea-pill-tab price-path-asset-tab" role="tab" data-asset="' +
           escapeHtml(value) +
-          '"' +
-          (value === state.asset ? " selected" : "") +
-          ">" +
+          '" aria-selected="' +
+          selected +
+          '">' +
           escapeHtml(slice.label) +
-          "</option>"
+          "</button>"
         );
       })
       .join("");
-    assetSelect.innerHTML =
-      options || '<option value="all">All assets</option>';
-    if (!assetSelect.value) {
-      assetSelect.value = "all";
-    }
+  }
+
+  function syncAssetTabs() {
+    if (!assetTabsContainer) return;
+    var tabs = assetTabsContainer.querySelectorAll(".price-path-asset-tab");
+    Array.prototype.forEach.call(tabs, function (tab) {
+      tab.setAttribute(
+        "aria-selected",
+        (tab.dataset.asset || "all") === state.asset ? "true" : "false",
+      );
+    });
   }
 
   function renderHeatmap() {
