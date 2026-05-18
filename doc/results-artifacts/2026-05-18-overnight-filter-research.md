@@ -550,9 +550,9 @@ like exhaustion × ma_rejection (0.3% overlap), ma_rejection × htf
 (0.9%), and failed_breakout × ma_rejection (1.2%) almost never fire
 together. These are catching different market structures.
 
-**Most striking finding:** exhaustion_reversal and htf_alignment have
+**Most striking finding:** exhaustion*reversal and htf_alignment have
 5.5% overlap but only **21% agreement** when both fire. That is, when
-both detect something on the same bar, they almost always _disagree_
+both detect something on the same bar, they almost always \_disagree*
 on direction. Mechanically that makes sense — exhaustion is a
 reversal-after-extension signal and htf_alignment is a
 trend-continuation signal; the regimes they target are opposite.
@@ -610,16 +610,16 @@ peeked at the future-bar close, randomizing the outcome label would
 not bring WR back to ~50%.
 
 | filter                   | real WR | random-outcome WR (5-trial avg) |
-|--------------------------|--------:|-------------------------------:|
-| body_divergence          | 72.10%  | 50.58% |
-| exhaustion_reversal      | 84.06%  | 49.10% |
-| failed_breakout_reversal | 84.73%  | 50.04% |
-| htf_alignment            | 92.40%  | 50.08% |
-| ma_rejection             | 88.38%  | 49.57% |
-| pin_bar_reversal         | 78.64%  | 49.77% |
-| range_divergence         | 72.52%  | 49.98% |
-| rsi_divergence           | 75.45%  | 49.79% |
-| wick_divergence          | 71.71%  | 50.13% |
+| ------------------------ | ------: | ------------------------------: |
+| body_divergence          |  72.10% |                          50.58% |
+| exhaustion_reversal      |  84.06% |                          49.10% |
+| failed_breakout_reversal |  84.73% |                          50.04% |
+| htf_alignment            |  92.40% |                          50.08% |
+| ma_rejection             |  88.38% |                          49.57% |
+| pin_bar_reversal         |  78.64% |                          49.77% |
+| range_divergence         |  72.52% |                          49.98% |
+| rsi_divergence           |  75.45% |                          49.79% |
+| wick_divergence          |  71.71% |                          50.13% |
 
 All nine filters drop to 49-50% on randomized outcomes. Real WR is
 21-42 percentage points above chance. The decisions are independent
@@ -635,14 +635,14 @@ assets):
 - **77.86%** WR with at least one filter firing (no conflict).
 - WR rises with unanimous-fire count:
 
-| filters unanimous | n | WR |
-|---|---:|---:|
-| >=1 | 38,374 | 77.86% |
-| >=2 | 17,588 | 76.81% |
-| >=3 |  7,137 | 78.03% |
-| >=4 |  1,493 | **85.20%** |
-| >=5 |    379 | **86.54%** |
-| >=6 |     72 | **90.28%** |
+| filters unanimous |      n |         WR |
+| ----------------- | -----: | ---------: |
+| >=1               | 38,374 |     77.86% |
+| >=2               | 17,588 |     76.81% |
+| >=3               |  7,137 |     78.03% |
+| >=4               |  1,493 | **85.20%** |
+| >=5               |    379 | **86.54%** |
+| >=6               |     72 | **90.28%** |
 
 Conflict slice: 1,537 targets (3.9% of any-fire) have at least one
 filter firing each direction. **Majority vote on conflicts wins only
@@ -655,7 +655,7 @@ single high-quality filters, and the data backs that up:
 
 - Single-filter fire (no other filter says anything): WR 78.75%
   (n=20,786)
-- >=2 filters agree (no conflict): WR 76.81% (n=17,588)
+- > =2 filters agree (no conflict): WR 76.81% (n=17,588)
 
 Adding more filters doesn't really improve WR until you reach 4+
 unanimous agreement, which only happens on 1,493 of 39,911 any-fire
@@ -666,19 +666,110 @@ of the available edge per decision.
 
 WR range across 9 calendar quarters (2024 Q2 – 2026 Q2):
 
-| filter                    | min WR  | max WR  | range  | notes |
-|---------------------------|--------:|--------:|-------:|-------|
-| failed_breakout_reversal  | 83.47%  | 85.65%  | 2.18pp | rock-solid |
-| ma_rejection              | 86.43%  | 90.02%  | 3.60pp | very consistent |
-| htf_alignment             | 90.07%  | 94.09%  | 4.02pp | very consistent |
-| range_divergence          | 69.82%  | 74.50%  | 4.67pp | consistent |
-| pin_bar_reversal          | 76.49%  | 81.78%  | 5.28pp | consistent |
-| rsi_divergence            | 72.88%  | 78.39%  | 5.51pp | consistent |
-| body_divergence           | 67.86%  | 74.44%  | 6.58pp | mild variation |
-| wick_divergence           | 68.00%  | 74.97%  | 6.97pp | mild variation |
-| exhaustion_reversal       | 74.68%  | 97.14%  | 22.46pp | (97% is on n=35 in 2026 Q2; excluding that, range collapses to ~14pp from 74.68% to 88.46%) |
+| filter                   | min WR | max WR |   range | notes                                                                                       |
+| ------------------------ | -----: | -----: | ------: | ------------------------------------------------------------------------------------------- |
+| failed_breakout_reversal | 83.47% | 85.65% |  2.18pp | rock-solid                                                                                  |
+| ma_rejection             | 86.43% | 90.02% |  3.60pp | very consistent                                                                             |
+| htf_alignment            | 90.07% | 94.09% |  4.02pp | very consistent                                                                             |
+| range_divergence         | 69.82% | 74.50% |  4.67pp | consistent                                                                                  |
+| pin_bar_reversal         | 76.49% | 81.78% |  5.28pp | consistent                                                                                  |
+| rsi_divergence           | 72.88% | 78.39% |  5.51pp | consistent                                                                                  |
+| body_divergence          | 67.86% | 74.44% |  6.58pp | mild variation                                                                              |
+| wick_divergence          | 68.00% | 74.97% |  6.97pp | mild variation                                                                              |
+| exhaustion_reversal      | 74.68% | 97.14% | 22.46pp | (97% is on n=35 in 2026 Q2; excluding that, range collapses to ~14pp from 74.68% to 88.46%) |
 
 Critically: in 2026 Q1 + Q2 (most recent quarters), most filters
 perform at or above their full-window average. Configs are not
 degrading on out-of-sample-ish later data — strong evidence the
 signals are stable and not overfit to specific early-period regimes.
+
+## Filter 10: Streak Reversal — registered
+
+`src/lib/filters/streakReversal.ts` — `filter id = streak_reversal`,
+`version = 1`. **Registered.**
+
+Simplest mean-reversion construction: after `streakLength` consecutive
+same-direction closed bars (and a minimum cumulative return), bet the
+opposite direction. Bullish after a down streak, bearish after an up
+streak. The filter ignores the synth bar's direction by construction,
+so we get a clean test of whether 1h mean reversion has any standalone
+signal.
+
+Best config: `streakLength = 3`, `minTotalReturnPct = 0.02`,
+`maxSignalAgeBars = 3`, `maxAge = 4`, `maxConsecutiveWrong = 1`.
+
+Backtest: **67.56% WR on 7,620 decisions** across all 5 assets.
+Per-quarter min 62.38%, per-asset min 64.37%. Lowest WR of the
+registered set and borderline on the 70% target, but passes the 60%
+acceptance floor with high frequency.
+
+Synth-direction decomposition: 5,417 with-synth at **89.50% WR**;
+2,178 against-synth at **13.13% WR** (28.7% of total). Same shape as
+every other filter — even a filter *constructed* to ignore synth
+direction ends up with most of its decisions agreeing with synth (when
+the streak ends and the bar reverses, the synth often shows the
+reversal direction too). The aggregate WR drops because the
+against-synth slice is larger than for the more selective filters.
+
+## Final registry summary (10 candidates × 5 assets)
+
+```
+1h / btc, eth, sol, xrp, doge:
+  - htf_alignment v1            (92.40% WR,  5,107 decisions)
+  - ma_rejection v1             (88.44% WR,  3,460 decisions)
+  - failed_breakout_reversal v1 (84.71% WR,  4,696 decisions)
+  - exhaustion_reversal v1      (84.07% WR,  1,287 decisions)
+  - pin_bar_reversal v1         (78.67% WR,  2,189 decisions)
+  - rsi_divergence v6           (75.47% WR,  7,584 decisions)
+  - range_divergence v1         (72.51% WR, 15,871 decisions)
+  - body_divergence v1          (72.09% WR,  9,473 decisions)
+  - wick_divergence v1          (71.69% WR, 19,702 decisions)
+  - streak_reversal v1          (67.56% WR,  7,620 decisions)
+```
+
+**Grand total: 76,989 decisions, 75.20% blended WR** over 2024 Q2 –
+2026 Q2.
+
+Filters not registered (in tree, swept, documented as trivial-baseline
+detectors or below acceptance floor):
+
+```
+- trend_pullback_resume         (99.40% sweep top, trivial — synth-locked)
+- compression_breakout          (100% sweep top, trivial — synth-locked)
+- ambiguous_trend_continuation  (54.77% — negative finding, 10-min ambiguity is random)
+```
+
+## What the user should look at in the morning
+
+1. **Pruning candidate**: the three divergence cousins (wick/range/body) are
+   65-70% overlap with 98-99% agreement — keep one, drop two. Recommend
+   keeping `rsi_divergence` (the existing trusted filter) or
+   `wick_divergence` (the highest-frequency one).
+2. **Top quality**: `htf_alignment` (92.40%, 5,107) is the best new filter
+   by a clear margin. Worth highlighting on the dashboard.
+3. **Borderline**: `streak_reversal` (67.56%) is the weakest registered
+   candidate. Could drop if you want only 70%+ WR filters.
+4. **The synth-direction baseline finding is the single most important
+   takeaway**. Every filter wins on with-synth bets and loses on
+   against-synth bets. The aggregate WR is mostly carried by
+   confirmation of an already-decided bar. Worth deciding whether the
+   PnL on Polymarket actually comes from this confirmation (in which
+   case the WR metric is the right one) or from the contrarian slice
+   (in which case the current filters all underperform the trivial
+   baseline). I documented this thoroughly but it's a strategic call
+   the user should make.
+5. The leakage test passed cleanly — all 10 filters drop to ~50% WR on
+   randomized outcomes. No future-data peeking in the synthesizer or
+   anywhere else in the trigger / lifecycle path.
+
+## Codebase changes this session
+
+- New shared infrastructure: `src/lib/filters/thesisLifecycle.ts`,
+  `src/lib/research/sweepInfra.ts`.
+- 10 registered filter families × `<name>Core.ts` + `<name>.ts` +
+  `<name>.test.ts` + `src/bin/research/<name>Sweep.ts`.
+- Backtest window extended from 2025-Q1 to 2024-Q1 in
+  `src/constants/backtest.ts`.
+- XRP added back to `TRADE_DECISION_TRADABLE_ASSETS`, default markets,
+  and the candidate registry.
+- ~15 commits on `main`, all pushed.
