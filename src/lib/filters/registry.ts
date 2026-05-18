@@ -149,6 +149,8 @@ const oneHourExtensionReversalCandidate = defineCandidate({
     minSynthReturnPct: 0.02,
     minLastReturnPct: 0.01,
     maxSignalAgeBars: 0,
+    allowedDirection: "up",
+    minStreakLength: 0,
     maxAge: 4,
     maxConsecutiveWrong: 1,
     requireWrongLessThanRight: false,

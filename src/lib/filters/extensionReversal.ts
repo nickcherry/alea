@@ -19,9 +19,9 @@ export type ExtensionReversalConfig = ExtensionReversalBaseConfig &
 export const extensionReversalFilter: TradingFilter<ExtensionReversalConfig> = {
   id: "extension_reversal",
   name: "Extension Reversal",
-  version: 1,
+  version: 2,
   description:
-    "Mean-reversion against a compounded extension: when the in-progress (synth) bar and the prior closed bar are both pushing the same direction with returns above their respective thresholds, bet the opposite direction. The further price has run inside the current hour on top of an already-trending prior hour, the more likely it mean-reverts on the next hour. Lifecycle invalidates on max age, consecutive wrong bars, or an unfavorable right-vs-wrong tally.",
+    "Mean-reversion against a compounded extension. When the in-progress (synth) bar and the prior closed bar push the same direction with returns above their respective thresholds, bet the opposite direction. The `allowedDirection` config gates which side of the asymmetry to take — crypto's upward drift bias makes fading downward extensions reliable, while fading upward extensions tends to be coin-flip. The optional `minStreakLength` filter requires a multi-bar same-direction streak preceding the trigger. Lifecycle invalidates on max age, consecutive wrong bars, or an unfavorable right-vs-wrong tally.",
   sources: [pythSpotCandleSource],
   evaluate({ series, config }) {
     const match = findRecentExtensionReversal({ bars: series.pyth, config });

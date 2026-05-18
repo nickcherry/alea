@@ -1,10 +1,30 @@
 import type { FilterEvaluation } from "@alea/lib/filters/types";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 
+export type ExtensionReversalAllowedDirection = "up" | "down" | "both";
+
 export type ExtensionReversalBaseConfig = {
   readonly minSynthReturnPct: number;
   readonly minLastReturnPct: number;
   readonly maxSignalAgeBars: number;
+  /**
+   * Restrict trigger to one bet direction. "up" only fires when the
+   * extension is downward (mean-revert up); "down" only fires when
+   * the extension is upward (mean-revert down); "both" allows either.
+   *
+   * Crypto has an upward drift bias on 1h candles — fading downward
+   * extensions reliably reverses, fading upward extensions does not.
+   * Defaults to "up" by convention; explicitly set "both" to recover
+   * the symmetric v1 behavior.
+   */
+  readonly allowedDirection: ExtensionReversalAllowedDirection;
+  /**
+   * Minimum number of consecutive same-direction closed bars
+   * immediately preceding the synth bar (going back from `lastIndex-1`).
+   * Synth and last-closed already need to align by construction, so
+   * `minStreakLength` of 0 or 1 is equivalent to "no streak filter."
+   */
+  readonly minStreakLength: number;
 };
 
 export type ExtensionReversalTrigger = {
@@ -12,6 +32,7 @@ export type ExtensionReversalTrigger = {
   readonly confirmedIndex: number;
   readonly synthReturnPct: number;
   readonly lastReturnPct: number;
+  readonly streakLength: number;
 };
 
 export type ExtensionReversalMatch =
@@ -115,12 +136,53 @@ export function detectExtensionReversalAt({
     return undefined;
   }
   const direction: "up" | "down" = synthSign > 0 ? "down" : "up";
+  if (
+    config.allowedDirection !== "both" &&
+    config.allowedDirection !== direction
+  ) {
+    return undefined;
+  }
+  const extensionDirection: "up" | "down" = synthSign > 0 ? "up" : "down";
+  const streakLength = countLeadingSameDirClosed({
+    bars,
+    startIndex: index - 1,
+    direction: extensionDirection,
+  });
+  if (streakLength < config.minStreakLength) {
+    return undefined;
+  }
   return {
     direction,
     confirmedIndex: index,
     synthReturnPct,
     lastReturnPct,
+    streakLength,
   };
+}
+
+function countLeadingSameDirClosed({
+  bars,
+  startIndex,
+  direction,
+}: {
+  readonly bars: readonly MarketBar[];
+  readonly startIndex: number;
+  readonly direction: "up" | "down";
+}): number {
+  let count = 0;
+  for (let i = startIndex; i >= 0; i -= 1) {
+    const bar = bars[i];
+    if (bar === undefined) {
+      break;
+    }
+    const dir: "up" | "down" | "flat" =
+      bar.close > bar.open ? "up" : bar.close < bar.open ? "down" : "flat";
+    if (dir !== direction) {
+      break;
+    }
+    count += 1;
+  }
+  return count;
 }
 
 function validateExtensionReversalBaseConfig(
@@ -143,5 +205,18 @@ function validateExtensionReversalBaseConfig(
     config.maxSignalAgeBars < 0
   ) {
     throw new Error("maxSignalAgeBars must be a non-negative integer");
+  }
+  if (
+    config.allowedDirection !== "up" &&
+    config.allowedDirection !== "down" &&
+    config.allowedDirection !== "both"
+  ) {
+    throw new Error('allowedDirection must be "up", "down", or "both"');
+  }
+  if (
+    !Number.isInteger(config.minStreakLength) ||
+    config.minStreakLength < 0
+  ) {
+    throw new Error("minStreakLength must be a non-negative integer");
   }
 }

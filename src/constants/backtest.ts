@@ -20,4 +20,7 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 1;
 // target. See doc/DECISION_TIMING.md. Bumping invalidates all v2 cache rows.
 // v4: registered Extension Reversal candidate added to the live set; bump so
 // dashboards rebuild rows for the new candidate alongside the rest.
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 4;
+// v5: Extension Reversal bumped to v2 — config gained `allowedDirection` +
+// `minStreakLength`; registered config now restricts to "up" (fade
+// down-extensions) per the asymmetry finding.
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 5;

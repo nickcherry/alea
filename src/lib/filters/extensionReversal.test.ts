@@ -19,6 +19,8 @@ const baseConfig = (
   minSynthReturnPct: 0.02,
   minLastReturnPct: 0.01,
   maxSignalAgeBars: 0,
+  allowedDirection: "both",
+  minStreakLength: 0,
   ...overrides,
 });
 
@@ -151,6 +153,115 @@ describe("findRecentExtensionReversal", () => {
     bars.push(lastClosed, synth);
     const match = findRecentExtensionReversal({ bars, config: baseConfig() });
     expect(match.matched).toBe(false);
+  });
+
+  it("respects allowedDirection: 'up' (only fires after down-extensions)", () => {
+    const bars = buildHistory({ count: 80 });
+    const lastClosedOpen = bars.at(-1)!.close;
+    bars.push(
+      bar({
+        open: lastClosedOpen,
+        close: lastClosedOpen * 1.015,
+        openTimeMs: 80,
+      }),
+    );
+    bars.push(
+      bar({
+        open: bars.at(-1)!.close,
+        close: bars.at(-1)!.close * 1.025,
+        openTimeMs: 81,
+      }),
+    );
+    const match = findRecentExtensionReversal({
+      bars,
+      config: baseConfig({ allowedDirection: "up" }),
+    });
+    expect(match.matched).toBe(false);
+  });
+
+  it("respects allowedDirection: 'up' (fires after down-extensions)", () => {
+    const bars = buildHistory({ count: 80 });
+    const lastClosedOpen = bars.at(-1)!.close;
+    bars.push(
+      bar({
+        open: lastClosedOpen,
+        close: lastClosedOpen * 0.985,
+        openTimeMs: 80,
+      }),
+    );
+    bars.push(
+      bar({
+        open: bars.at(-1)!.close,
+        close: bars.at(-1)!.close * 0.975,
+        openTimeMs: 81,
+      }),
+    );
+    const match = findRecentExtensionReversal({
+      bars,
+      config: baseConfig({ allowedDirection: "up" }),
+    });
+    expect(match.matched).toBe(true);
+    if (match.matched) {
+      expect(match.trigger.direction).toBe("up");
+    }
+  });
+
+  it("respects minStreakLength: requires N prior same-dir closed bars", () => {
+    const bars = buildHistory({ count: 80 });
+    const lastClosedOpen = bars.at(-1)!.close;
+    bars.push(
+      bar({
+        open: lastClosedOpen,
+        close: lastClosedOpen * 0.985,
+        openTimeMs: 80,
+      }),
+    );
+    bars.push(
+      bar({
+        open: bars.at(-1)!.close,
+        close: bars.at(-1)!.close * 0.975,
+        openTimeMs: 81,
+      }),
+    );
+    const noStreakMatch = findRecentExtensionReversal({
+      bars,
+      config: baseConfig({ allowedDirection: "up", minStreakLength: 3 }),
+    });
+    expect(noStreakMatch.matched).toBe(false);
+  });
+
+  it("records streak length on the trigger", () => {
+    const bars: MarketBar[] = [];
+    let price = 100;
+    for (let i = 0; i < 75; i += 1) {
+      const open = price;
+      const close = open + 0.05;
+      bars.push(bar({ open, close, openTimeMs: i }));
+      price = close;
+    }
+    for (let i = 0; i < 3; i += 1) {
+      const open = price;
+      const close = open * 0.985;
+      bars.push(bar({ open, close, openTimeMs: 75 + i }));
+      price = close;
+    }
+    const synthOpen = price;
+    bars.push(
+      bar({
+        open: synthOpen,
+        close: synthOpen * 0.975,
+        openTimeMs: 78,
+      }),
+    );
+    const match = findRecentExtensionReversal({
+      bars,
+      config: baseConfig({ allowedDirection: "up", minStreakLength: 2 }),
+    });
+    expect(match.matched).toBe(true);
+    if (match.matched) {
+      expect(match.trigger.streakLength).toBeGreaterThanOrEqual(3);
+      expect(match.trigger.direction).toBe("up");
+    }
   });
 });
 

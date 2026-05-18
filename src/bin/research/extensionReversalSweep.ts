@@ -34,10 +34,12 @@ import { z } from "zod";
 
 type SweepConfig = ExtensionReversalBaseConfig & ThesisLifecycleConfig;
 
-const minSynthReturnPctValues = [0.005, 0.01, 0.015, 0.02, 0.025] as const;
+const minSynthReturnPctValues = [0.015, 0.02, 0.025, 0.03] as const;
 const minLastReturnPctValues = [0.005, 0.01, 0.015, 0.02] as const;
-const maxSignalAgeBarsValues = [0, 1, 2] as const;
-const maxAgeValues = [4, 8, 16] as const;
+const allowedDirectionValues = ["up", "down", "both"] as const;
+const minStreakLengthValues = [0, 2, 3] as const;
+const maxSignalAgeBarsValues = [0, 1] as const;
+const maxAgeValues = [4, 8] as const;
 const maxConsecutiveWrongValues = [1, 2] as const;
 const requireWrongLessThanRightValues = [false, true] as const;
 const requireFirstTradeWinValues = [false, true] as const;
@@ -45,6 +47,8 @@ const requireFirstTradeWinValues = [false, true] as const;
 const candidateCount =
   minSynthReturnPctValues.length *
   minLastReturnPctValues.length *
+  allowedDirectionValues.length *
+  minStreakLengthValues.length *
   maxSignalAgeBarsValues.length *
   maxAgeValues.length *
   maxConsecutiveWrongValues.length *
@@ -188,6 +192,8 @@ async function runSweep({
     candidateCount,
     minSynthReturnPctValues,
     minLastReturnPctValues,
+    allowedDirectionValues,
+    minStreakLengthValues,
     maxSignalAgeBarsValues,
     maxAgeValues,
     maxConsecutiveWrongValues,
@@ -259,88 +265,94 @@ function evaluateTarget({
 
   for (const minSynthReturnPct of minSynthReturnPctValues) {
     for (const minLastReturnPct of minLastReturnPctValues) {
-      const triggers: {
-        readonly trigger: ExtensionReversalTrigger;
-        readonly barsAgo: number;
-      }[] = [];
-      const baseConfig: ExtensionReversalBaseConfig = {
-        minSynthReturnPct,
-        minLastReturnPct,
-        maxSignalAgeBars: maxAgeWindow,
-      };
-      for (let i = earliest; i <= lastIndex; i += 1) {
-        const trigger = detectExtensionReversalAt({
-          bars,
-          index: i,
-          config: baseConfig,
-        });
-        if (trigger !== undefined) {
-          triggers.push({ trigger, barsAgo: lastIndex - i });
-        }
-      }
-      if (triggers.length === 0) {
-        continue;
-      }
-      const lifecycleCache = new Map<string, boolean>();
-      for (const maxSignalAgeBars of maxSignalAgeBarsValues) {
-        let selected:
-          | {
-              readonly trigger: ExtensionReversalTrigger;
-              readonly barsAgo: number;
+      for (const allowedDirection of allowedDirectionValues) {
+        for (const minStreakLength of minStreakLengthValues) {
+          const triggers: {
+            readonly trigger: ExtensionReversalTrigger;
+            readonly barsAgo: number;
+          }[] = [];
+          const baseConfig: ExtensionReversalBaseConfig = {
+            minSynthReturnPct,
+            minLastReturnPct,
+            allowedDirection,
+            minStreakLength,
+            maxSignalAgeBars: maxAgeWindow,
+          };
+          for (let i = earliest; i <= lastIndex; i += 1) {
+            const trigger = detectExtensionReversalAt({
+              bars,
+              index: i,
+              config: baseConfig,
+            });
+            if (trigger !== undefined) {
+              triggers.push({ trigger, barsAgo: lastIndex - i });
             }
-          | undefined;
-        for (let i = triggers.length - 1; i >= 0; i -= 1) {
-          if (triggers[i]!.barsAgo <= maxSignalAgeBars) {
-            selected = triggers[i];
-            break;
           }
-        }
-        if (selected === undefined) {
-          continue;
-        }
-        for (const maxAge of maxAgeValues) {
-          for (const maxConsecutiveWrong of maxConsecutiveWrongValues) {
-            for (const requireWrongLessThanRight of requireWrongLessThanRightValues) {
-              for (const requireFirstTradeWin of requireFirstTradeWinValues) {
-                const lifecycleConfig: ThesisLifecycleConfig = {
-                  maxAge,
-                  maxConsecutiveWrong,
-                  requireWrongLessThanRight,
-                  requireFirstTradeWin,
-                };
-                const cacheKey = `${selected.trigger.confirmedIndex}|${maxAge}|${maxConsecutiveWrong}|${requireWrongLessThanRight ? 1 : 0}|${requireFirstTradeWin ? 1 : 0}`;
-                let invalidated = lifecycleCache.get(cacheKey);
-                if (invalidated === undefined) {
-                  const result = runThesisLifecycle({
-                    direction: selected.trigger.direction,
-                    confirmedIndex: selected.trigger.confirmedIndex,
-                    bars,
-                    lastIndex,
-                    config: lifecycleConfig,
-                  });
-                  invalidated = result.invalidated;
-                  lifecycleCache.set(cacheKey, invalidated);
+          if (triggers.length === 0) {
+            continue;
+          }
+          const lifecycleCache = new Map<string, boolean>();
+          for (const maxSignalAgeBars of maxSignalAgeBarsValues) {
+            let selected:
+              | {
+                  readonly trigger: ExtensionReversalTrigger;
+                  readonly barsAgo: number;
                 }
-                if (invalidated) {
-                  continue;
+              | undefined;
+            for (let i = triggers.length - 1; i >= 0; i -= 1) {
+              if (triggers[i]!.barsAgo <= maxSignalAgeBars) {
+                selected = triggers[i];
+                break;
+              }
+            }
+            if (selected === undefined) {
+              continue;
+            }
+            for (const maxAge of maxAgeValues) {
+              for (const maxConsecutiveWrong of maxConsecutiveWrongValues) {
+                for (const requireWrongLessThanRight of requireWrongLessThanRightValues) {
+                  for (const requireFirstTradeWin of requireFirstTradeWinValues) {
+                    const lifecycleConfig: ThesisLifecycleConfig = {
+                      maxAge,
+                      maxConsecutiveWrong,
+                      requireWrongLessThanRight,
+                      requireFirstTradeWin,
+                    };
+                    const cacheKey = `${selected.trigger.confirmedIndex}|${maxAge}|${maxConsecutiveWrong}|${requireWrongLessThanRight ? 1 : 0}|${requireFirstTradeWin ? 1 : 0}`;
+                    let invalidated = lifecycleCache.get(cacheKey);
+                    if (invalidated === undefined) {
+                      const result = runThesisLifecycle({
+                        direction: selected.trigger.direction,
+                        confirmedIndex: selected.trigger.confirmedIndex,
+                        bars,
+                        lastIndex,
+                        config: lifecycleConfig,
+                      });
+                      invalidated = result.invalidated;
+                      lifecycleCache.set(cacheKey, invalidated);
+                    }
+                    if (invalidated) {
+                      continue;
+                    }
+                    const config: SweepConfig = {
+                      ...baseConfig,
+                      maxSignalAgeBars,
+                      ...lifecycleConfig,
+                    };
+                    const key = configKey(config);
+                    const stat = getOrCreateCandidateStat({
+                      stats,
+                      key,
+                      config,
+                    });
+                    recordSweepDecision({
+                      stat,
+                      asset: target.asset,
+                      quarter: target.quarter,
+                      won: selected.trigger.direction === target.outcome,
+                    });
+                  }
                 }
-                const config: SweepConfig = {
-                  ...baseConfig,
-                  maxSignalAgeBars,
-                  ...lifecycleConfig,
-                };
-                const key = configKey(config);
-                const stat = getOrCreateCandidateStat({
-                  stats,
-                  key,
-                  config,
-                });
-                recordSweepDecision({
-                  stat,
-                  asset: target.asset,
-                  quarter: target.quarter,
-                  won: selected.trigger.direction === target.outcome,
-                });
               }
             }
           }
@@ -354,6 +366,8 @@ function configKey(config: SweepConfig): string {
   return [
     `synth=${config.minSynthReturnPct}`,
     `last=${config.minLastReturnPct}`,
+    `dir=${config.allowedDirection}`,
+    `streak=${config.minStreakLength}`,
     `age=${config.maxSignalAgeBars}`,
     `mAge=${config.maxAge}`,
     `mCons=${config.maxConsecutiveWrong}`,

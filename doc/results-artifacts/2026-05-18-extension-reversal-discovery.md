@@ -1,5 +1,21 @@
 # Extension Reversal — first honest edge under corrected timing (2026-05-18)
 
+> **v2 update (later same day).** A conditioning analysis on the
+> `extension_reversal@v1` triggers revealed a sharp asymmetry: fading
+> *downward* extensions (bet up) wins **62.15%** at synth>=0.02, while
+> fading *upward* extensions (bet down) is **coin-flip at 51.00%**.
+> Crypto's well-known 1h upward drift bias kills the short-fade.
+>
+> `extensionReversal` was bumped to v2 with two new config fields,
+> `allowedDirection` (`"up"` / `"down"` / `"both"`) and
+> `minStreakLength`. The registered config restricts to
+> `allowedDirection: "up"`, lifting backtest WR from 58.46% → **65.23%**
+> on 256 decisions while keeping all 5 assets at 63%+ and every
+> covered quarter positive. See
+> `doc/results-artifacts/2026-05-18T14-17-59.225Z-one-hour-extension-reversal-conditioning.json`
+> for the full breakdown.
+
+
 After the decision-timing flip (see [DECISION_TIMING.md](../DECISION_TIMING.md)),
 every previously registered filter collapsed to coin-flip. The legacy 70–92% WRs
 were artifacts of the filter peeking at ~25–50 minutes of its own target
