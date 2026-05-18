@@ -11,5 +11,18 @@ export function binanceInterval({
 }: {
   readonly timeframe: CandleTimeframe;
 }): "1m" | "5m" | "15m" | "1h" {
-  return timeframe;
+  switch (timeframe) {
+    case "1m":
+    case "5m":
+    case "15m":
+    case "1h":
+      return timeframe;
+    case "4h":
+    case "1d":
+      // Binance supports 4h/1d natively, but we drive higher-timeframe
+      // ingestion through Pyth (the Polymarket settlement-price proxy).
+      throw new Error(
+        `Binance interval not configured for ${timeframe}; use Pyth instead`,
+      );
+  }
 }

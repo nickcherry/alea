@@ -168,6 +168,10 @@ function barSecondsFor({
       return 900;
     case "1h":
       return 3600;
+    case "4h":
+      return 14_400;
+    case "1d":
+      return 86_400;
   }
 }
 

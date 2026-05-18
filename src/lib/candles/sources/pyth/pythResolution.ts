@@ -14,5 +14,11 @@ export function pythResolution({
       return "15";
     case "1h":
       return "60";
+    case "4h":
+      return "240";
+    case "1d":
+      // Pyth's TradingView shim accepts both "D" and "1D" for daily bars;
+      // "D" is the canonical TradingView resolution literal.
+      return "D";
   }
 }

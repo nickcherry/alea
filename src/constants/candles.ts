@@ -2,7 +2,7 @@
  * Stable candle timeframes the system understands.
  * Stored as the `timeframe` column on persisted candle rows.
  */
-export const candleTimeframeValues = ["1m", "5m", "15m", "1h"] as const;
+export const candleTimeframeValues = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 
 /**
  * Default number of candles requested per page when paginating through

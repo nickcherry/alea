@@ -155,6 +155,14 @@ function requestSpecForTimeframe({
         rowsPerPage: maxHourlyRowsPerPage,
         barMs: 60 * oneMinuteMs,
       };
+    case "4h":
+    case "1d":
+      // Higher timeframes are fetched from Pyth (the Polymarket
+      // settlement-price proxy). CoinDesk has hour/day endpoints but
+      // we don't wire them up until there's a use case.
+      throw new Error(
+        `CoinDesk CADLI request spec not configured for ${timeframe}`,
+      );
   }
 }
 

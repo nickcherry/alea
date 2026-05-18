@@ -17,5 +17,9 @@ export function timeframeMs({
       return 900_000;
     case "1h":
       return 3_600_000;
+    case "4h":
+      return 14_400_000;
+    case "1d":
+      return 86_400_000;
   }
 }

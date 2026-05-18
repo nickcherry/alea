@@ -8,6 +8,8 @@ describe("Pyth candle mappings", () => {
     expect(pythResolution({ timeframe: "5m" })).toBe("5");
     expect(pythResolution({ timeframe: "15m" })).toBe("15");
     expect(pythResolution({ timeframe: "1h" })).toBe("60");
+    expect(pythResolution({ timeframe: "4h" })).toBe("240");
+    expect(pythResolution({ timeframe: "1d" })).toBe("D");
   });
 
   it("maps assets to Pyth oracle symbols", () => {
