@@ -7,9 +7,9 @@ import {
   CANDIDATE_BACKTEST_START_MS,
 } from "@alea/constants/backtest";
 import {
-  tradeDecisionFireTimeMs,
+  TRADE_OUTCOME_WINDOW_BARS,
+  TRADE_TAKE_PROFIT_PCT,
   tradeDecisionHydrateBars,
-  tradeDecisionLeadTimeMs,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
 import {
@@ -19,21 +19,18 @@ import {
   quarterStartFor,
   quarterWindowFor,
 } from "@alea/lib/backtest/cache";
+import { resolveTradeOutcome } from "@alea/lib/backtest/resolveTradeOutcome";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
 import type {
-  CrossAssetSeries,
+  CrossAssetBars,
   FilterCandidate,
   FilterDecision,
 } from "@alea/lib/filters/types";
-import { alignMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
-import { resolveDirectionalOutcome } from "@alea/lib/reliability/resolveDirectionalOutcome";
 import type { Asset } from "@alea/types/assets";
 import { sql } from "kysely";
-
-const ONE_MINUTE_MS = 60_000;
 
 export type CandidateBacktestLogEvent =
   | {
@@ -82,13 +79,23 @@ export async function runCandidateBacktest({
   let decisions = 0;
 
   for (const period of periods) {
-    const crossAssetLoader = await buildCrossAssetSeriesLoader({
-      db,
-      assets,
-      period,
-      startMs,
-      endMs,
-    });
+    // Load every asset's bars up front so we can serve cross-asset
+    // confluence checks at decision time without re-querying.
+    const perAssetBars = new Map<Asset, readonly MarketBar[]>();
+    const periodMs = timeframeMs({ timeframe: period });
+    const hydrateBars = tradeDecisionHydrateBars({ period });
+    const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
+    for (const asset of assets) {
+      const bars = await loadPythBars({
+        db,
+        asset,
+        timeframe: period,
+        startMs: historyStartMs,
+        endMs,
+      });
+      perAssetBars.set(asset, bars);
+    }
+
     for (const asset of assets) {
       const periodCandidates =
         candidates ?? registeredCandidatesForMarket({ asset, period });
@@ -99,7 +106,8 @@ export async function runCandidateBacktest({
         candidates: periodCandidates,
         startMs,
         endMs,
-        crossAssetLoader,
+        periodBars: perAssetBars.get(asset) ?? [],
+        perAssetBars,
       });
       if (result.targetCount === 0) {
         log({
@@ -129,84 +137,6 @@ export async function runCandidateBacktest({
   return { rowsWritten, rowsSkipped, markets, decisions };
 }
 
-type CrossAssetLoader = (targetTsMs: number) => CrossAssetSeries;
-
-async function buildCrossAssetSeriesLoader({
-  db,
-  assets,
-  period,
-  startMs,
-  endMs,
-}: {
-  readonly db: DatabaseClient;
-  readonly assets: readonly Asset[];
-  readonly period: TradeDecisionPeriod;
-  readonly startMs: number;
-  readonly endMs: number;
-}): Promise<CrossAssetLoader> {
-  const periodMs = timeframeMs({ timeframe: period });
-  const hydrateBars = tradeDecisionHydrateBars({ period });
-  const leadTimeMs = tradeDecisionLeadTimeMs({ period });
-  const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
-  const minuteStartMs = Math.max(0, startMs - periodMs);
-
-  const perAsset = new Map<
-    Asset,
-    {
-      readonly periodBars: readonly MarketBar[];
-      readonly minuteBars: readonly MarketBar[];
-    }
-  >();
-  for (const asset of assets) {
-    const [periodBars, minuteBars] = await Promise.all([
-      loadPythBars({
-        db,
-        asset,
-        timeframe: period,
-        startMs: historyStartMs,
-        endMs,
-      }),
-      loadPythBars({
-        db,
-        asset,
-        timeframe: "1m",
-        startMs: minuteStartMs,
-        endMs,
-      }),
-    ]);
-    perAsset.set(asset, { periodBars, minuteBars });
-  }
-
-  return (targetTsMs: number) => {
-    const out: Partial<Record<Asset, ReturnType<typeof alignMarketSeries>>> = {};
-    const decisionTsMs = tradeDecisionFireTimeMs({ period, targetTsMs });
-    const activeOpenTimeMs = targetTsMs - periodMs;
-    for (const [asset, data] of perAsset) {
-      const closedEndIndex = lowerBoundOpenTime({
-        bars: data.periodBars,
-        openTimeMs: targetTsMs,
-      });
-      const history = data.periodBars.slice(
-        Math.max(0, closedEndIndex - 1 - (hydrateBars - 1)),
-        Math.max(0, closedEndIndex - 1),
-      );
-      const syntheticBar = synthesizePartialBar({
-        minuteBars: data.minuteBars,
-        activeOpenTimeMs,
-        decisionTsMs,
-      });
-      if (history.length === 0 || syntheticBar === null) {
-        continue;
-      }
-      out[asset] = alignMarketSeries({
-        pyth: [...history, syntheticBar],
-        coinbase: [],
-      });
-    }
-    return out;
-  };
-}
-
 async function runMarketCandidateBacktest({
   db,
   asset,
@@ -214,7 +144,8 @@ async function runMarketCandidateBacktest({
   candidates,
   startMs,
   endMs,
-  crossAssetLoader,
+  periodBars,
+  perAssetBars,
 }: {
   readonly db: DatabaseClient;
   readonly asset: Asset;
@@ -222,7 +153,8 @@ async function runMarketCandidateBacktest({
   readonly candidates: readonly FilterCandidate[];
   readonly startMs: number;
   readonly endMs: number;
-  readonly crossAssetLoader?: CrossAssetLoader;
+  readonly periodBars: readonly MarketBar[];
+  readonly perAssetBars: ReadonlyMap<Asset, readonly MarketBar[]>;
 }): Promise<{
   readonly rowsWritten: number;
   readonly rowsSkipped: number;
@@ -231,32 +163,15 @@ async function runMarketCandidateBacktest({
 }> {
   const periodMs = timeframeMs({ timeframe: period });
   const hydrateBars = tradeDecisionHydrateBars({ period });
-  const leadTimeMs = tradeDecisionLeadTimeMs({ period });
-  const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
-  // The synthetic bar is built from 1m data in the hour *before* the target
-  // opens (see doc/DECISION_TIMING.md). We need 1m coverage starting at
-  // `startMs - period` for the earliest target whose open == startMs.
-  const minuteStartMs = Math.max(0, startMs - periodMs);
-  const [periodBars, minuteBars] = await Promise.all([
-    loadPythBars({
-      db,
-      asset,
-      timeframe: period,
-      startMs: historyStartMs,
-      endMs,
-    }),
-    loadPythBars({
-      db,
-      asset,
-      timeframe: "1m",
-      startMs: minuteStartMs,
-      endMs,
-    }),
-  ]);
   const targetBars = periodBars.filter(
-    (bar) => bar.openTimeMs >= startMs && bar.openTimeMs < endMs,
+    (bar) =>
+      bar.openTimeMs >= startMs &&
+      bar.openTimeMs < endMs &&
+      // Need at least `outcomeWindowBars` candles in the window starting
+      // here for the outcome to be well-defined.
+      bar.openTimeMs + periodMs * TRADE_OUTCOME_WINDOW_BARS <= endMs,
   );
-  if (targetBars.length === 0 || minuteBars.length === 0) {
+  if (targetBars.length === 0) {
     return {
       rowsWritten: 0,
       rowsSkipped: 0,
@@ -272,11 +187,9 @@ async function runMarketCandidateBacktest({
     candidates,
     targetBars,
     periodBars,
-    minuteBars,
     startMs,
     endMs,
     periodMs,
-    leadTimeMs,
     hydrateBars,
   });
   const skippedPlanKeys = new Set(
@@ -286,47 +199,41 @@ async function runMarketCandidateBacktest({
   );
   const accumulators = new Map<string, QuarterAccumulator>();
   let decisionCount = 0;
+
+  // Index each asset's bars by openTimeMs so the cross-asset gate is O(1).
+  const closedEndIndexByAsset = new Map<Asset, ReadonlyMap<number, number>>();
+  for (const [otherAsset, bars] of perAssetBars) {
+    const index = new Map<number, number>();
+    for (let i = 0; i < bars.length; i += 1) {
+      index.set(bars[i]!.openTimeMs, i);
+    }
+    closedEndIndexByAsset.set(otherAsset, index);
+  }
+
   for (const targetBar of targetBars) {
     const targetTsMs = targetBar.openTimeMs;
-    // See doc/DECISION_TIMING.md.
-    // Decision fires `leadTimeMs` BEFORE the target opens.
-    // The synthetic represents the *prior* (in-progress) candle, built from
-    // 1m bars in [targetTsMs - period, decisionTsMs].
-    const decisionTsMs = tradeDecisionFireTimeMs({
-      period,
-      targetTsMs,
-    });
-    if (decisionTsMs >= endMs) {
-      continue;
-    }
-    const activeOpenTimeMs = targetTsMs - periodMs;
     const quarterStartMs = quarterStartFor({ tsMs: targetTsMs });
     const closedEndIndex = lowerBoundOpenTime({
       bars: periodBars,
       openTimeMs: targetTsMs,
     });
-    // History is fully-closed bars strictly before the now candle. The now
-    // candle sits at `closedEndIndex - 1`; we exclude it from history and
-    // include its partial via the synthetic instead.
-    const history = periodBars.slice(
-      Math.max(0, closedEndIndex - 1 - (hydrateBars - 1)),
-      Math.max(0, closedEndIndex - 1),
-    );
-    const syntheticBar = synthesizePartialBar({
-      minuteBars,
-      activeOpenTimeMs,
-      decisionTsMs,
-    });
-    if (history.length === 0 || syntheticBar === null) {
+    const startIndex = Math.max(0, closedEndIndex - hydrateBars);
+    const bars = periodBars.slice(startIndex, closedEndIndex);
+    if (bars.length === 0) {
       continue;
     }
-    const series = alignMarketSeries({
-      pyth: [...history, syntheticBar],
-      coinbase: [],
-    });
-    const outcome = resolveDirectionalOutcome({
-      startPrice: targetBar.open,
-      endPrice: targetBar.close,
+    const outcomeBars = periodBars.slice(
+      closedEndIndex,
+      closedEndIndex + TRADE_OUTCOME_WINDOW_BARS,
+    );
+    if (outcomeBars.length < TRADE_OUTCOME_WINDOW_BARS) {
+      continue;
+    }
+    const crossAssetBars = buildCrossAssetBars({
+      perAssetBars,
+      closedEndIndexByAsset,
+      targetTsMs,
+      hydrateBars,
     });
     for (const candidate of candidates) {
       const cachePlan = cachePlans.get(
@@ -339,22 +246,27 @@ async function runMarketCandidateBacktest({
         accumulators,
         cachePlan,
       });
-      const crossAssetSeries = crossAssetLoader?.(targetTsMs);
       const evaluation = candidate.evaluate({
         asset,
         period,
         targetTsMs,
-        series,
-        crossAssetSeries,
+        bars,
+        crossAssetBars,
       });
       accumulator.evaluatedCount += 1;
       if (evaluation.decision === "neutral") {
         accumulator.neutralCount += 1;
         continue;
       }
-      const prediction = predictionFromFilterDecision(evaluation.decision);
-      const won = prediction === outcome ? 1 : 0;
-      accumulator.decisions.push([targetTsMs, prediction, won]);
+      const direction = directionFromFilterDecision(evaluation.decision);
+      const outcome = resolveTradeOutcome({
+        direction,
+        entryPrice: targetBar.open,
+        outcomeBars,
+        takeProfitPct: TRADE_TAKE_PROFIT_PCT,
+      });
+      const won = outcome === "win" ? 1 : 0;
+      accumulator.decisions.push([targetTsMs, direction, won]);
       accumulator.decisionCount += 1;
       accumulator.winCount += won;
       accumulator.lossCount += won === 1 ? 0 : 1;
@@ -373,6 +285,32 @@ async function runMarketCandidateBacktest({
     targetCount: targetBars.length,
     decisionCount,
   };
+}
+
+function buildCrossAssetBars({
+  perAssetBars,
+  closedEndIndexByAsset,
+  targetTsMs,
+  hydrateBars,
+}: {
+  readonly perAssetBars: ReadonlyMap<Asset, readonly MarketBar[]>;
+  readonly closedEndIndexByAsset: ReadonlyMap<
+    Asset,
+    ReadonlyMap<number, number>
+  >;
+  readonly targetTsMs: number;
+  readonly hydrateBars: number;
+}): CrossAssetBars {
+  const out: Partial<Record<Asset, readonly MarketBar[]>> = {};
+  for (const [otherAsset, bars] of perAssetBars) {
+    const targetIndex = closedEndIndexByAsset.get(otherAsset)?.get(targetTsMs);
+    if (targetIndex === undefined) {
+      continue;
+    }
+    const startIndex = Math.max(0, targetIndex - hydrateBars);
+    out[otherAsset] = bars.slice(startIndex, targetIndex);
+  }
+  return out;
 }
 
 type CachePlan = {
@@ -395,11 +333,9 @@ async function buildCachePlans({
   candidates,
   targetBars,
   periodBars,
-  minuteBars,
   startMs,
   endMs,
   periodMs,
-  leadTimeMs,
   hydrateBars,
 }: {
   readonly db: DatabaseClient;
@@ -408,11 +344,9 @@ async function buildCachePlans({
   readonly candidates: readonly FilterCandidate[];
   readonly targetBars: readonly MarketBar[];
   readonly periodBars: readonly MarketBar[];
-  readonly minuteBars: readonly MarketBar[];
   readonly startMs: number;
   readonly endMs: number;
   readonly periodMs: number;
-  readonly leadTimeMs: number;
   readonly hydrateBars: number;
 }): Promise<ReadonlyMap<string, CachePlan>> {
   const quarterStarts = [
@@ -441,12 +375,9 @@ async function buildCachePlans({
       0,
       windowStartMs - periodMs * (hydrateBars + 2),
     );
-    const minuteStartMs = windowStartMs;
     const inputDataHash = candidateBacktestInputDataHash({
       periodBars,
-      minuteBars,
       periodStartMs,
-      minuteStartMs,
       windowEndMs,
     });
     for (const candidate of candidates) {
@@ -466,8 +397,9 @@ async function buildCachePlans({
         windowEndMs,
         decisionSchemaVersion: CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION,
         engineVersion: CANDIDATE_BACKTEST_ENGINE_VERSION,
-        leadTimeMs,
         hydrateBars,
+        takeProfitPct: TRADE_TAKE_PROFIT_PCT,
+        outcomeWindowBars: TRADE_OUTCOME_WINDOW_BARS,
         inputDataHash,
       });
       plans.set(key, {
@@ -549,8 +481,6 @@ function cachePlanKey({
   return `${candidate?.id ?? candidateId}|${asset}|${period}|${quarterStartMs}`;
 }
 
-type CandleTimeframeForBacktest = "1m" | TradeDecisionPeriod;
-
 async function loadPythBars({
   db,
   asset,
@@ -560,7 +490,7 @@ async function loadPythBars({
 }: {
   readonly db: DatabaseClient;
   readonly asset: Asset;
-  readonly timeframe: CandleTimeframeForBacktest;
+  readonly timeframe: TradeDecisionPeriod;
   readonly startMs: number;
   readonly endMs: number;
 }): Promise<readonly MarketBar[]> {
@@ -583,43 +513,6 @@ async function loadPythBars({
     close: Number(row.close),
     volume: Number(row.volume),
   }));
-}
-
-function synthesizePartialBar({
-  minuteBars,
-  activeOpenTimeMs,
-  decisionTsMs,
-}: {
-  readonly minuteBars: readonly MarketBar[];
-  readonly activeOpenTimeMs: number;
-  readonly decisionTsMs: number;
-}): MarketBar | null {
-  const start = lowerBoundOpenTime({
-    bars: minuteBars,
-    openTimeMs: activeOpenTimeMs,
-  });
-  const usable: MarketBar[] = [];
-  for (let i = start; i < minuteBars.length; i += 1) {
-    const bar = minuteBars[i]!;
-    if (bar.openTimeMs < activeOpenTimeMs) {
-      continue;
-    }
-    if (bar.openTimeMs + ONE_MINUTE_MS > decisionTsMs) {
-      break;
-    }
-    usable.push(bar);
-  }
-  if (usable.length === 0) {
-    return null;
-  }
-  return {
-    openTimeMs: activeOpenTimeMs,
-    open: usable[0]!.open,
-    high: Math.max(...usable.map((bar) => bar.high)),
-    low: Math.min(...usable.map((bar) => bar.low)),
-    close: usable.at(-1)!.close,
-    volume: usable.reduce((sum, bar) => sum + bar.volume, 0),
-  };
 }
 
 function lowerBoundOpenTime({
@@ -693,7 +586,7 @@ function getAccumulator({
   return accumulator;
 }
 
-function predictionFromFilterDecision(
+function directionFromFilterDecision(
   decision: Exclude<FilterDecision, "neutral">,
 ): "up" | "down" {
   return decision;

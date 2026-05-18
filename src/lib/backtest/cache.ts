@@ -15,8 +15,9 @@ export type CandidateBacktestCacheInput = {
   readonly windowEndMs: number;
   readonly decisionSchemaVersion: number;
   readonly engineVersion: number;
-  readonly leadTimeMs: number;
   readonly hydrateBars: number;
+  readonly takeProfitPct: number;
+  readonly outcomeWindowBars: number;
   readonly inputDataHash: string;
 };
 
@@ -39,8 +40,9 @@ export function candidateBacktestCachePayload({
   windowEndMs,
   decisionSchemaVersion,
   engineVersion,
-  leadTimeMs,
   hydrateBars,
+  takeProfitPct,
+  outcomeWindowBars,
   inputDataHash,
 }: CandidateBacktestCacheInput): string {
   return JSON.stringify({
@@ -54,10 +56,11 @@ export function candidateBacktestCachePayload({
     filterVersion: candidate.filterVersion,
     hydrateBars,
     inputDataHash,
-    leadTimeMs,
+    outcomeWindowBars,
     period,
     quarterStartMs,
     source,
+    takeProfitPct,
     windowEndMs,
     windowStartMs,
   });
@@ -65,15 +68,11 @@ export function candidateBacktestCachePayload({
 
 export function candidateBacktestInputDataHash({
   periodBars,
-  minuteBars,
   periodStartMs,
-  minuteStartMs,
   windowEndMs,
 }: {
   readonly periodBars: readonly MarketBar[];
-  readonly minuteBars: readonly MarketBar[];
   readonly periodStartMs: number;
-  readonly minuteStartMs: number;
   readonly windowEndMs: number;
 }): string {
   const hash = createHash("sha256");
@@ -82,13 +81,6 @@ export function candidateBacktestInputDataHash({
     label: "period",
     bars: periodBars,
     startMs: periodStartMs,
-    endMs: windowEndMs,
-  });
-  updateBarHash({
-    hash,
-    label: "minute",
-    bars: minuteBars,
-    startMs: minuteStartMs,
     endMs: windowEndMs,
   });
   return hash.digest("hex").slice(0, 32);

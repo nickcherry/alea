@@ -3,7 +3,6 @@ import {
   nextTradeDecisionFireTimeMs,
   resolveTradeDecisionMarkets,
   TRADE_DECISION_DEFAULT_MARKETS,
-  TRADE_DECISION_HYDRATE_BARS,
   tradeDecisionFireTimeMs,
   tradeDecisionHydrateBars,
   tradeDecisionTargetOpenTimeMs,
@@ -37,33 +36,32 @@ describe("trade decision market defaults", () => {
     ]);
   });
 
-  it("uses chart-window-sized hydration by period", () => {
+  it("hydrates 288 bars per period by default", () => {
     expect(tradeDecisionHydrateBars({ period: "1h" })).toBe(288);
-    expect(TRADE_DECISION_HYDRATE_BARS).toBe(288);
   });
 
-  it("targets the next (not-yet-open) hourly market 35 minutes before its open", () => {
-    // See doc/DECISION_TIMING.md. At now=12:24:59 inside the 12:00-13:00 hour,
-    // the candle we are *predicting* is the 13:00-14:00 candle, and the
-    // decision fires 35 minutes before that opens — i.e. at 12:25:00.
+  it("fires the decision at the target candle's open (no lead time)", () => {
+    // At now=12:24:59 inside the 12:00-13:00 hour, the candle we'd enter
+    // is the 13:00-14:00 candle. We make the decision AT 13:00 and enter
+    // at the 13:00 open.
     const nowMs = Date.UTC(2026, 4, 17, 12, 24, 59);
     const targetTsMs = Date.UTC(2026, 4, 17, 13, 0, 0);
-    const fireTsMs = Date.UTC(2026, 4, 17, 12, 25, 0);
 
     expect(tradeDecisionTargetOpenTimeMs({ period: "1h", nowMs })).toBe(
       targetTsMs,
     );
     expect(tradeDecisionFireTimeMs({ period: "1h", targetTsMs })).toBe(
-      fireTsMs,
+      targetTsMs,
     );
-    expect(nextTradeDecisionFireTimeMs({ period: "1h", nowMs })).toBe(fireTsMs);
-    // Once we are past the fire window for the 13:00 target, the next
-    // upcoming fire is for the 14:00 target at 13:25.
+    expect(nextTradeDecisionFireTimeMs({ period: "1h", nowMs })).toBe(
+      targetTsMs,
+    );
+    // Once we are past the 13:00 target fire, next fire is the 14:00 open.
     expect(
       nextTradeDecisionFireTimeMs({
         period: "1h",
-        nowMs: Date.UTC(2026, 4, 17, 12, 26, 0),
+        nowMs: Date.UTC(2026, 4, 17, 13, 0, 1),
       }),
-    ).toBe(Date.UTC(2026, 4, 17, 13, 25, 0));
+    ).toBe(Date.UTC(2026, 4, 17, 14, 0, 0));
   });
 });

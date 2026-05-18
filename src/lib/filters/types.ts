@@ -1,5 +1,5 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
-import type { AlignedMarketSeries } from "@alea/lib/marketSeries/types";
+import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Asset } from "@alea/types/assets";
 import type { Product } from "@alea/types/products";
 import type { CandleSource } from "@alea/types/sources";
@@ -25,27 +25,25 @@ export const pythSpotCandleSource = {
 } as const satisfies FilterSourceSpec;
 
 /**
- * Per-asset market series at decision time, keyed by asset. Used by filters
- * that need to consult OTHER assets' bars (e.g. broad-market confluence
- * gating). The current asset's series is also present at
- * `crossAssetSeries[context.asset]`.
+ * Bars supplied to a filter at decision time. These are *all closed*
+ * 1h candles ending at the bar that just closed before the entry
+ * candle opens. The filter never sees the entry candle itself.
  *
- * Populated by the harness (backtest, dry-run, live-trading) where
- * available; filters that don't need cross-asset state simply ignore it.
- * Filters that DO need it must handle the `undefined`/missing-asset case
- * gracefully — typically by failing closed (no trigger) when the harness
- * cannot provide the data.
+ * `crossAssetBars` is keyed by asset and contains the same shape of
+ * closed-bar series for every other tradable asset, useful for broad
+ * market confluence checks. The current asset's bars are also
+ * available at `crossAssetBars[context.asset]`.
  */
-export type CrossAssetSeries = Readonly<
-  Partial<Record<Asset, AlignedMarketSeries>>
+export type CrossAssetBars = Readonly<
+  Partial<Record<Asset, readonly MarketBar[]>>
 >;
 
 export type FilterEvaluationContext = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
-  readonly series: AlignedMarketSeries;
-  readonly crossAssetSeries?: CrossAssetSeries;
+  readonly bars: readonly MarketBar[];
+  readonly crossAssetBars?: CrossAssetBars;
 };
 
 export type FilterEvaluation = {

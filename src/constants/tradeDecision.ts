@@ -1,24 +1,20 @@
-import {
-  marketChartRecentBarsForTimeframe,
-  MAX_MARKET_CHART_RECENT_BARS,
-} from "@alea/constants/marketChart";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { Asset } from "@alea/types/assets";
 
 /**
- * Source-of-truth knobs for candidate-filter trade decisions. Dry-run and
- * live trading must read these same constants so both modes evaluate the same
- * markets with the same timing and candle context.
+ * Source-of-truth knobs for filter trade decisions. Backtest + future
+ * dry-run/live trading runners all read these so they all evaluate the
+ * same markets with the same timing.
+ *
+ * New decision model:
+ * - Decision fires AT the open of the candle we'd enter (no lead time,
+ *   no synthetic bar).
+ * - Entry price = target candle's open.
+ * - Outcome window = the next N candles, starting with the entry candle.
+ * - Win = price reaches +/- `TRADE_TAKE_PROFIT_PCT` from entry within
+ *   those N candles (high for longs, low for shorts).
  */
 
-export const TRADE_DECISION_DECISION_SOURCE = "candidate_filters";
-
-/**
- * Every candle period the dry-run table is allowed to hold a decision
- * for. Matches the `dry_run_period` CHECK constraint on
- * `dry_run_decisions.period` so the dashboard period toggle and the
- * schema agree on the option set.
- */
 export const TRADE_DECISION_SUPPORTED_PERIODS = ["1h"] as const;
 
 export type TradeDecisionPeriod =
@@ -30,9 +26,9 @@ export type TradeDecisionMarket = {
 };
 
 /**
- * Assets currently eligible for dry-run/live trading. Keep this narrower than
- * the repo-wide asset whitelist when an asset should remain available for
- * candles/research but not for order-bearing trading loops.
+ * Assets currently eligible for backtest/trading. Keep this narrower
+ * than the repo-wide asset whitelist when an asset should remain
+ * available for candles but not for filter evaluation.
  */
 export const TRADE_DECISION_TRADABLE_ASSETS = [
   "btc",
@@ -43,8 +39,8 @@ export const TRADE_DECISION_TRADABLE_ASSETS = [
 ] as const satisfies readonly Asset[];
 
 /**
- * Exact no-flag dry-run/live market set. The operational default trades every
- * currently enabled trading asset on Polymarket's 1h crypto markets.
+ * Default backtest/trade market set. The operational default trades
+ * every currently enabled asset on 1h candles.
  */
 export const TRADE_DECISION_DEFAULT_MARKETS = [
   { asset: "btc", period: "1h" },
@@ -54,54 +50,53 @@ export const TRADE_DECISION_DEFAULT_MARKETS = [
   { asset: "doge", period: "1h" },
 ] as const satisfies readonly TradeDecisionMarket[];
 
-/**
- * Default assets/periods used when an operator provides only one axis,
- * e.g. `--periods 1h` or `--assets eth`. With no override at all, use
- * `TRADE_DECISION_DEFAULT_MARKETS` exactly.
- */
 export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
   TRADE_DECISION_SUPPORTED_PERIODS;
 
 export const TRADE_DECISION_DEFAULT_ASSETS = TRADE_DECISION_TRADABLE_ASSETS;
 
 /**
- * Dashboard/default display period. The runner itself uses
- * `TRADE_DECISION_DEFAULT_MARKETS`.
+ * Dashboard/default display period.
  */
 export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 
 /**
- * How long before the target candle *opens* the loop snapshots the live price
- * and evaluates filters. The target candle is the *next* (not-yet-open)
- * Polymarket market window. For 1h with a 35-min lead, that means evaluating
- * at HH:25 of the current hour for the HH+1:00 – HH+2:00 target market.
- *
- * The decision must fire before the target opens so the maker order is in the
- * book while the market is still around 50c. Once the candle is in progress,
- * winning-side bids stop filling at 50c.
- *
- * See doc/DECISION_TIMING.md for the full timing semantics.
+ * Take-profit threshold relative to entry. A long wins if any candle
+ * in the outcome window reaches `entry * (1 + TRADE_TAKE_PROFIT_PCT)`;
+ * a short wins on `entry * (1 - TRADE_TAKE_PROFIT_PCT)`.
  */
-export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
+export const TRADE_TAKE_PROFIT_PCT = 0.05;
+
+/**
+ * Outcome window. The number of candles (starting with the entry
+ * candle itself) inside which the take-profit threshold must be touched
+ * for the trade to count as a win.
+ */
+export const TRADE_OUTCOME_WINDOW_BARS = 5;
+
+/**
+ * How many closed bars to feed each filter at decision time. The
+ * filter never sees the entry bar — its inputs end at the bar that
+ * just closed before the entry candle opens.
+ */
+export const TRADE_DECISION_HYDRATE_BARS_BY_PERIOD: Readonly<
   Record<TradeDecisionPeriod, number>
 > = {
-  "1h": 15 * 60 * 1000,
+  "1h": 288,
 };
 
-export function tradeDecisionLeadTimeMs({
+export function tradeDecisionHydrateBars({
   period,
 }: {
   readonly period: TradeDecisionPeriod;
 }): number {
-  return TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS[period];
+  return TRADE_DECISION_HYDRATE_BARS_BY_PERIOD[period];
 }
 
 /**
- * Returns the open timestamp of the *target* candle — the next 1h candle
- * that has not yet started. At now=HH:20 the target is HH+1:00. At
- * now=HH:00 exactly (or any tick boundary), the target is the next tick
- * (HH+1:00), since the candle whose open == now has just started and is
- * therefore no longer predictable from "before it opens" timing.
+ * Returns the open timestamp of the *target* candle — the next 1h
+ * candle that has not yet opened. At now=HH:20 the target is HH+1:00.
+ * At now=HH:00 exactly, the next open is HH+1:00.
  */
 export function tradeDecisionTargetOpenTimeMs({
   period,
@@ -115,14 +110,10 @@ export function tradeDecisionTargetOpenTimeMs({
 }
 
 /**
- * Returns the clock time at which the decision must fire for the given
- * target candle: `target.open - leadTime`. For 1h with 35-min lead and
- * target.open = HH+1:00, fire time = HH:25.
- *
- * Do not flip the sign back to `targetTsMs + periodMs - leadTime` — that
- * semantic would put the decision *inside* the target candle, which lets
- * filters peek at partial data of the candle they are predicting and
- * invalidates every backtest number. See doc/DECISION_TIMING.md.
+ * Clock time at which the decision fires for the given target candle.
+ * Under the current model the decision fires AT the target's open —
+ * we evaluate the filter on closed bars only and enter at
+ * `target.open`. No lead time.
  */
 export function tradeDecisionFireTimeMs({
   period,
@@ -132,7 +123,7 @@ export function tradeDecisionFireTimeMs({
   readonly targetTsMs: number;
 }): number {
   void period;
-  return targetTsMs - tradeDecisionLeadTimeMs({ period });
+  return targetTsMs;
 }
 
 export function nextTradeDecisionFireTimeMs({
@@ -151,49 +142,6 @@ export function nextTradeDecisionFireTimeMs({
   }
   return fireTime;
 }
-
-/**
- * Maximum closed bars hydrated at startup. Period-specific callers should use
- * `tradeDecisionHydrateBars`; this fallback keeps tests/helper defaults large
- * enough for the longest trading chart window.
- */
-export const TRADE_DECISION_HYDRATE_BARS = MAX_MARKET_CHART_RECENT_BARS;
-
-export function tradeDecisionHydrateBars({
-  period,
-}: {
-  readonly period: TradeDecisionPeriod;
-}): number {
-  return marketChartRecentBarsForTimeframe({ timeframe: period });
-}
-
-/**
- * Once startup hydration has populated the in-memory bar window, decision-time
- * refreshes only need the recent tail plus any missed bars. Keeping this small
- * reduces Pyth timeout risk in the decision path.
- */
-export const TRADE_DECISION_REFRESH_LOOKBACK_BARS = 8;
-
-/**
- * Maximum tolerated age for the one-shot Pyth price used to synthesize
- * the active candle at decision time. Pyth publishes frequently; older
- * snapshots usually mean Hermes or our network path is stale enough to
- * skip the decision instead of trading on stale state.
- */
-export const TRADE_DECISION_MAX_PRICE_AGE_MS = 15 * 1000;
-
-/**
- * Decision-time candle refresh must fail fast: waiting through the
- * normal sync/backfill retry policy would miss the market boundary.
- */
-export const TRADE_DECISION_CANDLE_FETCH_TIMEOUT_MS = 4 * 1000;
-
-/**
- * End-to-end watchdog for a single live filter decision. This must be long
- * enough for candle refresh and filter evaluation, but short enough that one
- * stuck asset cannot block every later market boundary.
- */
-export const TRADE_DECISION_MAX_DECISION_DURATION_MS = 15 * 1000;
 
 export function resolveTradeDecisionMarkets({
   markets,
