@@ -198,28 +198,46 @@ export async function runDryRun({
           if (now < fireTime) {
             continue;
           }
-          for (const state of statesByPeriod.get(period) ?? []) {
-            if (state.lastPredictedBoundary >= targetTsMs) {
-              continue;
+          // Refresh every due asset's bars first so the cross-asset series
+          // snapshot is consistent across this period's predictions.
+          const dueStates = (statesByPeriod.get(period) ?? []).filter(
+            (state) => state.lastPredictedBoundary < targetTsMs,
+          );
+          const refreshedEntries = await Promise.all(
+            dueStates.map(async (state) => {
+              try {
+                const refreshed = await refreshTradeDecisionCandleState({
+                  state,
+                  nowMs: now,
+                  limit: tradeDecisionHydrateBars({ period: state.period }),
+                  fetchCandles,
+                  fetchCoinbaseBarsForRefresh: fetchNoCandles,
+                });
+                return { state, refreshed };
+              } catch (e) {
+                log({
+                  kind: "error",
+                  message: `candle refresh failed ${state.period}/${state.asset}: ${String(e)}`,
+                });
+                return null;
+              }
+            }),
+          );
+          const crossAssetSeries: Partial<
+            Record<Asset, AlignedMarketSeries>
+          > = {};
+          for (const entry of refreshedEntries) {
+            if (
+              entry !== null &&
+              entry.refreshed.seriesForDecision !== null
+            ) {
+              crossAssetSeries[entry.state.asset] =
+                entry.refreshed.seriesForDecision;
             }
-            let refreshed: Awaited<
-              ReturnType<typeof refreshTradeDecisionCandleState>
-            >;
-            try {
-              refreshed = await refreshTradeDecisionCandleState({
-                state,
-                nowMs: now,
-                limit: tradeDecisionHydrateBars({ period: state.period }),
-                fetchCandles,
-                fetchCoinbaseBarsForRefresh: fetchNoCandles,
-              });
-            } catch (e) {
-              log({
-                kind: "error",
-                message: `candle refresh failed ${state.period}/${state.asset}: ${String(e)}`,
-              });
-              continue;
-            }
+          }
+          for (const entry of refreshedEntries) {
+            if (entry === null) continue;
+            const { state, refreshed } = entry;
             await scorePendingDecisions({
               db,
               state,
@@ -247,6 +265,7 @@ export async function runDryRun({
               targetTsMs,
               series: refreshed.seriesForDecision,
               synthBar: refreshed.syntheticBar,
+              crossAssetSeries,
               pendingByState,
               orderSimulator,
               log,
@@ -277,6 +296,7 @@ async function makePrediction({
   targetTsMs,
   series,
   synthBar,
+  crossAssetSeries,
   pendingByState,
   orderSimulator,
   log,
@@ -286,6 +306,7 @@ async function makePrediction({
   readonly targetTsMs: number;
   readonly series: AlignedMarketSeries;
   readonly synthBar: MarketBar;
+  readonly crossAssetSeries: Partial<Record<Asset, AlignedMarketSeries>>;
   readonly pendingByState: Map<string, Map<number, string>>;
   readonly orderSimulator: ReturnType<typeof createDryRunOrderSimulator>;
   readonly log: (event: DryRunLogEvent) => void;
@@ -297,6 +318,7 @@ async function makePrediction({
       period: state.period,
       targetTsMs,
       series,
+      crossAssetSeries,
     },
   });
   const decisionCompletedAtMs = Date.now();

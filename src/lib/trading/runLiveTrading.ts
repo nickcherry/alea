@@ -10,9 +10,7 @@ import {
   type TradeDecisionPeriod,
   tradeDecisionTargetOpenTimeMs,
 } from "@alea/constants/tradeDecision";
-import {
-  LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
-} from "@alea/constants/trading";
+import { LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS } from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
 import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
@@ -161,6 +159,12 @@ export async function runLiveTrading({
         });
         let nextFireTime = now + 1000;
         const dueDecisions: DueLiveDecision[] = [];
+        // Group by period+targetTsMs so we can refresh every asset's bars,
+        // build a cross-asset series snapshot, then evaluate each candidate
+        // with broad-market context available. Cross-asset confluence
+        // candidates (e.g. extension_reversal-confluence) fail closed when
+        // crossAssetSeries is missing, so populating it here is what enables
+        // them to actually trade in production.
         for (const period of selectedPeriods) {
           const targetTsMs = tradeDecisionTargetOpenTimeMs({
             period,
@@ -174,23 +178,27 @@ export async function runLiveTrading({
           if (now < fireTime) {
             continue;
           }
-          for (const state of statesByPeriod.get(period) ?? []) {
-            if (state.lastPredictedBoundary >= targetTsMs) {
-              continue;
-            }
+          const dueStates = (statesByPeriod.get(period) ?? []).filter(
+            (state) => state.lastPredictedBoundary < targetTsMs,
+          );
+          if (dueStates.length === 0) {
+            continue;
+          }
+          const decisionPromise = processDueLiveDecisionsForPeriod({
+            states: dueStates,
+            now,
+            fetchCandles,
+            targetTsMs,
+            orderExecutor,
+            telegramNotifier,
+            log,
+          });
+          for (const state of dueStates) {
             dueDecisions.push({
               asset: state.asset,
               period: state.period,
               targetTsMs,
-              promise: processDueLiveDecision({
-                state,
-                now,
-                fetchCandles,
-                targetTsMs,
-                orderExecutor,
-                telegramNotifier,
-                log,
-              }),
+              promise: decisionPromise,
             });
           }
         }
@@ -304,53 +312,6 @@ function logDecisionTimeout({
   });
 }
 
-async function processDueLiveDecision({
-  state,
-  now,
-  fetchCandles,
-  targetTsMs,
-  orderExecutor,
-  telegramNotifier,
-  log,
-}: {
-  readonly state: TradeDecisionCandleState;
-  readonly now: number;
-  readonly fetchCandles: FetchCandles;
-  readonly targetTsMs: number;
-  readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
-  readonly telegramNotifier: ReturnType<
-    typeof createLiveDecisionTelegramNotifier
-  >;
-  readonly log: (event: LiveTradingLogEvent) => void;
-}): Promise<void> {
-  try {
-    const refreshed = await refreshStateForDecision({
-      state,
-      now,
-      fetchCandles,
-      log,
-    });
-    if (refreshed === null) {
-      return;
-    }
-    await makeLiveDecision({
-      state,
-      targetTsMs,
-      series: refreshed.seriesForDecision,
-      synthBar: refreshed.syntheticBar,
-      priceAgeMs: refreshed.priceAgeMs,
-      orderExecutor,
-      telegramNotifier,
-      log,
-    });
-  } catch (e) {
-    log({
-      kind: "error",
-      message: `decision failed ${state.period}/${state.asset}: ${String(e)}`,
-    });
-  }
-}
-
 async function refreshStateForDecision({
   state,
   now,
@@ -402,12 +363,88 @@ async function refreshStateForDecision({
   }
 }
 
+async function processDueLiveDecisionsForPeriod({
+  states,
+  now,
+  fetchCandles,
+  targetTsMs,
+  orderExecutor,
+  telegramNotifier,
+  log,
+}: {
+  readonly states: readonly TradeDecisionCandleState[];
+  readonly now: number;
+  readonly fetchCandles: FetchCandles;
+  readonly targetTsMs: number;
+  readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
+  readonly telegramNotifier: ReturnType<
+    typeof createLiveDecisionTelegramNotifier
+  >;
+  readonly log: (event: LiveTradingLogEvent) => void;
+}): Promise<void> {
+  // Phase 1: refresh every asset's bars in parallel so the cross-asset
+  // snapshot is consistent across decisions.
+  const refreshed = await Promise.all(
+    states.map(async (state) => {
+      try {
+        const result = await refreshStateForDecision({
+          state,
+          now,
+          fetchCandles,
+          log,
+        });
+        return { state, result };
+      } catch (e) {
+        log({
+          kind: "error",
+          message: `decision failed ${state.period}/${state.asset}: ${String(e)}`,
+        });
+        return { state, result: null };
+      }
+    }),
+  );
+
+  // Phase 2: build the cross-asset series snapshot from successful refreshes.
+  const crossAssetSeries: Partial<Record<Asset, AlignedMarketSeries>> = {};
+  for (const r of refreshed) {
+    if (r.result !== null) {
+      crossAssetSeries[r.state.asset] = r.result.seriesForDecision;
+    }
+  }
+
+  // Phase 3: evaluate each asset with the full cross-asset context.
+  await Promise.all(
+    refreshed.map(async ({ state, result }) => {
+      if (result === null) return;
+      try {
+        await makeLiveDecision({
+          state,
+          targetTsMs,
+          series: result.seriesForDecision,
+          synthBar: result.syntheticBar,
+          priceAgeMs: result.priceAgeMs,
+          crossAssetSeries,
+          orderExecutor,
+          telegramNotifier,
+          log,
+        });
+      } catch (e) {
+        log({
+          kind: "error",
+          message: `decision failed ${state.period}/${state.asset}: ${String(e)}`,
+        });
+      }
+    }),
+  );
+}
+
 async function makeLiveDecision({
   state,
   targetTsMs,
   series,
   synthBar,
   priceAgeMs,
+  crossAssetSeries,
   orderExecutor,
   telegramNotifier,
   log,
@@ -417,6 +454,7 @@ async function makeLiveDecision({
   readonly series: AlignedMarketSeries;
   readonly synthBar: MarketBar;
   readonly priceAgeMs: number | null;
+  readonly crossAssetSeries: Partial<Record<Asset, AlignedMarketSeries>>;
   readonly orderExecutor: ReturnType<typeof createLiveOrderExecutor>;
   readonly telegramNotifier: ReturnType<
     typeof createLiveDecisionTelegramNotifier
@@ -430,6 +468,7 @@ async function makeLiveDecision({
       period: state.period,
       targetTsMs,
       series,
+      crossAssetSeries,
     },
   });
   log({
