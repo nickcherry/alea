@@ -489,3 +489,114 @@ The divergence family (rsi / wick / range) likely correlates heavily —
 all three fire on swing-pivot patterns with momentum disagreement. A
 correlation matrix in a future session would tell us how much marginal
 coverage each adds versus how often they all fire on the same bars.
+
+## Third pass: XRP, body divergence, HTF alignment, pin bar, correlation matrix
+
+XRP added back to the tradable + registered set in
+`src/constants/tradeDecision.ts` and `src/lib/filters/registry.ts`. All
+8 (and later 9) registered filters reproduce on XRP within 2pp of the
+other assets — the signals generalize cleanly.
+
+### Three more filters registered
+
+**body_divergence v1** (72.09% / 9,473 decisions): third divergence
+cousin. Confirmed swing-low prints a lower low but the bar's body
+(|close - open|) shrunk by >=80% relative to the prior pivot bar.
+Per-quarter min 67.93%.
+
+**htf_alignment v1** (92.40% / 5,107 decisions): bet in the direction
+of a 4-bar cumulative return when |return| >= 3% AND the synth bar's
+intra-hour direction agrees. Highest aggregate WR of the registered
+set. Per-quarter min 89.55%, per-asset min 91.93%. Notable: no
+synth-independent config made the top — pure-HTF without synth
+confirmation didn't qualify as alpha, so the filter's edge is heavily
+"strong 4h trend AND aligned synth bar" rather than a pure HTF signal.
+
+**pin_bar_reversal v1** (78.67% / 2,189 decisions): classic single-bar
+rejection pattern — a bar touches a recent 40-bar extreme with a wick
+
+> =55% of range, a body <=40% of range, and a close back across the
+> body. Per-quarter min 76%. Distinct from exhaustion_reversal (which
+> requires a multi-bar directional run) — this is purely a single-bar
+> read at a horizon extreme.
+
+### Filter correlation matrix (the most important diagnostic)
+
+Evaluating all 9 registered candidates against every target across all
+5 assets (~88,205 records / 39,881 with at least one fire):
+
+| filter pair                    | overlap | agreement when both fire |
+| ------------------------------ | ------- | ------------------------ |
+| wick_div × body_div            | 70.6%   | 98%                      |
+| wick_div × range_div           | 66.6%   | 99%                      |
+| range_div × body_div           | 65.1%   | 99%                      |
+| failed_breakout × exhaustion   | 32.3%   | 99%                      |
+| rsi_div × wick_div             | 31.7%   | 90%                      |
+| ma_rejection × wick_div        | 24.2%   | 66%                      |
+| exhaustion × ma_rejection      | 0.3%    | 100%                     |
+| ma_rejection × htf             | 0.9%    | 100%                     |
+| failed_breakout × ma_rejection | 1.2%    | 78%                      |
+| exhaustion × htf               | 5.5%    | **21%**                  |
+
+**The divergence family is highly redundant.** wick / range / body
+divergence overlap 65-70% with each other and agree 98-99% when they
+both fire. They are essentially the same signal in three slightly
+different feature variations. The marginal information from carrying
+all three is small; the user could prune to one and lose almost no
+coverage.
+
+**The "rare" filters provide genuinely orthogonal coverage.** Pairs
+like exhaustion × ma_rejection (0.3% overlap), ma_rejection × htf
+(0.9%), and failed_breakout × ma_rejection (1.2%) almost never fire
+together. These are catching different market structures.
+
+**Most striking finding:** exhaustion_reversal and htf_alignment have
+5.5% overlap but only **21% agreement** when both fire. That is, when
+both detect something on the same bar, they almost always _disagree_
+on direction. Mechanically that makes sense — exhaustion is a
+reversal-after-extension signal and htf_alignment is a
+trend-continuation signal; the regimes they target are opposite.
+Practically: if you are seeing both fire on the same target, the bar
+is in a contested regime and neither directional read is likely
+correct.
+
+### Updated registry summary
+
+```
+1h / btc, eth, sol, xrp, doge:
+  - htf_alignment v1            (92.40% WR,  5,107 decisions)
+  - ma_rejection v1             (88.44% WR,  3,460 decisions)
+  - failed_breakout_reversal v1 (84.71% WR,  4,696 decisions)
+  - exhaustion_reversal v1      (84.07% WR,  1,287 decisions)
+  - pin_bar_reversal v1         (78.67% WR,  2,189 decisions)
+  - rsi_divergence v6           (75.47% WR,  7,584 decisions)
+  - range_divergence v1         (72.51% WR, 15,871 decisions)
+  - body_divergence v1          (72.09% WR,  9,473 decisions)
+  - wick_divergence v1          (71.69% WR, 19,702 decisions)
+```
+
+**Grand total: 69,369 decisions, 76.04% blended WR over 2024 Q2 –
+2026 Q2.** Nine candidates per asset across five assets. Volume data
+in Pyth is all zero, so no volume-based filters are possible without a
+different source. Three implementation-only filters live in tree but
+not registered (trend_pullback_resume, compression_breakout,
+ambiguous_trend_continuation).
+
+### Recommended pruning (the morning todo)
+
+Based on the correlation matrix and synth-baseline calibration, the
+practical question for the morning is whether to prune the divergence
+family from three filters to one (or maybe two). The cleanest options:
+
+- **Keep just wick_divergence** as the divergence representative. It
+  has the highest decision count (19,702) and ties for highest
+  agreement with the others, so dropping range + body loses very
+  little coverage.
+- **Keep only the orthogonal four** (htf_alignment, ma_rejection,
+  failed_breakout_reversal, exhaustion_reversal, pin_bar_reversal) as
+  the high-quality core; treat the divergence family as one block
+  represented by RSI Divergence (75.47%) or Wick Divergence (71.69%).
+
+Either pruning would shrink the active set from 9 candidates to 5-6
+without materially changing the blended WR or the bars actually
+traded, but would simplify reasoning about which signal fired and why.

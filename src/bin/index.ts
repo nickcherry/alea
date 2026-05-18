@@ -23,6 +23,7 @@ import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhau
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchHtfAlignmentSweepCommand } from "@alea/bin/research/htfAlignmentSweep";
 import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
+import { researchPinBarReversalSweepCommand } from "@alea/bin/research/pinBarReversalSweep";
 import { researchRangeDivergenceSweepCommand } from "@alea/bin/research/rangeDivergenceSweep";
 import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { researchTrendPullbackResumeSweepCommand } from "@alea/bin/research/trendPullbackResumeSweep";
@@ -74,6 +75,7 @@ const cli = createCli({
     researchFailedBreakoutReversalSweepCommand,
     researchHtfAlignmentSweepCommand,
     researchMaRejectionSweepCommand,
+    researchPinBarReversalSweepCommand,
     researchRsiDivergenceSweepCommand,
     researchRangeDivergenceSweepCommand,
     researchWickDivergenceSweepCommand,

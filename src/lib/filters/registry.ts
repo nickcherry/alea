@@ -21,6 +21,10 @@ import {
   maRejectionFilter,
 } from "@alea/lib/filters/maRejection";
 import {
+  type PinBarReversalConfig,
+  pinBarReversalFilter,
+} from "@alea/lib/filters/pinBarReversal";
+import {
   type RangeDivergenceConfig,
   rangeDivergenceFilter,
 } from "@alea/lib/filters/rangeDivergence";
@@ -182,6 +186,21 @@ const oneHourHtfAlignmentCandidate = defineCandidate({
   } satisfies HtfAlignmentConfig,
 });
 
+const oneHourPinBarReversalCandidate = defineCandidate({
+  filter: pinBarReversalFilter,
+  config: {
+    lookbackBars: 40,
+    minWickPct: 0.55,
+    maxBodyPct: 0.4,
+    minCloseAcrossBodyPct: 0.75,
+    maxSignalAgeBars: 5,
+    maxAge: 8,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies PinBarReversalConfig,
+});
+
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
@@ -191,6 +210,7 @@ const baseCandidates = [
   oneHourRangeDivergenceCandidate,
   oneHourBodyDivergenceCandidate,
   oneHourHtfAlignmentCandidate,
+  oneHourPinBarReversalCandidate,
 ];
 
 export const registeredCandidatesByMarket = {
