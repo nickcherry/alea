@@ -32,26 +32,17 @@ describe("scanPendingSessions", () => {
 
     // dayA: cleanly rotated (has .complete)
     await writeFile(resolvePath(dayA, "2026-05-05T12-30.jsonl"), "");
-    await writeFile(
-      resolvePath(dayA, "2026-05-05T12-30.jsonl.complete"),
-      "",
-    );
+    await writeFile(resolvePath(dayA, "2026-05-05T12-30.jsonl.complete"), "");
 
     // dayA: orphaned (no .complete, presumably from a kill -9)
     await writeFile(resolvePath(dayA, "2026-05-05T13-00.jsonl"), "");
 
     // dayA: already ingested — should be ignored
-    await writeFile(
-      resolvePath(dayA, "2026-05-05T11-00.jsonl.ingested"),
-      "",
-    );
+    await writeFile(resolvePath(dayA, "2026-05-05T11-00.jsonl.ingested"), "");
 
     // dayB: also cleanly rotated
     await writeFile(resolvePath(dayB, "2026-05-06T00-00.jsonl"), "");
-    await writeFile(
-      resolvePath(dayB, "2026-05-06T00-00.jsonl.complete"),
-      "",
-    );
+    await writeFile(resolvePath(dayB, "2026-05-06T00-00.jsonl.complete"), "");
 
     const result = await scanPendingSessions({
       dir,

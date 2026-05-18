@@ -15,9 +15,5 @@ export async function writeReliabilityHtml({
     htmlPath,
     pageAssets: ["reliability.css"],
   });
-  await writeFile(
-    htmlPath,
-    renderReliabilityHtml({ payload, assets }),
-    "utf8",
-  );
+  await writeFile(htmlPath, renderReliabilityHtml({ payload, assets }), "utf8");
 }

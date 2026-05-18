@@ -68,4 +68,3 @@ function rsiOf({
   const rs = avgGain / avgLoss;
   return 100 - 100 / (1 + rs);
 }
-

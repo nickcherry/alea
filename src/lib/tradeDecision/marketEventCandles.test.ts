@@ -15,9 +15,7 @@ describe("mergeStoredAndEventCandles", () => {
       ],
     });
 
-    expect(
-      merged.map((c) => [c.timestamp.toISOString(), c.close]),
-    ).toEqual([
+    expect(merged.map((c) => [c.timestamp.toISOString(), c.close])).toEqual([
       ["2026-05-15T12:00:00.000Z", 100],
       ["2026-05-15T12:05:00.000Z", 111],
       ["2026-05-15T12:10:00.000Z", 112],

@@ -42,9 +42,7 @@ describe("parsePolymarketMarketDataEvents", () => {
           event_type: "price_change",
           market: "condition",
           timestamp: 1_777_900_201_000,
-          changes: [
-            { asset_id: "UP", price: "0.52", size: "7", side: "BUY" },
-          ],
+          changes: [{ asset_id: "UP", price: "0.52", size: "7", side: "BUY" }],
         }),
         tokenIdToSide,
       }),

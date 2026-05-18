@@ -242,7 +242,8 @@ export function buildTradingPerformancePayload({
       walletAddress,
       marketCount: rows.length,
       openPositionCount: rows.filter((r) => r.status === "open").length,
-      redeemablePositionCount: rows.filter((r) => r.status === "redeemable").length,
+      redeemablePositionCount: rows.filter((r) => r.status === "redeemable")
+        .length,
       winningMarketCount: rows.filter((r) => r.result === "win").length,
       losingMarketCount: rows.filter((r) => r.result === "loss").length,
       flatMarketCount: rows.filter((r) => r.result === "flat").length,
@@ -384,11 +385,13 @@ function buildChart({
   // line tracks realized PnL through time. Open positions stay out of
   // this chart because their PnL is still mark-to-market and can move
   // until resolution/redemption.
-  const ordered = rows.filter((r) => r.realizedPnlUsd !== null).sort(
-    (a, b) =>
-      a.lastActivityAtMs - b.lastActivityAtMs ||
-      a.conditionId.localeCompare(b.conditionId),
-  );
+  const ordered = rows
+    .filter((r) => r.realizedPnlUsd !== null)
+    .sort(
+      (a, b) =>
+        a.lastActivityAtMs - b.lastActivityAtMs ||
+        a.conditionId.localeCompare(b.conditionId),
+    );
   let cumulative = 0;
   const points: TradingPerformanceChartPoint[] = [];
   for (const row of ordered) {

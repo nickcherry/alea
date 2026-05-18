@@ -5,7 +5,9 @@
  * tooltip chrome, and legend styling come from alea.css.
  */
 
-.latency-shell { min-height: 100vh; }
+.latency-shell {
+  min-height: 100vh;
+}
 
 /* The primary chart card needs to fill the viewport so the twin
    panels feel like a proper trading chart, not a small widget. */
@@ -24,7 +26,9 @@
   flex-wrap: wrap;
 }
 
-.chart-card-head .alea-card-title { font-size: 16px; }
+.chart-card-head .alea-card-title {
+  font-size: 16px;
+}
 
 .panels {
   position: relative;
@@ -42,13 +46,21 @@
   border: 1px solid var(--alea-border-muted);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 92% 8%, rgba(215, 170, 69, 0.05), transparent 36%),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(215, 170, 69, 0.05),
+      transparent 36%
+    ),
     linear-gradient(180deg, rgba(15, 27, 18, 0.55), rgba(7, 9, 10, 0.4));
   overflow: hidden;
 }
 
-.panel.spot { flex-grow: 1.1; }
-.panel.perp { flex-grow: 0.9; }
+.panel.spot {
+  flex-grow: 1.1;
+}
+.panel.perp {
+  flex-grow: 0.9;
+}
 
 .panel-tag {
   position: absolute;
@@ -64,11 +76,18 @@
   pointer-events: none;
 }
 
-.panel > .uplot-host { position: absolute; inset: 0; }
+.panel > .uplot-host {
+  position: absolute;
+  inset: 0;
+}
 
 /* Tick-count bar chart, second card. */
-.bars-card { padding: 22px 26px; }
-.bars-card .alea-section-rule { margin-bottom: 18px; }
+.bars-card {
+  padding: 22px 26px;
+}
+.bars-card .alea-section-rule {
+  margin-bottom: 18px;
+}
 
 .bars {
   display: flex;

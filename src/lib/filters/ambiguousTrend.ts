@@ -22,7 +22,7 @@ export const ambiguousTrendFilter: TradingFilter<AmbiguousTrendConfig> = {
   name: "Ambiguous-Synth Trend Continuation",
   version: 1,
   description:
-    "Targets the regime where the synthetic bar at HH:50 is ambiguous (small body and a close-location near the middle of the bar's range) so the synth-direction baseline is weak. In that regime, predicts direction from the prevailing EMA trend: fast EMA above slow EMA with positive slope plus close above the slow EMA votes up, mirror votes down. Lifecycle invalidates on max age, consecutive wrong bars, an unfavorable right-vs-wrong tally, or a close back through the slow EMA against the trend.",
+    "Targets the regime where the synthetic bar at HH:25 is ambiguous (small body and a close-location near the middle of the bar's range) so the synth-direction baseline is weak. In that regime, predicts direction from the prevailing EMA trend: fast EMA above slow EMA with positive slope plus close above the slow EMA votes up, mirror votes down. Lifecycle invalidates on max age, consecutive wrong bars, an unfavorable right-vs-wrong tally, or a close back through the slow EMA against the trend.",
   sources: [pythSpotCandleSource],
   evaluate({ series, config }) {
     const match = findAmbiguousTrendMatch({ bars: series.pyth, config });

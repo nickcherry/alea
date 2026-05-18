@@ -43,11 +43,13 @@
     }
 
     bubble.style.left =
-      Math.round(clamp(left, margin, window.innerWidth - bubbleWidth - margin)) +
-      "px";
+      Math.round(
+        clamp(left, margin, window.innerWidth - bubbleWidth - margin),
+      ) + "px";
     bubble.style.top =
-      Math.round(clamp(top, margin, window.innerHeight - bubbleHeight - margin)) +
-      "px";
+      Math.round(
+        clamp(top, margin, window.innerHeight - bubbleHeight - margin),
+      ) + "px";
   }
 
   function showBubble(tip) {

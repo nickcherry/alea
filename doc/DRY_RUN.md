@@ -33,15 +33,15 @@ market closes.
 `dry_run_decisions` is append-only for actionable dry-run decisions. Important
 columns:
 
-| Column                               | Meaning                                                 |
-| ------------------------------------ | ------------------------------------------------------- |
-| `ts_ms`                              | Target candle open time in milliseconds                 |
-| `decided_at_ms`                      | Wall-clock time when filters ran                        |
-| `asset`, `period`                    | Market bucket                                           |
-| `prediction`                         | `u` or `d`, the side dry-run would buy                  |
+| Column                               | Meaning                                                  |
+| ------------------------------------ | -------------------------------------------------------- |
+| `ts_ms`                              | Target candle open time in milliseconds                  |
+| `decided_at_ms`                      | Wall-clock time when filters ran                         |
+| `asset`, `period`                    | Market bucket                                            |
+| `prediction`                         | `u` or `d`, the side dry-run would buy                   |
 | `synth_open`                         | Decision-time synthetic price used as the live reference |
-| `decision_audit`                     | JSON filter vote audit, including candidate votes       |
-| `actual_open`, `actual_close`, `won` | Filled after the target candle settles                  |
+| `decision_audit`                     | JSON filter vote audit, including candidate votes        |
+| `actual_open`, `actual_close`, `won` | Filled after the target candle settles                   |
 
 `dry_run_decision_attempts` records every scheduled evaluation, including
 neutral/no-trade filter majorities. The linked `dry_run_decision_id` is null

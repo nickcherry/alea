@@ -123,7 +123,12 @@ function handleFrame({
     }
     const bid = Number(data.b);
     const ask = Number(data.a);
-    if (!Number.isFinite(bid) || !Number.isFinite(ask) || bid <= 0 || ask <= 0) {
+    if (
+      !Number.isFinite(bid) ||
+      !Number.isFinite(ask) ||
+      bid <= 0 ||
+      ask <= 0
+    ) {
       return;
     }
     onTick({

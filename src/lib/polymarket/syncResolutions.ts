@@ -163,7 +163,8 @@ export async function syncPolymarketResolutions({
 
   try {
     await Promise.all(
-      Array.from({ length: Math.min(concurrency, Math.max(1, pending.length)) },
+      Array.from(
+        { length: Math.min(concurrency, Math.max(1, pending.length)) },
         () => worker(),
       ),
     );

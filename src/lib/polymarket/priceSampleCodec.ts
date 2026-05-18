@@ -35,9 +35,7 @@ export type PriceSampleTick = {
   readonly downBps: number | null;
 };
 
-export function encodePriceSamples(
-  ticks: readonly PriceSampleTick[],
-): Buffer {
+export function encodePriceSamples(ticks: readonly PriceSampleTick[]): Buffer {
   const buffer = Buffer.alloc(
     PRICE_SAMPLE_HEADER_BYTES + ticks.length * PRICE_SAMPLE_TICK_BYTES,
   );
@@ -78,9 +76,7 @@ export function decodePriceSamples(
   for (let i = 0; i < tickCount; i += 1) {
     const cursor = PRICE_SAMPLE_HEADER_BYTES + i * PRICE_SAMPLE_TICK_BYTES;
     const offsetMs =
-      version === 2
-        ? buffer.readInt32LE(cursor)
-        : buffer.readUInt32LE(cursor);
+      version === 2 ? buffer.readInt32LE(cursor) : buffer.readUInt32LE(cursor);
     ticks.push({
       offsetMs,
       upBps: decodeBps(buffer.readUInt16LE(cursor + 4)),

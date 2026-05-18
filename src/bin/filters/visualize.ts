@@ -152,9 +152,7 @@ export const filtersVisualizeCommand = defineCommand({
         .min(1)
         .max(50)
         .default(5)
-        .describe(
-          "Maximum examples sampled from each asset/timeframe market.",
-        ),
+        .describe("Maximum examples sampled from each asset/timeframe market."),
     }),
     defineValueOption({
       key: "assets",
@@ -180,7 +178,9 @@ export const filtersVisualizeCommand = defineCommand({
       key: "start",
       long: "--start",
       valueName: "ISO",
-      schema: optionalDateSchema("Sample window start. Defaults to the backtest start."),
+      schema: optionalDateSchema(
+        "Sample window start. Defaults to the backtest start.",
+      ),
     }),
     defineValueOption({
       key: "end",
@@ -275,8 +275,7 @@ export const filtersVisualizeCommand = defineCommand({
       options.outDir ??
         `tmp/charts/filter-visualizations/${timestampForFilename(new Date())}`,
     );
-    const startMs =
-      options.start?.getTime() ?? CANDIDATE_BACKTEST_START_MS;
+    const startMs = options.start?.getTime() ?? CANDIDATE_BACKTEST_START_MS;
     const endMs =
       options.end?.getTime() ??
       CANDIDATE_BACKTEST_END_EXCLUSIVE_MS ??
@@ -396,7 +395,9 @@ async function sampleVisualizationEvents({
           : [];
       return takeEvenly({
         items:
-          sampleKind === "mixed" ? interleave([fired, invalidated]) : [...fired, ...invalidated],
+          sampleKind === "mixed"
+            ? interleave([fired, invalidated])
+            : [...fired, ...invalidated],
         count: perMarket,
       });
     }),
@@ -680,7 +681,7 @@ async function renderVisualizationEvent({
     barsAgo: detail.match.barsAgo,
     invalidation:
       detail.invalidation.invalidated === true
-        ? detail.invalidation.reason ?? "invalidated"
+        ? (detail.invalidation.reason ?? "invalidated")
         : null,
   };
 }
@@ -833,7 +834,8 @@ function visualizationIndicators({
           : event.won
             ? "target win"
             : "target loss",
-      color: event.won === undefined ? "#ced4da" : event.won ? "#2f9e44" : "#e03131",
+      color:
+        event.won === undefined ? "#ced4da" : event.won ? "#2f9e44" : "#e03131",
       position: "belowBar",
       shape: "square",
     });

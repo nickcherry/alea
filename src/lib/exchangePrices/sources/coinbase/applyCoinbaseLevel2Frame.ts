@@ -148,11 +148,7 @@ export function applyCoinbaseLevel2Frame({
         }
       }
     }
-    if (
-      topChanged &&
-      product.bestBid !== null &&
-      product.bestAsk !== null
-    ) {
+    if (topChanged && product.bestBid !== null && product.bestAsk !== null) {
       out.push({
         exchange,
         asset,

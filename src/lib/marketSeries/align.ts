@@ -19,8 +19,6 @@ export function alignMarketSeries({
 
   return {
     pyth,
-    coinbase: pyth.map(
-      (bar) => coinbaseByOpenTime.get(bar.openTimeMs) ?? null,
-    ),
+    coinbase: pyth.map((bar) => coinbaseByOpenTime.get(bar.openTimeMs) ?? null),
   };
 }

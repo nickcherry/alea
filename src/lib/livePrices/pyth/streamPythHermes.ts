@@ -194,7 +194,11 @@ export function streamPythHermes({
   };
 }
 
-function buildStreamUrl({ assets }: { readonly assets: readonly Asset[] }): string {
+function buildStreamUrl({
+  assets,
+}: {
+  readonly assets: readonly Asset[];
+}): string {
   const u = new URL("/v2/updates/price/stream", hermesEndpoint);
   for (const asset of assets) {
     const id = pythPriceFeedIds[asset];

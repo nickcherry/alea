@@ -11,9 +11,7 @@ import {
 } from "@alea/lib/polymarket/priceSampler";
 import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
 import { assetSchema } from "@alea/types/assets";
-import {
-  resolutionTimeframeSchema,
-} from "@alea/types/resolutions";
+import { resolutionTimeframeSchema } from "@alea/types/resolutions";
 import pc from "picocolors";
 import { z } from "zod";
 
@@ -38,7 +36,9 @@ export const polymarketPriceSampleCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(z.array(assetSchema).default([...TRADE_DECISION_DEFAULT_ASSETS]))
-        .describe("Comma-separated asset list (default: current trading assets)."),
+        .describe(
+          "Comma-separated asset list (default: current trading assets).",
+        ),
     }),
     defineValueOption({
       key: "timeframes",
@@ -49,9 +49,7 @@ export const polymarketPriceSampleCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(
-          z
-            .array(resolutionTimeframeSchema)
-            .default([...defaultTimeframes]),
+          z.array(resolutionTimeframeSchema).default([...defaultTimeframes]),
         )
         .describe("Comma-separated timeframes. Defaults to 1h."),
     }),

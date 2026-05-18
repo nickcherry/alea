@@ -286,4 +286,3 @@ function shortId({ value }: { readonly value: string }): string {
   }
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }
-

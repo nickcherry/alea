@@ -66,7 +66,11 @@ export function streamPolymarketChainlinkQuotes({
           return;
         }
         const frame = JSON.parse(raw) as PolymarketRtdsFrame;
-        if (frame.topic !== topic || frame.type !== "update" || !frame.payload) {
+        if (
+          frame.topic !== topic ||
+          frame.type !== "update" ||
+          !frame.payload
+        ) {
           return;
         }
         const symbol = frame.payload.symbol ?? "";

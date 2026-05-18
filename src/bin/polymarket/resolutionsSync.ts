@@ -8,9 +8,7 @@ import {
   type SyncResolutionsResult,
 } from "@alea/lib/polymarket/syncResolutions";
 import { assetSchema } from "@alea/types/assets";
-import {
-  resolutionTimeframeSchema,
-} from "@alea/types/resolutions";
+import { resolutionTimeframeSchema } from "@alea/types/resolutions";
 import pc from "picocolors";
 import { z } from "zod";
 
@@ -73,9 +71,7 @@ export const polymarketResolutionsSyncCommand = defineCommand({
         .optional()
         .transform((value) => parseList(value))
         .pipe(
-          z
-            .array(resolutionTimeframeSchema)
-            .default([...defaultTimeframes]),
+          z.array(resolutionTimeframeSchema).default([...defaultTimeframes]),
         )
         .describe("Comma-separated timeframes. Defaults to 1h."),
     }),

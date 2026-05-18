@@ -29,4 +29,3 @@ function bar(i: number, overrides: Partial<MarketBar> = {}): MarketBar {
     ...overrides,
   };
 }
-

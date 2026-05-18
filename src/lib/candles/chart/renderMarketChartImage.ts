@@ -12,7 +12,7 @@ import type { Asset } from "@alea/types/assets";
 import type { Candle, CandleTimeframe } from "@alea/types/candles";
 import type { Product } from "@alea/types/products";
 import type { CandleSource } from "@alea/types/sources";
-import { type Browser,chromium } from "playwright-core";
+import { type Browser, chromium } from "playwright-core";
 
 type RenderMarketChartImageParams = {
   readonly candles: readonly Candle[];

@@ -1,22 +1,10 @@
-import {
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  stat,
-} from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve as resolvePath } from "node:path";
 
 import { createCaptureJsonlWriter } from "@alea/lib/marketCapture/jsonlWriter";
 import type { CaptureRecord } from "@alea/lib/marketCapture/types";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 let dir: string;
 
@@ -71,7 +59,10 @@ describe("createCaptureJsonlWriter", () => {
   });
 
   it("rotates files at the hourly boundary using wall-clock at write time", async () => {
-    const rolledOver: { closedSession: { windowKey: string }; closedPath: string }[] = [];
+    const rolledOver: {
+      closedSession: { windowKey: string };
+      closedPath: string;
+    }[] = [];
     let now = Date.parse("2026-05-05T12:32:00.000Z");
     const writer = await createCaptureJsonlWriter({
       dir,
@@ -104,11 +95,7 @@ describe("createCaptureJsonlWriter", () => {
 
     // .complete marker dropped on the closed window.
     const completeMarker = await stat(
-      resolvePath(
-        dir,
-        "2026-05-05",
-        "2026-05-05T12-00.jsonl.complete",
-      ),
+      resolvePath(dir, "2026-05-05", "2026-05-05T12-00.jsonl.complete"),
     );
     expect(completeMarker.isFile()).toBe(true);
 

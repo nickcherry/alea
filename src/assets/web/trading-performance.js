@@ -21,12 +21,17 @@
   let plot = null;
 
   function formatUsd(value, opts) {
-    const fractionDigits = opts && opts.fractionDigits != null ? opts.fractionDigits : 2;
+    const fractionDigits =
+      opts && opts.fractionDigits != null ? opts.fractionDigits : 2;
     const sign = value > 0 ? "+" : value < 0 ? "-" : "";
-    return sign + "$" + Math.abs(value).toLocaleString(undefined, {
-      minimumFractionDigits: fractionDigits,
-      maximumFractionDigits: fractionDigits,
-    });
+    return (
+      sign +
+      "$" +
+      Math.abs(value).toLocaleString(undefined, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+      })
+    );
   }
 
   function formatTradeTime(ms) {
@@ -74,7 +79,10 @@
     }
     empty.style.display = "none";
     const width = Math.max(320, Math.floor(host.getBoundingClientRect().width));
-    const height = Math.max(260, Math.floor(host.getBoundingClientRect().height));
+    const height = Math.max(
+      260,
+      Math.floor(host.getBoundingClientRect().height),
+    );
     plot = new uPlot(
       {
         width,
@@ -88,7 +96,7 @@
             label: "Cumulative Realized PnL",
             stroke: "#d7aa45",
             width: 3,
-            value: (_self, raw) => raw == null ? "--" : formatUsd(raw),
+            value: (_self, raw) => (raw == null ? "--" : formatUsd(raw)),
           },
         ],
         axes: [
@@ -107,7 +115,8 @@
             ticks: { stroke: tokens.axisTickStroke, width: 1, size: 5 },
             font: tokens.axisFont,
             size: 72,
-            values: (_self, vals) => vals.map((value) => formatUsd(value, { fractionDigits: 0 })),
+            values: (_self, vals) =>
+              vals.map((value) => formatUsd(value, { fractionDigits: 0 })),
           },
         ],
         hooks: {
@@ -127,12 +136,24 @@
               }
               const head = formatTradeTime(point.orderedAtMs);
               tooltip.innerHTML =
-                '<div class="alea-tooltip-head">' + head + '</div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' + point.symbol + ' · ' + point.title + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Market Realized</span><span class="value">' + formatUsd(point.marketPnlUsd) + '</span></div>' +
-                '<div class="alea-tooltip-row"><span></span><span class="name">Total Realized</span><span class="value">' + formatUsd(point.cumulativePnlUsd) + '</span></div>';
+                '<div class="alea-tooltip-head">' +
+                head +
+                "</div>" +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Market</span><span class="value">' +
+                point.symbol +
+                " · " +
+                point.title +
+                "</span></div>" +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Market Realized</span><span class="value">' +
+                formatUsd(point.marketPnlUsd) +
+                "</span></div>" +
+                '<div class="alea-tooltip-row"><span></span><span class="name">Total Realized</span><span class="value">' +
+                formatUsd(point.cumulativePnlUsd) +
+                "</span></div>";
               const rect = host.getBoundingClientRect();
-              tooltip.style.left = Math.min(rect.width - 230, Math.max(8, self.cursor.left + 12)) + "px";
+              tooltip.style.left =
+                Math.min(rect.width - 230, Math.max(8, self.cursor.left + 12)) +
+                "px";
               tooltip.style.top = Math.max(8, self.cursor.top + 12) + "px";
               tooltip.classList.add("visible");
             },

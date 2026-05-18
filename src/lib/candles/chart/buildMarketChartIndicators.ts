@@ -9,9 +9,7 @@ import {
   type TimeValuePoint,
 } from "@alea/lib/indicators/shared/series";
 import { computeSmaSeries } from "@alea/lib/indicators/sma";
-import {
-  computeWickRejectionSignals,
-} from "@alea/lib/indicators/wickRejection";
+import { computeWickRejectionSignals } from "@alea/lib/indicators/wickRejection";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import type { Candle } from "@alea/types/candles";
 

@@ -13,4 +13,3 @@ export type AlignedMarketSeries = {
   readonly pyth: readonly MarketBar[];
   readonly coinbase: readonly (MarketBar | null)[];
 };
-

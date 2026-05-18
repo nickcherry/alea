@@ -40,7 +40,9 @@ export async function up(db: Kysely<Database>): Promise<void> {
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
-  await sql`drop index if exists dry_run_decision_attempts_asset_ts`.execute(db);
+  await sql`drop index if exists dry_run_decision_attempts_asset_ts`.execute(
+    db,
+  );
   await sql`drop table if exists dry_run_decision_attempts`.execute(db);
   await sql`
     alter table dry_run_decisions

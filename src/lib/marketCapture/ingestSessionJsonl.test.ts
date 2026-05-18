@@ -4,13 +4,7 @@ import { resolve as resolvePath } from "node:path";
 
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { ingestSessionJsonl } from "@alea/lib/marketCapture/ingestSessionJsonl";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 let dir: string;
 

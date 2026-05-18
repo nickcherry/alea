@@ -6,30 +6,13 @@
   "decisionTiming": "For each 1h target candle, decide 10 minutes before that same candle closes by appending a synthetic current-hour bar built from 1m Pyth candles through HH:50.",
   "startMs": 1735689600000,
   "endMs": 1779054959212,
-  "assets": [
-    "btc",
-    "eth",
-    "sol",
-    "doge",
-    "xrp"
-  ],
+  "assets": ["btc", "eth", "sol", "doge", "xrp"],
   "timeframe": "1h",
   "records": 59970,
   "baseConfigCount": 80,
   "candidateCount": 25600,
-  "rsiLengths": [
-    7,
-    9,
-    14,
-    21,
-    28
-  ],
-  "pivotBarsValues": [
-    2,
-    3,
-    5,
-    7
-  ],
+  "rsiLengths": [7, 9, 14, 21, 28],
+  "pivotBarsValues": [2, 3, 5, 7],
   "rangePairs": [
     {
       "rangeLower": 2,
@@ -48,34 +31,10 @@
       "rangeUpper": 100
     }
   ],
-  "includeHiddenValues": [
-    false,
-    true
-  ],
-  "maxSignalAgeBarsValues": [
-    0,
-    1,
-    2,
-    3,
-    5,
-    8,
-    13,
-    20,
-    30,
-    40
-  ],
-  "minAgreementScoreValues": [
-    0,
-    -1,
-    -2,
-    -3
-  ],
-  "maxConsecutiveDisagreementValues": [
-    1,
-    2,
-    3,
-    4
-  ],
+  "includeHiddenValues": [false, true],
+  "maxSignalAgeBarsValues": [0, 1, 2, 3, 5, 8, 13, 20, 30, 40],
+  "minAgreementScoreValues": [0, -1, -2, -3],
+  "maxConsecutiveDisagreementValues": [1, 2, 3, 4],
   "topOverall": [
     {
       "key": "rsi=21|pivot=2|range=2-30|hidden=true|age=13|score=0|streak=1",

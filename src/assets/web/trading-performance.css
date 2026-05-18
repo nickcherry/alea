@@ -8,13 +8,20 @@
 /* Trading-performance metric values are slightly smaller than the
    shared default to keep the 4-column grid balanced on common laptop
    widths. */
-.alea-metric-value { font-size: 29px; white-space: nowrap; }
+.alea-metric-value {
+  font-size: 29px;
+  white-space: nowrap;
+}
 
 .chart-frame {
   position: relative;
   border-radius: 10px;
   background:
-    radial-gradient(circle at 92% 10%, rgba(215, 170, 69, 0.05), transparent 36%),
+    radial-gradient(
+      circle at 92% 10%,
+      rgba(215, 170, 69, 0.05),
+      transparent 36%
+    ),
     linear-gradient(180deg, rgba(15, 27, 18, 0.6), rgba(7, 9, 10, 0.4));
   border: 1px solid var(--alea-border-muted);
   padding: 12px 8px 6px;
@@ -62,8 +69,13 @@
   table-layout: fixed;
   min-width: 1160px;
 }
-.trading-performance-table thead th { padding: 11px 11px 9px; font-size: 10px; }
-.trading-performance-table tbody td { padding: 9px 11px; }
+.trading-performance-table thead th {
+  padding: 11px 11px 9px;
+  font-size: 10px;
+}
+.trading-performance-table tbody td {
+  padding: 9px 11px;
+}
 .trading-performance-table th:not(.market-col):not(.status-col),
 .trading-performance-table td:not(.market-col):not(.status-col) {
   width: 8.5%;
@@ -72,9 +84,13 @@
   text-overflow: ellipsis;
 }
 .trading-performance-table th.market-col,
-.trading-performance-table td.market-col { width: 28%; }
+.trading-performance-table td.market-col {
+  width: 28%;
+}
 .trading-performance-table th.status-col,
-.trading-performance-table td.status-col { width: 12%; }
+.trading-performance-table td.status-col {
+  width: 12%;
+}
 
 .trade-market {
   display: flex;
@@ -141,6 +157,12 @@
 }
 
 @media (max-width: 680px) {
-  .alea-metric-value { font-size: 25px; }
-  .chart-host { height: 430px; min-height: 430px; max-height: 430px; }
+  .alea-metric-value {
+    font-size: 25px;
+  }
+  .chart-host {
+    height: 430px;
+    min-height: 430px;
+    max-height: 430px;
+  }
 }

@@ -80,4 +80,3 @@ function findPivots({
   }
   return pivots;
 }
-

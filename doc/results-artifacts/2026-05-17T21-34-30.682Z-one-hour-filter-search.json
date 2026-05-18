@@ -3,22 +3,8 @@
   "runtimeMs": 25511,
   "objective": "Find simple explainable 1h candidates with high Pyth-proxy win rate using no-leak synthetic active candles.",
   "outcomeSource": "Pyth spot 1h candle direction; local Polymarket 1h resolutions are not populated yet.",
-  "assets": [
-    "btc",
-    "eth",
-    "sol",
-    "doge",
-    "xrp"
-  ],
-  "leadMinutesValues": [
-    5,
-    10,
-    15,
-    20,
-    30,
-    45,
-    55
-  ],
+  "assets": ["btc", "eth", "sol", "doge", "xrp"],
+  "leadMinutesValues": [5, 10, 15, 20, 30, 45, 55],
   "records": 419796,
   "recordsByLead": {
     "5": 59975,

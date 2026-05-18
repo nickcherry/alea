@@ -58,10 +58,7 @@ describe("evaluateRsiDivergenceInvalidation", () => {
     const match = matched({
       decision: "up",
       kind: "hidden_bullish",
-      bars: [
-        bar({ open: 100, close: 100 }),
-        bar({ open: 100, close: 99 }),
-      ],
+      bars: [bar({ open: 100, close: 100 }), bar({ open: 100, close: 99 })],
     });
 
     const result = evaluateRsiDivergenceInvalidation({
@@ -70,9 +67,7 @@ describe("evaluateRsiDivergenceInvalidation", () => {
     });
 
     expect(result.invalidated).toBe(true);
-    expect(result.metadata?.["invalidation"]).toBe(
-      "negative_agreement_tally",
-    );
+    expect(result.metadata?.["invalidation"]).toBe("negative_agreement_tally");
     expect(result.metadata?.["invalidationOpenTimeMs"]).toBe(60_000);
   });
 
@@ -128,10 +123,7 @@ describe("evaluateRsiDivergenceInvalidation", () => {
     const match = matched({
       decision: "up",
       kind: "regular_bullish",
-      bars: [
-        bar({ open: 100, close: 100 }),
-        bar({ open: 100, close: 99 }),
-      ],
+      bars: [bar({ open: 100, close: 100 }), bar({ open: 100, close: 99 })],
     });
 
     const result = evaluateRsiDivergenceInvalidation({
@@ -150,10 +142,7 @@ describe("evaluateRsiDivergenceInvalidation", () => {
     const match = matched({
       decision: "down",
       kind: "regular_bearish",
-      bars: [
-        bar({ open: 100, close: 100 }),
-        bar({ open: 100, close: 101 }),
-      ],
+      bars: [bar({ open: 100, close: 100 }), bar({ open: 100, close: 101 })],
     });
 
     const result = evaluateRsiDivergenceInvalidation({
@@ -177,10 +166,7 @@ describe("applyRsiDivergenceInvalidation", () => {
     const match = matched({
       decision: "down",
       kind: "regular_bearish",
-      bars: [
-        bar({ open: 100, close: 100 }),
-        bar({ open: 100, close: 101 }),
-      ],
+      bars: [bar({ open: 100, close: 100 }), bar({ open: 100, close: 101 })],
     });
 
     const evaluation = applyRsiDivergenceInvalidation({
