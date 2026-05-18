@@ -455,7 +455,7 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
-/* Page-scope controls (5m/15m period toggle + auxiliary filters).    */
+/* Page-scope controls (period tabs + auxiliary filters).             */
 /* Sits as the first child of `.alea-main`, above the cards, so every */
 /* dashboard parks its page-wide filters in the same spot. Auxiliary  */
 /* controls (regime tabs, asset select) flow onto the same row to the */

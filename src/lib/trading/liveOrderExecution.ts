@@ -299,6 +299,17 @@ export function createLiveOrderExecutor({
       const stepMs = resolutionTimeframeStepMs({ timeframe: period });
       const currentStart = Math.floor(nowMs / stepMs) * stepMs;
       const nextStart = currentStart + stepMs;
+      void ensureMarketSession({
+        asset,
+        period,
+        targetTsMs: currentStart,
+      }).catch((error) =>
+        log({
+          kind: "live-market",
+          status: "stream-disconnected",
+          message: `market warm failed ${period}/${asset}: ${String(error)}`,
+        }),
+      );
       if (nowMs + discoveryLeadMs < nextStart) {
         continue;
       }

@@ -34,7 +34,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       samples jsonb not null,
       primary key (asset, timeframe, window_start_ts_ms),
       constraint polymarket_price_samples_timeframe_check
-        check (timeframe in ('5m', '15m')),
+        check (timeframe = '1h'),
       constraint polymarket_price_samples_sample_interval_check
         check (sample_interval_ms > 0),
       constraint polymarket_price_samples_sample_count_check

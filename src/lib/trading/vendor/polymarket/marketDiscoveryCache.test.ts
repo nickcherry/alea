@@ -22,12 +22,12 @@ describe("createPolymarketMarketDiscoveryCache", () => {
     const [a, b] = await Promise.all([
       cache.getOrDiscover({
         asset: "btc",
-        timeframe: "5m",
+        timeframe: "1h",
         windowStartTsMs: 1_800_000_000_000,
       }),
       cache.getOrDiscover({
         asset: "btc",
-        timeframe: "5m",
+        timeframe: "1h",
         windowStartTsMs: 1_800_000_000_000,
       }),
     ]);
@@ -38,7 +38,7 @@ describe("createPolymarketMarketDiscoveryCache", () => {
     expect(
       cache.get({
         asset: "btc",
-        timeframe: "5m",
+        timeframe: "1h",
         windowStartTsMs: 1_800_000_000_000,
       }),
     ).toEqual(market);
@@ -54,14 +54,14 @@ describe("createPolymarketMarketDiscoveryCache", () => {
     });
 
     cache.warm({
-      markets: [{ asset: "btc", timeframe: "5m" }],
-      nowMs: 1_800_000_296_000,
+      markets: [{ asset: "btc", timeframe: "1h" }],
+      nowMs: 1_800_003_596_000,
       discoveryLeadMs: 30_000,
     });
 
     await Promise.resolve();
 
-    expect(seen).toEqual(["btc:5m:1800000000", "btc:5m:1800000300"]);
+    expect(seen).toEqual(["btc:1h:1800000000", "btc:1h:1800003600"]);
   });
 
   it("backs off repeated misses instead of rediscovering immediately", async () => {
@@ -75,7 +75,7 @@ describe("createPolymarketMarketDiscoveryCache", () => {
     });
     const input = {
       asset: "btc" as const,
-      timeframe: "5m" as const,
+      timeframe: "1h" as const,
       windowStartTsMs: 1_800_000_000_000,
     };
 

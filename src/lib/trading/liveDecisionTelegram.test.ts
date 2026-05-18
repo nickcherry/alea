@@ -23,8 +23,8 @@ describe("live decision Telegram notifications", () => {
 
     notifier.trackDecision({
       asset: "btc",
-      period: "5m",
-      targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
+      period: "1h",
+      targetTsMs: Date.UTC(2026, 4, 15, 18),
       prediction: "u",
       reasoning: "Clean close above support & no rejection.",
     });
@@ -36,7 +36,7 @@ describe("live decision Telegram notifications", () => {
 
     expect(sent).toEqual([
       {
-        text: "BTC 2:15-2:20 PM ET\n\nUP\nClean close above support & no rejection.",
+        text: "BTC 2:00-3:00 PM ET\n\nUP\nClean close above support & no rejection.",
       },
     ]);
   });
@@ -54,8 +54,8 @@ describe("live decision Telegram notifications", () => {
 
     notifier.trackDecision({
       asset: "btc",
-      period: "5m",
-      targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
+      period: "1h",
+      targetTsMs: Date.UTC(2026, 4, 15, 18),
       prediction: "d",
       reasoning: "Rejected above range.",
     });
@@ -77,8 +77,8 @@ describe("live decision Telegram notifications", () => {
 
     notifier.trackDecision({
       asset: "btc",
-      period: "5m",
-      targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
+      period: "1h",
+      targetTsMs: Date.UTC(2026, 4, 15, 18),
       prediction: "u",
       reasoning: "Continuation.",
     });
@@ -94,12 +94,12 @@ describe("live decision Telegram notifications", () => {
     expect(
       formatLiveDecisionTelegramCaption({
         asset: "eth",
-        period: "15m",
-        targetTsMs: Date.UTC(2026, 4, 15, 18, 15),
+        period: "1h",
+        targetTsMs: Date.UTC(2026, 4, 15, 18),
         prediction: "d",
         reasoning: "High sweep < prior range.",
       }),
-    ).toBe("ETH 2:15-2:30 PM ET\n\nDOWN\nHigh sweep < prior range.");
+    ).toBe("ETH 2:00-3:00 PM ET\n\nDOWN\nHigh sweep < prior range.");
   });
 });
 
@@ -109,8 +109,8 @@ function orderEvent(
   return {
     kind: "live-order",
     asset: "btc",
-    period: "5m",
-    tsMs: Date.UTC(2026, 4, 15, 18, 15),
+    period: "1h",
+    tsMs: Date.UTC(2026, 4, 15, 18),
     prediction: "u",
     status: "placed",
     attempt: 1,

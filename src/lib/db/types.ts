@@ -155,7 +155,7 @@ export interface CandidateBacktestQuarterResultTable {
   readonly config_hash: string;
   readonly config_json: unknown;
   readonly asset: string;
-  readonly timeframe: "5m" | "15m";
+  readonly timeframe: "1h";
   readonly source: "pyth";
   readonly quarter_start_ms: ColumnType<
     string,
@@ -196,7 +196,7 @@ export interface CandidateBacktestQuarterResultTable {
  */
 export interface PolymarketResolutionTable {
   readonly asset: string;
-  readonly timeframe: "5m" | "15m";
+  readonly timeframe: "1h";
   readonly window_start_ts_ms: ColumnType<
     string,
     string | number | bigint,
@@ -228,7 +228,7 @@ export interface PolymarketResolutionTable {
  */
 export interface PolymarketPriceSampleTable {
   readonly asset: string;
-  readonly timeframe: "5m" | "15m";
+  readonly timeframe: "1h";
   readonly window_start_ts_ms: ColumnType<
     string,
     string | number | bigint,

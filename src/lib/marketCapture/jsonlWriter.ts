@@ -15,7 +15,7 @@ import {
 import type { CaptureRecord } from "@alea/lib/marketCapture/types";
 
 /**
- * Append-only JSONL writer that rotates files at the 5-minute window
+ * Append-only JSONL writer that rotates files at the hourly window
  * boundary. Designed for a long-lived capture process: holds one open
  * file handle, appends every record as it arrives, and atomically
  * rotates on the wall-clock boundary.
@@ -170,7 +170,7 @@ export async function createCaptureJsonlWriter({
         // Route by WALL-CLOCK at write time, not by `record.tsMs`.
         //
         // We tried event-time routing first and it blew up at every
-        // 5-minute boundary: cross-venue clock skew puts simultaneous
+        // Window boundary: cross-venue clock skew puts simultaneous
         // events on opposite sides of the wall-clock boundary (Binance
         // says 14:59:59.97, Coinbase says 15:00:00.05). Routing by each
         // event's clock causes the writer to flip-flop between two

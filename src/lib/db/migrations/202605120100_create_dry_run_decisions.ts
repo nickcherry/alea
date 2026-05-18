@@ -38,7 +38,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       won smallint,
       constraint dry_run_prediction check (prediction in ('u', 'd')),
       constraint dry_run_won check (won is null or won in (0, 1)),
-      constraint dry_run_period check (period in ('5m', '15m'))
+      constraint dry_run_period check (period = '1h')
     )
   `.execute(db);
   await sql`

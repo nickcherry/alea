@@ -43,7 +43,7 @@ export const tradingRunCommand = defineCommand({
   name: "trading:run",
   summary: "Run live filter trading with real Polymarket orders",
   description:
-    "Long-running live trader. Hydrates Pyth bar history, pre-discovers and pre-subscribes next Polymarket markets, evaluates registered filters before each target candle opens (5m at T-2m, 15m at T-3m), and starts real post-only maker GTD order placement immediately after an actionable filter majority. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
+    "Long-running live trader. Hydrates Pyth 1h bar history, discovers and subscribes the current Polymarket 1h markets, evaluates registered filters 10 minutes before the current 1h candle closes, and starts real post-only maker GTD order placement immediately after an actionable filter majority. Reads POLYMARKET_PRIVATE_KEY and POLYMARKET_FUNDER_ADDRESS from the environment.",
   options: [
     defineValueOption({
       key: "periods",
@@ -64,8 +64,8 @@ export const tradingRunCommand = defineCommand({
   ],
   examples: [
     "bun alea trading:run",
-    "bun alea trading:run --periods 15m",
-    "bun alea trading:run --assets eth --periods 5m,15m",
+    "bun alea trading:run --periods 1h",
+    "bun alea trading:run --assets eth --periods 1h",
   ],
   output:
     "Streams market subscription, decision, and live-order placement events to stdout. Live order/fill state remains in Polymarket, not the local DB.",

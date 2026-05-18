@@ -28,7 +28,7 @@ export const candlesChartCommand = defineCommand({
   name: "candles:chart",
   summary: "Render a market candle chart PNG",
   description:
-    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Pyth BTC-USD 5m spot chart; pass --start/--end for an explicit range, and pass --show-indicators when you want the default indicator bundle.",
+    "Fetches candles from the selected source and renders a TradingView Lightweight Charts candlestick + volume PNG. Defaults to a recent Pyth BTC-USD 1h spot chart; pass --start/--end for an explicit range, and pass --show-indicators when you want the default indicator bundle.",
   options: [
     defineValueOption({
       key: "asset",
@@ -45,7 +45,7 @@ export const candlesChartCommand = defineCommand({
       valueName: "TIMEFRAME",
       choices: candleTimeframeValues,
       schema: candleTimeframeSchema
-        .default("5m")
+        .default("1h")
         .describe("Candle timeframe to render."),
     }),
     defineValueOption({
@@ -178,11 +178,11 @@ export const candlesChartCommand = defineCommand({
   ],
   examples: [
     "bun alea candles:chart",
-    "bun alea candles:chart --asset btc --timeframe 5m",
-    "bun alea candles:chart --asset eth --timeframe 15m --source coinbase",
-    "bun alea candles:chart --asset btc --timeframe 5m --start 2026-05-15T09:30:00Z --end 2026-05-15T13:30:00Z",
-    "bun alea candles:chart --asset btc --timeframe 5m --no-price-line --no-top-info",
-    "bun alea candles:chart --asset btc --timeframe 5m --show-indicators",
+    "bun alea candles:chart --asset btc --timeframe 1h",
+    "bun alea candles:chart --asset eth --timeframe 1h --source coinbase",
+    "bun alea candles:chart --asset btc --timeframe 1h --start 2026-05-15T09:00:00Z --end 2026-05-15T14:00:00Z",
+    "bun alea candles:chart --asset btc --timeframe 1h --no-price-line --no-top-info",
+    "bun alea candles:chart --asset btc --timeframe 1h --show-indicators",
     "bun alea candles:chart --source pyth --asset sol --out tmp/charts/sol-pyth.png --no-open",
   ],
   output: "Prints the rendered PNG path and candle window.",

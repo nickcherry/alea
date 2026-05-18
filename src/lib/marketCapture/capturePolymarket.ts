@@ -8,7 +8,7 @@ import type {
 
 /**
  * Wires the Polymarket market-data WS into the capture pipeline. The
- * `markets` set is window-scoped (Polymarket's up/down 5m markets get
+ * `markets` set is window-scoped (Polymarket's up/down 1h markets get
  * their own condition id per window), so the runner is expected to
  * `stop()` and re-create this whenever the active set changes — the
  * same pattern the trading runner uses.

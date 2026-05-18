@@ -16,7 +16,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
   it("builds a post-only maker BUY request for the predicted-side token", () => {
     const request = buildLiveMakerLimitBuyOrder({
       market: market({ tickSize: 0.001, negRisk: true }),
-      period: "5m",
+      period: "1h",
       prediction: "d",
       targetTsMs: 1_800_000,
       limitPrice: 0.497,
@@ -27,7 +27,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
       price: 0.497,
       size: 100.6036,
       side: Side.BUY,
-      expiration: 2100,
+      expiration: 5400,
     });
     expect(request.options).toEqual({ tickSize: "0.001", negRisk: true });
   });
@@ -35,7 +35,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
   it("falls back to the penny tick when metadata is missing", () => {
     const request = buildLiveMakerLimitBuyOrder({
       market: market({ tickSize: null, negRisk: null }),
-      period: "15m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       limitPrice: 0.5,
@@ -43,7 +43,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
 
     expect(request.userOrder.tokenID).toBe("UP");
     expect(request.userOrder.size).toBe(100);
-    expect(request.userOrder.expiration).toBe(2700);
+    expect(request.userOrder.expiration).toBe(5400);
     expect(request.options).toEqual({ tickSize: "0.01", negRisk: false });
   });
 
@@ -51,7 +51,7 @@ describe("buildLiveMakerLimitBuyOrder", () => {
     expect(() =>
       buildLiveMakerLimitBuyOrder({
         market: market({ tickSize: 0.01, negRisk: false }),
-        period: "5m",
+        period: "1h",
         prediction: "u",
         targetTsMs: 1_800_000,
         limitPrice: Number.NaN,
@@ -86,7 +86,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs,
       confidence: 0.6,
@@ -98,13 +98,13 @@ describe("createLiveOrderExecutor", () => {
       discoveryCalls.every(
         (call) =>
           call.asset === "btc" &&
-          call.timeframe === "5m" &&
+          call.timeframe === "1h" &&
           call.windowStartTsMs === targetTsMs,
       ),
     ).toBe(true);
   });
 
-  it("starts placement immediately after a pre-open decision with one tick below 50c when no quote is available", async () => {
+  it("starts placement immediately after a current-market decision with one tick below 50c when no quote is available", async () => {
     const calls: PostedOrder[] = [];
     const executor = createLiveOrderExecutor({
       client: fakeClient({
@@ -122,7 +122,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: 0.6,
@@ -168,7 +168,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: 0.6,
@@ -205,7 +205,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: 0.51,
@@ -239,7 +239,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: 0.6,
@@ -273,7 +273,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: null,
@@ -283,7 +283,7 @@ describe("createLiveOrderExecutor", () => {
     expect(sleeps[0]).toBe(100);
   });
 
-  it("retries pre-open cancel-only responses", async () => {
+  it("retries venue cancel-only responses", async () => {
     const calls: PostedOrder[] = [];
     const sleeps: number[] = [];
     const executor = createLiveOrderExecutor({
@@ -312,7 +312,7 @@ describe("createLiveOrderExecutor", () => {
 
     await executor.scheduleOrder({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       prediction: "u",
       targetTsMs: 1_800_000,
       confidence: null,

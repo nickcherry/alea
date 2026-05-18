@@ -6,7 +6,7 @@ import type { Asset } from "@alea/types/assets";
 /**
  * Wires Polymarket's Chainlink-derived RTDS reference price into the
  * capture pipeline. Chainlink is the actual settlement source for the
- * up/down 5m markets, so this is the most direct ground truth we can
+ * up/down markets, so this is the most direct ground truth we can
  * record alongside Pyth and Polymarket market-data events. Source
  * label: `polymarket-chainlink`.
  *

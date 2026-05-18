@@ -2,13 +2,15 @@
 
 ## Purpose
 
-We're building a model that bets on Polymarket's 5-minute crypto up/down markets. Those markets settle on a Chainlink oracle price feed at the end of each 5-minute window: above the start-line price → "Up" wins, below → "Down" wins.
+This is a sensor-quality experiment for Polymarket's `1h` crypto up/down
+markets. The latency question is whether venue feeds move early enough to help
+with a decision before the hourly settlement window closes.
 
 To bet profitably we need a directional read on where the Chainlink feed is going to land before the window closes. Chainlink itself only emits at ~1 Hz with a 0.05% deviation threshold, so by the time it tells us a move is happening the move has often already happened. The question is: **which exchange feed gives us the earliest reliable signal that Chainlink is about to move?**
 
-We don't care about absolute price accuracy — every venue has its own basis (perps trade at funding-rate offsets to spot, individual exchanges drift relative to the cross-venue mean). What matters is the **relative move**: at the start of each 5-minute window we anchor every venue's price to its own value at T=0, and from then on we're tracking percentage deviation. The venue whose deviation reliably leads Chainlink's deviation is the one we want our model conditioned on.
+We don't care about absolute price accuracy — every venue has its own basis (perps trade at funding-rate offsets to spot, individual exchanges drift relative to the cross-venue mean). What matters is the **relative move**: at the start of each settlement window we anchor every venue's price to its own value at T=0, and from then on we're tracking percentage deviation. The venue whose deviation reliably leads Chainlink's deviation is the one we want our model conditioned on.
 
-This isn't the trading model itself. It's the upstream choice of "which sensor goes into the model." The model itself is a separate effort — it consumes historical 5-minute windows and learns conditional probabilities of "given price moved X% in the first N seconds, what's the probability the window settles Up vs Down?"
+This isn't the trading model itself. It's the upstream choice of "which sensor goes into the model."
 
 ## Tooling
 
@@ -19,7 +21,7 @@ This isn't the trading model itself. It's the upstream choice of "which sensor g
   - `coinbase-spot`, `coinbase-perp` — Coinbase International perp via `BTC-PERP-INTX`; both via the `level2` channel with same price-or-qty-at-top semantics as Binance
   - `polymarket-chainlink` — the RTDS feed Polymarket itself uses to settle. **This is the baseline.** ~1 Hz, dictated by Chainlink Data Streams' heartbeat
 - `--exhaustive`: adds every other supported venue (bitstamp, gemini, okx spot+swap, bybit spot+perp) and overlays spot/perp VWAP consensus lines. Used for the broader cross-venue sanity check.
-- `--duration <seconds>`: capture window length (default 120). Use `--duration 300` for a 5-minute window matching one Polymarket settlement interval.
+- `--duration <seconds>`: capture window length (default 120). Use `--duration 3600` for a full 1-hour settlement interval.
 
 `bun alea latency:chart [path]` re-renders the HTML chart from a saved JSON capture. Default picks the most recent file under `alea/tmp/`.
 
@@ -50,7 +52,7 @@ All four primary feeds (Binance spot+perp, Coinbase spot+perp) reliably show pri
 - **Connection ramp-up** (~1.7s in the worst case): exchanges open WebSocket connections and emit their first frame at staggered intervals. The first 1-2 seconds of each capture have lines for some venues coming online while others haven't yet.
 - **Apparent flat regions** are usually real BBO calmness, not feed loss. Especially Coinbase: BTC-USD has a 1¢ spread and deep inside liquidity, so the BBO genuinely doesn't churn as fast as Binance.
 - **All venues' tick timestamps are local receipt time** (`Date.now()` at message arrival), not the exchange's own timestamp. For lead/lag purposes this is what matters — we want the bot's reaction time, which is gated by network arrival.
-- **Polymarket's CLOB market WebSocket** (the `wss://ws-subscriptions-clob.polymarket.com` endpoint) is much higher rate (~200 Hz during active windows) but does **not** carry an underlying BTC price — it streams the binary outcome token's orderbook in $0–$1. We don't currently subscribe to it; if we want a "what are Polymarket traders pricing this market at" signal it's a separate panel and a separate analysis (and would require auto-rolling the subscription every 5 minutes as new market slots open).
+- **Polymarket's CLOB market WebSocket** (the `wss://ws-subscriptions-clob.polymarket.com` endpoint) is much higher rate (~200 Hz during active windows) but does **not** carry an underlying BTC price — it streams the binary outcome token's orderbook in $0–$1. We don't currently subscribe to it; if we want a "what are Polymarket traders pricing this market at" signal it's a separate panel and a separate analysis.
 
 ## Files
 

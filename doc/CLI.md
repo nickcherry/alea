@@ -24,11 +24,11 @@ Everything that matters is reachable through one non-interactive entrypoint:
 - `db:*`
   `db:migrate`
 - `candles:*`
-  `candles:sync` — backfills canonical candles for one ingestion timeframe. Supported storage timeframes are `1m`, `5m`, `15m`, and `1h`; the default is `5m`. Hourly candles are data-only today and do not make `dry:run` or Polymarket resolution sync trade hourly markets.
+  `candles:sync` — backfills canonical candles for one ingestion timeframe. The default is `1h`.
   `candles:fill-gaps` — refetches missing bars for one stored candle timeframe.
-  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `5m`; use `--start`/`--end` for an explicit time range and `--show-indicators` for SMA, RSI-divergence, and sweep-rejection overlays.
+  `candles:chart` — fetches candles directly from a configured source/product/asset/timeframe and renders a TradingView Lightweight Charts PNG. Defaults to recent Pyth spot BTC `1h`; use `--start`/`--end` for an explicit time range and `--show-indicators` for opt-in indicator overlays.
 - `backtest:*`
-  `backtest:run` — evaluates the candidates registered for each selected period against stored Pyth candles, using 1m bars to synthesize the pre-open active candle and persisting missing or stale quarterly results to `candidate_backtest_quarter_results`. See [BACKTESTS.md](./BACKTESTS.md).
+  `backtest:run` — evaluates the candidates registered for each selected 1h market against stored Pyth candles, using 1m bars to synthesize the current-hour candle at HH:50 and persisting missing or stale quarterly results to `candidate_backtest_quarter_results`. See [BACKTESTS.md](./BACKTESTS.md).
 - `dry:*`
   `dry:run` — long-running process that refreshes Pyth candles at decision time, synthesizes the active Pyth bar from the latest Pyth price, evaluates the candidates registered for the market period, persists actionable up/down majorities to `dry_run_decisions`, and tracks the configured simulated Polymarket order fill status. See [DRY_RUN.md](./DRY_RUN.md).
 - `filters:*`
@@ -50,10 +50,12 @@ Everything that matters is reachable through one non-interactive entrypoint:
   `telegram:test`
 - `polymarket:*`
   `polymarket:auth-check`
-  `polymarket:price-sample` — long-running sampler that records compact live 5m/15m Polymarket UP price paths into `polymarket_price_samples`, feeding the `/price-paths/` dashboard's 50c calibration views.
+  `polymarket:price-sample` — long-running sampler that records compact live 1h Polymarket UP price paths into `polymarket_price_samples`, feeding the `/price-paths/` dashboard's 50c calibration views. Defaults to current trading assets and one sample per active market per minute.
   `polymarket:resolutions-sync` — backfills settled Polymarket up/down crypto market outcomes into `polymarket_resolutions`. Pair with Pyth candles to drive the proxy-accuracy dashboard. See [PROXY.md](./PROXY.md).
+- `research:*`
+  `research:rsi-divergence-sweep` — local 1h RSI-divergence grid sweep that writes JSON findings under `doc/results-artifacts/` without touching trading tables.
 - `trading:*`
-  `trading:run` — long-running live trader. Uses the same filter-decision path as dry-run, pre-discovers/pre-subscribes next Polymarket markets, and places real GTD post-only maker orders after actionable up/down majorities. Defaults to the BTC/ETH/SOL/DOGE `5m` + `15m` market set; use `--assets` / `--periods` to override within the currently enabled trading assets. See [LIVE_TRADING.md](./LIVE_TRADING.md).
+  `trading:run` — long-running live trader. Uses the same filter-decision path as dry-run, subscribes the current Polymarket 1h markets, and places real GTD post-only maker orders after actionable up/down majorities. Defaults to the BTC/ETH/SOL/DOGE `1h` market set; use `--assets` / `--periods` to override within the currently enabled trading assets. See [LIVE_TRADING.md](./LIVE_TRADING.md).
   `trading:hydrate-lifetime-pnl` — operator escape hatch to refresh the on-disk Polymarket lifetime-PnL checkpoint.
   `trading:performance` — print the latest lifetime PnL summary scanned from Polymarket data-api.
 - `help`
@@ -68,30 +70,26 @@ PNG without depending on local candle sync state. The command fetches
 directly from the requested source/product/asset/timeframe and renders
 the image with TradingView Lightweight Charts through local Chrome.
 
-Recent-window mode is the default. Trading timeframes use the same visual
-history window used by operator chart review: `5m` charts render the most
-recent 2 days of completed candles, and `15m` charts render the most recent
-4 days. Use `--bars` only when you need to override that default:
-Use `--bars` only when you need to override that default:
+Recent-window mode is the default. For active trading review, `1h` charts use
+the standard recent-bar fallback unless you pass `--bars`.
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m
-bun alea candles:chart --asset btc --timeframe 15m
-bun alea candles:chart --asset btc --timeframe 5m --bars 288
+bun alea candles:chart --asset btc --timeframe 1h
+bun alea candles:chart --asset btc --timeframe 1h --bars 288
 ```
 
 Explicit range mode uses `--start` and optional `--end`. Both values are
 floored to the selected timeframe boundary, and `--end` is an exclusive
-cutoff: a `5m` chart with `--end 2026-05-15T13:30:00Z` shows the candle
-that opened at `13:25:00Z`, not the candle that opens at `13:30:00Z`. If
+cutoff: a `1h` chart with `--end 2026-05-15T14:00:00Z` shows the candle
+that opened at `13:00:00Z`, not the candle that opens at `14:00:00Z`. If
 `--end` is omitted, the range runs through the latest completed candle.
 Ranges are capped at 2,000 bars.
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m \
-  --start 2026-05-15T09:30:00Z \
-  --end 2026-05-15T13:30:00Z \
-  --out tmp/charts/btc-pyth-5m.png
+bun alea candles:chart --asset btc --timeframe 1h \
+  --start 2026-05-15T09:00:00Z \
+  --end 2026-05-15T14:00:00Z \
+  --out tmp/charts/btc-pyth-1h.png
 ```
 
 By default, chart images are plain candlestick + volume charts. Use
@@ -104,14 +102,14 @@ price horizontal line and right-edge last-value label, and use
 `--no-top-info` to hide the OHLC/change/range block at the top:
 
 ```sh
-bun alea candles:chart --asset btc --timeframe 5m \
-  --start 2026-05-15T09:30:00Z \
-  --end 2026-05-15T13:30:00Z \
+bun alea candles:chart --asset btc --timeframe 1h \
+  --start 2026-05-15T09:00:00Z \
+  --end 2026-05-15T14:00:00Z \
   --no-price-line \
   --no-top-info
 ```
 
-The default chart is Pyth spot BTC `5m`, matching Alea's canonical
+The default chart is Pyth spot BTC `1h`, matching Alea's canonical
 price/outcome source. Pyth does not publish venue volume, so the volume
 pane is omitted; pass `--source coinbase` when you want Coinbase trade
 volume. Use `--source`, `--product`, `--asset`, and `--timeframe` to
@@ -144,7 +142,7 @@ Each chart marks:
 To inspect stale-signal cases directly, ask for invalidated samples:
 
 ```sh
-bun alea filters:visualize --sample-kind invalidated --assets btc,eth --periods 15m
+bun alea filters:visualize --sample-kind invalidated --assets btc,eth --periods 1h
 ```
 
 Useful review knobs:

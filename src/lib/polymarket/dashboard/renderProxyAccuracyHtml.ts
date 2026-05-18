@@ -28,7 +28,7 @@ export function renderProxyAccuracyHtml({
   const payloadJson = escapeJsonForHtml({ value: JSON.stringify(payload) });
 
   const initialTimeframe: ResolutionTimeframe =
-    payload.breakdowns[0]?.timeframe ?? "5m";
+    payload.breakdowns[0]?.timeframe ?? "1h";
 
   return `<!doctype html>
 <html lang="en" data-theme="dark">
@@ -47,16 +47,7 @@ export function renderProxyAccuracyHtml({
     </header>
     ${renderTopNav({ activeId: "proxy" })}
     <main class="alea-main">
-      <div class="alea-page-controls">
-        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
-          ${["5m", "15m"]
-            .map(
-              (tf) =>
-                `<button class="alea-pill-tab is-prominent proxy-period-tab" role="tab" data-period="${tf}" aria-selected="${tf === initialTimeframe ? "true" : "false"}">${tf}</button>`,
-            )
-            .join("\n          ")}
-        </div>
-      </div>
+      ${renderTimeframeControls({ payload, initialTimeframe })}
 
       ${payload.breakdowns
         .map((b) =>
@@ -83,6 +74,28 @@ export function renderProxyAccuracyHtml({
 </html>`;
 }
 
+function renderTimeframeControls({
+  payload,
+  initialTimeframe,
+}: {
+  readonly payload: ProxyAccuracyPayload;
+  readonly initialTimeframe: ResolutionTimeframe;
+}): string {
+  if (payload.breakdowns.length <= 1) {
+    return "";
+  }
+  return `<div class="alea-page-controls">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          ${payload.breakdowns
+            .map(
+              (b) =>
+                `<button class="alea-pill-tab is-prominent proxy-period-tab" role="tab" data-period="${b.timeframe}" aria-selected="${b.timeframe === initialTimeframe ? "true" : "false"}">${b.timeframe}</button>`,
+            )
+            .join("\n          ")}
+        </div>
+      </div>`;
+}
+
 function renderTimeframeSection({
   breakdown,
   isActive,
@@ -101,7 +114,8 @@ function renderTimeframeSection({
               title: "Disagreements by Pyth move size",
               buckets: breakdown.aggregate.moveBucketsDisagree,
               total: breakdown.aggregate.disagreed,
-              empty: "No disagreements — Pyth matches Polymarket on every window.",
+              empty:
+                "No disagreements — Pyth matches Polymarket on every window.",
             })}
             ${renderBucketBlock({
               title: "All windows by Pyth move size",
@@ -305,7 +319,7 @@ function renderExtremeTable({
 }
 
 const PER_ASSET_TIPS = {
-  asset: "Crypto symbol the 5-minute up/down market settled on.",
+  asset: "Crypto symbol the up/down market settled on.",
   windows:
     "Number of resolution windows we have both a Polymarket outcome and a Pyth open/close for in this timeframe.",
   agreement:
@@ -323,7 +337,7 @@ const PER_ASSET_TIPS = {
 } as const;
 
 const EXTREME_TIPS = {
-  time: "Start of the 5-minute resolution window.",
+  time: "Start of the resolution window.",
   asset: "Crypto symbol the market settled on.",
   polymarket:
     "Direction Polymarket resolved to (up / down / flat), derived from Chainlink Data Streams.",
@@ -403,4 +417,3 @@ function escapeHtml({ value }: { readonly value: string }): string {
 function escapeJsonForHtml({ value }: { readonly value: string }): string {
   return value.replaceAll("<", "\\u003c");
 }
-

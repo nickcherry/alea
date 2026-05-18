@@ -50,7 +50,7 @@ export type IngestSessionJsonlResult = {
  * renamed on success, which is enough idempotence for the common
  * "rerun ingester after a crash" case.
  *
- * The file is read fully into memory (one 5-minute window at our
+ * The file is read fully into memory (one hourly window at our
  * expected event rates fits in tens of MB at most). If we ever need
  * to ingest much larger files, swap to a line-streaming reader; the
  * chunk loop already handles backpressure naturally.

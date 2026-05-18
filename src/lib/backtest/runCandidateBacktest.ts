@@ -7,6 +7,7 @@ import {
   CANDIDATE_BACKTEST_START_MS,
 } from "@alea/constants/backtest";
 import {
+  tradeDecisionFireTimeMs,
   tradeDecisionHydrateBars,
   tradeDecisionLeadTimeMs,
   type TradeDecisionPeriod,
@@ -152,7 +153,7 @@ async function runMarketCandidateBacktest({
       db,
       asset,
       timeframe: "1m",
-      startMs: Math.max(0, startMs - periodMs),
+      startMs,
       endMs,
     }),
   ]);
@@ -191,12 +192,18 @@ async function runMarketCandidateBacktest({
   let decisionCount = 0;
   for (const targetBar of targetBars) {
     const targetTsMs = targetBar.openTimeMs;
-    const activeOpenTimeMs = targetTsMs - periodMs;
-    const decisionTsMs = targetTsMs - leadTimeMs;
+    const activeOpenTimeMs = targetTsMs;
+    const decisionTsMs = tradeDecisionFireTimeMs({
+      period,
+      targetTsMs,
+    });
+    if (decisionTsMs >= endMs) {
+      continue;
+    }
     const quarterStartMs = quarterStartFor({ tsMs: targetTsMs });
     const closedEndIndex = lowerBoundOpenTime({
       bars: periodBars,
-      openTimeMs: activeOpenTimeMs,
+      openTimeMs: targetTsMs,
     });
     const history = periodBars.slice(
       Math.max(0, closedEndIndex - (hydrateBars - 1)),
@@ -329,7 +336,7 @@ async function buildCachePlans({
       0,
       windowStartMs - periodMs * (hydrateBars + 2),
     );
-    const minuteStartMs = Math.max(0, windowStartMs - periodMs);
+    const minuteStartMs = windowStartMs;
     const inputDataHash = candidateBacktestInputDataHash({
       periodBars,
       minuteBars,

@@ -57,7 +57,7 @@ export const candlesSyncCommand = defineCommand({
       valueName: "TIMEFRAME",
       choices: candleTimeframeValues,
       schema: candleTimeframeSchema
-        .default("5m")
+        .default("1h")
         .describe("Candle timeframe to fetch."),
     }),
     defineValueOption({
@@ -107,7 +107,7 @@ export const candlesSyncCommand = defineCommand({
   ],
   examples: [
     "bun alea candles:sync",
-    "bun alea candles:sync --timeframe 5m --days 730",
+    "bun alea candles:sync --timeframe 1h --days 730",
     "bun alea candles:sync --timeframe 1h --sources pyth --products spot",
     "bun alea candles:sync --assets btc,eth --sources pyth",
     "bun alea candles:sync --products spot",

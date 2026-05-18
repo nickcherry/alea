@@ -42,7 +42,7 @@ export const candlesFillGapsCommand = defineCommand({
       valueName: "TIMEFRAME",
       choices: candleTimeframeValues,
       schema: candleTimeframeSchema
-        .default("5m")
+        .default("1h")
         .describe("Candle timeframe to repair."),
     }),
     defineValueOption({

@@ -26,7 +26,7 @@ const topic = "crypto_prices_chainlink";
  * is re-sent on every (re)connect.
  *
  * Polymarket is the venue we trade against; the Chainlink-derived
- * reference IS the true settlement source for the up/down 5m markets.
+ * reference IS the true settlement source for Polymarket up/down markets.
  * This is the only feed for which Polymarket and "the source of
  * truth" coincide, so capturing it directly is critical for proxy-
  * mismatch research (the Binance vs. Chainlink divergence that

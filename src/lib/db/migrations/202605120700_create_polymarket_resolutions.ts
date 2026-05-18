@@ -26,7 +26,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       fetched_at_ms bigint not null,
       primary key (asset, timeframe, window_start_ts_ms),
       constraint polymarket_resolutions_timeframe_check
-        check (timeframe in ('5m', '15m')),
+        check (timeframe = '1h'),
       constraint polymarket_resolutions_outcome_check
         check (outcome in ('up', 'down', 'void'))
     )

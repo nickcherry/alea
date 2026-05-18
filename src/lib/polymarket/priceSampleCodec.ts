@@ -18,9 +18,7 @@
  *   v2 — offsetMs is signed (i32). Negative offsets are pre-market ticks
  *        captured before `window_start_ts_ms`.
  *
- * Buffer is host byte order (LE on x86/arm64). A 15m × 1s capture is
- * 8 + 900 × 8 = 7208 bytes; adding 5m of pre-market at 1Hz brings a
- * 15m capture to 8 + 1200 × 8 = 9608 bytes.
+ * Buffer is host byte order (LE on x86/arm64).
  */
 
 export const PRICE_SAMPLE_CODEC_VERSION = 2;

@@ -1,3 +1,4 @@
+import { DASHBOARD_RESOLUTION_TIMEFRAMES } from "@alea/constants/dashboard";
 import { OUTCOME_MIN_ABS_MOVE_PCT } from "@alea/constants/outcome";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
@@ -12,12 +13,11 @@ import type {
   ProxyAccuracyTimeframeBreakdown,
 } from "@alea/lib/polymarket/dashboard/types";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
-import { resolutionTimeframeValues } from "@alea/types/resolutions";
 import { sql } from "kysely";
 
 const EXTREME_DISAGREEMENT_LIMIT = 50;
 const PROXY_ACCURACY_PAYLOAD_CACHE_KEY = "proxy-accuracy";
-const PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION = 2;
+const PROXY_ACCURACY_PAYLOAD_CACHE_SCHEMA_VERSION = 4;
 
 type ProxyAccuracyPayloadCacheKey = {
   readonly schemaVersion: number;
@@ -80,6 +80,7 @@ async function buildProxyAccuracyPayload({
       and pyth.asset = poly.asset
       and pyth.timeframe = poly.timeframe
       and pyth.timestamp = to_timestamp(poly.window_start_ts_ms / 1000.0)
+    where poly.timeframe in (${dashboardTimeframeSqlValues()})
   `.execute(db);
 
   const rows = rowsResult.rows;
@@ -105,7 +106,7 @@ async function buildProxyAccuracyPayload({
       }>
     >
   >();
-  for (const tf of resolutionTimeframeValues) {
+  for (const tf of DASHBOARD_RESOLUTION_TIMEFRAMES) {
     byTimeframe.set(tf, new Map());
   }
 
@@ -167,7 +168,7 @@ async function buildProxyAccuracyPayload({
   };
 
   const breakdowns: ProxyAccuracyTimeframeBreakdown[] = [];
-  for (const timeframe of resolutionTimeframeValues) {
+  for (const timeframe of DASHBOARD_RESOLUTION_TIMEFRAMES) {
     const assetMap = byTimeframe.get(timeframe);
     if (assetMap === undefined) {
       continue;
@@ -311,6 +312,7 @@ async function loadResolutionsFingerprint({
           end
         ) * (window_start_ts_ms % 1000003))::text as outcome_checksum
       from polymarket_resolutions
+      where timeframe in (${dashboardTimeframeSqlValues()})
       group by asset, timeframe
     )
     select coalesce(
@@ -351,7 +353,7 @@ async function loadPythCandleFingerprint({
       from candles
       where source = 'pyth'
         and product = 'spot'
-        and timeframe in ('5m', '15m')
+        and timeframe in (${dashboardTimeframeSqlValues()})
       group by asset, timeframe
     )
     select coalesce(
@@ -371,6 +373,12 @@ async function loadPythCandleFingerprint({
     from grouped
   `.execute(db);
   return rows.rows[0]?.fingerprint ?? "empty";
+}
+
+function dashboardTimeframeSqlValues() {
+  return sql.raw(
+    DASHBOARD_RESOLUTION_TIMEFRAMES.map((tf) => `'${tf}'`).join(", "),
+  );
 }
 
 function isProxyAccuracyPayload(value: unknown): value is ProxyAccuracyPayload {

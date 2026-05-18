@@ -25,7 +25,7 @@ export const reliabilityCaptureCommand = defineCommand({
   name: "reliability:capture",
   summary: "Compare directional outcomes across exchange feeds",
   description:
-    "Opens multi-asset quote streams for Coinbase spot/perp, Binance spot/perp, and Polymarket Chainlink RTDS. It checks whether the faster exchange feeds we train and trade from virtually always finish each 5-minute window on the same side as Polymarket's Chainlink baseline.",
+    "Opens multi-asset quote streams for Coinbase spot/perp, Binance spot/perp, and Polymarket Chainlink RTDS. It checks whether the faster exchange feeds we train and trade from virtually always finish each 1h window on the same side as Polymarket's Chainlink baseline.",
   options: [
     defineValueOption({
       key: "duration",
@@ -58,7 +58,7 @@ export const reliabilityCaptureCommand = defineCommand({
         .int()
         .nonnegative()
         .default(DEFAULT_GRACE_MS)
-        .describe("Max lag after a 5m boundary before an end tick is missing."),
+        .describe("Max lag after a 1h boundary before an end tick is missing."),
     }),
     defineValueOption({
       key: "nearZeroBp",

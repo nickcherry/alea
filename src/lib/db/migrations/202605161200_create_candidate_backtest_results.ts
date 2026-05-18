@@ -27,7 +27,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
       decision_schema_version integer not null,
       decisions jsonb not null,
       generated_at_ms bigint not null,
-      constraint candidate_backtest_timeframe_check check (timeframe in ('5m', '15m')),
+      constraint candidate_backtest_timeframe_check check (timeframe = '1h'),
       constraint candidate_backtest_source_check check (source = 'pyth'),
       constraint candidate_backtest_counts_check check (
         evaluated_count >= 0

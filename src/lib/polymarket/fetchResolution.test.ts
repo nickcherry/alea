@@ -32,7 +32,7 @@ describe("fetchPolymarketResolution", () => {
     globalThis.fetch = mockJsonResponse([]);
     const result = await fetchPolymarketResolution({
       asset: "btc",
-      timeframe: "5m",
+      timeframe: "1h",
       windowStartTsMs: 1_700_000_000_000,
     });
     expect(result.kind).toBe("missing");
@@ -41,7 +41,7 @@ describe("fetchPolymarketResolution", () => {
   it("returns resolved up when outcomePrices is [1, 0]", async () => {
     globalThis.fetch = mockJsonResponse([
       {
-        slug: "btc-updown-5m-1700000000",
+        slug: "bitcoin-up-or-down-nov-14-2023-10pm-et",
         markets: [
           {
             conditionId: "0xCOND",
@@ -54,7 +54,7 @@ describe("fetchPolymarketResolution", () => {
     ]);
     const result = await fetchPolymarketResolution({
       asset: "btc",
-      timeframe: "5m",
+      timeframe: "1h",
       windowStartTsMs: 1_700_000_000_000,
     });
     expect(result.kind).toBe("resolved");
@@ -72,7 +72,7 @@ describe("fetchPolymarketResolution", () => {
   it("returns resolved down when outcomePrices is [0, 1]", async () => {
     globalThis.fetch = mockJsonResponse([
       {
-        slug: "btc-updown-5m-1700000000",
+        slug: "bitcoin-up-or-down-nov-14-2023-10pm-et",
         markets: [
           {
             conditionId: "0xCOND",
@@ -85,7 +85,7 @@ describe("fetchPolymarketResolution", () => {
     ]);
     const result = await fetchPolymarketResolution({
       asset: "btc",
-      timeframe: "5m",
+      timeframe: "1h",
       windowStartTsMs: 1_700_000_000_000,
     });
     expect(result.kind).toBe("resolved");
@@ -101,7 +101,7 @@ describe("fetchPolymarketResolution", () => {
   it("returns resolved void when both legs are 0", async () => {
     globalThis.fetch = mockJsonResponse([
       {
-        slug: "btc-updown-5m-1700000000",
+        slug: "bitcoin-up-or-down-nov-14-2023-10pm-et",
         markets: [
           {
             conditionId: "0xCOND",
@@ -113,7 +113,7 @@ describe("fetchPolymarketResolution", () => {
     ]);
     const result = await fetchPolymarketResolution({
       asset: "btc",
-      timeframe: "5m",
+      timeframe: "1h",
       windowStartTsMs: 1_700_000_000_000,
     });
     expect(result.kind).toBe("resolved");
@@ -127,7 +127,7 @@ describe("fetchPolymarketResolution", () => {
   it("returns pending when outcomePrices is absent", async () => {
     globalThis.fetch = mockJsonResponse([
       {
-        slug: "btc-updown-5m-1700000000",
+        slug: "bitcoin-up-or-down-nov-14-2023-10pm-et",
         markets: [
           {
             conditionId: "0xCOND",
@@ -138,13 +138,13 @@ describe("fetchPolymarketResolution", () => {
     ]);
     const result = await fetchPolymarketResolution({
       asset: "btc",
-      timeframe: "5m",
+      timeframe: "1h",
       windowStartTsMs: 1_700_000_000_000,
     });
     expect(result.kind).toBe("pending");
   });
 
-  it("builds the slug from asset, timeframe, and unix-seconds window", async () => {
+  it("builds hourly slugs in the venue's ET slug family", async () => {
     let capturedUrl = "";
     globalThis.fetch = mock(async (input: string | URL | Request) => {
       capturedUrl =
@@ -156,10 +156,10 @@ describe("fetchPolymarketResolution", () => {
       return new Response(JSON.stringify([]), { status: 200 });
     }) as unknown as typeof originalFetch;
     await fetchPolymarketResolution({
-      asset: "eth",
-      timeframe: "15m",
-      windowStartTsMs: 1_778_517_000_000,
+      asset: "doge",
+      timeframe: "1h",
+      windowStartTsMs: 1_779_048_000_000,
     });
-    expect(capturedUrl).toContain("eth-updown-15m-1778517000");
+    expect(capturedUrl).toContain("dogecoin-up-or-down-may-17-2026-4pm-et");
   });
 });

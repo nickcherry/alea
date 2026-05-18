@@ -9,7 +9,7 @@ import type { Asset } from "@alea/types/assets";
  */
 
 /**
- * One "up/down 5m" market the capture pipeline tracks. `vendorRef`,
+ * One "up/down" market the capture pipeline tracks. `vendorRef`,
  * `upRef`, and `downRef` are opaque strings that can embed venue-
  * native ids (Polymarket conditionId + clob tokenIds) without the
  * downstream pipeline caring about their shape. `asset` is the only

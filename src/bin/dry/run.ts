@@ -35,11 +35,11 @@ const commaSeparatedAssetsSchema = z
 
 /**
  * Boots the dry-run trader loop. Hydrates per-asset bar history from
- * the `candles` table, refreshes recent Pyth candles before each
- * configured period boundary, synthesizes the active candle from the
+ * the `candles` table, refreshes recent Pyth candles 10 minutes before each
+ * 1h market closes, synthesizes the current-hour candle from the
  * latest Pyth price, and evaluates the candidates registered for the period.
  * Actionable filter-majority decisions land in `dry_run_decisions`; the
- * configured pre-open Polymarket order is simulated; outcomes are scored once
+ * configured current-market Polymarket order is simulated; outcomes are scored once
  * the target bar finalizes.
  *
  * Stays running until SIGINT / SIGTERM. Intended to live in a
@@ -49,7 +49,7 @@ export const dryRunCommand = defineCommand({
   name: "dry:run",
   summary: "Run filter decisions in dry-run mode",
   description:
-    "Long-running process. Hydrates bar history from `candles`, refreshes recent Pyth candles before each configured boundary (5m at T-2m, 15m at T-3m), synthesizes the active candle from the latest Pyth price, and evaluates the candidates registered for the period. Actionable filter-majority decisions land in `dry_run_decisions`; the configured pre-open Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
+    "Long-running process. Hydrates 1h bar history from `candles`, refreshes recent Pyth candles 10 minutes before the current 1h market closes, synthesizes the current-hour candle from the latest Pyth price, and evaluates the candidates registered for the period. Actionable filter-majority decisions land in `dry_run_decisions`; the configured Polymarket order is simulated immediately after the decision; outcomes auto-score when the target bar closes.",
   options: [
     defineValueOption({
       key: "periods",
@@ -70,8 +70,8 @@ export const dryRunCommand = defineCommand({
   ],
   examples: [
     "bun alea dry:run",
-    "bun alea dry:run --periods 15m",
-    "bun alea dry:run --assets eth --periods 5m,15m",
+    "bun alea dry:run --periods 1h",
+    "bun alea dry:run --assets eth --periods 1h",
   ],
   output:
     "Streams decision, simulated-order, and outcome events to stdout. Persists to the `dry_run_decisions` table.",

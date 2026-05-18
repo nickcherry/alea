@@ -244,8 +244,7 @@ export async function refreshTradeDecisionCandleState({
     };
   }
   // Coinbase active bar: take the partial bar Coinbase returned for
-  // the open period (the Advanced Trade API serves partial 5m/15m
-  // bars). If absent, the active Coinbase slot is null.
+  // the open period. If absent, the active Coinbase slot is null.
   const coinbasePartial =
     fetchedCoinbaseBars.find((bar) => bar.openTimeMs === currentOpenTimeMs) ??
     null;

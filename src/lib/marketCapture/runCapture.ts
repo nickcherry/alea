@@ -9,11 +9,11 @@ import { createCaptureSink } from "@alea/lib/marketCapture/captureSink";
 import { ingestSessionJsonl } from "@alea/lib/marketCapture/ingestSessionJsonl";
 import { createCaptureJsonlWriter } from "@alea/lib/marketCapture/jsonlWriter";
 import { scanPendingSessions } from "@alea/lib/marketCapture/scanPendingSessions";
-import { sessionForWindow } from "@alea/lib/marketCapture/session";
 import {
-  currentWindowStartMs,
-  FIVE_MINUTES_MS,
-} from "@alea/lib/time/fiveMinuteWindow";
+  CAPTURE_WINDOW_MS,
+  sessionForWindow,
+  windowStartFor,
+} from "@alea/lib/marketCapture/session";
 import { discoverPolymarketMarket } from "@alea/lib/trading/vendor/polymarket/discoverMarket";
 import type {
   MarketDataStreamHandle,
@@ -230,12 +230,12 @@ async function refreshPolymarketSubscription({
     return;
   }
   const nowMs = Date.now();
-  const currentStart = currentWindowStartMs({ nowMs });
-  const nextStart = currentStart + FIVE_MINUTES_MS;
+  const currentStart = windowStartFor({ nowMs });
+  const nextStart = currentStart + CAPTURE_WINDOW_MS;
 
   // Drop windows whose tail has fully passed.
   for (const windowStart of [...polyState.activeMarkets.keys()]) {
-    if (windowStart + FIVE_MINUTES_MS + WINDOW_TAIL_MS < nowMs) {
+    if (windowStart + CAPTURE_WINDOW_MS + WINDOW_TAIL_MS < nowMs) {
       polyState.activeMarkets.delete(windowStart);
     }
   }
@@ -337,6 +337,7 @@ async function discoverWindow({
     }
     const discovered = await discoverPolymarketMarket({
       asset,
+      timeframe: "1h",
       windowStartUnixSeconds,
       signal,
     });

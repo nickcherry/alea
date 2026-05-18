@@ -7,8 +7,8 @@ import {
 } from "@alea/constants/backtest";
 import {
   TRADE_DECISION_DEFAULT_MARKETS,
+  tradeDecisionFireTimeMs,
   tradeDecisionHydrateBars,
-  tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   type TradeDecisionPeriod,
 } from "@alea/constants/tradeDecision";
@@ -172,7 +172,9 @@ export const filtersVisualizeCommand = defineCommand({
       schema: z
         .string()
         .optional()
-        .describe("Comma-separated period filter, e.g. 5m,15m."),
+        .describe(
+          "Comma-separated period filter. Defaults to the active 1h trading market.",
+        ),
     }),
     defineValueOption({
       key: "start",
@@ -259,7 +261,7 @@ export const filtersVisualizeCommand = defineCommand({
     "bun alea filters:visualize",
     "bun alea filters:visualize --samples 20 --per-market 5",
     "bun alea filters:visualize --candidate-id rsi_divergence@v6:...",
-    "bun alea filters:visualize --sample-kind invalidated --assets btc,eth --periods 15m",
+    "bun alea filters:visualize --sample-kind invalidated --assets btc,eth --periods 1h",
     "bun alea filters:visualize --show-indicators",
     "bun alea filters:visualize --before-bars 120 --after-bars 40 --out-dir tmp/charts/rsi-review",
   ],
@@ -696,11 +698,9 @@ function rsiDetailForTarget({
   readonly minuteBars: readonly MarketBar[];
   readonly targetTsMs: number;
 }): EventDetail | null {
-  const periodMs = timeframeMs({ timeframe: period });
   const hydrateBars = tradeDecisionHydrateBars({ period });
-  const leadTimeMs = tradeDecisionLeadTimeMs({ period });
-  const activeOpenTimeMs = targetTsMs - periodMs;
-  const decisionTsMs = targetTsMs - leadTimeMs;
+  const activeOpenTimeMs = targetTsMs;
+  const decisionTsMs = tradeDecisionFireTimeMs({ period, targetTsMs });
   const closedEndIndex = lowerBoundOpenTime({
     bars: periodBars,
     openTimeMs: activeOpenTimeMs,

@@ -1,5 +1,5 @@
-import { assetValues } from "@alea/constants/assets";
 import { env } from "@alea/constants/env";
+import { TRADE_DECISION_DEFAULT_ASSETS } from "@alea/constants/tradeDecision";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
 import { defineFlagOption } from "@alea/lib/cli/defineFlagOption";
 import { defineValueOption } from "@alea/lib/cli/defineValueOption";
@@ -13,19 +13,21 @@ import { sendTelegramMessage } from "@alea/lib/telegram/sendTelegramMessage";
 import { assetSchema } from "@alea/types/assets";
 import {
   resolutionTimeframeSchema,
-  resolutionTimeframeValues,
 } from "@alea/types/resolutions";
 import pc from "picocolors";
 import { z } from "zod";
 
+const defaultOneHourIntervalMs = 60_000;
 const defaultTelegramStatusMinutes = 5;
+const errorTelegramThrottleMs = 10 * 60_000;
+const defaultTimeframes = ["1h"] as const;
 type PersistedMarket = NonNullable<PriceSamplerLogEvent["persistedMarket"]>;
 
 export const polymarketPriceSampleCommand = defineCommand({
   name: "polymarket:price-sample",
   summary: "Sample live Polymarket up/down prices into compact DB blobs",
   description:
-    "Long-running sampler for live Polymarket crypto up/down markets. Discovers active 5m and 15m markets, subscribes to the public market-data websocket, samples the normalized UP contract price on a fixed cadence, and writes one compact JSONB blob per market at market end.",
+    "Long-running sampler for live Polymarket crypto up/down markets. Discovers active 1h markets by default, subscribes to the public market-data websocket, samples the normalized UP contract price on a fixed cadence, and writes one compact DB blob per market at market end.",
   options: [
     defineValueOption({
       key: "assets",
@@ -35,8 +37,8 @@ export const polymarketPriceSampleCommand = defineCommand({
         .string()
         .optional()
         .transform((value) => parseList(value))
-        .pipe(z.array(assetSchema).default([...assetValues]))
-        .describe("Comma-separated asset list (default: all whitelisted)."),
+        .pipe(z.array(assetSchema).default([...TRADE_DECISION_DEFAULT_ASSETS]))
+        .describe("Comma-separated asset list (default: current trading assets)."),
     }),
     defineValueOption({
       key: "timeframes",
@@ -49,31 +51,20 @@ export const polymarketPriceSampleCommand = defineCommand({
         .pipe(
           z
             .array(resolutionTimeframeSchema)
-            .default([...resolutionTimeframeValues]),
+            .default([...defaultTimeframes]),
         )
-        .describe("Comma-separated timeframes: 5m,15m."),
+        .describe("Comma-separated timeframes. Defaults to 1h."),
     }),
     defineValueOption({
-      key: "fiveMinuteIntervalMs",
-      long: "--5m-interval-ms",
+      key: "oneHourIntervalMs",
+      long: "--1h-interval-ms",
       valueName: "MS",
       schema: z.coerce
         .number()
         .int()
         .positive()
-        .default(1_000)
-        .describe("Sample cadence for 5m markets in milliseconds."),
-    }),
-    defineValueOption({
-      key: "fifteenMinuteIntervalMs",
-      long: "--15m-interval-ms",
-      valueName: "MS",
-      schema: z.coerce
-        .number()
-        .int()
-        .positive()
-        .default(3_000)
-        .describe("Sample cadence for 15m markets in milliseconds."),
+        .default(defaultOneHourIntervalMs)
+        .describe("Sample cadence for 1h markets in milliseconds."),
     }),
     defineFlagOption({
       key: "telegram",
@@ -100,7 +91,8 @@ export const polymarketPriceSampleCommand = defineCommand({
   ],
   examples: [
     "bun alea polymarket:price-sample",
-    "bun alea polymarket:price-sample --assets btc,eth --timeframes 5m",
+    "bun alea polymarket:price-sample --assets btc,eth --timeframes 1h",
+    "bun alea polymarket:price-sample --timeframes 1h --1h-interval-ms 60000",
     "bun alea polymarket:price-sample --telegram --telegram-status-minutes 5",
   ],
   output:
@@ -135,6 +127,7 @@ export const polymarketPriceSampleCommand = defineCommand({
       assets: options.assets,
       timeframes: options.timeframes,
     });
+    let nextTelegramErrorStatusAtMs = 0;
 
     const db = createDatabase();
     const telegramTimer =
@@ -148,8 +141,7 @@ export const polymarketPriceSampleCommand = defineCommand({
       `${pc.bold("alea polymarket:price-sample")}  ` +
         `${pc.dim("assets=")}${options.assets.join(",")}  ` +
         `${pc.dim("timeframes=")}${options.timeframes.join(",")}  ` +
-        `${pc.dim("5m_ms=")}${options.fiveMinuteIntervalMs}  ` +
-        `${pc.dim("15m_ms=")}${options.fifteenMinuteIntervalMs}  ` +
+        `${pc.dim("1h_ms=")}${options.oneHourIntervalMs}  ` +
         `${pc.dim("telegram=")}${options.telegram}\n`,
     );
 
@@ -161,14 +153,17 @@ export const polymarketPriceSampleCommand = defineCommand({
         timeframes: options.timeframes,
         signal: controller.signal,
         sampleIntervalsMs: {
-          "5m": options.fiveMinuteIntervalMs,
-          "15m": options.fifteenMinuteIntervalMs,
+          "1h": options.oneHourIntervalMs,
         },
         log: (event) => {
           updateStats({ stats, event });
           io.writeStdout(`${formatLog(event)}\n`);
           if (event.kind === "error") {
-            void sendTelegramStatus(`error: ${event.message}`);
+            const nowMs = Date.now();
+            if (nowMs >= nextTelegramErrorStatusAtMs) {
+              nextTelegramErrorStatusAtMs = nowMs + errorTelegramThrottleMs;
+              void sendTelegramStatus(`error: ${event.message}`);
+            }
           }
         },
       });

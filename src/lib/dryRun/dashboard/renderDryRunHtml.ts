@@ -56,7 +56,7 @@ const DRY_RUN_TIPS = {
   winRate:
     "Share of scored calls that closed in the predicted direction. Ambiguous (exactly-flat) calls are excluded from the denominator.",
   upDown: "Up-calls vs down-calls split.",
-  time: "Decision timestamp (UTC) — when the predictor evaluated the next bar.",
+  time: "Decision timestamp (UTC) — the target 1h market window being evaluated.",
   prediction:
     "Direction selected by the filter candidates: up or down. Drives which side of the Polymarket pair would be bought.",
   actualOpen:
@@ -89,7 +89,7 @@ export function renderDryRunHtml({
   const initialPeriod = payload.decisionConfig.period;
   const initialSlice =
     payload.byPeriod[initialPeriod] ??
-    payload.byPeriod[payload.decisionConfig.supportedPeriods[0] ?? "5m"]!;
+    payload.byPeriod[payload.decisionConfig.supportedPeriods[0] ?? "1h"]!;
   const recentRows = payload.recent
     .filter((r) => r.period === initialPeriod)
     .slice(0, RECENT_TABLE_LIMIT);

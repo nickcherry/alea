@@ -20,12 +20,13 @@ open→close direction match the Chainlink-derived winner?
 ## Pipeline
 
 1. **Resolutions sync** — `bun alea polymarket:resolutions-sync` walks
-   every 5m and 15m Polymarket up/down market on the asset whitelist
-   from the last N days. Each settled market goes into
-   `polymarket_resolutions` keyed by `(asset, timeframe,
-   window_start_ts_ms)`. Pending markets are skipped (re-fetched next
-   run). Void / refund markets are stored so they aren't re-fetched but
-   excluded from the agreement math.
+   `1h` Polymarket up/down markets by default. The deployed dashboard filters
+   to `1h` via
+   [`DASHBOARD_RESOLUTION_TIMEFRAMES`](../src/constants/dashboard.ts). Each
+   settled market goes into `polymarket_resolutions`, keyed by asset,
+   timeframe, and `window_start_ts_ms`. Pending markets are skipped
+   (re-fetched next run). Void / refund markets are stored so they aren't
+   re-fetched but excluded from the agreement math.
 2. **Pyth candles** — already covered by `candles:sync`. The dashboard
    joins on `(source=pyth, product=spot, asset, timeframe, timestamp)`.
 3. **Dashboard build** — `dashboards:build` loads paired windows,
@@ -60,10 +61,10 @@ open→close direction match the Chainlink-derived winner?
 
 ## Polymarket retention
 
-The gamma-api `/events?slug=…` endpoint retains 5m markets for ~75 days
-and 15m markets for ~180 days based on empirical probing in May 2026.
-Beyond that the slug returns an empty event list and the sync records
-nothing for that window. The endpoint is marked `Deprecation: true /
-Sunset: 2026-05-01` — still serving traffic at time of writing; the
-documented successor is `/events/keyset`, which the sync layer can
+Hourly retention has not yet been measured; current and next-hour slugs were
+verified live on 2026-05-17. Beyond retention, the gamma-api
+`/events?slug=…` endpoint returns an empty event list and the sync records
+nothing for that window. The endpoint is marked
+`Deprecation: true / Sunset: 2026-05-01` — still serving traffic at time of
+writing; the documented successor is `/events/keyset`, which the sync layer can
 adopt without touching the persistence shape.

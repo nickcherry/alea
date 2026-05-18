@@ -42,7 +42,7 @@ export const backtestRunCommand = defineCommand({
   name: "backtest:run",
   summary: "Backtest registered filter candidates",
   description:
-    "Evaluates the filter candidates registered for each selected timeframe against stored Pyth candles. The simulator makes each decision at the same pre-open lead time as dry-run/live trading and builds the active candle only from stored 1m bars available by that decision timestamp.",
+    "Evaluates the filter candidates registered for each selected 1h market against stored Pyth candles. The simulator makes each decision 10 minutes before the current 1h market closes and builds the synthetic current-hour candle only from stored 1m bars available by that decision timestamp.",
   options: [
     defineValueOption({
       key: "periods",
@@ -91,13 +91,13 @@ export const backtestRunCommand = defineCommand({
   ],
   examples: [
     "bun alea backtest:run",
-    "bun alea backtest:run --periods 5m --assets btc,eth",
-    "bun alea backtest:run --start 2024-04-01 --end 2026-05-01",
+    "bun alea backtest:run --periods 1h --assets btc,eth",
+    "bun alea backtest:run --start 2025-01-01 --end 2026-05-01",
   ],
   output:
     "Prints per-market generated/skipped row counts and a final decision total. Results are persisted by candidate, asset, timeframe, and quarter.",
   sideEffects:
-    "Reads stored Pyth 1m/5m/15m candles and upserts missing or stale rows into `candidate_backtest_quarter_results`.",
+    "Reads stored Pyth 1m/1h candles and upserts missing or stale rows into `candidate_backtest_quarter_results`.",
   async run({ io, options }) {
     const assets = (options.assets ??
       CANDIDATE_BACKTEST_ASSETS) as readonly Asset[];

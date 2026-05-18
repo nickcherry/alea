@@ -20,10 +20,10 @@ const repoRoot = resolvePath(import.meta.dir, "../../..");
 /**
  * Long-running market-data capture.
  *
- * Subscribes to the same Polymarket up/down 5m WS the dry-run trader
+ * Subscribes to the same Polymarket up/down 1h WS the dry-run trader
  * uses, plus Pyth spot and Polymarket Chainlink reference-price feeds,
  * and writes every event to a per-window JSONL file under
- * `tmp/market-capture/YYYY-MM-DD/<windowKey>.jsonl`. On each 5-minute
+ * `tmp/market-capture/YYYY-MM-DD/<windowKey>.jsonl`. On each hourly
  * boundary the previous file is closed and (unless `--no-ingest` is
  * passed) bulk-loaded into the `market_event` table.
  *
@@ -36,7 +36,7 @@ export const dataCaptureCommand = defineCommand({
   summary:
     "Long-running capture of Polymarket + Pyth + Chainlink market-data events to disk and Postgres",
   description:
-    "Opens the Polymarket public market-data WS for current/next-window up/down 5m markets, the Pyth Hermes spot-price stream, and Polymarket's RTDS Chainlink reference-price topic — all for the configured asset set. Writes each event as one JSONL line under tmp/market-capture/, rotating files at the 5-minute window boundary. Successfully rotated files are bulk-loaded into the market_event Postgres table. On startup, recovers and loads any orphaned .jsonl files from prior runs. Exits cleanly on SIGINT/SIGTERM.",
+    "Opens the Polymarket public market-data WS for current/next-window up/down 1h markets, the Pyth Hermes spot-price stream, and Polymarket's RTDS Chainlink reference-price topic — all for the configured asset set. Writes each event as one JSONL line under tmp/market-capture/, rotating files at the hourly window boundary. Successfully rotated files are bulk-loaded into the market_event Postgres table. On startup, recovers and loads any orphaned .jsonl files from prior runs. Exits cleanly on SIGINT/SIGTERM.",
   options: [
     defineValueOption({
       key: "assets",

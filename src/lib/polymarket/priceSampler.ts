@@ -16,8 +16,7 @@ import type { Asset } from "@alea/types/assets";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
 
 const defaultSampleIntervalsMs = {
-  "5m": 1_000,
-  "15m": 1_000,
+  "1h": 60_000,
 } as const satisfies Record<ResolutionTimeframe, number>;
 
 /**
@@ -26,7 +25,7 @@ const defaultSampleIntervalsMs = {
  * (handled by codec v2). Drives the discovery lead so the WS is up
  * before sampling begins.
  */
-export const PRE_MARKET_SAMPLE_LEAD_MS = 5 * 60_000;
+export const PRE_MARKET_SAMPLE_LEAD_MS = 60 * 60_000;
 
 const tickIntervalMs = 250;
 const discoverySafetyLeadMs = 30_000;
@@ -37,6 +36,8 @@ const missingMarketRetryMs = 15_000;
 const discoveryFailureRetryMs = 10_000;
 const rateLimitedDiscoveryRetryMs = 60_000;
 const subscriptionTailMs = 10_000;
+const subscriptionRebuildDebounceMs = 2_000;
+const finalizeFailureRetryMs = 60_000;
 const sampleSchemaVersion = 3;
 
 export type PriceSamplerLogEvent = {
@@ -88,6 +89,7 @@ type SamplerMarketSession = {
   lastSampleTsMs: number | null;
   missingSampleCount: number;
   finalizing: boolean;
+  nextFinalizeAttemptMs: number;
 };
 
 type TokenRoute = {
@@ -119,6 +121,7 @@ export async function runPolymarketPriceSampler({
   const tokenRoutes = new Map<string, TokenRoute>();
   let streamHandle: MarketDataStreamHandle | null = null;
   let discoveryPumpTimer: ReturnType<typeof setTimeout> | null = null;
+  let subscriptionRebuildTimer: ReturnType<typeof setTimeout> | null = null;
   let activeDiscoveryCount = 0;
   let lastDiscoveryStartedAtMs = 0;
   let tickRunning = false;
@@ -183,6 +186,21 @@ export async function runPolymarketPriceSampler({
         });
       },
     });
+  };
+
+  const clearSubscriptionRebuildTimer = (): void => {
+    if (subscriptionRebuildTimer !== null) {
+      clearTimeout(subscriptionRebuildTimer);
+      subscriptionRebuildTimer = null;
+    }
+  };
+
+  const scheduleSubscriptionRebuild = (): void => {
+    clearSubscriptionRebuildTimer();
+    subscriptionRebuildTimer = setTimeout(() => {
+      subscriptionRebuildTimer = null;
+      rebuildSubscription();
+    }, subscriptionRebuildDebounceMs);
   };
 
   const clearDiscoveryPumpTimer = (): void => {
@@ -265,12 +283,13 @@ export async function runPolymarketPriceSampler({
           lastSampleTsMs: null,
           missingSampleCount: 0,
           finalizing: false,
+          nextFinalizeAttemptMs: 0,
         });
         emit({
           kind: "info",
           message: `discovered ${request.asset.toUpperCase()} ${request.timeframe} market ${new Date(request.windowStartTsMs).toISOString()}`,
         });
-        rebuildSubscription();
+        scheduleSubscriptionRebuild();
       })
       .catch((error) => {
         const message = sanitizeErrorMessage(error);
@@ -345,7 +364,7 @@ export async function runPolymarketPriceSampler({
         emit,
       });
       if (finalizedCount > 0) {
-        rebuildSubscription();
+        scheduleSubscriptionRebuild();
       }
     } finally {
       tickRunning = false;
@@ -365,6 +384,7 @@ export async function runPolymarketPriceSampler({
 
   clearInterval(tickHandle);
   clearDiscoveryPumpTimer();
+  clearSubscriptionRebuildTimer();
   emit({
     kind: "info",
     message: "shutdown signal received; closing price sampler",
@@ -493,7 +513,11 @@ async function finalizeEndedSessions({
 }): Promise<number> {
   let finalizedCount = 0;
   for (const session of sessions.values()) {
-    if (session.finalizing || nowMs < session.windowEndTsMs) {
+    if (
+      session.finalizing ||
+      nowMs < session.windowEndTsMs ||
+      session.nextFinalizeAttemptMs > nowMs
+    ) {
       continue;
     }
     session.finalizing = true;
@@ -516,11 +540,13 @@ async function finalizeEndedSessions({
       });
     } catch (error) {
       session.finalizing = false;
+      session.nextFinalizeAttemptMs = nowMs + finalizeFailureRetryMs;
       emit({
         kind: "error",
         message:
           `persist ${session.asset.toUpperCase()} ${session.timeframe} ` +
-          `${new Date(session.windowStartTsMs).toISOString()} failed: ${(error as Error).message}`,
+          `${new Date(session.windowStartTsMs).toISOString()} failed; ` +
+          `retry_in=${formatMs(finalizeFailureRetryMs)}: ${(error as Error).message}`,
       });
     }
   }

@@ -4,7 +4,7 @@
  * from `<script id="dry-run-payload">` and the chart-color tokens
  * from `<script id="dry-run-tokens">`. Owns three pieces of state:
  *
- *   1. The page-level 5m/15m period toggle. Switching periods swaps
+ *   1. The page-level period toggle. Switching periods swaps
  *      the summary metrics, the per-asset table, the
  *      "Recent Decisions" feed, and the uPlot chart series — every
  *      number on the page comes from `payload.byPeriod[currentPeriod]`
@@ -27,7 +27,7 @@
   var byPeriod = (payload && payload.byPeriod) || {};
   var recentAll = (payload && payload.recent) || [];
   var decisionConfig = (payload && payload.decisionConfig) || {};
-  var supportedPeriods = decisionConfig.supportedPeriods || ["5m"];
+  var supportedPeriods = decisionConfig.supportedPeriods || ["1h"];
 
   var RECENT_TABLE_LIMIT = 50;
 
@@ -36,7 +36,7 @@
   var percent = alea.formatPercent;
   var toneClass = alea.winRateToneClass;
 
-  var currentPeriod = decisionConfig.period || supportedPeriods[0] || "5m";
+  var currentPeriod = decisionConfig.period || supportedPeriods[0] || "1h";
 
   var assetBody = document.getElementById("dry-run-asset-body");
   var recentBody = document.getElementById("dry-run-recent-body");

@@ -26,7 +26,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
     include (open, close)
     where source = 'pyth'
       and product = 'spot'
-      and timeframe in ('5m', '15m')
+      and timeframe = '1h'
   `.execute(db);
 }
 

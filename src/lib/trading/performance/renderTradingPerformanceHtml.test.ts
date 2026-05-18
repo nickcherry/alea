@@ -64,7 +64,7 @@ function payloadFixture(): TradingPerformancePayload {
         conditionId: "condition-1",
         symbol: "BTC",
         title: "Bitcoin Up or Down",
-        slug: "btc-updown-5m-1777900200",
+        slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
         outcome: "Up",
         endDateMs: 1_777_900_500_000,
         lastActivityAtMs: 1_777_900_500_000,

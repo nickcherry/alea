@@ -32,7 +32,9 @@
   var crossingsChartHost = document.getElementById(
     "price-path-crossings-chart",
   );
-  var crossingsTooltip = document.getElementById("price-path-crossings-tooltip");
+  var crossingsTooltip = document.getElementById(
+    "price-path-crossings-tooltip",
+  );
   var driftSharesHost = document.getElementById(
     "price-path-drift-shares-chart",
   );
@@ -112,7 +114,10 @@
   renderAll();
 
   function initialTimeframe() {
-    var selected = "5m";
+    var selected =
+      payload && payload.breakdowns && payload.breakdowns[0]
+        ? payload.breakdowns[0].timeframe || "1h"
+        : "1h";
     Array.prototype.forEach.call(tabs, function (tab) {
       if (tab.getAttribute("aria-selected") === "true") {
         selected = tab.dataset.period || selected;
@@ -448,7 +453,8 @@
    */
   function niceAxisTicks(leftEdgeMs, durationMs) {
     var span = durationMs - leftEdgeMs;
-    if (span <= 0) return [{ offsetMs: durationMs, label: "T-0:00", fractionX: 1 }];
+    if (span <= 0)
+      return [{ offsetMs: durationMs, label: "T-0:00", fractionX: 1 }];
     var stepCandidates = [
       10_000, 30_000, 60_000, 120_000, 300_000, 600_000, 1_800_000,
     ];
@@ -540,11 +546,9 @@
     if (bandTooltip) bandTooltip.classList.remove("visible");
     var svg = bandHost.querySelector("svg");
     if (!svg) return;
-    svg
-      .querySelectorAll("[data-hover]")
-      .forEach(function (el) {
-        el.style.display = "none";
-      });
+    svg.querySelectorAll("[data-hover]").forEach(function (el) {
+      el.style.display = "none";
+    });
   }
 
   function handleCrossingsMove(event) {
@@ -611,11 +615,9 @@
     if (crossingsTooltip) crossingsTooltip.classList.remove("visible");
     var svg = crossingsChartHost.querySelector("svg");
     if (!svg) return;
-    svg
-      .querySelectorAll("[data-hover]")
-      .forEach(function (el) {
-        el.style.display = "none";
-      });
+    svg.querySelectorAll("[data-hover]").forEach(function (el) {
+      el.style.display = "none";
+    });
   }
 
   function bandTooltipRow(swatchCls, label, value) {
@@ -923,8 +925,7 @@
       d += (d ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
     });
     if (d) {
-      svg +=
-        '<path class="price-path-crossings-line" d="' + d + '"></path>';
+      svg += '<path class="price-path-crossings-line" d="' + d + '"></path>';
     }
 
     // Hover-only overlay: vertical hairline + one dot, hidden until
@@ -1217,10 +1218,7 @@
           );
         })
         .join("") +
-      tooltipRow(
-        "Samples",
-        Number(lead.sampleCount || 0).toLocaleString(),
-      );
+      tooltipRow("Samples", Number(lead.sampleCount || 0).toLocaleString());
     positionTooltip(driftSharesTooltip, driftSharesHost, event);
     driftSharesTooltip.classList.add("visible");
   }
@@ -1337,7 +1335,9 @@
     });
     if (d) {
       svg +=
-        '<path class="price-path-band-line flip-share" d="' + d + '"></path>' +
+        '<path class="price-path-band-line flip-share" d="' +
+        d +
+        '"></path>' +
         pointsSvg;
     }
 
@@ -1366,7 +1366,12 @@
     var layout = state.flipShareLayout;
     if (!flipShareHost || !flipShareTooltip || !layout) return;
     var leads = layout.leads || [];
-    var idx = bucketIndexFor(flipShareHost, event.clientX, layout, leads.length);
+    var idx = bucketIndexFor(
+      flipShareHost,
+      event.clientX,
+      layout,
+      leads.length,
+    );
     if (idx < 0) {
       hideFlipShareHover();
       return;
@@ -1395,7 +1400,9 @@
         dot.setAttribute("cx", x.toFixed(1));
         dot.setAttribute(
           "cy",
-          (layout.pad.top + (1 - share / layout.yMax) * layout.plotH).toFixed(1),
+          (layout.pad.top + (1 - share / layout.yMax) * layout.plotH).toFixed(
+            1,
+          ),
         );
         dot.style.display = "";
       }
@@ -1442,5 +1449,4 @@
   function formatLeadMinutes(leadMinutes) {
     return "T-" + leadMinutes + "m";
   }
-
 })();

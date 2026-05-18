@@ -2,6 +2,7 @@ import {
   marketChartRecentBarsForTimeframe,
   MAX_MARKET_CHART_RECENT_BARS,
 } from "@alea/constants/marketChart";
+import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { Asset } from "@alea/types/assets";
 
 /**
@@ -18,7 +19,7 @@ export const TRADE_DECISION_DECISION_SOURCE = "candidate_filters";
  * `dry_run_decisions.period` so the dashboard period toggle and the
  * schema agree on the option set.
  */
-export const TRADE_DECISION_SUPPORTED_PERIODS = ["5m", "15m"] as const;
+export const TRADE_DECISION_SUPPORTED_PERIODS = ["1h"] as const;
 
 export type TradeDecisionPeriod =
   (typeof TRADE_DECISION_SUPPORTED_PERIODS)[number];
@@ -42,22 +43,18 @@ export const TRADE_DECISION_TRADABLE_ASSETS = [
 
 /**
  * Exact no-flag dry-run/live market set. The operational default trades every
- * currently enabled trading asset across both Polymarket chart periods.
+ * currently enabled trading asset on Polymarket's 1h crypto markets.
  */
 export const TRADE_DECISION_DEFAULT_MARKETS = [
-  { asset: "btc", period: "5m" },
-  { asset: "btc", period: "15m" },
-  { asset: "eth", period: "5m" },
-  { asset: "eth", period: "15m" },
-  { asset: "sol", period: "5m" },
-  { asset: "sol", period: "15m" },
-  { asset: "doge", period: "5m" },
-  { asset: "doge", period: "15m" },
+  { asset: "btc", period: "1h" },
+  { asset: "eth", period: "1h" },
+  { asset: "sol", period: "1h" },
+  { asset: "doge", period: "1h" },
 ] as const satisfies readonly TradeDecisionMarket[];
 
 /**
  * Default assets/periods used when an operator provides only one axis,
- * e.g. `--periods 15m` or `--assets eth`. With no override at all, use
+ * e.g. `--periods 1h` or `--assets eth`. With no override at all, use
  * `TRADE_DECISION_DEFAULT_MARKETS` exactly.
  */
 export const TRADE_DECISION_DEFAULT_PERIODS: readonly TradeDecisionPeriod[] =
@@ -69,18 +66,18 @@ export const TRADE_DECISION_DEFAULT_ASSETS = TRADE_DECISION_TRADABLE_ASSETS;
  * Dashboard/default display period. The runner itself uses
  * `TRADE_DECISION_DEFAULT_MARKETS`.
  */
-export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "15m";
+export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 
 /**
- * How long before each target candle opens the loop snapshots the live price
- * and evaluates filters. The order path enters immediately after an
- * actionable filter majority.
+ * How long before the target candle closes the loop snapshots the live price
+ * and evaluates filters. The target candle is the currently open Polymarket
+ * market window; for 1h that means evaluating at HH:50 for the HH:00-HH:59
+ * market.
  */
 export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
   Record<TradeDecisionPeriod, number>
 > = {
-  "5m": 2 * 60 * 1000,
-  "15m": 3 * 60 * 1000,
+  "1h": 10 * 60 * 1000,
 };
 
 export function tradeDecisionLeadTimeMs({
@@ -89,6 +86,50 @@ export function tradeDecisionLeadTimeMs({
   readonly period: TradeDecisionPeriod;
 }): number {
   return TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS[period];
+}
+
+export function tradeDecisionTargetOpenTimeMs({
+  period,
+  nowMs,
+}: {
+  readonly period: TradeDecisionPeriod;
+  readonly nowMs: number;
+}): number {
+  const periodMs = timeframeMs({ timeframe: period });
+  return Math.floor(nowMs / periodMs) * periodMs;
+}
+
+export function tradeDecisionFireTimeMs({
+  period,
+  targetTsMs,
+}: {
+  readonly period: TradeDecisionPeriod;
+  readonly targetTsMs: number;
+}): number {
+  const periodMs = timeframeMs({ timeframe: period });
+  return targetTsMs + periodMs - tradeDecisionLeadTimeMs({ period });
+}
+
+export function nextTradeDecisionFireTimeMs({
+  period,
+  nowMs,
+}: {
+  readonly period: TradeDecisionPeriod;
+  readonly nowMs: number;
+}): number {
+  const periodMs = timeframeMs({ timeframe: period });
+  const currentTargetTsMs = tradeDecisionTargetOpenTimeMs({ period, nowMs });
+  const currentFireTimeMs = tradeDecisionFireTimeMs({
+    period,
+    targetTsMs: currentTargetTsMs,
+  });
+  if (nowMs < currentFireTimeMs) {
+    return currentFireTimeMs;
+  }
+  return tradeDecisionFireTimeMs({
+    period,
+    targetTsMs: currentTargetTsMs + periodMs,
+  });
 }
 
 /**

@@ -29,24 +29,24 @@ describe("refreshTradeDecisionCandleState", () => {
 
     const state = await hydrateTradeDecisionCandleState({
       asset: "btc",
-      period: "5m",
+      period: "1h",
       limit: 3,
-      nowMs: 895_000,
+      nowMs: 8_950_000,
       fetchCandles: async ({ start, end }) => {
         requested.push({ start: start.getTime(), end: end.getTime() });
         return [
           candle(0, 90, 100),
-          candle(300_000, 100, 108),
-          candle(600_000, 108, 111),
+          candle(3_600_000, 100, 108),
+          candle(7_200_000, 108, 111),
         ];
       },
       fetchCoinbaseBarsForHydrate: async () => [],
     });
 
-    expect(requested).toEqual([{ start: 0, end: 895_000 }]);
+    expect(requested).toEqual([{ start: 0, end: 8_950_000 }]);
     expect(state.bars.map((b) => [b.openTimeMs, b.open, b.close])).toEqual([
       [0, 90, 100],
-      [300_000, 100, 108],
+      [3_600_000, 100, 108],
     ]);
   });
 
@@ -238,7 +238,7 @@ function stateWithBars(
 ): TradeDecisionCandleState {
   return {
     asset: "btc",
-    period: "5m",
+    period: "1h",
     periodMs: 300_000,
     bars: [...bars],
     coinbaseBars: [],
@@ -273,7 +273,7 @@ function candle(
     source: "pyth",
     asset: "btc",
     product: "spot",
-    timeframe: "5m",
+    timeframe: "1h",
     timestamp: new Date(openTimeMs),
     open,
     high,
@@ -293,7 +293,7 @@ function coinbaseCandle(
     source: "coinbase",
     asset: "btc",
     product: "spot",
-    timeframe: "5m",
+    timeframe: "1h",
     timestamp: new Date(openTimeMs),
     open,
     high: Math.max(open, close),

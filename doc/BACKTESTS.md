@@ -1,8 +1,8 @@
 # Backtests
 
 `bun alea backtest:run` evaluates the candidates registered for each
-asset+period market over stored Pyth candles for the traded assets and the `5m`
-/ `15m` periods. Candidate sets can differ by period and by asset. Results persist to
+asset+period market over stored Pyth candles for the traded assets and the `1h`
+period. Candidate sets can still differ by asset. Results persist to
 `candidate_backtest_quarter_results`, one row per candidate, asset, timeframe,
 and quarter.
 
@@ -17,12 +17,11 @@ row with the same hash, it treats that candidate/asset/period/quarter as cached
 and does not regenerate it. If any of those inputs change, the hash changes and
 that quarter is regenerated.
 
-Backtests intentionally mirror dry-run/live timing. For each target candle,
-the simulator evaluates filters before the target opens using
-`tradeDecisionLeadTimeMs({ period })`. Closed timeframe bars stop at the last
-fully closed candle, and the final active candle is synthesized only from
-stored Pyth `1m` candles whose minute close is available by the decision
-timestamp. That prevents future candle leakage.
+Backtests intentionally mirror dry-run/live timing. For each target 1h candle,
+the simulator evaluates filters 10 minutes before that same candle closes.
+Closed timeframe bars stop before the target candle, and the final active
+candle is synthesized only from stored Pyth `1m` candles whose minute close is
+available by the HH:50 decision timestamp. That prevents future candle leakage.
 
 The quarterly row stores compact decision tuples in JSON:
 
@@ -32,7 +31,7 @@ The quarterly row stores compact decision tuples in JSON:
 
 Neutral evaluations are counted but not written into the decision tuple array.
 The backtest dashboard at `/backtest/` aggregates those rows by candidate and
-quarter, supports the same `5m` / `15m` toggle as the trading surfaces, adds an
-asset toggle so each asset has its own table, filters to the currently active
-registry for each asset+period market, and sorts candidates by overall win
-rate within that table.
+quarter, supports the active `1h` period, adds an asset toggle so each asset
+has its own table, filters to the currently active registry for each
+asset+period market, and sorts candidates by overall win rate within that
+table.

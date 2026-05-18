@@ -39,18 +39,24 @@ The canonical URL set lives in
 
 ## Current Assumptions
 
-- Crypto event slugs use
-  `<asset>-updown-<5m|15m>-<windowStartUnixSeconds>`. `discoverPolymarketMarket`
-  reads `GET /events?slug=<slug>` and expects a binary `Up` / `Down` market
-  with two CLOB token IDs.
+- Current trading uses crypto `1h` markets. Those slugs use the venue's ET
+  title family, e.g.
+  `bitcoin-up-or-down-may-17-2026-4pm-et`. `discoverPolymarketMarket` reads
+  `GET /events?slug=<slug>` and expects a binary `Up` / `Down` market with two
+  CLOB token IDs.
 - `polymarket:price-sample` records one row per completed live
   `(asset, timeframe, window_start)` in `polymarket_price_samples`. The row's
-  `samples` JSONB is a compact array of `[offset_ms, up_price_bps, quality]`
-  tuples; `up_price_bps / 10000` recovers the 0..1 UP contract price and
-  `window_start_ts_ms + offset_ms` recovers the sample timestamp. The purpose
-  is to calibrate expectations for how long 50c prices remain available; the
+  `samples` bytea is a packed tick stream. Each entry stores `offset_ms`,
+  `up_price_bps`, and `down_price_bps`; `up_price_bps / 10000` recovers the
+  0..1 UP contract price and `window_start_ts_ms + offset_ms` recovers the sample
+  timestamp. The sampler defaults to `1h` markets for the current trading assets,
+  starts sampling one hour before each market opens, and samples each active
+  market once per minute unless `--1h-interval-ms` overrides it. The purpose is
+  to calibrate expectations for how long 50c prices remain available; the
   `/price-paths/` dashboard renders the distribution heatmap, 50c band-decay
-  chart, and 50c-crossings chart + marker table from these rows.
+  chart, and 50c-crossings chart + marker table from these rows. Dashboard
+  reporting filters to `1h` via
+  [`DASHBOARD_RESOLUTION_TIMEFRAMES`](../src/constants/dashboard.ts).
 - The TypeScript integration uses `@polymarket/clob-client-v2`. Live order
   creation must stay on the V2 signed-order shape: no submitted order nonce and
   no embedded `feeRateBps`; fee fields are read from venue market metadata and
@@ -65,8 +71,8 @@ The canonical URL set lives in
   per-token metadata when signing.
 - `marketDiscoveryCache` centralizes current/next-window Gamma slug discovery
   and deduplicates concurrent lookups. Dry-run and live trading share it so
-  order placement has already resolved condition/token IDs before the target
-  window opens.
+  order placement has already resolved condition/token IDs by the HH:50
+  decision inside the current 1h window.
 - The public market WebSocket subscription sends
   `{ type: "market", assets_ids: [...tokenIds], custom_feature_enabled: true }`.
   Dry-run and live trading consume `book`/`best_bid_ask` for executable quote
@@ -75,25 +81,13 @@ The canonical URL set lives in
   `market_resolved` is the official-first settlement event for paths that need
   venue resolution. REST resolution remains the fallback if the websocket event
   is missed.
-- Current live order placement is maker-only. On 2026-05-13, public probes of
-  current/next BTC crypto windows found Gamma returning future `5m` and `15m`
-  events with `active=true`, `accepting=true`, token IDs, and CLOB books out to
-  roughly 23h48m ahead; the next aligned windows after that had no event. A
-  live canary posted a post-only BTC `5m` BUY at 1c about 6m52s before the
-  target window opened, received `success=true` / `status=live`, then canceled
-  cleanly with zero open orders left. Live trading therefore signs and posts
-  `createAndPostOrder(..., OrderType.GTD, postOnly=true)` immediately after the
-  period-specific pre-open filter decision (`5m` at T-2m, `15m` at T-3m)
-  instead of waiting for the boundary. It buys the predicted-side token one
-  tick below the best ask, or one tick below 50c if no predicted-side ask has
-  arrived, expiring at that market's close.
-- Pre-market books are not empty placeholders. In the same 2026-05-13 snapshot,
-  far-ahead markets clustered near 50c with 1c-4c spreads; within the last
-  couple minutes before open, mids had already moved with the underlying, e.g.
-  next-window `5m` UP mids across BTC/ETH/SOL/XRP/DOGE ranged roughly
-  50.5c-55.5c and next-window `15m` ranged roughly 50.0c-56.5c, with DOGE 15m
-  especially wide.
-- If Polymarket starts rejecting pre-open orders, the relevant order errors are
+- Current live order placement is maker-only. The current runtime decides
+  10 minutes before the `1h` market closes, then signs and posts
+  `createAndPostOrder(..., OrderType.GTD, postOnly=true)` immediately after an
+  actionable filter decision. It buys the predicted-side token one tick below
+  the best ask, or one tick below 50c if no predicted-side ask has arrived,
+  expiring at that market's close.
+- If Polymarket starts rejecting current-window orders, the relevant order errors are
   retryable rather than fatal: market-not-ready, `404`/`not found`, `425` too
   early, `429`, `5xx`, and transient network failures. A post-only cross
   rejection is also retryable, but the next attempt is capped one tick below the

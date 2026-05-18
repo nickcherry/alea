@@ -116,7 +116,7 @@ function windowFixture({
     status: "active",
     windowStartMs: startMs,
     windowEndMs: endMs,
-    marketSlug: "btc-updown-5m-1777902600",
+    marketSlug: "bitcoin-up-or-down-may-17-2026-4pm-et",
     conditionId: "0xabc",
     marketStatus: "active",
     marketError: null,

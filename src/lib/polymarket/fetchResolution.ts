@@ -1,4 +1,5 @@
 import { polymarket } from "@alea/constants/polymarket";
+import { polymarketUpDownEventSlug } from "@alea/lib/polymarket/marketSlug";
 import type { Asset } from "@alea/types/assets";
 import type {
   ResolutionOutcome,
@@ -8,7 +9,7 @@ import { z } from "zod";
 
 /**
  * Polymarket up/down crypto resolution row, parsed from the gamma-api
- * `/events?slug=<asset>-updown-<5m|15m>-<unix>` payload. `outcome` is
+ * `/events?slug=...` payload. `outcome` is
  * derived from `outcomePrices`: `["1", "0"]` = up won, `["0", "1"]` =
  * down won; anything else (the rare void / refund case) becomes `void`.
  *
@@ -77,7 +78,11 @@ export async function fetchPolymarketResolution({
   const windowStartUnixSeconds = Math.floor(
     windowStartTsMs / millisecondsPerSecond,
   );
-  const slug = `${asset}-updown-${timeframe}-${windowStartUnixSeconds}`;
+  const slug = polymarketUpDownEventSlug({
+    asset,
+    timeframe,
+    windowStartUnixSeconds,
+  });
   const url = `${polymarket.gammaApiUrl}/events?slug=${slug}`;
 
   const response = await fetchWithRetry({ url, slug, signal });

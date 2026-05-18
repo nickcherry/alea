@@ -5,9 +5,9 @@
 
   var payload = JSON.parse(payloadEl.textContent || "{}");
   var byPeriod = payload.byPeriod || {};
-  var supportedPeriods = payload.supportedPeriods || ["5m"];
+  var supportedPeriods = payload.supportedPeriods || ["1h"];
   var supportedAssets = payload.supportedAssets || ["btc"];
-  var currentPeriod = payload.defaultPeriod || supportedPeriods[0] || "5m";
+  var currentPeriod = payload.defaultPeriod || supportedPeriods[0] || "1h";
   var currentAsset = payload.defaultAsset || supportedAssets[0] || "btc";
   var TABLE_LIMIT = 20;
   var alea = window.alea;

@@ -41,22 +41,7 @@ export function renderPricePathsHtml({
     </header>
     ${renderTopNav({ activeId: "price-paths" })}
     <main class="alea-main">
-      <div class="alea-page-controls price-path-controls">
-        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
-          ${["5m", "15m"]
-            .map(
-              (tf) =>
-                `<button class="alea-pill-tab is-prominent price-path-period-tab" role="tab" data-period="${tf}" aria-selected="${tf === initialBreakdown?.timeframe ? "true" : "false"}">${tf}</button>`,
-            )
-            .join("\n          ")}
-        </div>
-        <label class="price-path-select-wrap alea-page-controls-right">
-          <span>Asset</span>
-          <select id="price-path-asset-select">
-            ${renderAssetOptions({ breakdown: initialBreakdown })}
-          </select>
-        </label>
-      </div>
+      ${renderControls({ payload, initialBreakdown })}
 
       <section class="price-path-section">
         <div class="alea-section-rule"><h2>Price Distribution</h2></div>
@@ -122,6 +107,35 @@ export function renderPricePathsHtml({
   ${assets.scripts.map((src) => `<script src="${src}"></script>`).join("\n  ")}
 </body>
 </html>`;
+}
+
+function renderControls({
+  payload,
+  initialBreakdown,
+}: {
+  readonly payload: PricePathsPayload;
+  readonly initialBreakdown: PricePathTimeframeBreakdown | null;
+}): string {
+  const timeframeControls =
+    payload.breakdowns.length <= 1
+      ? ""
+      : `<div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+          ${payload.breakdowns
+            .map(
+              (b) =>
+                `<button class="alea-pill-tab is-prominent price-path-period-tab" role="tab" data-period="${b.timeframe}" aria-selected="${b.timeframe === initialBreakdown?.timeframe ? "true" : "false"}">${b.timeframe}</button>`,
+            )
+            .join("\n          ")}
+        </div>`;
+  return `<div class="alea-page-controls price-path-controls">
+        ${timeframeControls}
+        <label class="price-path-select-wrap alea-page-controls-right">
+          <span>Asset</span>
+          <select id="price-path-asset-select">
+            ${renderAssetOptions({ breakdown: initialBreakdown })}
+          </select>
+        </label>
+      </div>`;
 }
 
 function initialTimeframeBreakdown({

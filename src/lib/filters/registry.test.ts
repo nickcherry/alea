@@ -1,5 +1,4 @@
 import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
-import type { RangeBreakoutFadeConfig } from "@alea/lib/filters/rangeBreakoutFade";
 import {
   type CandidateRegistryByMarket,
   registeredCandidates,
@@ -8,6 +7,7 @@ import {
   registeredCandidatesForPeriod,
   tradeCandidatesForMarket,
 } from "@alea/lib/filters/registry";
+import type { RsiDivergenceConfig } from "@alea/lib/filters/rsiDivergence";
 import type { FilterCandidate, FilterDecision } from "@alea/lib/filters/types";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { describe, expect, it } from "bun:test";
@@ -23,21 +23,17 @@ describe("registeredCandidates", () => {
     ).toBe(true);
   });
 
-  it("registers curated range breakout fade candidates by market", () => {
+  it("registers the curated 1h RSI divergence candidate by market", () => {
     const expectedCounts = {
-      "5m/btc": 1,
-      "5m/eth": 1,
-      "5m/sol": 0,
-      "5m/doge": 0,
-      "15m/btc": 1,
-      "15m/eth": 1,
-      "15m/sol": 1,
-      "15m/doge": 0,
+      "1h/btc": 1,
+      "1h/eth": 1,
+      "1h/sol": 1,
+      "1h/doge": 1,
     } as const;
 
     for (const [market, expectedCount] of Object.entries(expectedCounts)) {
       const [period, asset] = market.split("/") as [
-        "5m" | "15m",
+        "1h",
         "btc" | "eth" | "sol" | "doge",
       ];
       const candidates = registeredCandidatesForMarket({ asset, period });
@@ -45,54 +41,49 @@ describe("registeredCandidates", () => {
       expect(
         candidates.every(
           (candidate) =>
-            candidate.filterId === "range_breakout_fade" &&
-            candidate.filterVersion === 1,
+            candidate.filterId === "rsi_divergence" &&
+            candidate.filterVersion === 6,
         ),
       ).toBe(true);
       for (const candidate of candidates) {
-        const config = candidate.config as RangeBreakoutFadeConfig;
-        expect(config.lookbackBars).toBe(24);
-        expect(config.minBreakBps).toBe(5);
-        expect(config.closeLocationThreshold).toBe(0.65);
-        expect(config.minActiveRangeAtrFraction).toBe(0.9);
+        const config = candidate.config as RsiDivergenceConfig;
+        expect(config.rsiLength).toBe(21);
+        expect(config.includeHidden).toBe(true);
+        expect(config.maxSignalAgeBars).toBe(13);
+        expect(config.minAgreementScore).toBe(0);
+        expect(config.maxConsecutiveDisagreements).toBe(1);
       }
     }
   });
 
-  it("keeps the registry typed for different candidate sets by market", () => {
+  it("keeps the registry typed for different candidate sets by asset", () => {
     const divergentRegistry = {
-      "5m": {
-        btc: [testCandidate({ id: "five-minute-btc", decision: "up" })],
-        eth: [testCandidate({ id: "five-minute-eth", decision: "up" })],
-        sol: [testCandidate({ id: "five-minute-sol", decision: "up" })],
-        doge: [testCandidate({ id: "five-minute-doge", decision: "up" })],
-      },
-      "15m": {
-        btc: [testCandidate({ id: "fifteen-minute-btc", decision: "down" })],
-        eth: [testCandidate({ id: "fifteen-minute-eth", decision: "down" })],
-        sol: [testCandidate({ id: "fifteen-minute-sol", decision: "down" })],
-        doge: [testCandidate({ id: "fifteen-minute-doge", decision: "down" })],
+      "1h": {
+        btc: [testCandidate({ id: "one-hour-btc", decision: "up" })],
+        eth: [testCandidate({ id: "one-hour-eth", decision: "down" })],
+        sol: [testCandidate({ id: "one-hour-sol", decision: "up" })],
+        doge: [testCandidate({ id: "one-hour-doge", decision: "down" })],
       },
     } satisfies CandidateRegistryByMarket;
 
     expect(
-      (registeredCandidatesByMarket["5m"].btc ?? []).map(
+      (registeredCandidatesByMarket["1h"].btc ?? []).map(
         (candidate) => candidate.id,
       ),
     ).toEqual(
-      registeredCandidatesForMarket({ asset: "btc", period: "5m" }).map(
+      registeredCandidatesForMarket({ asset: "btc", period: "1h" }).map(
         (candidate) => candidate.id,
       ),
     );
     expect(
-      divergentRegistry["5m"].btc.map((candidate) => candidate.id),
+      divergentRegistry["1h"].btc?.map((candidate) => candidate.id),
     ).not.toEqual(
-      divergentRegistry["15m"].btc.map((candidate) => candidate.id),
+      divergentRegistry["1h"].eth?.map((candidate) => candidate.id),
     );
   });
 
   it("uses the same direct trade candidates for every local market", () => {
-    const periods = ["5m", "15m"] as const;
+    const periods = ["1h"] as const;
     const assets = ["btc", "eth", "sol", "doge"] as const;
 
     for (const period of periods) {
@@ -111,7 +102,7 @@ describe("registeredCandidates", () => {
   });
 
   it("does not duplicate candidate identities inside a period", () => {
-    const ids = registeredCandidatesForPeriod({ period: "5m" }).map(
+    const ids = registeredCandidatesForPeriod({ period: "1h" }).map(
       (candidate) => candidate.id,
     );
 
@@ -121,12 +112,12 @@ describe("registeredCandidates", () => {
   it("uses the context market when callers do not pass candidates", () => {
     const marketCandidates = tradeCandidatesForMarket({
       asset: "sol",
-      period: "15m",
+      period: "1h",
     });
     const decision = evaluateCandidateTradeDecision({
       context: {
         asset: "sol",
-        period: "15m",
+        period: "1h",
         targetTsMs: Date.UTC(2026, 0, 1),
         series: {
           pyth: trendingBars({ count: 80 }),
@@ -144,7 +135,7 @@ describe("registeredCandidates", () => {
     const decision = evaluateCandidateTradeDecision({
       context: {
         asset: "btc",
-        period: "5m",
+        period: "1h",
         targetTsMs: Date.UTC(2026, 0, 1),
         series: {
           pyth: trendingBars({ count: 80 }),
@@ -166,7 +157,7 @@ describe("registeredCandidates", () => {
     const decision = evaluateCandidateTradeDecision({
       context: {
         asset: "btc",
-        period: "5m",
+        period: "1h",
         targetTsMs: Date.UTC(2026, 0, 1),
         series: {
           pyth: trendingBars({ count: 80 }),

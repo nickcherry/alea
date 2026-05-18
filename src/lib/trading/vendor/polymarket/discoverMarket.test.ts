@@ -35,8 +35,8 @@ describe("discoverPolymarketMarket", () => {
       return Response.json([
         {
           id: "444602",
-          slug: "btc-updown-5m-1777900200",
-          title: "Bitcoin Up or Down - May 4, 9:10AM-9:15AM ET",
+          slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
+          title: "Bitcoin Up or Down - May 17, 4PM ET",
           markets: [
             {
               id: "2148175",
@@ -54,11 +54,12 @@ describe("discoverPolymarketMarket", () => {
 
     const result = await discoverPolymarketMarket({
       asset: "btc",
-      windowStartUnixSeconds: 1_777_900_200,
+      timeframe: "1h",
+      windowStartUnixSeconds: 1_779_048_000,
     });
 
     expect(seenUrls).toEqual([
-      `${polymarket.gammaApiUrl}/events?slug=btc-updown-5m-1777900200`,
+      `${polymarket.gammaApiUrl}/events?slug=bitcoin-up-or-down-may-17-2026-4pm-et`,
     ]);
     expect(result).toEqual({
       asset: "btc",
@@ -76,7 +77,7 @@ describe("discoverPolymarketMarket", () => {
     installFetch(() =>
       Response.json([
         {
-          slug: "btc-updown-5m-1777900200",
+          slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
           markets: [
             {
               conditionId: "condition",
@@ -91,7 +92,8 @@ describe("discoverPolymarketMarket", () => {
     expect(
       await discoverPolymarketMarket({
         asset: "btc",
-        windowStartUnixSeconds: 1_777_900_200,
+        timeframe: "1h",
+        windowStartUnixSeconds: 1_779_048_000,
       }),
     ).toBeNull();
   });
@@ -102,12 +104,13 @@ describe("discoverPolymarketMarket", () => {
     expect(
       discoverPolymarketMarket({
         asset: "btc",
-        windowStartUnixSeconds: 1_777_900_200,
+        timeframe: "1h",
+        windowStartUnixSeconds: 1_779_048_000,
       }),
     ).rejects.toThrow(/429 rate limited/);
   });
 
-  it("uses 15m slugs when requested", async () => {
+  it("uses ET human-readable slugs for hourly markets", async () => {
     const seenUrls: string[] = [];
     installFetch((input) => {
       seenUrls.push(inputUrl(input));
@@ -115,13 +118,13 @@ describe("discoverPolymarketMarket", () => {
     });
 
     await discoverPolymarketMarket({
-      asset: "eth",
-      timeframe: "15m",
-      windowStartUnixSeconds: 1_777_900_200,
+      asset: "btc",
+      timeframe: "1h",
+      windowStartUnixSeconds: 1_779_048_000,
     });
 
     expect(seenUrls).toEqual([
-      `${polymarket.gammaApiUrl}/events?slug=eth-updown-15m-1777900200`,
+      `${polymarket.gammaApiUrl}/events?slug=bitcoin-up-or-down-may-17-2026-4pm-et`,
     ]);
   });
 });

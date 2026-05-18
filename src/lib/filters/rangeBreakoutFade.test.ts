@@ -100,7 +100,7 @@ function evaluate({
 }) {
   return rangeBreakoutFadeFilter.evaluate({
     asset: "eth",
-    period: "15m",
+    period: "1h",
     targetTsMs: Date.UTC(2026, 0, 1),
     config,
     series: {

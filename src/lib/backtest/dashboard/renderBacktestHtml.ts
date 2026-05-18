@@ -32,7 +32,7 @@ export function renderBacktestHtml({
   const initialPeriod = payload.defaultPeriod;
   const initialPeriodSlice =
     payload.byPeriod[initialPeriod] ??
-    payload.byPeriod[payload.supportedPeriods[0] ?? "5m"]!;
+    payload.byPeriod[payload.supportedPeriods[0] ?? "1h"]!;
   const initialAsset =
     initialPeriodSlice.byAsset[payload.defaultAsset] === undefined
       ? initialPeriodSlice.defaultAsset

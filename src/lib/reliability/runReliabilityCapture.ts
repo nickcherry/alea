@@ -1,6 +1,12 @@
+import { polymarketUpDownEventSlug } from "@alea/lib/polymarket/marketSlug";
 import { emptyReliabilitySummary } from "@alea/lib/reliability/computeReliabilitySummary";
 import { startReliabilityFeeds } from "@alea/lib/reliability/feeds/startReliabilityFeeds";
 import { finalizeReliabilityWindow } from "@alea/lib/reliability/finalizeReliabilityWindow";
+import {
+  currentReliabilityWindowStartMs,
+  nextReliabilityWindowStartMs,
+  RELIABILITY_WINDOW_MS,
+} from "@alea/lib/reliability/time";
 import {
   baselineReliabilitySource,
   RELIABILITY_SCHEMA_VERSION,
@@ -13,11 +19,6 @@ import {
   type ReliabilitySourceHealth,
   reliabilitySourceValues,
 } from "@alea/lib/reliability/types";
-import {
-  currentWindowStartMs,
-  FIVE_MINUTES_MS,
-  nextWindowStartMs,
-} from "@alea/lib/time/fiveMinuteWindow";
 import { discoverPolymarketMarket } from "@alea/lib/trading/vendor/polymarket/discoverMarket";
 import type { Asset } from "@alea/types/assets";
 
@@ -44,19 +45,19 @@ export async function runReliabilityCapture({
   readonly signal: AbortSignal;
 }): Promise<ReliabilityCapturePayload> {
   const startedAtMs = Date.now();
-  const runStartWindowMs = nextWindowStartMs({ nowMs: startedAtMs });
+  const runStartWindowMs = nextReliabilityWindowStartMs({ nowMs: startedAtMs });
   const captureEndMs =
     durationMs === null ? null : runStartWindowMs + durationMs;
   const lastWindowStartMs =
     captureEndMs === null
       ? null
-      : currentWindowStartMs({
+      : currentReliabilityWindowStartMs({
           nowMs: Math.max(runStartWindowMs, captureEndMs - 1),
         });
   const stopAfterMs =
     lastWindowStartMs === null
       ? null
-      : lastWindowStartMs + FIVE_MINUTES_MS + graceMs + 250;
+      : lastWindowStartMs + RELIABILITY_WINDOW_MS + graceMs + 250;
   const sourceHealth = createSourceHealth();
   const healthBySource = new Map(
     sourceHealth.map((health) => [health.source, health] as const),
@@ -170,7 +171,7 @@ export async function runReliabilityCapture({
         emit,
         schedulePersist,
       });
-      nextToOpenMs += FIVE_MINUTES_MS;
+      nextToOpenMs += RELIABILITY_WINDOW_MS;
     }
 
     const finalized = finalizeDueWindows({
@@ -245,7 +246,7 @@ function openWindow({
   readonly emit: (event: ReliabilityCaptureEvent) => void;
   readonly schedulePersist: () => void;
 }): void {
-  const windowEndMs = windowStartMs + FIVE_MINUTES_MS;
+  const windowEndMs = windowStartMs + RELIABILITY_WINDOW_MS;
   for (const asset of assets) {
     const window = createAssetWindow({ asset, windowStartMs, windowEndMs });
     capture.activeWindows.push(window);
@@ -289,7 +290,11 @@ function createAssetWindow({
     status: "active",
     windowStartMs,
     windowEndMs,
-    marketSlug: `${asset}-updown-5m-${windowStartUnixSeconds}`,
+    marketSlug: polymarketUpDownEventSlug({
+      asset,
+      timeframe: "1h",
+      windowStartUnixSeconds,
+    }),
     conditionId: null,
     marketStatus: "pending",
     marketError: null,
@@ -359,6 +364,7 @@ async function discoverMarketForWindow({
   try {
     const market = await discoverPolymarketMarket({
       asset: window.asset,
+      timeframe: "1h",
       windowStartUnixSeconds: Math.floor(window.windowStartMs / 1000),
       signal,
     });

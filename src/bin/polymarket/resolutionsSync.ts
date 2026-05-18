@@ -10,19 +10,13 @@ import {
 import { assetSchema } from "@alea/types/assets";
 import {
   resolutionTimeframeSchema,
-  resolutionTimeframeValues,
 } from "@alea/types/resolutions";
 import pc from "picocolors";
 import { z } from "zod";
 
 const millisecondsPerDay = 86_400_000;
 
-/**
- * Default backfill window. Polymarket retains 5m markets ~75 days and 15m
- * markets ~180 days; 200 days is a comfortable upper bound that lets the
- * sync probe the full retained history and stop once it hits the wall of
- * missing slugs.
- */
+/** Default 1h resolution backfill window. */
 const defaultDays = 200;
 
 /**
@@ -35,12 +29,12 @@ const perTaskConcurrency = 8;
 
 /**
  * Cross-task fan-out. The slow part is the network round trip, not CPU,
- * so two tasks (one per timeframe / asset combo) running their inner
- * workers gives an aggregate concurrency around 16 — still well within
- * the gamma-api's tolerance and far enough below the network's saturation
- * point to keep latency stable.
+ * so two tasks running their inner workers gives an aggregate concurrency
+ * around 16 — still well within the gamma-api's tolerance and far enough
+ * below the network's saturation point to keep latency stable.
  */
 const taskParallelism = 2;
+const defaultTimeframes = ["1h"] as const;
 
 export const polymarketResolutionsSyncCommand = defineCommand({
   name: "polymarket:resolutions-sync",
@@ -81,14 +75,14 @@ export const polymarketResolutionsSyncCommand = defineCommand({
         .pipe(
           z
             .array(resolutionTimeframeSchema)
-            .default([...resolutionTimeframeValues]),
+            .default([...defaultTimeframes]),
         )
-        .describe("Comma-separated timeframes: 5m,15m."),
+        .describe("Comma-separated timeframes. Defaults to 1h."),
     }),
   ],
   examples: [
     "bun alea polymarket:resolutions-sync",
-    "bun alea polymarket:resolutions-sync --days 30 --assets btc,eth --timeframes 5m",
+    "bun alea polymarket:resolutions-sync --days 30 --assets btc,eth --timeframes 1h",
   ],
   output:
     "Prints per-(asset, timeframe) counts (resolved / pending / missing / voided / errors) and the overall total.",
@@ -106,7 +100,10 @@ export const polymarketResolutionsSyncCommand = defineCommand({
     );
 
     const db = createDatabase();
-    const tasks: Array<{ asset: (typeof options.assets)[number]; timeframe: (typeof options.timeframes)[number] }> = [];
+    const tasks: Array<{
+      asset: (typeof options.assets)[number];
+      timeframe: (typeof options.timeframes)[number];
+    }> = [];
     for (const asset of options.assets) {
       for (const timeframe of options.timeframes) {
         tasks.push({ asset, timeframe });

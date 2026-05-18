@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 
 import { assetValues } from "@alea/constants/assets";
+import { DASHBOARD_RESOLUTION_TIMEFRAMES } from "@alea/constants/dashboard";
 import { LEAD_TIME_DRIFT_THRESHOLD_BPS } from "@alea/constants/leadTimeDrift";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
@@ -22,7 +23,6 @@ import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowS
 import { decodePriceSamples } from "@alea/lib/polymarket/priceSampleCodec";
 import { PRE_MARKET_SAMPLE_LEAD_MS } from "@alea/lib/polymarket/priceSampler";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
-import { resolutionTimeframeValues } from "@alea/types/resolutions";
 import { sql } from "kysely";
 
 const millisecondsPerSecond = 1000;
@@ -112,6 +112,7 @@ export async function loadPricePathsPayload({
       "samples",
     ])
     .where("window_start_ts_ms", ">=", String(cutoffMs))
+    .where("timeframe", "in", [...DASHBOARD_RESOLUTION_TIMEFRAMES])
     .orderBy("timeframe", "asc")
     .orderBy("asset", "asc")
     .orderBy("window_start_ts_ms", "asc")
@@ -148,7 +149,7 @@ type CacheFingerprint = {
  * Bump when the shape of the cached payload changes — forces every
  * deploy to rebuild from source instead of serving a stale shape.
  */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 4;
 const CACHE_FILE_NAME = "price-paths-payload.json";
 
 async function computeCacheFingerprint({
@@ -170,6 +171,7 @@ async function computeCacheFingerprint({
         coalesce(max(finalized_at_ms), 0)::bigint as pms_max_finalized_at_ms
       from polymarket_price_samples
       where window_start_ts_ms >= ${String(cutoffMs)}
+        and timeframe in (${dashboardTimeframeSqlValues()})
     `.execute(db)) as {
       readonly rows: readonly {
         readonly pms_count: number | string;
@@ -293,7 +295,7 @@ export function buildPricePathsPayloadFromRows({
   }
 
   const breakdowns: PricePathTimeframeBreakdown[] =
-    resolutionTimeframeValues.map((timeframe) => {
+    DASHBOARD_RESOLUTION_TIMEFRAMES.map((timeframe) => {
       const durationMs = resolutionTimeframeStepMs({ timeframe });
       const timeBucketMs = timeBucketMsFor({ durationMs });
       const timeframeWindows = windows.filter((w) => w.timeframe === timeframe);
@@ -447,9 +449,7 @@ function buildAggregateSlice({
   readonly timeBucketMs: number;
   readonly leftEdgeOffsetMs: number;
 }): PricePathAggregateSlice {
-  const columnCount = Math.ceil(
-    (durationMs - leftEdgeOffsetMs) / timeBucketMs,
-  );
+  const columnCount = Math.ceil((durationMs - leftEdgeOffsetMs) / timeBucketMs);
   const columns = Array.from({ length: columnCount }, () =>
     createColumnAccumulator(),
   );
@@ -709,8 +709,8 @@ function maxColumnShare({
 /**
  * Time-bucket width used by the heatmap, band-decay chart, and 50c
  * crossings chart/table. 10 seconds across every timeframe so the per-
- * bucket numbers stay comparable between 5m and 15m and the crossings
- * table reads at the same resolution the operator asked for.
+ * bucket numbers stay comparable and the crossings table reads at the
+ * same resolution the operator asked for.
  */
 function timeBucketMsFor({
   durationMs: _durationMs,
@@ -750,6 +750,10 @@ function tableMarkersMsFor({
   // expressed as `durationMs + msBeforeOpen`, so the table reads as a
   // chronological progression: pre-open → open → close.
   const preMarket = [
+    durationMs + 60 * 60 * millisecondsPerSecond,
+    durationMs + 30 * 60 * millisecondsPerSecond,
+    durationMs + 15 * 60 * millisecondsPerSecond,
+    durationMs + 10 * 60 * millisecondsPerSecond,
     durationMs + 5 * 60 * millisecondsPerSecond,
     durationMs + 3 * 60 * millisecondsPerSecond,
     durationMs + 60 * millisecondsPerSecond,
@@ -836,9 +840,7 @@ function computeLeftEdgeOffsetMs({
   readonly windows: readonly PricePathWindow[];
   readonly timeBucketMs: number;
 }): number {
-  return (
-    Math.floor(-PRE_MARKET_SAMPLE_LEAD_MS / timeBucketMs) * timeBucketMs
-  );
+  return Math.floor(-PRE_MARKET_SAMPLE_LEAD_MS / timeBucketMs) * timeBucketMs;
 }
 
 function formatTimeRemaining({ ms }: { readonly ms: number }): string {
@@ -909,7 +911,15 @@ function sortedAssets({
 }
 
 function isResolutionTimeframe(value: string): value is ResolutionTimeframe {
-  return resolutionTimeframeValues.includes(value as ResolutionTimeframe);
+  return DASHBOARD_RESOLUTION_TIMEFRAMES.includes(
+    value as (typeof DASHBOARD_RESOLUTION_TIMEFRAMES)[number],
+  );
+}
+
+function dashboardTimeframeSqlValues() {
+  return sql.raw(
+    DASHBOARD_RESOLUTION_TIMEFRAMES.map((tf) => `'${tf}'`).join(", "),
+  );
 }
 
 function clamp({

@@ -16,6 +16,7 @@ import { polymarketPriceSampleCommand } from "@alea/bin/polymarket/priceSample";
 import { polymarketResolutionsSyncCommand } from "@alea/bin/polymarket/resolutionsSync";
 import { reliabilityCaptureCommand } from "@alea/bin/reliability/capture";
 import { reliabilityChartCommand } from "@alea/bin/reliability/chart";
+import { researchRsiDivergenceSweepCommand } from "@alea/bin/research/rsiDivergenceSweep";
 import { sayTextCommand } from "@alea/bin/say/text";
 import { telegramTestCommand } from "@alea/bin/telegram/test";
 import {
@@ -56,6 +57,7 @@ const cli = createCli({
     polymarketAuthCheckCommand,
     polymarketPriceSampleCommand,
     polymarketResolutionsSyncCommand,
+    researchRsiDivergenceSweepCommand,
     tradingRunCommand,
     tradingHydrateLifetimePnlCommand,
     tradingPerformanceCommand,

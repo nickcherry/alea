@@ -14,15 +14,15 @@ describe("candidateBacktestCacheHash", () => {
     const base = {
       candidate: candidate({ configCanon: '{"length":14}', version: 2 }),
       asset: "btc",
-      period: "5m",
+      period: "1h",
       source: "pyth",
       quarterStartMs: Date.UTC(2026, 3, 1),
       windowStartMs: Date.UTC(2026, 4, 1),
       windowEndMs: Date.UTC(2026, 4, 2),
       decisionSchemaVersion: 1,
       engineVersion: 1,
-      leadTimeMs: 120_000,
-      hydrateBars: 576,
+      leadTimeMs: 600_000,
+      hydrateBars: 288,
       inputDataHash: "data-a",
     } as const;
     const hash = candidateBacktestCacheHash(base);
@@ -41,7 +41,7 @@ describe("candidateBacktestCacheHash", () => {
       }),
     ).not.toBe(hash);
     expect(
-      candidateBacktestCacheHash({ ...base, leadTimeMs: 180_000 }),
+      candidateBacktestCacheHash({ ...base, leadTimeMs: 900_000 }),
     ).not.toBe(hash);
     expect(
       candidateBacktestCacheHash({

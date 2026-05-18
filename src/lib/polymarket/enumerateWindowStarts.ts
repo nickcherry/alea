@@ -14,10 +14,8 @@ export function resolutionTimeframeStepMs({
   readonly timeframe: ResolutionTimeframe;
 }): number {
   switch (timeframe) {
-    case "5m":
-      return 5 * 60 * millisecondsPerSecond;
-    case "15m":
-      return 15 * 60 * millisecondsPerSecond;
+    case "1h":
+      return 60 * 60 * millisecondsPerSecond;
   }
 }
 
@@ -26,10 +24,10 @@ export function resolutionTimeframeStepMs({
  * timeframe's bar boundary, **newest first**.
  *
  * Both endpoints are snapped: Polymarket slug discovery only works on
- * the venue's exact 5m / 15m grid. An off-grid start (e.g.
- * `new Date()`'s millisecond resolution) would otherwise produce slugs
- * like `eth-updown-5m-1778521915` which never resolve, and the sync
- * would record every window as "missing" instead of "resolved".
+ * the venue's exact 1h grid. An off-grid start (e.g. `new Date()`'s
+ * millisecond resolution) would otherwise produce slugs that never
+ * resolve, and the sync would record every window as "missing" instead
+ * of "resolved".
  *
  * Walking newest-first means the dashboard fills with the most recent
  * (and most relevant) data first, and the trailing missing-slug

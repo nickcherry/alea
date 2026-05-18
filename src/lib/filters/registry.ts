@@ -1,9 +1,9 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
 import { defineCandidate } from "@alea/lib/filters/config";
 import {
-  type RangeBreakoutFadeConfig,
-  rangeBreakoutFadeFilter,
-} from "@alea/lib/filters/rangeBreakoutFade";
+  type RsiDivergenceConfig,
+  rsiDivergenceFilter,
+} from "@alea/lib/filters/rsiDivergence";
 import type { FilterCandidate } from "@alea/lib/filters/types";
 import type { Asset } from "@alea/types/assets";
 
@@ -25,101 +25,35 @@ const registryAssets = [
   "doge",
 ] as const satisfies readonly Asset[];
 
-const baseRangeBreakoutFadeConfig = {
-  lookbackBars: 24,
-  minBreakBps: 5,
-  closeLocationThreshold: 0.65,
-  atrBars: 20,
-  minActiveRangeAtrFraction: 0.9,
-  priorTrendBars: 24,
-  maxPriorTrendBps: 100,
-} as const satisfies RangeBreakoutFadeConfig;
-
-const rangeBreakoutFadeCandidates = {
-  btc5m: defineCandidate({
-    filter: rangeBreakoutFadeFilter,
-    config: {
-      ...baseRangeBreakoutFadeConfig,
-      maxBreakBps: 30,
-      maxActiveMoveBps: 25,
-      sidePriorTrendCaps: [
-        { bars: 12, maxBps: 100 },
-        { bars: 24, maxBps: 50 },
-      ],
-      compressionBars: 12,
-      compressionDistanceBps: 20,
-      maxCompressionCount: 5,
-    } satisfies RangeBreakoutFadeConfig,
-  }),
-  eth5m: defineCandidate({
-    filter: rangeBreakoutFadeFilter,
-    config: {
-      ...baseRangeBreakoutFadeConfig,
-      maxBreakBps: 30,
-      maxActiveMoveBps: 40,
-      maxActiveRangeAtrFraction: 3,
-      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
-      compressionBars: 12,
-      compressionDistanceBps: 20,
-      maxCompressionCount: 1,
-    } satisfies RangeBreakoutFadeConfig,
-  }),
-  btc15m: defineCandidate({
-    filter: rangeBreakoutFadeFilter,
-    config: {
-      ...baseRangeBreakoutFadeConfig,
-      maxBreakBps: 60,
-      maxActiveMoveBps: 90,
-      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
-      compressionBars: 12,
-      compressionDistanceBps: 20,
-      maxCompressionCount: 1,
-    } satisfies RangeBreakoutFadeConfig,
-  }),
-  eth15m: defineCandidate({
-    filter: rangeBreakoutFadeFilter,
-    config: {
-      ...baseRangeBreakoutFadeConfig,
-      maxBreakBps: 90,
-    } satisfies RangeBreakoutFadeConfig,
-  }),
-  sol15m: defineCandidate({
-    filter: rangeBreakoutFadeFilter,
-    config: {
-      ...baseRangeBreakoutFadeConfig,
-      maxBreakBps: 90,
-      maxActiveMoveBps: 90,
-      sidePriorTrendCaps: [{ bars: 24, maxBps: 100 }],
-      compressionBars: 12,
-      compressionDistanceBps: 20,
-      maxCompressionCount: 1,
-    } satisfies RangeBreakoutFadeConfig,
-  }),
-} as const;
+const oneHourRsiDivergenceCandidate = defineCandidate({
+  filter: rsiDivergenceFilter,
+  config: {
+    rsiLength: 21,
+    includeHidden: true,
+    leftBars: 2,
+    rightBars: 2,
+    rangeLower: 2,
+    rangeUpper: 30,
+    maxSignalAgeBars: 13,
+    minAgreementScore: 0,
+    maxConsecutiveDisagreements: 1,
+  } satisfies RsiDivergenceConfig,
+});
 
 export const registeredCandidatesByMarket = {
-  "5m": candidatesByAsset({
-    btc: [rangeBreakoutFadeCandidates.btc5m],
-    eth: [rangeBreakoutFadeCandidates.eth5m],
-    sol: [],
-    doge: [],
-  }),
-  "15m": candidatesByAsset({
-    btc: [rangeBreakoutFadeCandidates.btc15m],
-    eth: [rangeBreakoutFadeCandidates.eth15m],
-    sol: [rangeBreakoutFadeCandidates.sol15m],
-    doge: [],
+  "1h": candidatesByAsset({
+    btc: [oneHourRsiDivergenceCandidate],
+    eth: [oneHourRsiDivergenceCandidate],
+    sol: [oneHourRsiDivergenceCandidate],
+    doge: [oneHourRsiDivergenceCandidate],
   }),
 } as const satisfies CandidateRegistryByMarket;
 
 export const tradeCandidatesByMarket = registeredCandidatesByMarket;
 
 export const registeredCandidatesByPeriod = {
-  "5m": uniqueCandidates(
-    candidatesForRegisteredAssets(registeredCandidatesByMarket["5m"]),
-  ),
-  "15m": uniqueCandidates(
-    candidatesForRegisteredAssets(registeredCandidatesByMarket["15m"]),
+  "1h": uniqueCandidates(
+    candidatesForRegisteredAssets(registeredCandidatesByMarket["1h"]),
   ),
 } as const satisfies CandidateRegistryByPeriod;
 

@@ -90,6 +90,10 @@ dashboard updates with no second edit. Examples:
   the option set matches the schema's `dry_run_period` CHECK constraint;
   the dry-run process defaults to
   [`TRADE_DECISION_DEFAULT_MARKETS`](../src/constants/tradeDecision.ts).
+- [`DASHBOARD_RESOLUTION_TIMEFRAMES`](../src/constants/dashboard.ts)
+  → the Polymarket price-paths, lead-time-drift, and proxy-accuracy
+  dashboards. These pages are hourly-only going forward, matching the
+  current live/dry/backtest trading period.
 
 If a value appears on a page and there is no constant for it, add the
 constant under `src/constants/` first; do not inline it into the

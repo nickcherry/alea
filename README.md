@@ -6,16 +6,17 @@ evaluates deterministic filters against the same candle state in dry-run,
 live, and backtest modes, and places or simulates Polymarket maker orders
 when those candidates produce actionable up/down signals.
 
-The strategy is directional prediction before the next `5m` or `15m`
-candle closes, paired with Polymarket maker orders near 50c. With zero
-fees and roughly 1:1 risk/reward, win rate is the edge.
+The strategy is directional prediction for the currently open `1h`
+Polymarket market, decided 10 minutes before the hourly candle closes
+and paired with maker orders near 50c. With zero fees and roughly 1:1
+risk/reward, win rate is the edge.
 
 Pyth remains the canonical price and outcome source because it closes
 closest to Polymarket settlement. Coinbase spot remains available for
 volume-bearing chart context and source-comparison work.
 
-The candle store can ingest `1m`, `5m`, `15m`, and `1h` bars. Live and
-dry-run trading operate on `5m` and `15m` Polymarket markets.
+The candle store can ingest multiple OHLCV granularities. Live trading, dry
+run, and candidate backtests operate on `1h` Polymarket markets.
 
 ## How the pieces fit
 
@@ -51,7 +52,7 @@ dry-run trading operate on `5m` and `15m` Polymarket markets.
 ```sh
 bun alea db:migrate
 bun alea candles:sync
-bun alea candles:chart --asset btc --timeframe 5m
+bun alea candles:chart --asset btc --timeframe 1h
 bun alea backtest:run
 bun alea dry:run
 bun alea dashboards:build --deploy

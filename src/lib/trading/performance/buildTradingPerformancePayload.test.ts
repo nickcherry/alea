@@ -12,7 +12,7 @@ function buy(
     side: "BUY",
     conditionId: "cond",
     title: "BTC Up",
-    slug: "btc-updown-5m",
+    slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
     outcome: "Up",
     usdcSize: 10,
     size: 0,
@@ -30,7 +30,7 @@ function redeem(
     side: null,
     conditionId: "cond",
     title: "BTC Up",
-    slug: "btc-updown-5m",
+    slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
     outcome: "Up",
     usdcSize: 25,
     size: 0,
@@ -70,7 +70,7 @@ describe("buildTradingPerformancePayload", () => {
         {
           conditionId: "lose",
           title: "BTC Up",
-          slug: "btc-updown-5m",
+          slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
           outcome: "Up",
           size: 100,
           currentPrice: 0,
@@ -96,7 +96,7 @@ describe("buildTradingPerformancePayload", () => {
         {
           conditionId: "win",
           title: "BTC Up",
-          slug: "btc-updown-5m",
+          slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
           outcome: "Up",
           size: 100,
           currentPrice: 1,
@@ -119,7 +119,7 @@ describe("buildTradingPerformancePayload", () => {
         {
           conditionId: "open",
           title: "BTC Up",
-          slug: "btc-updown-5m",
+          slug: "bitcoin-up-or-down-may-17-2026-4pm-et",
           outcome: "Up",
           size: 100,
           currentPrice: 0.45,
@@ -196,7 +196,7 @@ describe("buildTradingPerformancePayload", () => {
         {
           conditionId: "open",
           title: "XRP Up",
-          slug: "xrp-updown-15m",
+          slug: "xrp-up-or-down-may-17-2026-4pm-et",
           outcome: "Up",
           size: 38.46,
           currentPrice: 0.74,

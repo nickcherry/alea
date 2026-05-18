@@ -1,4 +1,5 @@
 import { polymarket } from "@alea/constants/polymarket";
+import { polymarketUpDownEventSlug } from "@alea/lib/polymarket/marketSlug";
 import type { TradableMarket } from "@alea/lib/trading/vendor/types";
 import type { Asset } from "@alea/types/assets";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
@@ -6,9 +7,8 @@ import { z } from "zod";
 
 /**
  * Polymarket "up/down" market lookup via the public gamma-api.
- * Slug is fixed by the venue: `<asset>-updown-<5m|15m>-<unixSeconds>`,
- * where `unixSeconds` is the window *start* (UTC, aligned to the
- * timeframe grid).
+ * The venue uses a human-readable ET slug family for hourly crypto
+ * markets, so discovery goes through the shared hourly slug helper.
  *
  * Returns `null` when the slug doesn't resolve to anything that
  * matches the expected up/down shape (degenerate outcomes, missing
@@ -22,7 +22,7 @@ import { z } from "zod";
  */
 export async function discoverPolymarketMarket({
   asset,
-  timeframe = "5m",
+  timeframe = "1h",
   windowStartUnixSeconds,
   signal,
 }: {
@@ -31,7 +31,11 @@ export async function discoverPolymarketMarket({
   readonly windowStartUnixSeconds: number;
   readonly signal?: AbortSignal;
 }): Promise<TradableMarket | null> {
-  const slug = `${asset}-updown-${timeframe}-${windowStartUnixSeconds}`;
+  const slug = polymarketUpDownEventSlug({
+    asset,
+    timeframe,
+    windowStartUnixSeconds,
+  });
   const url = `${polymarket.gammaApiUrl}/events?slug=${slug}`;
   const response = await fetch(url, {
     headers: { "User-Agent": "alea/1.0" },

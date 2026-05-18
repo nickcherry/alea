@@ -261,9 +261,9 @@ describe("createDryRunOrderSimulator", () => {
     const streamedMarkets: TradableMarket[][] = [];
     const discoveredMarket: TradableMarket = {
       asset: "eth",
-      vendorRef: "COND-15M",
-      upRef: "UP-15M",
-      downRef: "DOWN-15M",
+      vendorRef: "COND-1H",
+      upRef: "UP-1H",
+      downRef: "DOWN-1H",
       tickSize: 0.01,
       negRisk: false,
     };
@@ -283,7 +283,7 @@ describe("createDryRunOrderSimulator", () => {
     await simulator.scheduleOrder({
       decisionId: "42",
       asset: "eth",
-      period: "15m",
+      period: "1h",
       prediction: "d",
       targetTsMs,
       confidence: 0.57,
@@ -293,20 +293,20 @@ describe("createDryRunOrderSimulator", () => {
     expect(discoveryCalls).toEqual([
       {
         asset: "eth",
-        timeframe: "15m",
+        timeframe: "1h",
         windowStartTsMs: targetTsMs,
       },
     ]);
     expect(streamedMarkets.at(-1)).toEqual([discoveredMarket]);
     expect(
       updates.some(
-        (update) => update.order_expires_at_ms === targetTsMs + 15 * 60_000,
+        (update) => update.order_expires_at_ms === targetTsMs + 60 * 60_000,
       ),
     ).toBe(true);
     expect(updates).toContainEqual({
-      order_market_ref: "COND-15M",
-      order_up_token_ref: "UP-15M",
-      order_down_token_ref: "DOWN-15M",
+      order_market_ref: "COND-1H",
+      order_up_token_ref: "UP-1H",
+      order_down_token_ref: "DOWN-1H",
     });
   });
 });

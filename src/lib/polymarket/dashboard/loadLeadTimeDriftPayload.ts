@@ -1,5 +1,6 @@
 import { PRICE_PATH_ANALYSIS_END_EXCLUSIVE_MS } from "@alea/constants/analysisWindows";
 import { assetValues } from "@alea/constants/assets";
+import { DASHBOARD_RESOLUTION_TIMEFRAMES } from "@alea/constants/dashboard";
 import {
   LEAD_MINUTES_BY_PERIOD,
   LEAD_TIME_DRIFT_THRESHOLD_BPS,
@@ -8,7 +9,6 @@ import type { DatabaseClient } from "@alea/lib/db/types";
 import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import type { Asset } from "@alea/types/assets";
 import type { ResolutionTimeframe } from "@alea/types/resolutions";
-import { resolutionTimeframeValues } from "@alea/types/resolutions";
 import { sql } from "kysely";
 
 const millisecondsPerMinute = 60_000;
@@ -176,7 +176,7 @@ export function buildLeadTimeDriftPayloadFromAggregateRows({
   }
 
   const breakdowns: LeadTimeDriftTimeframeBreakdown[] = [];
-  for (const timeframe of resolutionTimeframeValues) {
+  for (const timeframe of DASHBOARD_RESOLUTION_TIMEFRAMES) {
     const slices: LeadTimeDriftSlice[] = [];
     // Per-asset slices.
     for (const asset of assetValues) {
@@ -399,7 +399,7 @@ function emptyPayload({
     hasOneMinuteCandles: false,
     firstCandleMs: null,
     lastCandleMs: null,
-    breakdowns: resolutionTimeframeValues.map((timeframe) => ({
+    breakdowns: DASHBOARD_RESOLUTION_TIMEFRAMES.map((timeframe) => ({
       timeframe,
       leadMinutes: LEAD_MINUTES_BY_PERIOD[timeframe],
       slices: [],
@@ -436,26 +436,23 @@ async function fetchAggregateRows({
   readonly db: DatabaseClient;
   readonly endExclusiveMs: number;
 }): Promise<readonly LeadTimeDriftAggregateRow[]> {
-  const fiveMinuteLeads = sql.raw(
-    `array[${LEAD_MINUTES_BY_PERIOD["5m"].join(",")}]::int[]`,
-  );
-  const fifteenMinuteLeads = sql.raw(
-    `array[${LEAD_MINUTES_BY_PERIOD["15m"].join(",")}]::int[]`,
-  );
-  const fiveMinuteMinutes = sql.raw(
-    String(
-      Math.round(
-        resolutionTimeframeStepMs({ timeframe: "5m" }) / millisecondsPerMinute,
+  const leadsValues = sql.raw(
+    DASHBOARD_RESOLUTION_TIMEFRAMES.flatMap((timeframe) =>
+      LEAD_MINUTES_BY_PERIOD[timeframe].map(
+        (leadMinutes) => `('${timeframe}', ${leadMinutes})`,
       ),
-    ),
+    ).join(", "),
   );
-  const fifteenMinuteMinutes = sql.raw(
-    String(
-      Math.round(
-        resolutionTimeframeStepMs({ timeframe: "15m" }) /
-          millisecondsPerMinute,
-      ),
-    ),
+  const timeframeValues = sql.raw(
+    DASHBOARD_RESOLUTION_TIMEFRAMES.map((tf) => `'${tf}'`).join(", "),
+  );
+  const timeframeMinutesCase = sql.raw(
+    DASHBOARD_RESOLUTION_TIMEFRAMES.map((timeframe) => {
+      const minutes = Math.round(
+        resolutionTimeframeStepMs({ timeframe }) / millisecondsPerMinute,
+      );
+      return `when '${timeframe}' then ${minutes}`;
+    }).join(" "),
   );
   const bps2 = sql.raw(String(LEAD_TIME_DRIFT_THRESHOLD_BPS[0] ?? 2));
   const bps5 = sql.raw(String(LEAD_TIME_DRIFT_THRESHOLD_BPS[1] ?? 5));
@@ -480,16 +477,15 @@ async function fetchAggregateRows({
     readonly last_candle_ts: Date | string | null;
   }>`
     with leads as (
-      select '5m'::text as timeframe, unnest(${fiveMinuteLeads}) as lead_minutes
-      union all
-      select '15m'::text as timeframe, unnest(${fifteenMinuteLeads}) as lead_minutes
+      select timeframe::text, lead_minutes::int
+      from (values ${leadsValues}) as v(timeframe, lead_minutes)
     ),
     targets as (
       select asset, timeframe, timestamp, open, close
       from candles
       where source = 'pyth'
         and product = 'spot'
-        and timeframe in ('5m', '15m')
+        and timeframe in (${timeframeValues})
         and timestamp < ${new Date(endExclusiveMs)}
     ),
     joined as (
@@ -509,7 +505,7 @@ async function fetchAggregateRows({
         and one_min.timeframe = '1m'
         and one_min.asset = t.asset
         and one_min.timestamp = t.timestamp + (
-          ((case t.timeframe when '5m' then ${fiveMinuteMinutes} else ${fifteenMinuteMinutes} end) - l.lead_minutes - 1)
+          ((case t.timeframe ${timeframeMinutesCase} end) - l.lead_minutes - 1)
           * interval '1 minute'
         )
     ),

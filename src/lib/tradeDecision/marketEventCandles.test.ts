@@ -36,7 +36,7 @@ function candle({
     source: "pyth",
     asset: "btc",
     product: "spot",
-    timeframe: "5m",
+    timeframe: "1h",
     timestamp: new Date(timestamp),
     open: close,
     high: close,

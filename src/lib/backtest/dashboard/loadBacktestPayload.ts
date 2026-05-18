@@ -83,7 +83,7 @@ function defaultAssetFor({
 }: {
   readonly byPeriod: Record<string, BacktestDashboardPeriodSlice>;
 }): string {
-  for (const period of ["15m", "5m"]) {
+  for (const period of CANDIDATE_BACKTEST_PERIODS) {
     const slice = byPeriod[period];
     if (slice === undefined) {
       continue;
@@ -110,13 +110,12 @@ function defaultPeriodFor({
 }: {
   readonly byPeriod: Record<string, BacktestDashboardPeriodSlice>;
 }): string {
-  if (periodHasRows(byPeriod["15m"])) {
-    return "15m";
+  for (const period of CANDIDATE_BACKTEST_PERIODS) {
+    if (periodHasRows(byPeriod[period])) {
+      return period;
+    }
   }
-  if (periodHasRows(byPeriod["5m"])) {
-    return "5m";
-  }
-  return "15m";
+  return CANDIDATE_BACKTEST_PERIODS[0] ?? "1h";
 }
 
 function buildPeriodSlice({

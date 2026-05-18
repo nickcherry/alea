@@ -3,7 +3,7 @@
 ## Purpose
 
 `reliability:capture` is the sanity check that lets us use fast exchange feeds
-as practical proxies for Polymarket's Chainlink-settled 5-minute crypto
+as practical proxies for Polymarket's Chainlink-settled 1h crypto
 markets.
 
 The chart-decision and live-trading path can compare Pyth, Coinbase/Binance
@@ -17,7 +17,7 @@ stream:
 - That speed is the point: the exchange feeds may be small leading indicators
   for the slower Chainlink-derived Polymarket settlement feed.
 
-The risk is proxy drift. If Binance/Coinbase often end a 5-minute window on the
+The risk is proxy drift. If Binance/Coinbase often end a 1h window on the
 opposite side from Polymarket's Chainlink feed, then those feeds would point
 the chart-decision path at the wrong settlement target and live trading would
 be measuring the wrong line. This experiment exists to detect that failure
@@ -25,7 +25,7 @@ mode.
 
 This is not an absolute price-accuracy test. Coinbase, Binance, spot, and perps
 can all carry different bases. The required property is narrower: when each
-source anchors to its own price at the start of the same Polymarket 5-minute
+source anchors to its own price at the start of the same Polymarket 1h
 window, it should virtually always finish on the same directional side as
 Polymarket. "Close enough" means disagreements should be rare and should mostly
 cluster around near-zero Chainlink moves where boundary timestamp jitter can
@@ -45,7 +45,7 @@ The command opens five multi-asset public streams:
 
 The default asset set is the repo whitelist: `btc`, `eth`, `sol`, `xrp`,
 `doge`. The runner warms up streams, skips the partial startup window, then
-records complete UTC-aligned 5-minute windows.
+records complete UTC-aligned 1h windows.
 
 For each asset/window/source:
 
@@ -56,8 +56,8 @@ For each asset/window/source:
 4. Non-Polymarket sources are marked `OK` or `DIFF` against
    `polymarket-chainlink`.
 
-Ties favor `UP`, matching the existing trading code and Polymarket's current
-5-minute crypto market wording.
+Ties favor `UP`, matching the existing trading code and Polymarket's crypto
+market wording.
 
 The command deliberately uses live boundary ticks rather than OHLC candles.
 Polymarket's market wording is beginning-price vs ending-price over the titled

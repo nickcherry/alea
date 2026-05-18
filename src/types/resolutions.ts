@@ -1,11 +1,7 @@
 import { z } from "zod";
 
-/**
- * Timeframes Polymarket publishes up/down crypto markets for. 5m markets
- * exist on every 5-minute boundary; 15m markets exist only on :00 / :15 /
- * :30 / :45 boundaries.
- */
-export const resolutionTimeframeValues = ["5m", "15m"] as const;
+/** Timeframes Alea trades on Polymarket up/down crypto markets. */
+export const resolutionTimeframeValues = ["1h"] as const;
 
 export const resolutionTimeframeSchema = z.enum(resolutionTimeframeValues);
 

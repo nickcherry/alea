@@ -56,7 +56,7 @@ type FetchPythCandlesParams = {
  * Pyth aggregates a median across ~10+ first-party publishers (Coinbase,
  * Cboe, Wintermute, Virtu, etc) — architecturally similar to Chainlink
  * Data Streams' reporter model, and a candidate proxy for the Streams
- * price Polymarket settles 5-minute markets on. See
+ * price Polymarket settles up/down markets on. See
  * doc/RELIABILITY_EXPERIMENT.md for the comparison context.
  *
  * `volume` is always 0: Pyth is an oracle median, not a venue-level

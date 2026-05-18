@@ -9,10 +9,7 @@ type MarketChartRecentWindow = {
 
 export const MARKET_CHART_RECENT_WINDOWS: Readonly<
   Partial<Record<CandleTimeframe, MarketChartRecentWindow>>
-> = {
-  "5m": { days: 2, bars: 2 * 24 * 12 },
-  "15m": { days: 4, bars: 4 * 24 * 4 },
-};
+> = {};
 
 export const MAX_MARKET_CHART_RECENT_BARS = Math.max(
   MARKET_CHART_FALLBACK_RECENT_BARS,

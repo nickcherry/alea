@@ -15,8 +15,8 @@ describe("waitForDueLiveDecisions", () => {
       decisions: [
         {
           asset: "doge",
-          period: "5m",
-          targetTsMs: Date.UTC(2026, 4, 15, 22, 30),
+          period: "1h",
+          targetTsMs: Date.UTC(2026, 4, 15, 22),
           promise: new Promise(() => {
             /* intentionally left pending */
           }),
@@ -30,7 +30,7 @@ describe("waitForDueLiveDecisions", () => {
       {
         kind: "error",
         message:
-          "decision timed out 5m/doge target=2026-05-15T22:30:00.000Z after 5ms; scheduler continuing",
+          "decision timed out 1h/doge target=2026-05-15T22:00:00.000Z after 5ms; scheduler continuing",
       },
     ]);
   });
@@ -43,8 +43,8 @@ describe("waitForDueLiveDecisions", () => {
       decisions: [
         {
           asset: "btc",
-          period: "15m",
-          targetTsMs: Date.UTC(2026, 4, 15, 22, 30),
+          period: "1h",
+          targetTsMs: Date.UTC(2026, 4, 15, 22),
           promise: Promise.resolve(),
         },
       ],
@@ -56,24 +56,26 @@ describe("waitForDueLiveDecisions", () => {
 });
 
 describe("isLiveDecisionTooLateForOrder", () => {
-  it("allows decisions inside the post-open retry window", () => {
-    const targetTsMs = Date.UTC(2026, 4, 15, 22, 30);
+  it("allows decisions before the target 1h market closes", () => {
+    const targetTsMs = Date.UTC(2026, 4, 15, 22);
 
     expect(
       isLiveDecisionTooLateForOrder({
+        period: "1h",
         targetTsMs,
-        nowMs: targetTsMs + 10_000,
+        nowMs: targetTsMs + 59 * 60_000,
       }),
     ).toBe(false);
   });
 
-  it("blocks decisions after the post-open retry window", () => {
-    const targetTsMs = Date.UTC(2026, 4, 15, 22, 30);
+  it("blocks decisions once the target 1h market has closed", () => {
+    const targetTsMs = Date.UTC(2026, 4, 15, 22);
 
     expect(
       isLiveDecisionTooLateForOrder({
+        period: "1h",
         targetTsMs,
-        nowMs: targetTsMs + 10_001,
+        nowMs: targetTsMs + 60 * 60_000,
       }),
     ).toBe(true);
   });

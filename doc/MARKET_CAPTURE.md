@@ -2,7 +2,7 @@
 
 Long-running tape recorder for the live feeds that matter to the
 current dry-run and replay stack. The capture loop writes every event
-as JSONL under `tmp/market-capture/`, rotates files on UTC 5-minute
+as JSONL under `tmp/market-capture/`, rotates files on UTC hourly
 boundaries, and bulk-loads closed sessions into the `market_event`
 Postgres table unless `--no-ingest` is passed.
 
@@ -34,7 +34,7 @@ later to load sessions written with `--no-ingest`.
 
 | Source                 | Stream                                                               | Event shape                                                                                                                                |
 | ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `polymarket`           | Public market-data WS for current and next-window 5m up/down markets | Venue events (`book`, `trade`, `price-change`, `tick-size-change`, `resolved`) plus `connect`, `disconnect`, `error`, and `resync` markers |
+| `polymarket`           | Public market-data WS for current and next-window 1h up/down markets | Venue events (`book`, `trade`, `price-change`, `tick-size-change`, `resolved`) plus `connect`, `disconnect`, `error`, and `resync` markers |
 | `pyth-spot`            | Pyth Hermes SSE price stream                                         | Synthetic BBO-shaped ticks with `bid = ask = mid = price`; raw confidence is preserved in payload                                          |
 | `polymarket-chainlink` | Polymarket RTDS Chainlink reference price                            | Single-value reference ticks stored as `reference-price` events                                                                            |
 

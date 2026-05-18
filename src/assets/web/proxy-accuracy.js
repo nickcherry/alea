@@ -1,5 +1,6 @@
 /*
- * Proxy Accuracy dashboard — client-side period toggle.
+ * Proxy Accuracy dashboard — client-side period switch when the payload
+ * contains more than one timeframe.
  *
  * Shows one of the pre-rendered .proxy-timeframe-section elements at a
  * time and re-renders the "Top Disagreements" table from the embedded
@@ -28,7 +29,12 @@
   var alea = window.alea;
   var escapeHtml = alea.escapeHtml;
 
-  var initial = "5m";
+  var initial =
+    payload && payload.breakdowns && payload.breakdowns[0]
+      ? payload.breakdowns[0].timeframe || "1h"
+      : sections[0] && sections[0].dataset.period
+        ? sections[0].dataset.period
+        : "1h";
   Array.prototype.forEach.call(tabs, function (t) {
     if (t.getAttribute("aria-selected") === "true") {
       initial = t.dataset.period || initial;
@@ -61,7 +67,8 @@
       return r.timeframe === period;
     });
     if (rows.length === 0) {
-      extremeHost.innerHTML = '<p class="proxy-muted">No disagreements yet.</p>';
+      extremeHost.innerHTML =
+        '<p class="proxy-muted">No disagreements yet.</p>';
       return;
     }
     extremeHost.innerHTML =

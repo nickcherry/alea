@@ -1,16 +1,17 @@
 import {
+  nextTradeDecisionFireTimeMs,
   resolveTradeDecisionMarkets,
   TRADE_DECISION_DECISION_SOURCE,
   TRADE_DECISION_MAX_DECISION_DURATION_MS,
+  tradeDecisionFireTimeMs,
   tradeDecisionHydrateBars,
-  tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
+  tradeDecisionTargetOpenTimeMs,
 } from "@alea/constants/tradeDecision";
 import {
   LIVE_TRADING_MARKET_DISCOVERY_LEAD_MS,
-  LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS,
 } from "@alea/constants/trading";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
@@ -161,26 +162,31 @@ export async function runLiveTrading({
         let nextFireTime = now + 1000;
         const dueDecisions: DueLiveDecision[] = [];
         for (const period of selectedPeriods) {
-          const periodMs = resolutionTimeframeStepMs({ timeframe: period });
-          const nextBoundary = Math.ceil(now / periodMs) * periodMs;
-          const fireTime = nextBoundary - tradeDecisionLeadTimeMs({ period });
-          nextFireTime = Math.min(nextFireTime, fireTime);
+          const targetTsMs = tradeDecisionTargetOpenTimeMs({
+            period,
+            nowMs: now,
+          });
+          const fireTime = tradeDecisionFireTimeMs({ period, targetTsMs });
+          nextFireTime = Math.min(
+            nextFireTime,
+            nextTradeDecisionFireTimeMs({ period, nowMs: now }),
+          );
           if (now < fireTime) {
             continue;
           }
           for (const state of statesByPeriod.get(period) ?? []) {
-            if (state.lastPredictedBoundary >= nextBoundary) {
+            if (state.lastPredictedBoundary >= targetTsMs) {
               continue;
             }
             dueDecisions.push({
               asset: state.asset,
               period: state.period,
-              targetTsMs: nextBoundary,
+              targetTsMs,
               promise: processDueLiveDecision({
                 state,
                 now,
                 fetchCandles,
-                targetTsMs: nextBoundary,
+                targetTsMs,
                 orderExecutor,
                 telegramNotifier,
                 log,
@@ -453,6 +459,7 @@ async function makeLiveDecision({
   });
   if (
     isLiveDecisionTooLateForOrder({
+      period: state.period,
       targetTsMs,
       nowMs: Date.now(),
     })
@@ -475,13 +482,15 @@ async function makeLiveDecision({
 }
 
 export function isLiveDecisionTooLateForOrder({
+  period,
   targetTsMs,
   nowMs,
 }: {
+  readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
   readonly nowMs: number;
 }): boolean {
-  return nowMs > targetTsMs + LIVE_TRADING_ORDER_RETRY_AFTER_OPEN_MS;
+  return nowMs >= targetTsMs + resolutionTimeframeStepMs({ timeframe: period });
 }
 
 const fetchNoCandles: FetchCandles = async () => [];

@@ -1,7 +1,7 @@
-import { FIVE_MINUTES_MS } from "@alea/lib/time/fiveMinuteWindow";
+export const CAPTURE_WINDOW_MS = 60 * 60 * 1000;
 
 /**
- * Per-window file naming utilities. The capture pipeline uses 5-minute
+ * Per-window file naming utilities. The capture pipeline uses hourly
  * windows that align with the trading runner's window boundaries, so
  * a JSONL file holds exactly one window's worth of events and the
  * filename is enough to identify the window.
@@ -32,11 +32,11 @@ export type WindowSession = {
 };
 
 /**
- * Floors `nowMs` to its 5-minute window start, the same convention
- * the trading runner uses (see `currentWindowStartMs`).
+ * Floors `nowMs` to its hourly window start, the same convention
+ * the 1h trading runner uses.
  */
 export function windowStartFor({ nowMs }: { readonly nowMs: number }): number {
-  return Math.floor(nowMs / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
+  return Math.floor(nowMs / CAPTURE_WINDOW_MS) * CAPTURE_WINDOW_MS;
 }
 
 /**

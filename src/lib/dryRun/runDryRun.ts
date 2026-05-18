@@ -3,13 +3,15 @@ import {
   type DryRunOrderStatus,
 } from "@alea/constants/dryRun";
 import {
+  nextTradeDecisionFireTimeMs,
   resolveTradeDecisionMarkets,
   TRADE_DECISION_DECISION_SOURCE,
+  tradeDecisionFireTimeMs,
   tradeDecisionHydrateBars,
-  tradeDecisionLeadTimeMs,
   type TradeDecisionMarket,
   tradeDecisionMarketPeriods,
   type TradeDecisionPeriod,
+  tradeDecisionTargetOpenTimeMs,
 } from "@alea/constants/tradeDecision";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import {
@@ -19,7 +21,6 @@ import {
 import { evaluateCandidateTradeDecision } from "@alea/lib/filters/evaluateCandidates";
 import type { AlignedMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
-import { resolutionTimeframeStepMs } from "@alea/lib/polymarket/enumerateWindowStarts";
 import {
   type FetchCandles,
   hydrateTradeDecisionCandleState,
@@ -91,12 +92,12 @@ export type DryRunLogEvent =
  * Operations:
  *   1. Hydrate per-asset/per-period bar buffers from fresh Pyth candles
  *      (most recent trade-decision history bars).
- *   2. Shortly before each configured boundary, refresh recent Pyth
- *      candles into the in-memory buffer and synthesize the active candle
+ *   2. Ten minutes before each 1h market closes, refresh recent Pyth
+ *      candles into the in-memory buffer and synthesize the current 1h candle
  *      from the latest one-shot Pyth price.
  *   3. Evaluate the period's registered filter candidates on that same decision
  *      series and persist only actionable up/down majorities.
- *   4. Simulate the configured pre-open Polymarket order and track whether it
+ *   4. Simulate the configured current-market Polymarket order and track whether it
  *      fills before expiry.
  *
  * The dry-run loop is single-threaded by design — all state lives
@@ -185,65 +186,71 @@ export async function runDryRun({
         await orderSimulator.tick({ nowMs: now });
         let nextFireTime = now + 1000;
         for (const period of selectedPeriods) {
-          const periodMs = resolutionTimeframeStepMs({ timeframe: period });
-          const nextBoundary = Math.ceil(now / periodMs) * periodMs;
-          const fireTime = nextBoundary - tradeDecisionLeadTimeMs({ period });
-          nextFireTime = Math.min(nextFireTime, fireTime);
-          if (now >= fireTime) {
-            for (const state of statesByPeriod.get(period) ?? []) {
-              if (state.lastPredictedBoundary >= nextBoundary) {
-                continue;
-              }
-              let refreshed: Awaited<
-                ReturnType<typeof refreshTradeDecisionCandleState>
-              >;
-              try {
-                refreshed = await refreshTradeDecisionCandleState({
-                  state,
-                  nowMs: now,
-                  limit: tradeDecisionHydrateBars({ period: state.period }),
-                  fetchCandles,
-                  fetchCoinbaseBarsForRefresh: fetchNoCandles,
-                });
-              } catch (e) {
-                log({
-                  kind: "error",
-                  message: `candle refresh failed ${state.period}/${state.asset}: ${String(e)}`,
-                });
-                continue;
-              }
-              await scorePendingDecisions({
-                db,
-                state,
-                pendingByState,
-                log,
-              });
-              if (
-                refreshed.syntheticBar === null ||
-                refreshed.seriesForDecision === null
-              ) {
-                const reason =
-                  refreshed.priceAgeMs === null
-                    ? "missing latest Pyth price"
-                    : `latest Pyth price stale (${refreshed.priceAgeMs}ms old)`;
-                log({
-                  kind: "error",
-                  message: `skip decision ${state.period}/${state.asset}: ${reason}`,
-                });
-                continue;
-              }
-              state.lastPredictedBoundary = nextBoundary;
-              await makePrediction({
-                db,
-                state,
-                targetTsMs: nextBoundary,
-                series: refreshed.seriesForDecision,
-                synthBar: refreshed.syntheticBar,
-                pendingByState,
-                orderSimulator,
-                log,
-              });
+          const targetTsMs = tradeDecisionTargetOpenTimeMs({
+            period,
+            nowMs: now,
+          });
+          const fireTime = tradeDecisionFireTimeMs({ period, targetTsMs });
+          nextFireTime = Math.min(
+            nextFireTime,
+            nextTradeDecisionFireTimeMs({ period, nowMs: now }),
+          );
+          if (now < fireTime) {
+            continue;
+          }
+          for (const state of statesByPeriod.get(period) ?? []) {
+            if (state.lastPredictedBoundary >= targetTsMs) {
+              continue;
             }
+            let refreshed: Awaited<
+              ReturnType<typeof refreshTradeDecisionCandleState>
+            >;
+            try {
+              refreshed = await refreshTradeDecisionCandleState({
+                state,
+                nowMs: now,
+                limit: tradeDecisionHydrateBars({ period: state.period }),
+                fetchCandles,
+                fetchCoinbaseBarsForRefresh: fetchNoCandles,
+              });
+            } catch (e) {
+              log({
+                kind: "error",
+                message: `candle refresh failed ${state.period}/${state.asset}: ${String(e)}`,
+              });
+              continue;
+            }
+            await scorePendingDecisions({
+              db,
+              state,
+              pendingByState,
+              log,
+            });
+            if (
+              refreshed.syntheticBar === null ||
+              refreshed.seriesForDecision === null
+            ) {
+              const reason =
+                refreshed.priceAgeMs === null
+                  ? "missing latest Pyth price"
+                  : `latest Pyth price stale (${refreshed.priceAgeMs}ms old)`;
+              log({
+                kind: "error",
+                message: `skip decision ${state.period}/${state.asset}: ${reason}`,
+              });
+              continue;
+            }
+            state.lastPredictedBoundary = targetTsMs;
+            await makePrediction({
+              db,
+              state,
+              targetTsMs,
+              series: refreshed.seriesForDecision,
+              synthBar: refreshed.syntheticBar,
+              pendingByState,
+              orderSimulator,
+              log,
+            });
           }
         }
         const sleepMs = Math.max(250, Math.min(nextFireTime - now + 1, 1000));
@@ -326,12 +333,9 @@ async function makePrediction({
     });
     return;
   }
-  // Persist. The target bar's open = targetTsMs (i.e. the upcoming
-  // period boundary). Its open price is approximately the current
-  // Pyth price (close of the bar we just synthesised). We persist
-  // that as `synth_open` because it's both the synthetic close of
-  // the prior bar AND the open we're betting the next bar moves away
-  // from.
+  // Persist the synthetic current-bar close as `synth_open`; it is the
+  // live reference price available at decision time for the current 1h
+  // Polymarket window.
   //
   const inserted = await db
     .insertInto("dry_run_decisions")

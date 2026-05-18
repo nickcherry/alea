@@ -78,7 +78,7 @@ describe("packed-tick codec", () => {
 
   it("round-trips negative pre-market offsets", () => {
     const ticks: readonly PriceSampleTick[] = [
-      { offsetMs: -300_000, upBps: 5_000, downBps: 5_000 },
+      { offsetMs: -3_600_000, upBps: 5_000, downBps: 5_000 },
       { offsetMs: -1_000, upBps: 5_100, downBps: 4_900 },
       { offsetMs: 0, upBps: 5_050, downBps: 4_950 },
       { offsetMs: 299_000, upBps: 6_000, downBps: 4_000 },
@@ -107,7 +107,7 @@ describe("packed-tick codec", () => {
 
 describe("sampleActiveSessions", () => {
   const windowStartTsMs = 1_778_517_600_000;
-  const windowEndTsMs = windowStartTsMs + 300_000;
+  const windowEndTsMs = windowStartTsMs + 3_600_000;
 
   function freshSession(): SampleableSession {
     return {

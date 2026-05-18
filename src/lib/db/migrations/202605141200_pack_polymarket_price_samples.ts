@@ -4,8 +4,7 @@ import { type Kysely, sql } from "kysely";
 /**
  * Repack `polymarket_price_samples` to store packed-tick bytea instead
  * of a JSONB tuple array. Each tick is now 8 bytes (uint32 offsetMs,
- * uint16 up_bps, uint16 down_bps) preceded by an 8-byte header, so a
- * 15m × 1s market is ~7KB and full-coverage capture costs ~10MB/day.
+ * uint16 up_bps, uint16 down_bps) preceded by an 8-byte header.
  *
  * Old JSONB rows store only the UP price — incompatible with the new
  * both-sides layout — so the table is truncated. Fresh capture starts

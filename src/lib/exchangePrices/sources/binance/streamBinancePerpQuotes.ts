@@ -12,7 +12,7 @@ import { z } from "zod";
 const FAPI_WS_BASE = "wss://fstream.binance.com/stream";
 
 /**
- * Binance USDT-margined perpetual futures BBO + 5m kline-close stream
+ * Binance USDT-margined perpetual futures BBO + kline-close stream
  * for one or more assets, served from a single WebSocket connection
  * via Binance's combined-stream URL (`/stream?streams=...`).
  *

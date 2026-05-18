@@ -56,12 +56,12 @@ describe("createCaptureJsonlWriter", () => {
     const dateDir = resolvePath(dir, "2026-05-05");
     const entries = await readdir(dateDir);
     expect(entries.sort()).toEqual([
-      "2026-05-05T12-30.jsonl",
-      "2026-05-05T12-30.jsonl.complete",
+      "2026-05-05T12-00.jsonl",
+      "2026-05-05T12-00.jsonl.complete",
     ]);
 
     const text = await readFile(
-      resolvePath(dateDir, "2026-05-05T12-30.jsonl"),
+      resolvePath(dateDir, "2026-05-05T12-00.jsonl"),
       "utf8",
     );
     const lines = text.split("\n").filter((line) => line.length > 0);
@@ -70,7 +70,7 @@ describe("createCaptureJsonlWriter", () => {
     expect(parseRecord(lines[1]!).payload.bid).toBe(2);
   });
 
-  it("rotates files at the 5-minute boundary using wall-clock at write time", async () => {
+  it("rotates files at the hourly boundary using wall-clock at write time", async () => {
     const rolledOver: { closedSession: { windowKey: string }; closedPath: string }[] = [];
     let now = Date.parse("2026-05-05T12:32:00.000Z");
     const writer = await createCaptureJsonlWriter({
@@ -81,25 +81,25 @@ describe("createCaptureJsonlWriter", () => {
       },
     });
 
-    // Wall-clock is firmly inside the 12:30 window for the first two
+    // Wall-clock is firmly inside the 12:00 window for the first two
     // writes — even though one record carries an out-of-window tsMs
     // we expect the writer to ignore it and route by wall-clock.
     await writer.write(recordAt());
-    now = Date.parse("2026-05-05T12:34:30.000Z");
+    now = Date.parse("2026-05-05T12:50:30.000Z");
     await writer.write(
-      recordAt({ tsMs: Date.parse("2026-05-05T12:36:00.000Z") }),
+      recordAt({ tsMs: Date.parse("2026-05-05T13:05:00.000Z") }),
     );
-    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T12-30");
+    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T12-00");
 
-    // Now wall-clock crosses into 12:35 — rotation triggers regardless
+    // Now wall-clock crosses into 13:00 — rotation triggers regardless
     // of the record's tsMs.
-    now = Date.parse("2026-05-05T12:35:01.000Z");
+    now = Date.parse("2026-05-05T13:00:01.000Z");
     await writer.write(
-      recordAt({ tsMs: Date.parse("2026-05-05T12:34:55.000Z") }),
+      recordAt({ tsMs: Date.parse("2026-05-05T12:59:55.000Z") }),
     );
-    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T12-35");
+    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T13-00");
     expect(rolledOver.map((entry) => entry.closedSession.windowKey)).toEqual([
-      "2026-05-05T12-30",
+      "2026-05-05T12-00",
     ]);
 
     // .complete marker dropped on the closed window.
@@ -107,7 +107,7 @@ describe("createCaptureJsonlWriter", () => {
       resolvePath(
         dir,
         "2026-05-05",
-        "2026-05-05T12-30.jsonl.complete",
+        "2026-05-05T12-00.jsonl.complete",
       ),
     );
     expect(completeMarker.isFile()).toBe(true);
@@ -116,14 +116,14 @@ describe("createCaptureJsonlWriter", () => {
 
     // Closed window has both records; new window has the third.
     const closed = await readFile(
-      resolvePath(dir, "2026-05-05", "2026-05-05T12-30.jsonl"),
+      resolvePath(dir, "2026-05-05", "2026-05-05T12-00.jsonl"),
       "utf8",
     );
     expect(closed.split("\n").filter((line) => line.length > 0)).toHaveLength(
       2,
     );
     const opened = await readFile(
-      resolvePath(dir, "2026-05-05", "2026-05-05T12-35.jsonl"),
+      resolvePath(dir, "2026-05-05", "2026-05-05T13-00.jsonl"),
       "utf8",
     );
     expect(opened.split("\n").filter((line) => line.length > 0)).toHaveLength(
@@ -133,7 +133,7 @@ describe("createCaptureJsonlWriter", () => {
 
   it("does NOT flip-flop windows when out-of-order tsMs arrive (boundary-skew bug)", async () => {
     const rolledOver: { closedSession: { windowKey: string } }[] = [];
-    const now = Date.parse("2026-05-05T12:35:00.001Z");
+    const now = Date.parse("2026-05-05T13:00:00.001Z");
     const writer = await createCaptureJsonlWriter({
       dir,
       nowMs: () => now,
@@ -143,22 +143,22 @@ describe("createCaptureJsonlWriter", () => {
     });
 
     // Simulate the live boundary scenario: wall-clock just rolled to
-    // 12:35, but events from BEFORE the boundary keep arriving for
+    // 13:00, but events from BEFORE the boundary keep arriving for
     // a couple seconds (cross-venue clock skew). Each event's tsMs
-    // is firmly in the 12:30 window — but we want them all in the
-    // 12:35 window because that's when we OBSERVED them.
+    // is firmly in the 12:00 window — but we want them all in the
+    // 13:00 window because that's when we OBSERVED them.
     for (let i = 0; i < 5; i += 1) {
       await writer.write(
         recordAt({
-          tsMs: Date.parse("2026-05-05T12:34:59.500Z") + i,
+          tsMs: Date.parse("2026-05-05T12:59:59.500Z") + i,
         }),
       );
     }
 
     // Critical: NO rotation should have happened. Wall-clock has not
-    // moved out of 12:35.
+    // moved out of 13:00.
     expect(rolledOver).toHaveLength(0);
-    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T12-35");
+    expect(writer.currentSession()?.windowKey).toBe("2026-05-05T13-00");
     await writer.close();
   });
 
@@ -176,7 +176,7 @@ describe("createCaptureJsonlWriter", () => {
     await writer.close();
 
     const text = await readFile(
-      resolvePath(dir, "2026-05-05", "2026-05-05T12-30.jsonl"),
+      resolvePath(dir, "2026-05-05", "2026-05-05T12-00.jsonl"),
       "utf8",
     );
     const lines = text.split("\n").filter((line) => line.length > 0);

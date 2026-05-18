@@ -423,7 +423,7 @@ const REL_TIPS = {
   disconnects: "WebSocket closes or reconnects.",
   errors: "Errors seen from this feed.",
   lastTick: "Most recent price update time.",
-  window: "Start time of the 5-minute market window.",
+  window: "Start time of the 1h market window.",
   asset: "Crypto asset for the window.",
   polymarket: "Polymarket Chainlink direction and move. This is the baseline.",
   coinbaseSpot: "Coinbase spot direction and move, compared with Polymarket.",

@@ -1,3 +1,4 @@
+import { RELIABILITY_WINDOW_MS } from "@alea/lib/reliability/time";
 import {
   baselineReliabilitySource,
   comparableReliabilitySourceValues,
@@ -5,7 +6,6 @@ import {
   type ReliabilityAssetWindow,
   type ReliabilitySourceCell,
 } from "@alea/lib/reliability/types";
-import { FIVE_MINUTES_MS } from "@alea/lib/time/fiveMinuteWindow";
 import pc from "picocolors";
 
 function labelAsset(asset: string): string {
@@ -19,7 +19,7 @@ export function formatReliabilityWindow({
   readonly windowStartMs: number;
   readonly windows: readonly ReliabilityAssetWindow[];
 }): string {
-  const windowEndMs = windowStartMs + FIVE_MINUTES_MS;
+  const windowEndMs = windowStartMs + RELIABILITY_WINDOW_MS;
   const lines: string[] = [
     "",
     `${pc.bold("Directional agreement")} ${pc.dim(`${formatClock({ ms: windowStartMs })}-${formatClock({ ms: windowEndMs })} UTC`)}`,
