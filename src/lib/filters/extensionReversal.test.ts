@@ -21,6 +21,9 @@ const baseConfig = (
   maxSignalAgeBars: 0,
   allowedDirection: "both",
   minStreakLength: 0,
+  minConfluenceCount: 0,
+  confluenceMinSynthReturnPct: 0.02,
+  confluenceMinLastReturnPct: 0.01,
   ...overrides,
 });
 

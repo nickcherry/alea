@@ -170,6 +170,9 @@ async function runConditioning({
     maxSignalAgeBars: 0,
     allowedDirection: "both" as const,
     minStreakLength: 0,
+    minConfluenceCount: 0,
+    confluenceMinSynthReturnPct: 0,
+    confluenceMinLastReturnPct: 0,
   };
   for (const asset of assets) {
     const targets =

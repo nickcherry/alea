@@ -15,6 +15,67 @@
 > `doc/results-artifacts/2026-05-18T14-17-59.225Z-one-hour-extension-reversal-conditioning.json`
 > for the full breakdown.
 
+> **Tightened config update (same day).** A fresh v2 sweep confirmed
+> `synth>=0.025, last>=0.01, dir="up"` dominates the grid: **161
+> decisions / 68.32% WR**, every quarter positive, all 5 assets 63%+.
+> Registered config bumped from `0.02` → `0.025`. BTC volume collapses
+> to 2 trades at this threshold; per-asset specialization is the
+> obvious next lever but the data shows minimal lift (≤1 pp) given
+> XRP's strength is offset by BTC's negligible volume. See
+> `doc/results-artifacts/2026-05-18T14-49-39.827Z-one-hour-extension-reversal-sweep.json`.
+
+## Research follow-ups that didn't ship
+
+### Long-bias signal scan (closed-bar only)
+
+Goal: find a long-bias signal that fires *when Extension Reversal
+doesn't* and beats the base rate by enough to justify a second
+committee candidate. Tested cumulative N-bar drawdowns, red streaks,
+capitulation candles (down with close-near-low), RSI oversold, and
+distance from N-bar high. Best non-overlapping signal:
+`redStreak>=3 + bet up` → 9,422 trades / 52.92% WR, only ~2.5 pp above
+the 50.41% base rate. **Conclusion: the intra-hour synth bar carries
+the real predictive information; closed-bar-only signals barely beat
+chance.** See `2026-05-18T14-48-54.410Z-one-hour-long-bias-scan.json`.
+
+### Multi-asset confluence (deferred — needs framework change)
+
+Goal: gate Extension Reversal on simultaneous triggers across multiple
+assets. The hypothesis: broad-market downside extensions revert more
+reliably than idiosyncratic ones.
+
+Data confirms the hypothesis. At the current registered threshold
+(synth>=0.025, dir="up"):
+
+| simultaneous-asset count | n | WR |
+|---|---:|---:|
+| ≥1 (current) | 161 | 68.32% |
+| ≥2 | 117 | 68.38% |
+| **≥3** | **75** | **70.67%** |
+| ≥4 | 33 | 60.61% (overshot) |
+| ≥5 | 5 | 100% (noise) |
+
+In the recent regime (2025+) the lift is even cleaner: count≥3 → 54
+decisions / 70.37% WR vs. count≥1 → 101 / 65.35%.
+
+**Why this hasn't shipped:** the filter framework currently passes
+`FilterEvaluationContext` with the current asset's series only.
+Implementing confluence requires:
+
+1. Extending `FilterEvaluationContext` with a
+   `crossAssetSeries: Partial<Record<Asset, AlignedMarketSeries>>` field.
+2. Pre-computing per-asset synthetic + history series in
+   `runCandidateBacktest` and passing them to each `filter.evaluate` call.
+3. Same wiring in `runLiveTrading` and dry-run so the gate actually
+   works in production, not just in research.
+4. Adding `minConfluenceCount` (and helper threshold config) to
+   `extension_reversal`.
+
+The 2 pp WR lift at the cost of half the volume is real but modest;
+the architectural work is non-trivial. Sweep CLI
+`research:multi-asset-confluence` exists for follow-up exploration.
+Artifact: `2026-05-18T15-03-21.931Z-one-hour-multi-asset-confluence.json`.
+
 
 After the decision-timing flip (see [DECISION_TIMING.md](../DECISION_TIMING.md)),
 every previously registered filter collapsed to coin-flip. The legacy 70–92% WRs

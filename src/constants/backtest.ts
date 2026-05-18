@@ -25,4 +25,9 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 1;
 // down-extensions) per the asymmetry finding.
 // v6: Tightened registered Extension Reversal `minSynthReturnPct` from 0.02
 // to 0.025 (161 decisions / 68.32% WR vs. 256 / 65.23%).
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 6;
+// v7: Extension Reversal bumped to v3 — adds `minConfluenceCount` config and
+// a cross-asset gate. Filter framework's `FilterEvaluationContext` gained an
+// optional `crossAssetSeries` field; backtest harness populates it. Second
+// registered candidate `extension_reversal-confluence` uses
+// `minConfluenceCount=3` to trade only on broad-market downside extensions.
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 7;

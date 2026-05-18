@@ -24,11 +24,28 @@ export const pythSpotCandleSource = {
   role: "primary-candles",
 } as const satisfies FilterSourceSpec;
 
+/**
+ * Per-asset market series at decision time, keyed by asset. Used by filters
+ * that need to consult OTHER assets' bars (e.g. broad-market confluence
+ * gating). The current asset's series is also present at
+ * `crossAssetSeries[context.asset]`.
+ *
+ * Populated by the harness (backtest, dry-run, live-trading) where
+ * available; filters that don't need cross-asset state simply ignore it.
+ * Filters that DO need it must handle the `undefined`/missing-asset case
+ * gracefully — typically by failing closed (no trigger) when the harness
+ * cannot provide the data.
+ */
+export type CrossAssetSeries = Readonly<
+  Partial<Record<Asset, AlignedMarketSeries>>
+>;
+
 export type FilterEvaluationContext = {
   readonly asset: Asset;
   readonly period: TradeDecisionPeriod;
   readonly targetTsMs: number;
   readonly series: AlignedMarketSeries;
+  readonly crossAssetSeries?: CrossAssetSeries;
 };
 
 export type FilterEvaluation = {

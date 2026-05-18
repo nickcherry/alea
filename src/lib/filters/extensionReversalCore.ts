@@ -1,4 +1,4 @@
-import type { FilterEvaluation } from "@alea/lib/filters/types";
+import type { CrossAssetSeries, FilterEvaluation } from "@alea/lib/filters/types";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 
 export type ExtensionReversalAllowedDirection = "up" | "down" | "both";
@@ -25,6 +25,23 @@ export type ExtensionReversalBaseConfig = {
    * `minStreakLength` of 0 or 1 is equivalent to "no streak filter."
    */
   readonly minStreakLength: number;
+  /**
+   * Minimum number of assets (INCLUDING the asset being evaluated) that
+   * must simultaneously fire a same-direction extension trigger for the
+   * confluence gate to pass. Set to `0` or `1` to disable the gate. The
+   * confluence check uses `confluenceMinSynthReturnPct` and
+   * `confluenceMinLastReturnPct` (which usually mirror the primary
+   * thresholds) and treats other assets' synth direction symmetrically:
+   * for a long-only "up" trigger, we count other assets whose own synth
+   * is *also* extending downward (same as the asset under evaluation).
+   *
+   * Requires the harness to populate `context.crossAssetSeries`. When it
+   * doesn't, the filter fails closed (returns neutral) so a missing
+   * source can never silently pass the gate.
+   */
+  readonly minConfluenceCount: number;
+  readonly confluenceMinSynthReturnPct: number;
+  readonly confluenceMinLastReturnPct: number;
 };
 
 export type ExtensionReversalTrigger = {
@@ -52,9 +69,13 @@ export type ExtensionReversalMatch =
 export function findRecentExtensionReversal({
   bars,
   config,
+  crossAssetSeries,
+  asset,
 }: {
   readonly bars: readonly MarketBar[];
   readonly config: ExtensionReversalBaseConfig;
+  readonly crossAssetSeries?: CrossAssetSeries;
+  readonly asset?: string;
 }): ExtensionReversalMatch {
   validateExtensionReversalBaseConfig(config);
   const lastIndex = bars.length - 1;
@@ -74,6 +95,39 @@ export function findRecentExtensionReversal({
       continue;
     }
     const barsAgo = lastIndex - i;
+    let confluenceCount = 1;
+    if (config.minConfluenceCount > 1) {
+      if (crossAssetSeries === undefined) {
+        return {
+          matched: false,
+          evaluation: {
+            decision: "neutral",
+            reason:
+              "extension reversal needs cross-asset confluence but harness did not supply crossAssetSeries (failing closed)",
+          },
+        };
+      }
+      const extensionDirection: "up" | "down" =
+        trigger.direction === "up" ? "down" : "up";
+      for (const [otherAsset, otherSeries] of Object.entries(crossAssetSeries)) {
+        if (otherAsset === asset || otherSeries === undefined) {
+          continue;
+        }
+        if (
+          assetIsSimultaneouslyExtending({
+            bars: otherSeries.pyth,
+            extensionDirection,
+            minSynthReturnPct: config.confluenceMinSynthReturnPct,
+            minLastReturnPct: config.confluenceMinLastReturnPct,
+          })
+        ) {
+          confluenceCount += 1;
+        }
+      }
+      if (confluenceCount < config.minConfluenceCount) {
+        continue;
+      }
+    }
     return {
       matched: true,
       bars,
@@ -84,14 +138,15 @@ export function findRecentExtensionReversal({
         decision: trigger.direction,
         reason:
           trigger.direction === "up"
-            ? `extension reversal long: compounded down-extension ${(100 * trigger.synthReturnPct).toFixed(2)}% (synth) + ${(100 * trigger.lastReturnPct).toFixed(2)}% (last) ${barsAgo} bar(s) ago`
-            : `extension reversal short: compounded up-extension ${(100 * trigger.synthReturnPct).toFixed(2)}% (synth) + ${(100 * trigger.lastReturnPct).toFixed(2)}% (last) ${barsAgo} bar(s) ago`,
+            ? `extension reversal long: compounded down-extension ${(100 * trigger.synthReturnPct).toFixed(2)}% (synth) + ${(100 * trigger.lastReturnPct).toFixed(2)}% (last) ${barsAgo} bar(s) ago${config.minConfluenceCount > 1 ? ` (confluence=${confluenceCount})` : ""}`
+            : `extension reversal short: compounded up-extension ${(100 * trigger.synthReturnPct).toFixed(2)}% (synth) + ${(100 * trigger.lastReturnPct).toFixed(2)}% (last) ${barsAgo} bar(s) ago${config.minConfluenceCount > 1 ? ` (confluence=${confluenceCount})` : ""}`,
         metadata: {
           confirmedIndex: trigger.confirmedIndex,
           confirmedOpenTimeMs: bars[trigger.confirmedIndex]?.openTimeMs,
           synthReturnPct: trigger.synthReturnPct,
           lastReturnPct: trigger.lastReturnPct,
           barsAgo,
+          confluenceCount,
         },
       },
     };
@@ -103,6 +158,34 @@ export function findRecentExtensionReversal({
       reason: "no extension reversal trigger inside recency window",
     },
   };
+}
+
+function assetIsSimultaneouslyExtending({
+  bars,
+  extensionDirection,
+  minSynthReturnPct,
+  minLastReturnPct,
+}: {
+  readonly bars: readonly MarketBar[];
+  readonly extensionDirection: "up" | "down";
+  readonly minSynthReturnPct: number;
+  readonly minLastReturnPct: number;
+}): boolean {
+  const lastIndex = bars.length - 1;
+  if (lastIndex < 1) return false;
+  const synthBar = bars[lastIndex];
+  const lastBar = bars[lastIndex - 1];
+  if (synthBar === undefined || lastBar === undefined) return false;
+  if (synthBar.open <= 0 || lastBar.open <= 0) return false;
+  const synthRet = (synthBar.close - synthBar.open) / synthBar.open;
+  const lastRet = (lastBar.close - lastBar.open) / lastBar.open;
+  if (Math.abs(synthRet) < minSynthReturnPct) return false;
+  if (Math.abs(lastRet) < minLastReturnPct) return false;
+  const synthSign = Math.sign(synthRet);
+  const lastSign = Math.sign(lastRet);
+  if (synthSign === 0 || synthSign !== lastSign) return false;
+  const otherExt: "up" | "down" = synthSign > 0 ? "up" : "down";
+  return otherExt === extensionDirection;
 }
 
 export function detectExtensionReversalAt({
@@ -218,5 +301,23 @@ function validateExtensionReversalBaseConfig(
     config.minStreakLength < 0
   ) {
     throw new Error("minStreakLength must be a non-negative integer");
+  }
+  if (
+    !Number.isInteger(config.minConfluenceCount) ||
+    config.minConfluenceCount < 0
+  ) {
+    throw new Error("minConfluenceCount must be a non-negative integer");
+  }
+  if (
+    !Number.isFinite(config.confluenceMinSynthReturnPct) ||
+    config.confluenceMinSynthReturnPct < 0
+  ) {
+    throw new Error("confluenceMinSynthReturnPct must be a non-negative number");
+  }
+  if (
+    !Number.isFinite(config.confluenceMinLastReturnPct) ||
+    config.confluenceMinLastReturnPct < 0
+  ) {
+    throw new Error("confluenceMinLastReturnPct must be a non-negative number");
   }
 }

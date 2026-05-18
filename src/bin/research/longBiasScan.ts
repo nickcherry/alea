@@ -183,6 +183,9 @@ async function runScan({
             maxSignalAgeBars: 0,
             allowedDirection: "up",
             minStreakLength: 0,
+            minConfluenceCount: 0,
+            confluenceMinSynthReturnPct: 0,
+            confluenceMinLastReturnPct: 0,
           },
         }) !== undefined;
       points.push({

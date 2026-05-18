@@ -1,0 +1,984 @@
+{
+  "generatedAt": "2026-05-18T15:03:21.931Z",
+  "runtimeMs": 4057,
+  "startMs": 1704067200000,
+  "endMs": 1779116597873,
+  "assets": [
+    "btc",
+    "eth",
+    "sol",
+    "xrp",
+    "doge"
+  ],
+  "synthThreshold": 0.025,
+  "lastThreshold": 0.01,
+  "triggerCount": 161,
+  "triggers": [
+    {
+      "asset": "btc",
+      "targetTsMs": 1722841200000,
+      "won": true,
+      "synthRet": -0.04373397487577601
+    },
+    {
+      "asset": "btc",
+      "targetTsMs": 1769702400000,
+      "won": true,
+      "synthRet": -0.027624411821769737
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1718676000000,
+      "won": true,
+      "synthRet": -0.02698798743184083
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1722819600000,
+      "won": false,
+      "synthRet": -0.030288842717441738
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1722823200000,
+      "won": true,
+      "synthRet": -0.06896596358811923
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1722841200000,
+      "won": true,
+      "synthRet": -0.05001636900005817
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1734555600000,
+      "won": false,
+      "synthRet": -0.025924584557530737
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1736265600000,
+      "won": false,
+      "synthRet": -0.03347587261072452
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1737324000000,
+      "won": true,
+      "synthRet": -0.03668909480943689
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1738548000000,
+      "won": false,
+      "synthRet": -0.02633452827355843
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1738706400000,
+      "won": true,
+      "synthRet": -0.026773026139308546
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1740153600000,
+      "won": true,
+      "synthRet": -0.029524869439794262
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1740470400000,
+      "won": true,
+      "synthRet": -0.044774548078131964
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1741053600000,
+      "won": true,
+      "synthRet": -0.03329695948806058
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1741618800000,
+      "won": false,
+      "synthRet": -0.038441067844509035
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1743962400000,
+      "won": false,
+      "synthRet": -0.028392468347812182
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1743966000000,
+      "won": true,
+      "synthRet": -0.0386198034371141
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1743998400000,
+      "won": true,
+      "synthRet": -0.03230170719290653
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1746950400000,
+      "won": true,
+      "synthRet": -0.025369553897369453
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1749157200000,
+      "won": true,
+      "synthRet": -0.04349614336747562
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1760112000000,
+      "won": true,
+      "synthRet": -0.033182257008814095
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1763658000000,
+      "won": false,
+      "synthRet": -0.029831049250416547
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1764550800000,
+      "won": true,
+      "synthRet": -0.04222324372503471
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1769702400000,
+      "won": true,
+      "synthRet": -0.026126095577537298
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1769882400000,
+      "won": false,
+      "synthRet": -0.029022828972132608
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1770004800000,
+      "won": true,
+      "synthRet": -0.036401438401611405
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1770145200000,
+      "won": true,
+      "synthRet": -0.03072526477412125
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1770325200000,
+      "won": false,
+      "synthRet": -0.03157425866606391
+    },
+    {
+      "asset": "eth",
+      "targetTsMs": 1771812000000,
+      "won": true,
+      "synthRet": -0.029313733711235725
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1718676000000,
+      "won": true,
+      "synthRet": -0.07640989153000886
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1720137600000,
+      "won": true,
+      "synthRet": -0.030236852715596466
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1721876400000,
+      "won": false,
+      "synthRet": -0.03228441806482627
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1722819600000,
+      "won": false,
+      "synthRet": -0.03259631453118037
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1722841200000,
+      "won": true,
+      "synthRet": -0.05346550843676208
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1722859200000,
+      "won": false,
+      "synthRet": -0.025106503361655853
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1723748400000,
+      "won": true,
+      "synthRet": -0.02625898036563836
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1731409200000,
+      "won": false,
+      "synthRet": -0.025070710228685646
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1734638400000,
+      "won": true,
+      "synthRet": -0.025773530533183375
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1738548000000,
+      "won": true,
+      "synthRet": -0.032374384497951304
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1738648800000,
+      "won": true,
+      "synthRet": -0.04536323440384741
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1739862000000,
+      "won": true,
+      "synthRet": -0.029613664541027658
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1740153600000,
+      "won": true,
+      "synthRet": -0.03259996796679338
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1740708000000,
+      "won": false,
+      "synthRet": -0.027236676164904
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1741028400000,
+      "won": false,
+      "synthRet": -0.0400314058571668
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1741032000000,
+      "won": true,
+      "synthRet": -0.026053608218773963
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1741618800000,
+      "won": true,
+      "synthRet": -0.031080778131718542
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1743634800000,
+      "won": false,
+      "synthRet": -0.0497857357616609
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1743966000000,
+      "won": true,
+      "synthRet": -0.026673034903152107
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1743998400000,
+      "won": false,
+      "synthRet": -0.03306361202025905
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1749157200000,
+      "won": true,
+      "synthRet": -0.026717475348896284
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1760112000000,
+      "won": true,
+      "synthRet": -0.02928856555098649
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1762236000000,
+      "won": true,
+      "synthRet": -0.03432831897884125
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1762308000000,
+      "won": true,
+      "synthRet": -0.03520786654556771
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1763658000000,
+      "won": true,
+      "synthRet": -0.04676776717267217
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1764550800000,
+      "won": true,
+      "synthRet": -0.035907740743684115
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1766088000000,
+      "won": false,
+      "synthRet": -0.027296359552429195
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1768784400000,
+      "won": true,
+      "synthRet": -0.026110326589811637
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1769702400000,
+      "won": true,
+      "synthRet": -0.03149228449766645
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1769882400000,
+      "won": false,
+      "synthRet": -0.026775157660534878
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1769886000000,
+      "won": false,
+      "synthRet": -0.03064503905834171
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1770004800000,
+      "won": true,
+      "synthRet": -0.035985308958691446
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1770325200000,
+      "won": true,
+      "synthRet": -0.027034142933913798
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1770339600000,
+      "won": true,
+      "synthRet": -0.04194688929656375
+    },
+    {
+      "asset": "sol",
+      "targetTsMs": 1771812000000,
+      "won": false,
+      "synthRet": -0.034897070844672445
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1717786800000,
+      "won": true,
+      "synthRet": -0.051489287239742484
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1720141200000,
+      "won": false,
+      "synthRet": -0.026725729426547717
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1722819600000,
+      "won": false,
+      "synthRet": -0.03859548906701364
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1722823200000,
+      "won": true,
+      "synthRet": -0.028756246161478448
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1722841200000,
+      "won": true,
+      "synthRet": -0.054761390391366634
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1723078800000,
+      "won": true,
+      "synthRet": -0.03478009747091009
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1729900800000,
+      "won": true,
+      "synthRet": -0.027133126069835364
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1731409200000,
+      "won": true,
+      "synthRet": -0.03395974742954985
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1731470400000,
+      "won": false,
+      "synthRet": -0.025712001335138634
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1731628800000,
+      "won": true,
+      "synthRet": -0.028487048512317346
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1731859200000,
+      "won": true,
+      "synthRet": -0.027715693777401854
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1732453200000,
+      "won": true,
+      "synthRet": -0.06131668936056475
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1733234400000,
+      "won": true,
+      "synthRet": -0.042472164164292274
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1733331600000,
+      "won": true,
+      "synthRet": -0.03656227332633643
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1733443200000,
+      "won": true,
+      "synthRet": -0.026762666119304408
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1733785200000,
+      "won": false,
+      "synthRet": -0.02503777036437264
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1733882400000,
+      "won": true,
+      "synthRet": -0.02895516756925931
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1734555600000,
+      "won": true,
+      "synthRet": -0.03533231150816446
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1734577200000,
+      "won": true,
+      "synthRet": -0.030904229341815363
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1734696000000,
+      "won": true,
+      "synthRet": -0.045851296888121784
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1736265600000,
+      "won": false,
+      "synthRet": -0.04093939874871899
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1737324000000,
+      "won": false,
+      "synthRet": -0.027579096881960502
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1737968400000,
+      "won": true,
+      "synthRet": -0.030809483126868983
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1738548000000,
+      "won": true,
+      "synthRet": -0.06049666249131793
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1738648800000,
+      "won": true,
+      "synthRet": -0.054570849344717884
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1738706400000,
+      "won": true,
+      "synthRet": -0.04368148266850588
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1738857600000,
+      "won": false,
+      "synthRet": -0.026144805666939434
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1740153600000,
+      "won": true,
+      "synthRet": -0.02596141991726285
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1740470400000,
+      "won": true,
+      "synthRet": -0.043381429952293965
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1740708000000,
+      "won": false,
+      "synthRet": -0.031202679319130816
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1741053600000,
+      "won": true,
+      "synthRet": -0.03983941907306734
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1741366800000,
+      "won": true,
+      "synthRet": -0.036332645549123195
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1741618800000,
+      "won": true,
+      "synthRet": -0.02852541597476462
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1741654800000,
+      "won": true,
+      "synthRet": -0.04849816560766151
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1743634800000,
+      "won": true,
+      "synthRet": -0.053815777487329866
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1743998400000,
+      "won": false,
+      "synthRet": -0.04838478541325753
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1744009200000,
+      "won": true,
+      "synthRet": -0.0604330156028369
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1747076400000,
+      "won": true,
+      "synthRet": -0.02643166267653
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1749157200000,
+      "won": true,
+      "synthRet": -0.02895044814567679
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1752854400000,
+      "won": true,
+      "synthRet": -0.025153365264897528
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1760133600000,
+      "won": true,
+      "synthRet": -0.08014219854915369
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1762308000000,
+      "won": true,
+      "synthRet": -0.03016546633240027
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1763658000000,
+      "won": false,
+      "synthRet": -0.03445163953706054
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1764550800000,
+      "won": true,
+      "synthRet": -0.03324257087928609
+    },
+    {
+      "asset": "xrp",
+      "targetTsMs": 1767718800000,
+      "won": false,
+      "synthRet": -0.029658303346064844
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1717786800000,
+      "won": true,
+      "synthRet": -0.05365783625844979
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1718384400000,
+      "won": false,
+      "synthRet": -0.036650958132563805
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1718676000000,
+      "won": true,
+      "synthRet": -0.09135958840267577
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1720137600000,
+      "won": false,
+      "synthRet": -0.027132634119175845
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1720141200000,
+      "won": false,
+      "synthRet": -0.04205841182046877
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1722819600000,
+      "won": false,
+      "synthRet": -0.03854809239317384
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1722823200000,
+      "won": true,
+      "synthRet": -0.03702904554325104
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1722841200000,
+      "won": true,
+      "synthRet": -0.07144992809550382
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1727805600000,
+      "won": true,
+      "synthRet": -0.025248466933429265
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1729900800000,
+      "won": true,
+      "synthRet": -0.03877191679049029
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1730602800000,
+      "won": true,
+      "synthRet": -0.03720866997811033
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1731272400000,
+      "won": true,
+      "synthRet": -0.02980121939714589
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1731409200000,
+      "won": true,
+      "synthRet": -0.06575931893440982
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1731420000000,
+      "won": true,
+      "synthRet": -0.03697789540862526
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1731628800000,
+      "won": true,
+      "synthRet": -0.03367968890140506
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1731812400000,
+      "won": true,
+      "synthRet": -0.029021241608221282
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1732158000000,
+      "won": true,
+      "synthRet": -0.028783017002263954
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1732381200000,
+      "won": true,
+      "synthRet": -0.04902727735569343
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1732453200000,
+      "won": true,
+      "synthRet": -0.032160137511528575
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1732622400000,
+      "won": false,
+      "synthRet": -0.026524239595497094
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1733130000000,
+      "won": true,
+      "synthRet": -0.04930190340916983
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1734555600000,
+      "won": true,
+      "synthRet": -0.04531671939769508
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1734634800000,
+      "won": false,
+      "synthRet": -0.03505991685672505
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1734638400000,
+      "won": true,
+      "synthRet": -0.026983052480153896
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1734696000000,
+      "won": true,
+      "synthRet": -0.07230892906845038
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1736265600000,
+      "won": true,
+      "synthRet": -0.05359061774064419
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1737468000000,
+      "won": true,
+      "synthRet": -0.03242221923189257
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1738537200000,
+      "won": true,
+      "synthRet": -0.03656641539299835
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1738548000000,
+      "won": false,
+      "synthRet": -0.028129106443736073
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1738648800000,
+      "won": true,
+      "synthRet": -0.06824284608233835
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1738706400000,
+      "won": true,
+      "synthRet": -0.026028674652975856
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1738857600000,
+      "won": false,
+      "synthRet": -0.0255208629415546
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1740470400000,
+      "won": true,
+      "synthRet": -0.02955151671763064
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1741618800000,
+      "won": true,
+      "synthRet": -0.030717342948697365
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1743634800000,
+      "won": true,
+      "synthRet": -0.04553183116333522
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1743998400000,
+      "won": false,
+      "synthRet": -0.04440765414900733
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1746950400000,
+      "won": false,
+      "synthRet": -0.027568427428211372
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1752854400000,
+      "won": false,
+      "synthRet": -0.030127966388146524
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1753279200000,
+      "won": true,
+      "synthRet": -0.025385241789648044
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1760112000000,
+      "won": false,
+      "synthRet": -0.027309300612282997
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1760133600000,
+      "won": true,
+      "synthRet": -0.15048612079306412
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1762142400000,
+      "won": true,
+      "synthRet": -0.026915032065717444
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1763658000000,
+      "won": false,
+      "synthRet": -0.040475219458482495
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1764550800000,
+      "won": true,
+      "synthRet": -0.03887421754078378
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1765990800000,
+      "won": false,
+      "synthRet": -0.025398472653953834
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1767718800000,
+      "won": false,
+      "synthRet": -0.031201205909951138
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1768784400000,
+      "won": false,
+      "synthRet": -0.03742018558369321
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1769702400000,
+      "won": true,
+      "synthRet": -0.026686587632217797
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1769882400000,
+      "won": false,
+      "synthRet": -0.032722430313510256
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1770004800000,
+      "won": true,
+      "synthRet": -0.03382559002380329
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1772064000000,
+      "won": false,
+      "synthRet": -0.03226677256117385
+    },
+    {
+      "asset": "doge",
+      "targetTsMs": 1773169200000,
+      "won": false,
+      "synthRet": -0.026317029653568788
+    }
+  ]
+}

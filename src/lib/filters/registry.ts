@@ -151,6 +151,27 @@ const oneHourExtensionReversalCandidate = defineCandidate({
     maxSignalAgeBars: 0,
     allowedDirection: "up",
     minStreakLength: 0,
+    minConfluenceCount: 0,
+    confluenceMinSynthReturnPct: 0,
+    confluenceMinLastReturnPct: 0,
+    maxAge: 4,
+    maxConsecutiveWrong: 1,
+    requireWrongLessThanRight: false,
+    requireFirstTradeWin: false,
+  } satisfies ExtensionReversalConfig,
+});
+
+const oneHourExtensionReversalConfluenceCandidate = defineCandidate({
+  filter: extensionReversalFilter,
+  config: {
+    minSynthReturnPct: 0.02,
+    minLastReturnPct: 0.01,
+    maxSignalAgeBars: 0,
+    allowedDirection: "up",
+    minStreakLength: 0,
+    minConfluenceCount: 3,
+    confluenceMinSynthReturnPct: 0.02,
+    confluenceMinLastReturnPct: 0.01,
     maxAge: 4,
     maxConsecutiveWrong: 1,
     requireWrongLessThanRight: false,
@@ -166,6 +187,7 @@ const baseCandidates = [
   oneHourHtfAlignmentCandidate,
   oneHourPinBarReversalCandidate,
   oneHourExtensionReversalCandidate,
+  oneHourExtensionReversalConfluenceCandidate,
 ];
 
 export const registeredCandidatesByMarket = {

@@ -24,6 +24,7 @@ import { researchExhaustionReversalSweepCommand } from "@alea/bin/research/exhau
 import { researchExtensionReversalConditioningCommand } from "@alea/bin/research/extensionReversalConditioning";
 import { researchExtensionReversalSweepCommand } from "@alea/bin/research/extensionReversalSweep";
 import { researchLongBiasScanCommand } from "@alea/bin/research/longBiasScan";
+import { researchMultiAssetConfluenceCommand } from "@alea/bin/research/multiAssetConfluence";
 import { researchFailedBreakoutReversalSweepCommand } from "@alea/bin/research/failedBreakoutReversalSweep";
 import { researchHtfAlignmentSweepCommand } from "@alea/bin/research/htfAlignmentSweep";
 import { researchMaRejectionSweepCommand } from "@alea/bin/research/maRejectionSweep";
@@ -81,6 +82,7 @@ const cli = createCli({
     researchExtensionReversalConditioningCommand,
     researchExtensionReversalSweepCommand,
     researchLongBiasScanCommand,
+    researchMultiAssetConfluenceCommand,
     researchFailedBreakoutReversalSweepCommand,
     researchHtfAlignmentSweepCommand,
     researchMaRejectionSweepCommand,

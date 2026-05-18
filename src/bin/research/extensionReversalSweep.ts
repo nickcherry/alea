@@ -277,6 +277,9 @@ function evaluateTarget({
             allowedDirection,
             minStreakLength,
             maxSignalAgeBars: maxAgeWindow,
+            minConfluenceCount: 0,
+            confluenceMinSynthReturnPct: minSynthReturnPct,
+            confluenceMinLastReturnPct: minLastReturnPct,
           };
           for (let i = earliest; i <= lastIndex; i += 1) {
             const trigger = detectExtensionReversalAt({

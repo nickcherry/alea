@@ -22,7 +22,11 @@ import {
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { DatabaseClient } from "@alea/lib/db/types";
 import { registeredCandidatesForMarket } from "@alea/lib/filters/registry";
-import type { FilterCandidate, FilterDecision } from "@alea/lib/filters/types";
+import type {
+  CrossAssetSeries,
+  FilterCandidate,
+  FilterDecision,
+} from "@alea/lib/filters/types";
 import { alignMarketSeries } from "@alea/lib/marketSeries/align";
 import type { MarketBar } from "@alea/lib/marketSeries/types";
 import { resolveDirectionalOutcome } from "@alea/lib/reliability/resolveDirectionalOutcome";
@@ -77,8 +81,15 @@ export async function runCandidateBacktest({
   let markets = 0;
   let decisions = 0;
 
-  for (const asset of assets) {
-    for (const period of periods) {
+  for (const period of periods) {
+    const crossAssetLoader = await buildCrossAssetSeriesLoader({
+      db,
+      assets,
+      period,
+      startMs,
+      endMs,
+    });
+    for (const asset of assets) {
       const periodCandidates =
         candidates ?? registeredCandidatesForMarket({ asset, period });
       const result = await runMarketCandidateBacktest({
@@ -88,6 +99,7 @@ export async function runCandidateBacktest({
         candidates: periodCandidates,
         startMs,
         endMs,
+        crossAssetLoader,
       });
       if (result.targetCount === 0) {
         log({
@@ -117,6 +129,84 @@ export async function runCandidateBacktest({
   return { rowsWritten, rowsSkipped, markets, decisions };
 }
 
+type CrossAssetLoader = (targetTsMs: number) => CrossAssetSeries;
+
+async function buildCrossAssetSeriesLoader({
+  db,
+  assets,
+  period,
+  startMs,
+  endMs,
+}: {
+  readonly db: DatabaseClient;
+  readonly assets: readonly Asset[];
+  readonly period: TradeDecisionPeriod;
+  readonly startMs: number;
+  readonly endMs: number;
+}): Promise<CrossAssetLoader> {
+  const periodMs = timeframeMs({ timeframe: period });
+  const hydrateBars = tradeDecisionHydrateBars({ period });
+  const leadTimeMs = tradeDecisionLeadTimeMs({ period });
+  const historyStartMs = Math.max(0, startMs - periodMs * (hydrateBars + 2));
+  const minuteStartMs = Math.max(0, startMs - periodMs);
+
+  const perAsset = new Map<
+    Asset,
+    {
+      readonly periodBars: readonly MarketBar[];
+      readonly minuteBars: readonly MarketBar[];
+    }
+  >();
+  for (const asset of assets) {
+    const [periodBars, minuteBars] = await Promise.all([
+      loadPythBars({
+        db,
+        asset,
+        timeframe: period,
+        startMs: historyStartMs,
+        endMs,
+      }),
+      loadPythBars({
+        db,
+        asset,
+        timeframe: "1m",
+        startMs: minuteStartMs,
+        endMs,
+      }),
+    ]);
+    perAsset.set(asset, { periodBars, minuteBars });
+  }
+
+  return (targetTsMs: number) => {
+    const out: Partial<Record<Asset, ReturnType<typeof alignMarketSeries>>> = {};
+    const decisionTsMs = tradeDecisionFireTimeMs({ period, targetTsMs });
+    const activeOpenTimeMs = targetTsMs - periodMs;
+    for (const [asset, data] of perAsset) {
+      const closedEndIndex = lowerBoundOpenTime({
+        bars: data.periodBars,
+        openTimeMs: targetTsMs,
+      });
+      const history = data.periodBars.slice(
+        Math.max(0, closedEndIndex - 1 - (hydrateBars - 1)),
+        Math.max(0, closedEndIndex - 1),
+      );
+      const syntheticBar = synthesizePartialBar({
+        minuteBars: data.minuteBars,
+        activeOpenTimeMs,
+        decisionTsMs,
+      });
+      if (history.length === 0 || syntheticBar === null) {
+        continue;
+      }
+      out[asset] = alignMarketSeries({
+        pyth: [...history, syntheticBar],
+        coinbase: [],
+      });
+    }
+    return out;
+  };
+}
+
 async function runMarketCandidateBacktest({
   db,
   asset,
@@ -124,6 +214,7 @@ async function runMarketCandidateBacktest({
   candidates,
   startMs,
   endMs,
+  crossAssetLoader,
 }: {
   readonly db: DatabaseClient;
   readonly asset: Asset;
@@ -131,6 +222,7 @@ async function runMarketCandidateBacktest({
   readonly candidates: readonly FilterCandidate[];
   readonly startMs: number;
   readonly endMs: number;
+  readonly crossAssetLoader?: CrossAssetLoader;
 }): Promise<{
   readonly rowsWritten: number;
   readonly rowsSkipped: number;
@@ -247,11 +339,13 @@ async function runMarketCandidateBacktest({
         accumulators,
         cachePlan,
       });
+      const crossAssetSeries = crossAssetLoader?.(targetTsMs);
       const evaluation = candidate.evaluate({
         asset,
         period,
         targetTsMs,
         series,
+        crossAssetSeries,
       });
       accumulator.evaluatedCount += 1;
       if (evaluation.decision === "neutral") {
