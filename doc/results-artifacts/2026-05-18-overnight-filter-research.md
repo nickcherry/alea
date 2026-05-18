@@ -661,3 +661,24 @@ Adding more filters doesn't really improve WR until you reach 4+
 unanimous agreement, which only happens on 1,493 of 39,911 any-fire
 targets. The current single-filter approach is already capturing most
 of the available edge per decision.
+
+### Per-quarter consistency
+
+WR range across 9 calendar quarters (2024 Q2 – 2026 Q2):
+
+| filter                    | min WR  | max WR  | range  | notes |
+|---------------------------|--------:|--------:|-------:|-------|
+| failed_breakout_reversal  | 83.47%  | 85.65%  | 2.18pp | rock-solid |
+| ma_rejection              | 86.43%  | 90.02%  | 3.60pp | very consistent |
+| htf_alignment             | 90.07%  | 94.09%  | 4.02pp | very consistent |
+| range_divergence          | 69.82%  | 74.50%  | 4.67pp | consistent |
+| pin_bar_reversal          | 76.49%  | 81.78%  | 5.28pp | consistent |
+| rsi_divergence            | 72.88%  | 78.39%  | 5.51pp | consistent |
+| body_divergence           | 67.86%  | 74.44%  | 6.58pp | mild variation |
+| wick_divergence           | 68.00%  | 74.97%  | 6.97pp | mild variation |
+| exhaustion_reversal       | 74.68%  | 97.14%  | 22.46pp | (97% is on n=35 in 2026 Q2; excluding that, range collapses to ~14pp from 74.68% to 88.46%) |
+
+Critically: in 2026 Q1 + Q2 (most recent quarters), most filters
+perform at or above their full-window average. Configs are not
+degrading on out-of-sample-ish later data — strong evidence the
+signals are stable and not overfit to specific early-period regimes.
