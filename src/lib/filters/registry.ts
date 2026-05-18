@@ -146,7 +146,7 @@ const oneHourPinBarReversalCandidate = defineCandidate({
 const oneHourExtensionReversalCandidate = defineCandidate({
   filter: extensionReversalFilter,
   config: {
-    minSynthReturnPct: 0.02,
+    minSynthReturnPct: 0.025,
     minLastReturnPct: 0.01,
     maxSignalAgeBars: 0,
     allowedDirection: "up",

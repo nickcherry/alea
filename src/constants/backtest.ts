@@ -23,4 +23,6 @@ export const CANDIDATE_BACKTEST_DECISION_SCHEMA_VERSION = 1;
 // v5: Extension Reversal bumped to v2 — config gained `allowedDirection` +
 // `minStreakLength`; registered config now restricts to "up" (fade
 // down-extensions) per the asymmetry finding.
-export const CANDIDATE_BACKTEST_ENGINE_VERSION = 5;
+// v6: Tightened registered Extension Reversal `minSynthReturnPct` from 0.02
+// to 0.025 (161 decisions / 68.32% WR vs. 256 / 65.23%).
+export const CANDIDATE_BACKTEST_ENGINE_VERSION = 6;
