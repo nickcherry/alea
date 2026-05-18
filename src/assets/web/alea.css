@@ -469,7 +469,7 @@ body {
   gap: 12px 18px;
 }
 
-/* Auxiliary controls slot — sits to the right of the period toggle on
+/* Auxiliary controls slot — sits to the right of the timeframe control on
    wide screens, wraps below it on narrow ones. */
 .alea-page-controls-right {
   margin-left: auto;

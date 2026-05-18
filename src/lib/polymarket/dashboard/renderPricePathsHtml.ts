@@ -119,7 +119,7 @@ function renderControls({
   const timeframeControls =
     payload.breakdowns.length <= 1
       ? ""
-      : `<div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+      : `<div class="alea-pill-tabs" role="tablist" aria-label="Market timeframe">
           ${payload.breakdowns
             .map(
               (b) =>

@@ -86,7 +86,7 @@ dashboard updates with no second edit. Examples:
 - [`TRADE_DECISION_PRIMARY_PERIOD`](../src/constants/tradeDecision.ts) and
   [`TRADE_DECISION_SUPPORTED_PERIODS`](../src/constants/tradeDecision.ts)
   → `decisionConfig.period` and `decisionConfig.supportedPeriods` on the
-  dry-run page. The page-level period toggle reads `supportedPeriods` so
+  dry-run page. The page-level timeframe control reads `supportedPeriods` so
   the option set matches the schema's `dry_run_period` CHECK constraint;
   the dry-run process defaults to
   [`TRADE_DECISION_DEFAULT_MARKETS`](../src/constants/tradeDecision.ts).

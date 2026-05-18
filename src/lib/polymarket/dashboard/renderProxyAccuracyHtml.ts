@@ -85,7 +85,7 @@ function renderTimeframeControls({
     return "";
   }
   return `<div class="alea-page-controls">
-        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Market timeframe">
           ${payload.breakdowns
             .map(
               (b) =>

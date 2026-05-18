@@ -1,7 +1,7 @@
 /*
  * Dry-run dashboard — per-page layout. Generic primitives (alea
  * shell, header, table, mono, num-positive/negative, muted) come from
- * alea.css. The page-level period toggle uses `.alea-page-controls`
+ * alea.css. The page-level timeframe control uses `.alea-page-controls`
  * from alea.css.
  */
 

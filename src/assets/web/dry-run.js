@@ -4,12 +4,12 @@
  * from `<script id="dry-run-payload">` and the chart-color tokens
  * from `<script id="dry-run-tokens">`. Owns three pieces of state:
  *
- *   1. The page-level period toggle. Switching periods swaps
+ *   1. The page-level timeframe control. Switching timeframes swaps
  *      the summary metrics, the per-asset table, the
  *      "Recent Decisions" feed, and the uPlot chart series — every
  *      number on the page comes from `payload.byPeriod[currentPeriod]`
  *      so the page is internally consistent for the active period.
- *   2. The cumulative win-rate uPlot chart, re-instantiated on period
+ *   2. The cumulative win-rate uPlot chart, re-instantiated on timeframe
  *      switch and window resize.
  *   3. The hover tooltip that decorates the chart.
  *

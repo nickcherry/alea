@@ -114,7 +114,7 @@ export function renderDryRunHtml({
     ${renderTopNav({ activeId: "dryrun" })}
     <main class="alea-main">
       <div class="alea-page-controls">
-        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Market timeframe">
           ${payload.decisionConfig.supportedPeriods
             .map(
               (p) =>

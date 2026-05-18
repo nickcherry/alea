@@ -61,8 +61,8 @@ async function buildProxyAccuracyPayload({
   readonly now: () => number;
 }): Promise<ProxyAccuracyPayload> {
   // Use a single window-aligned join so the entire dashboard derives
-  // from one consistent snapshot. The volume is bounded (~200k rows over
-  // 200 days × 5 assets × 2 timeframes); pulling them all into memory
+  // from one consistent snapshot. The volume is bounded by the configured
+  // 1h dashboard timeframe set; pulling rows into memory
   // keeps the aggregation code straightforward and lets us compute
   // medians / p90s without a SQL dance.
   const rowsResult = await sql<JoinedRow>`

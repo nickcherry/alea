@@ -1,5 +1,5 @@
 /*
- * Proxy Accuracy dashboard — client-side period switch when the payload
+ * Proxy Accuracy dashboard — client-side timeframe switch when the payload
  * contains more than one timeframe.
  *
  * Shows one of the pre-rendered .proxy-timeframe-section elements at a

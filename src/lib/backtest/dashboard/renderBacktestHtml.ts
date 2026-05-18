@@ -61,7 +61,7 @@ export function renderBacktestHtml({
     ${renderTopNav({ activeId: "backtest" })}
     <main class="alea-main">
       <div class="alea-page-controls">
-        <div class="alea-pill-tabs" role="tablist" aria-label="Candle period">
+        <div class="alea-pill-tabs" role="tablist" aria-label="Market timeframe">
           ${payload.supportedPeriods
             .map(
               (period) =>

@@ -1,7 +1,7 @@
 /*
  * Proxy-accuracy dashboard — per-page layout. Generic primitives come
  * from alea.css; this file owns the aggregate-card / bucket-bar /
- * disagreement-table look. The page-level period toggle uses
+ * disagreement-table look. The page-level timeframe control uses
  * `.alea-page-controls` from alea.css.
  */
 

@@ -15,8 +15,8 @@ export type DryRunDashboardSummary = {
 export type DryRunDecisionConfig = {
   readonly period: string;
   /**
-   * Every candle period the dry-run table can hold a decision for.
-   * Drives the page-level period toggle so the UI shows the same set
+   * Every market timeframe the dry-run table can hold a decision for.
+   * Drives the page-level timeframe control so the UI shows the same set
    * of options the schema allows, not whatever happens to have rows.
    */
   readonly supportedPeriods: readonly string[];
@@ -70,8 +70,8 @@ export type DryRunDashboardCumulativeRow = {
 };
 
 /**
- * Aggregates split out per candle period. The client renders one slice
- * at a time as the user flips the period toggle; the SSR pass shows the
+ * Aggregates split out per market timeframe. The client renders one slice
+ * at a time as the user flips the timeframe control; the SSR pass shows the
  * `decisionConfig.period` slice (the default display period).
  */
 export type DryRunDashboardPeriodSlice = {
