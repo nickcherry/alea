@@ -1,8 +1,4 @@
 import type { TradeDecisionPeriod } from "@alea/constants/tradeDecision";
-import {
-  type BodyDivergenceConfig,
-  bodyDivergenceFilter,
-} from "@alea/lib/filters/bodyDivergence";
 import { defineCandidate } from "@alea/lib/filters/config";
 import {
   type ExhaustionReversalConfig,
@@ -25,22 +21,10 @@ import {
   pinBarReversalFilter,
 } from "@alea/lib/filters/pinBarReversal";
 import {
-  type RangeDivergenceConfig,
-  rangeDivergenceFilter,
-} from "@alea/lib/filters/rangeDivergence";
-import {
   type RsiDivergenceConfig,
   rsiDivergenceFilter,
 } from "@alea/lib/filters/rsiDivergence";
-import {
-  type StreakReversalConfig,
-  streakReversalFilter,
-} from "@alea/lib/filters/streakReversal";
 import type { FilterCandidate } from "@alea/lib/filters/types";
-import {
-  type WickDivergenceConfig,
-  wickDivergenceFilter,
-} from "@alea/lib/filters/wickDivergence";
 import type { Asset } from "@alea/types/assets";
 
 export type CandidateRegistryByPeriod = Readonly<
@@ -126,56 +110,6 @@ const oneHourMaRejectionCandidate = defineCandidate({
   } satisfies MaRejectionConfig,
 });
 
-const oneHourWickDivergenceCandidate = defineCandidate({
-  filter: wickDivergenceFilter,
-  config: {
-    leftBars: 2,
-    rightBars: 2,
-    rangeLower: 2,
-    rangeUpper: 30,
-    minCurrentWickPct: 0.1,
-    requireCloseLocImprovement: true,
-    maxSignalAgeBars: 13,
-    maxAge: 16,
-    maxConsecutiveWrong: 1,
-    requireWrongLessThanRight: false,
-    requireFirstTradeWin: false,
-  } satisfies WickDivergenceConfig,
-});
-
-const oneHourRangeDivergenceCandidate = defineCandidate({
-  filter: rangeDivergenceFilter,
-  config: {
-    leftBars: 2,
-    rightBars: 2,
-    rangeLower: 2,
-    rangeUpper: 30,
-    minRangeShrinkPct: 0.2,
-    requireBodyShrink: false,
-    maxSignalAgeBars: 13,
-    maxAge: 16,
-    maxConsecutiveWrong: 1,
-    requireWrongLessThanRight: false,
-    requireFirstTradeWin: false,
-  } satisfies RangeDivergenceConfig,
-});
-
-const oneHourBodyDivergenceCandidate = defineCandidate({
-  filter: bodyDivergenceFilter,
-  config: {
-    leftBars: 2,
-    rightBars: 2,
-    rangeLower: 5,
-    rangeUpper: 60,
-    minBodyShrinkPct: 0.8,
-    maxSignalAgeBars: 13,
-    maxAge: 16,
-    maxConsecutiveWrong: 1,
-    requireWrongLessThanRight: false,
-    requireFirstTradeWin: false,
-  } satisfies BodyDivergenceConfig,
-});
-
 const oneHourHtfAlignmentCandidate = defineCandidate({
   filter: htfAlignmentFilter,
   config: {
@@ -205,30 +139,13 @@ const oneHourPinBarReversalCandidate = defineCandidate({
   } satisfies PinBarReversalConfig,
 });
 
-const oneHourStreakReversalCandidate = defineCandidate({
-  filter: streakReversalFilter,
-  config: {
-    streakLength: 3,
-    minTotalReturnPct: 0.02,
-    maxSignalAgeBars: 3,
-    maxAge: 4,
-    maxConsecutiveWrong: 1,
-    requireWrongLessThanRight: false,
-    requireFirstTradeWin: false,
-  } satisfies StreakReversalConfig,
-});
-
 const baseCandidates = [
   oneHourRsiDivergenceCandidate,
   oneHourFailedBreakoutReversalCandidate,
   oneHourExhaustionReversalCandidate,
   oneHourMaRejectionCandidate,
-  oneHourWickDivergenceCandidate,
-  oneHourRangeDivergenceCandidate,
-  oneHourBodyDivergenceCandidate,
   oneHourHtfAlignmentCandidate,
   oneHourPinBarReversalCandidate,
-  oneHourStreakReversalCandidate,
 ];
 
 export const registeredCandidatesByMarket = {
