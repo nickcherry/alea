@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 
+import { tradeDecisionLeadTimeMs } from "@alea/constants/tradeDecision";
 import { quarterLabelFor, quarterStartFor } from "@alea/lib/backtest/cache";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import type { DatabaseClient } from "@alea/lib/db/types";
@@ -9,7 +10,7 @@ import type { Asset } from "@alea/types/assets";
 
 const ONE_MINUTE_MS = timeframeMs({ timeframe: "1m" });
 const ONE_HOUR_MS = timeframeMs({ timeframe: "1h" });
-const DECISION_BEFORE_CLOSE_MS = 10 * ONE_MINUTE_MS;
+const DECISION_BEFORE_CLOSE_MS = tradeDecisionLeadTimeMs({ period: "1h" });
 const DECISION_AFTER_OPEN_MS = ONE_HOUR_MS - DECISION_BEFORE_CLOSE_MS;
 
 export const SWEEP_HISTORY_BARS = 340;

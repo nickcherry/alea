@@ -73,13 +73,13 @@ export const TRADE_DECISION_PRIMARY_PERIOD: TradeDecisionPeriod = "1h";
 /**
  * How long before the target candle closes the loop snapshots the live price
  * and evaluates filters. The target candle is the currently open Polymarket
- * market window; for 1h that means evaluating at HH:50 for the HH:00-HH:59
+ * market window; for 1h that means evaluating at HH:25 for the HH:00-HH:59
  * market.
  */
 export const TRADE_DECISION_LEAD_TIME_BY_PERIOD_MS: Readonly<
   Record<TradeDecisionPeriod, number>
 > = {
-  "1h": 10 * 60 * 1000,
+  "1h": 35 * 60 * 1000,
 };
 
 export function tradeDecisionLeadTimeMs({

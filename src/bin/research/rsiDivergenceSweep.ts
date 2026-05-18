@@ -1,7 +1,10 @@
 import { writeFileSync } from "node:fs";
 
 import { CANDIDATE_BACKTEST_START_MS } from "@alea/constants/backtest";
-import { TRADE_DECISION_DEFAULT_ASSETS } from "@alea/constants/tradeDecision";
+import {
+  TRADE_DECISION_DEFAULT_ASSETS,
+  tradeDecisionLeadTimeMs,
+} from "@alea/constants/tradeDecision";
 import { quarterLabelFor, quarterStartFor } from "@alea/lib/backtest/cache";
 import { timeframeMs } from "@alea/lib/candles/timeframeMs";
 import { defineCommand } from "@alea/lib/cli/defineCommand";
@@ -61,7 +64,7 @@ type TargetRecord = {
 
 const ONE_MINUTE_MS = timeframeMs({ timeframe: "1m" });
 const ONE_HOUR_MS = timeframeMs({ timeframe: "1h" });
-const DECISION_BEFORE_CLOSE_MS = 10 * ONE_MINUTE_MS;
+const DECISION_BEFORE_CLOSE_MS = tradeDecisionLeadTimeMs({ period: "1h" });
 const DECISION_AFTER_OPEN_MS = ONE_HOUR_MS - DECISION_BEFORE_CLOSE_MS;
 const HISTORY_BARS = 340;
 
@@ -104,7 +107,7 @@ export const researchRsiDivergenceSweepCommand = defineCommand({
   name: "research:rsi-divergence-sweep",
   summary: "Sweep 1h RSI divergence configs",
   description:
-    "Runs a formal local research sweep for TradingView-style RSI divergence candidates on 1h markets. Each simulated decision happens 10 minutes before the current 1h market closes, using a synthetic current-hour candle built only from stored 1m Pyth bars available by HH:50.",
+    "Runs a formal local research sweep for TradingView-style RSI divergence candidates on 1h markets. Each simulated decision happens 35 minutes before the current 1h market closes, using a synthetic current-hour candle built only from stored 1m Pyth bars available by HH:25.",
   options: [
     defineValueOption({
       key: "assets",
@@ -239,7 +242,7 @@ async function runSweep({
     outcomeSource:
       "Pyth spot 1h candle direction. This does not include Polymarket market prices or odds.",
     decisionTiming:
-      "For each 1h target candle, decide 10 minutes before that same candle closes by appending a synthetic current-hour bar built from 1m Pyth candles through HH:50.",
+      "For each 1h target candle, decide 35 minutes before that same candle closes by appending a synthetic current-hour bar built from 1m Pyth candles through HH:25.",
     startMs,
     endMs,
     assets,
