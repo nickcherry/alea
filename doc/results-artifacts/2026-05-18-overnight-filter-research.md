@@ -324,3 +324,65 @@ the set.
 **Caveat.** Per the calibration note above, "highest WR" mostly means
 "most synth-aligned". Treat as a high-confidence directional confirmation
 rather than a contrarian reversal signal.
+
+## Filters 5, 7, 8, 9, 10 — not attempted this round
+
+- Filter 5 (Trap Candle): trigger conditions hard-lock direction to
+  synth direction. Same skip rationale as filter 2 / filter 4. Not
+  attempted.
+- Filter 7 (Inside-Bar / Mother Candle Resolution): same shape, would
+  require breakout close-location and body strength → trivial baseline.
+  Not attempted.
+- Filter 8 (Stair-Step Continuation): continuation pattern with
+  `currentResume = bullish synth` clauses → trivial baseline. Not
+  attempted.
+- Filter 9 (Divergence Cousins): conceptually has alpha because it
+  reproduces RSI Divergence's against-synth shape using non-RSI
+  momentum proxies. Worth attempting in a follow-on session — needs
+  pivot detection infrastructure similar to
+  `src/lib/indicators/shared/pivots.ts` and a careful design that
+  doesn't just replay RSI Divergence with extra steps. Not attempted
+  tonight.
+- Filter 10 (HTF Bias modifier): not a standalone filter — proposed as
+  a `requireHtfAlignment` flag that an existing filter could opt into.
+  Better to validate as an ablation on a registered filter once the
+  HTF data layer is wired up.
+
+## Registry summary as of this run
+
+```
+1h / btc, eth, sol, doge:
+  - rsi_divergence v6   (75.33% WR, 6,108 decisions)
+  - failed_breakout_reversal v1 (84.80% WR, 3,863 decisions)
+  - exhaustion_reversal v1 (84.29% WR, 1,025 decisions)
+  - ma_rejection v1     (88.83% WR, 2,767 decisions)
+```
+
+Combined: 4 candidates per asset × 4 assets, 13,763 total decisions over
+2024 Q2 - 2026 Q2 at a blended 80.4% WR. Three new filters in tree but
+unregistered (trend-pullback-resume, compression-breakout) plus tests
+and sweep CLIs. Shared `thesisLifecycle.ts` + `sweepInfra.ts` make it
+cheap to add more filters from here.
+
+## Open questions for the next session
+
+1. The against-synth slice loses in every filter. Is there a filter
+   shape that _consistently_ predicts against the synth bar at HH:50?
+   Hypothesis: filters that fire only on ambiguous synth bars
+   (`bodyPct < 0.25` and `closeLoc` between 0.4 and 0.6) where the
+   baseline is much weaker. That would isolate real reversal alpha.
+
+2. Is the user's actual edge driven more by the with-synth or against-
+   synth slice? If with-synth — these filters are pure confirmation
+   signals and the user is being paid for execution / market making at
+   50c. If against-synth — RSI Divergence's 1,162 contrarian bets at
+   19.7% WR are the source of edge (somehow), and we should be looking
+   for filters that beat 19.7% on the contrarian slice rather than
+   chasing aggregate WR.
+
+3. The "all my filters need synth direction strong" pattern means each
+   marginal candidate added to the registry mostly correlates with the
+   others. Diversity in the _trigger style_ doesn't translate to
+   diversity in _which bars get traded_. A real-portfolio-style
+   correlation matrix between candidate decisions would tell us how
+   much each new filter adds.
